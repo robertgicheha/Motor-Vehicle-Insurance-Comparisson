@@ -27,13 +27,13 @@ class RolesAndPermissionsSeeder extends Seeder
         ];
 
         foreach ($permissions as $permission) {
-            Permission::create(['name' => $permission]);
+            Permission::firstOrCreate(['name' => $permission, 'guard_name' => 'web']);
         }
 
-        $superAdmin = Role::create(['name' => 'super-admin']);
+        $superAdmin = Role::firstOrCreate(['name' => 'super-admin', 'guard_name' => 'web']);
         $superAdmin->givePermissionTo(Permission::all());
 
-        $admin = Role::create(['name' => 'admin']);
+        $admin = Role::firstOrCreate(['name' => 'admin', 'guard_name' => 'web']);
         $admin->givePermissionTo([
             'view users', 'create users', 'edit users', 'activate users', 'deactivate users',
             'view quotations', 'create quotations', 'edit quotations', 'delete quotations',
@@ -45,7 +45,7 @@ class RolesAndPermissionsSeeder extends Seeder
             'view dashboard', 'access admin panel',
         ]);
 
-        $user = Role::create(['name' => 'user']);
+        $user = Role::firstOrCreate(['name' => 'user', 'guard_name' => 'web']);
         $user->givePermissionTo([
             'view quotations', 'create quotations',
             'view companies', 'view rates',

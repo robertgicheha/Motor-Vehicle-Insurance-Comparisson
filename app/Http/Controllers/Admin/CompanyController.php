@@ -93,13 +93,15 @@ class CompanyController extends Controller
             'min_value' => 'nullable|numeric',
             'max_value' => 'nullable|numeric',
             'min_premium' => 'nullable|numeric',
+            'notes' => 'nullable|string|max:1000',
+            'value_type' => 'nullable|string|in:fixed,percentage,percentage_min,text',
         ]);
 
         if ($validator->fails()) {
             return back()->withErrors($validator);
         }
 
-        $rate->update($request->only(['value', 'percentage', 'min_value', 'max_value', 'min_premium']));
+        $rate->update($request->only(['value', 'percentage', 'min_value', 'max_value', 'min_premium', 'notes', 'value_type']));
 
         AuditService::activity('rate_updated', "Rate {$rate->item_name} updated for {$company->name}");
 

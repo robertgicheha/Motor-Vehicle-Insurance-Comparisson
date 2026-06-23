@@ -16,5 +16,6 @@ class SettingsSeeder extends Seeder
         Setting::setValue('weather_city', 'Nairobi', 'general');
         Setting::setValue('weather_country', 'KE', 'general');
         Setting::setValue('report_email', 'admin@insurance.com', 'general');
+        Setting::setValue('sticker_api_key', \Illuminate\Support\Str::random(32), 'api');
     }
 }

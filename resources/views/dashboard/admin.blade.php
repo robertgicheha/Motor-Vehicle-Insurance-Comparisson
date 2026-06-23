@@ -25,133 +25,135 @@
             @endif
         </div>
 
+        <div class="dashboard-section-label">Overview</div>
         <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div class="p-5 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 card-hover">
+            <div class="dashboard-card">
                 <div class="flex items-center gap-3">
-                    <div class="p-3 rounded-lg bg-blue-50 dark:bg-blue-900/30">
-                        <svg class="w-6 h-6 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"/></svg>
+                    <div class="p-3 rounded-lg" style="background:var(--blue-light)">
+                        <svg class="w-6 h-6" style="color:var(--blue)" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"/></svg>
                     </div>
                     <div>
-                        <p class="text-xs text-gray-500 dark:text-gray-400">Total Users</p>
-                        <p class="text-xl font-bold text-gray-900 dark:text-white">{{ $totalUsers }}</p>
+                        <p class="dashboard-stat-label">Total Users</p>
+                        <p class="dashboard-stat-value">{{ $totalUsers }}</p>
                     </div>
                 </div>
             </div>
-            <div class="p-5 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 card-hover">
+            <div class="dashboard-card">
                 <div class="flex items-center gap-3">
-                    <div class="p-3 rounded-lg bg-green-50 dark:bg-green-900/30">
-                        <svg class="w-6 h-6 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.636 18.364a9 9 0 010-12.728m12.728 0a9 9 0 010 12.728m-9.9-2.829a5 5 0 010-7.07m7.072 0a5 5 0 010 7.07M13 12a1 1 0 11-2 0 1 1 0 012 0z"/></svg>
+                    <div class="p-3 rounded-lg" style="background:var(--blue-light)">
+                        <svg class="w-6 h-6" style="color:var(--blue)" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.636 18.364a9 9 0 010-12.728m12.728 0a9 9 0 010 12.728m-9.9-2.829a5 5 0 010-7.07m7.072 0a5 5 0 010 7.07M13 12a1 1 0 11-2 0 1 1 0 012 0z"/></svg>
                     </div>
                     <div>
-                        <p class="text-xs text-gray-500 dark:text-gray-400">Online</p>
-                        <p class="text-xl font-bold text-gray-900 dark:text-white">{{ $onlineUsers }}</p>
+                        <p class="dashboard-stat-label">Online</p>
+                        <p class="dashboard-stat-value">{{ $onlineUsers }}</p>
                     </div>
                 </div>
             </div>
-            <div class="p-5 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 card-hover">
+            <div class="dashboard-card">
                 <div class="flex items-center gap-3">
-                    <div class="p-3 rounded-lg bg-purple-50 dark:bg-purple-900/30">
-                        <svg class="w-6 h-6 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                    <div class="p-3 rounded-lg" style="background:var(--blue-light)">
+                        <svg class="w-6 h-6" style="color:var(--blue)" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
                     </div>
                     <div>
-                        <p class="text-xs text-gray-500 dark:text-gray-400">Quotations</p>
-                        <p class="text-xl font-bold text-gray-900 dark:text-white">{{ $totalQuotations }}</p>
+                        <p class="dashboard-stat-label">Quotations</p>
+                        <p class="dashboard-stat-value">{{ $totalQuotations }}</p>
                     </div>
                 </div>
             </div>
-            <div class="p-5 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 card-hover">
+            <div class="dashboard-card">
                 <div class="flex items-center gap-3">
-                    <div class="p-3 rounded-lg bg-orange-50 dark:bg-orange-900/30">
-                        <svg class="w-6 h-6 text-orange-600 dark:text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    <div class="p-3 rounded-lg" style="background:var(--blue-light)">
+                        <svg class="w-6 h-6" style="color:var(--blue)" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                     </div>
                     <div>
-                        <p class="text-xs text-gray-500 dark:text-gray-400">Total Premium</p>
-                        <p class="text-xl font-bold text-gray-900 dark:text-white">{{ number_format($totalPremium, 0) }}</p>
+                        <p class="dashboard-stat-label">Total Premium</p>
+                        <p class="dashboard-stat-value">{{ number_format($totalPremium, 0) }}</p>
                     </div>
                 </div>
             </div>
         </div>
 
+        <div class="dashboard-section-label" style="margin-top:32px">Period Breakdown</div>
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div class="p-5 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
-                <p class="text-sm text-gray-500 dark:text-gray-400 mb-1">Today</p>
-                <p class="text-3xl font-bold text-gray-900 dark:text-white">{{ $todayQuotations }}</p>
-                <p class="text-xs text-gray-400 mt-1">quotations generated</p>
+            <div class="dashboard-card">
+                <p class="dashboard-stat-label">Today</p>
+                <p class="dashboard-stat-value">{{ $todayQuotations }}</p>
+                <p class="text-xs" style="color:var(--text-muted);margin-top:4px">quotations generated</p>
             </div>
-            <div class="p-5 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
-                <p class="text-sm text-gray-500 dark:text-gray-400 mb-1">This Week</p>
-                <p class="text-3xl font-bold text-gray-900 dark:text-white">{{ $weekQuotations }}</p>
-                <p class="text-xs text-gray-400 mt-1">quotations generated</p>
+            <div class="dashboard-card">
+                <p class="dashboard-stat-label">This Week</p>
+                <p class="dashboard-stat-value">{{ $weekQuotations }}</p>
+                <p class="text-xs" style="color:var(--text-muted);margin-top:4px">quotations generated</p>
             </div>
-            <div class="p-5 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
-                <p class="text-sm text-gray-500 dark:text-gray-400 mb-1">This Month</p>
-                <p class="text-3xl font-bold text-gray-900 dark:text-white">{{ $monthQuotations }}</p>
-                <p class="text-xs text-gray-400 mt-1">quotations generated</p>
+            <div class="dashboard-card">
+                <p class="dashboard-stat-label">This Month</p>
+                <p class="dashboard-stat-value">{{ $monthQuotations }}</p>
+                <p class="text-xs" style="color:var(--text-muted);margin-top:4px">quotations generated</p>
             </div>
         </div>
 
+        <div class="dashboard-section-label" style="margin-top:32px">Charts</div>
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-5">
-                <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Quotations by Company</h3>
+            <div class="dashboard-card">
+                <h3 class="dashboard-card-header">Quotations by Company</h3>
                 <canvas id="companyChart" height="200"></canvas>
             </div>
-            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-5">
-                <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Monthly Trend</h3>
+            <div class="dashboard-card">
+                <h3 class="dashboard-card-header">Monthly Trend</h3>
                 <canvas id="monthlyChart" height="200"></canvas>
             </div>
         </div>
 
+        <div class="dashboard-section-label" style="margin-top:32px">Companies Breakdown</div>
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
             @foreach($companies as $company)
-                <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-5">
+                <div class="dashboard-card">
                     <div class="flex items-center justify-between mb-3">
-                        <h3 class="font-semibold text-gray-900 dark:text-white">{{ $company->name }}</h3>
-                        <span class="text-2xl font-bold text-blue-600 dark:text-blue-400">{{ $company->quotations_count }}</span>
+                        <h3 class="font-semibold" style="color:var(--text)">{{ $company->name }}</h3>
+                        <span class="text-2xl font-bold" style="color:var(--blue)">{{ $company->quotations_count }}</span>
                     </div>
-                    <p class="text-sm text-gray-500 dark:text-gray-400">Total Quotations</p>
-                    <div class="mt-3 w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                    <p class="text-sm" style="color:var(--text-muted)">Total Quotations</p>
+                    <div class="mt-3 w-full rounded-full h-2" style="background:var(--border)">
                         @php $maxCount = $companies->max('quotations_count') ?: 1; @endphp
-                        <div class="bg-blue-600 dark:bg-blue-500 h-2 rounded-full" style="width: {{ ($company->quotations_count / $maxCount) * 100 }}%"></div>
+                        <div class="h-2 rounded-full" style="width: {{ ($company->quotations_count / $maxCount) * 100 }}%;background:var(--blue)"></div>
                     </div>
                 </div>
             @endforeach
         </div>
 
-        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
-            <div class="p-5 border-b border-gray-200 dark:border-gray-700">
-                <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Recent Quotations</h2>
-            </div>
+        <div class="dashboard-section-label" style="margin-top:32px">Recent Quotations</div>
+        <div class="breakdown-table">
             <div class="overflow-x-auto">
-                <table class="w-full text-sm">
+                <table class="dashboard-table">
                     <thead>
-                        <tr class="bg-gray-50 dark:bg-gray-700/50">
-                            <th class="px-4 py-3 text-left font-medium text-gray-500 dark:text-gray-400">#</th>
-                            <th class="px-4 py-3 text-left font-medium text-gray-500 dark:text-gray-400">User</th>
-                            <th class="px-4 py-3 text-left font-medium text-gray-500 dark:text-gray-400">Company</th>
-                            <th class="px-4 py-3 text-left font-medium text-gray-500 dark:text-gray-400">Vehicle</th>
-                            <th class="px-4 py-3 text-right font-medium text-gray-500 dark:text-gray-400">Premium</th>
-                            <th class="px-4 py-3 text-center font-medium text-gray-500 dark:text-gray-400">Status</th>
-                            <th class="px-4 py-3 text-right font-medium text-gray-500 dark:text-gray-400">Date</th>
+                        <tr>
+                            <th>#</th>
+                            <th>User</th>
+                            <th>Company</th>
+                            <th>Vehicle</th>
+                            <th>Premium</th>
+                            <th>Status</th>
+                            <th>Date</th>
                         </tr>
                     </thead>
-                    <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
+                    <tbody>
                         @forelse($recentQuotations as $q)
-                            <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/30">
-                                <td class="px-4 py-3">
-                                    <a href="{{ route('quotations.show', $q) }}" class="text-blue-600 dark:text-blue-400 hover:underline">{{ $q->quotation_number }}</a>
+                            <tr>
+                                <td>
+                                    <a href="{{ route('quotations.show', $q) }}" style="color:var(--blue)">{{ $q->quotation_number }}</a>
                                 </td>
-                                <td class="px-4 py-3">{{ $q->user->name }}</td>
-                                <td class="px-4 py-3">{{ $q->company->name }}</td>
-                                <td class="px-4 py-3">{{ $q->car_make }} {{ $q->car_model }}</td>
-                                <td class="px-4 py-3 text-right font-medium">{{ number_format($q->total_premium, 0) }}</td>
-                                <td class="px-4 py-3 text-center">
-                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300">{{ ucfirst($q->status) }}</span>
+                                <td>{{ $q->user->name }}</td>
+                                <td>{{ $q->company->name }}</td>
+                                <td>{{ $q->car_make }} {{ $q->car_model }}</td>
+                                <td>{{ number_format($q->total_premium, 0) }}</td>
+                                <td>
+                                    <span class="dashboard-badge dashboard-badge-active">{{ ucfirst($q->status) }}</span>
                                 </td>
-                                <td class="px-4 py-3 text-right text-gray-500">{{ $q->created_at->format('d M Y') }}</td>
+                                <td>{{ $q->created_at->format('d M Y') }}</td>
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="7" class="px-4 py-8 text-center text-gray-500">No quotations yet.</td>
+                                <td colspan="7" class="px-4 py-8 text-center" style="color:var(--text-muted)">No quotations yet.</td>
                             </tr>
                         @endforelse
                     </tbody>

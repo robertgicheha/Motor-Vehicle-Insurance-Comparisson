@@ -2,12 +2,15 @@
 
 namespace App\Http\Controllers;
 
+use App\Mail\QuotationMail;
 use App\Models\Quotation;
 use App\Models\Company;
 use App\Models\Rate;
 use App\Services\PremiumCalculationService;
 use App\Services\AuditService;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\DB;
 
@@ -119,6 +122,15 @@ class QuotationController extends Controller
             return $quotation;
         });
 
+        $user = auth()->user();
+        if ($user && $user->email) {
+            try {
+                Mail::to($user->email)->send(new QuotationMail($quotation));
+            } catch (\Exception $e) {
+                \Illuminate\Support\Facades\Log::warning("Failed to send quotation email: " . $e->getMessage());
+            }
+        }
+
         return redirect()->route('quotations.show', $quotation)
             ->with('success', 'Quotation generated successfully!');
     }
@@ -128,6 +140,21 @@ class QuotationController extends Controller
         $this->authorizeView($quotation);
         $quotation->load(['user', 'company', 'items']);
         return view('quotations.show', compact('quotation'));
+    }
+
+    public function downloadPdf(Quotation $quotation)
+    {
+        $this->authorizeView($quotation);
+        $quotation->load(['user', 'company']);
+        $pdf = Pdf::loadView('pdf.quotation', ['quotation' => $quotation]);
+        return $pdf->download("quotation-{$quotation->quotation_number}.pdf");
+    }
+
+    public function publicDownloadPdf(Quotation $quotation)
+    {
+        $quotation->load(['user', 'company']);
+        $pdf = Pdf::loadView('pdf.quotation', ['quotation' => $quotation]);
+        return $pdf->download("quotation-{$quotation->quotation_number}.pdf");
     }
 
     public function destroy(Quotation $quotation)

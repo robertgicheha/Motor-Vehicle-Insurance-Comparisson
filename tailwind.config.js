@@ -15,6 +15,18 @@ export default {
         extend: {
             fontFamily: {
                 sans: ['Inter', 'Figtree', ...defaultTheme.fontFamily.sans],
+                montserrat: ['Montserrat', ...defaultTheme.fontFamily.sans],
+            },
+            colors: {
+                brand: {
+                    blue: '#0066B3',
+                    'blue-dark': '#004f8c',
+                    'blue-light': '#e8f2fa',
+                    red: '#D0021B',
+                },
+                ga: '#005baa',
+                britam: '#0071bc',
+                sanlam: '#1d3c6e',
             },
         },
     },

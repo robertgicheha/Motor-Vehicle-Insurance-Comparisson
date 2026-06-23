@@ -9,7 +9,7 @@
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <style>[x-cloak] { display: none !important; }</style>
 </head>
-<body class="font-sans antialiased bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100">
+<body class="font-montserrat antialiased bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100">
     <div class="min-h-screen flex flex-col sm:justify-center items-center pt-6 sm:pt-0 px-4">
         <div class="w-full sm:max-w-md">
             <div class="text-center mb-6">

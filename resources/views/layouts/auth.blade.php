@@ -8,7 +8,7 @@
     <link rel="stylesheet" href="{{ asset('css/dashboard.css') }}">
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
-<body class="font-sans antialiased text-gray-900 bg-white">
+<body class="font-montserrat antialiased text-gray-900 bg-white">
     <div class="flex min-h-screen">
         <div class="flex flex-col justify-center w-full lg:w-[40%] px-8 sm:px-16 xl:px-24">
             <div class="mb-10 text-center">

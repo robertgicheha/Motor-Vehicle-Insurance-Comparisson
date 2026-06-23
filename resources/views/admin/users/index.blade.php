@@ -8,6 +8,11 @@
             <div class="flex gap-2">
                 <a href="{{ route('admin.users.create') }}" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition text-sm font-medium">Add User</a>
                 <a href="{{ route('admin.users.export') }}" class="px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition text-sm font-medium">Export</a>
+                <button onclick="document.getElementById('importFile').click()" class="px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition text-sm font-medium">Import</button>
+                <form id="importForm" action="{{ route('admin.users.import') }}" method="POST" enctype="multipart/form-data" class="hidden">
+                    @csrf
+                    <input type="file" name="file" id="importFile" accept=".xlsx,.csv" onchange="document.getElementById('importForm').submit()">
+                </form>
             </div>
         </div>
 

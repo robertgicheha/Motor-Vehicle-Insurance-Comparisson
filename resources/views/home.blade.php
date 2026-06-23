@@ -18,11 +18,9 @@
   <div class="nav-main">
     <img src="{{ asset('img/MIC-Global-Risks_logo.png') }}" alt="MIC Global Risks" class="nav-logo">
     <div class="nav-links">
-      <a href="#">Insurance</a>
-      <a href="#">About Us</a>
-      <a href="#">Contact Us</a>
-      <a href="{{ url('/') }}">Motor Quote</a>
-      <a href="#" class="active">Quotation</a>
+      <a href="{{ url('/motor-quote') }}">Motor Quote</a>
+      <a href="{{ route('stickers.create') }}">Certificates</a>
+      <a href="{{ route('stickers.lookup') }}">Look Up</a>
       <a href="{{ route('login') }}" class="nav-cta">Login</a>
       <a href="{{ route('register') }}" class="nav-cta" style="background:var(--blue-dark)">Register</a>
     </div>
@@ -45,6 +43,35 @@
 </section>
 
 <main class="main-content">
+
+  <div class="lookup-bar">
+    <div class="lookup-tabs">
+      <button class="lookup-tab active" data-tab="search" onclick="switchLookupTab('search')">Search</button>
+      <button class="lookup-tab" data-tab="quotation" onclick="switchLookupTab('quotation')">Find Quotation</button>
+      <button class="lookup-tab" data-tab="sticker" onclick="switchLookupTab('sticker')">Find Certificate</button>
+    </div>
+    <div class="lookup-panel active" id="panel-search">
+      <div class="search-box">
+        <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input type="text" id="globalSearch" placeholder="Search by quotation number, sticker number, registration, name..." autocomplete="off">
+        <div class="search-results" id="searchResults"></div>
+      </div>
+    </div>
+    <div class="lookup-panel" id="panel-quotation">
+      <form method="POST" action="{{ route('motor.lookup.quotation') }}" class="lookup-form">
+        @csrf
+        <input type="text" name="number" required placeholder="e.g. Q202606230001" class="lookup-input">
+        <button type="submit" class="lookup-btn">Find Quotation</button>
+      </form>
+    </div>
+    <div class="lookup-panel" id="panel-sticker">
+      <form method="POST" action="{{ route('motor.lookup.sticker') }}" class="lookup-form">
+        @csrf
+        <input type="text" name="number" required placeholder="e.g. STK202606230001" class="lookup-input">
+        <button type="submit" class="lookup-btn">Find Certificate</button>
+      </form>
+    </div>
+  </div>
 
   <div class="section-label">Customer &amp; Vehicle Summary</div>
   <div class="summary-grid">

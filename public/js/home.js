@@ -314,4 +314,77 @@ function actionTogglePreview() {
   }
 }
 
+/* ── LOOKUP TABS ── */
+function switchLookupTab(tab) {
+  document.querySelectorAll('.lookup-tab').forEach(function (t) { t.classList.remove('active'); });
+  document.querySelectorAll('.lookup-panel').forEach(function (p) { p.classList.remove('active'); });
+  document.querySelector('.lookup-tab[data-tab="' + tab + '"]').classList.add('active');
+  document.getElementById('panel-' + tab).classList.add('active');
+}
+
+/* ── GLOBAL SEARCH ── */
+(function () {
+  var searchInput = document.getElementById('globalSearch');
+  if (!searchInput) return;
+
+  var resultsEl = document.getElementById('searchResults');
+  var debounceTimer;
+
+  searchInput.addEventListener('input', function () {
+    clearTimeout(debounceTimer);
+    var q = this.value.trim();
+    if (q.length < 2) { resultsEl.classList.remove('show'); resultsEl.innerHTML = ''; return; }
+    debounceTimer = setTimeout(function () { performSearch(q); }, 300);
+  });
+
+  document.addEventListener('click', function (e) {
+    if (!e.target.closest('.search-box')) { resultsEl.classList.remove('show'); }
+  });
+})();
+
+function performSearch(q) {
+  var url = '/motor-quote/search?q=' + encodeURIComponent(q);
+  fetch(url)
+    .then(function (r) { return r.json(); })
+    .then(function (data) {
+      var html = '';
+      var hasResults = false;
+
+      (data.quotations || []).forEach(function (item) {
+        hasResults = true;
+        html += '<a href="/lookup/quotation/' + encodeURIComponent(item.quotation_number) + '" class="search-result-item">'
+          + '<span class="search-result-type quotation">Quote</span>'
+          + '<div class="search-result-info">'
+          + '<div class="search-result-number">' + item.quotation_number + '</div>'
+          + '<div class="search-result-detail">' + (item.car_make || '') + ' ' + (item.car_model || '') + ' &middot; ' + (item.car_registration || '') + '</div>'
+          + '</div>'
+          + '<span class="search-result-goto">View &rarr;</span>'
+          + '</a>';
+      });
+
+      (data.stickers || []).forEach(function (item) {
+        hasResults = true;
+        html += '<a href="/lookup/sticker/' + encodeURIComponent(item.sticker_number) + '" class="search-result-item">'
+          + '<span class="search-result-type sticker">Cert</span>'
+          + '<div class="search-result-info">'
+          + '<div class="search-result-number">' + item.sticker_number + '</div>'
+          + '<div class="search-result-detail">' + (item.customer_name || '') + ' &middot; ' + (item.car_make || '') + ' ' + (item.car_model || '') + '</div>'
+          + '</div>'
+          + '<span class="search-result-goto">View &rarr;</span>'
+          + '</a>';
+      });
+
+      if (!hasResults) {
+        html = '<div class="search-no-results">No results found for &ldquo;' + q + '&rdquo;</div>';
+      }
+
+      resultsEl.innerHTML = html;
+      resultsEl.classList.add('show');
+    })
+    .catch(function () {
+      resultsEl.innerHTML = '<div class="search-no-results">Search failed. Please try again.</div>';
+      resultsEl.classList.add('show');
+    });
+}
+
 window.onload = init;

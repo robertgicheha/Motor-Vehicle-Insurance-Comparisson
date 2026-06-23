@@ -1,5 +1,5 @@
 <x-app-layout>
-    <div class="space-y-6 fade-in">
+    <div class="fade-in">
         <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div>
                 <h1 class="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white">
@@ -29,103 +29,102 @@
                     </div>
                 </div>
             @endif
+
+            <a href="{{ route('quotations.create') }}" class="dashboard-btn dashboard-btn-primary">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                New Quotation
+            </a>
         </div>
 
+        <div class="dashboard-section-label">Overview</div>
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div class="p-5 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 card-hover">
+            <div class="dashboard-card">
                 <div class="flex items-center gap-3">
-                    <div class="p-3 rounded-lg bg-blue-50 dark:bg-blue-900/30">
-                        <svg class="w-6 h-6 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                    <div class="p-3 rounded-lg" style="background:var(--blue-light)">
+                        <svg class="w-6 h-6" style="color:var(--blue)" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
                     </div>
                     <div>
-                        <p class="text-sm text-gray-500 dark:text-gray-400">Total Quotations</p>
-                        <p class="text-2xl font-bold text-gray-900 dark:text-white">{{ $totalQuotations }}</p>
+                        <p class="dashboard-stat-label">Total Quotations</p>
+                        <p class="dashboard-stat-value">{{ $totalQuotations }}</p>
                     </div>
                 </div>
             </div>
 
-            <div class="p-5 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 card-hover">
+            <div class="dashboard-card">
                 <div class="flex items-center gap-3">
-                    <div class="p-3 rounded-lg bg-green-50 dark:bg-green-900/30">
-                        <svg class="w-6 h-6 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+                    <div class="p-3 rounded-lg" style="background:var(--blue-light)">
+                        <svg class="w-6 h-6" style="color:var(--blue)" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
                     </div>
                     <div>
-                        <p class="text-sm text-gray-500 dark:text-gray-400">Today</p>
-                        <p class="text-2xl font-bold text-gray-900 dark:text-white">{{ $todayQuotations }}</p>
+                        <p class="dashboard-stat-label">Today</p>
+                        <p class="dashboard-stat-value">{{ $todayQuotations }}</p>
                     </div>
                 </div>
             </div>
 
-            <div class="p-5 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 card-hover">
+            <div class="dashboard-card">
                 <div class="flex items-center gap-3">
-                    <div class="p-3 rounded-lg bg-purple-50 dark:bg-purple-900/30">
-                        <svg class="w-6 h-6 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+                    <div class="p-3 rounded-lg" style="background:var(--blue-light)">
+                        <svg class="w-6 h-6" style="color:var(--blue)" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
                     </div>
                     <div>
-                        <p class="text-sm text-gray-500 dark:text-gray-400">Companies</p>
-                        <p class="text-2xl font-bold text-gray-900 dark:text-white">{{ $companies->count() }}</p>
+                        <p class="dashboard-stat-label">Companies</p>
+                        <p class="dashboard-stat-value">{{ $companies->count() }}</p>
                     </div>
                 </div>
             </div>
         </div>
 
         @if(isset($recentQuotation))
-            <div class="p-5 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-xl text-white">
+            <div class="dashboard-card" style="background:linear-gradient(135deg, var(--blue) 0%, #004f8c 100%);border:none;margin-top:16px">
                 <div class="flex items-center justify-between">
                     <div>
-                        <p class="text-sm opacity-90">Last Quotation</p>
-                        <p class="text-lg font-bold">{{ $recentQuotation->quotation_number }}</p>
-                        <p class="text-sm opacity-90">{{ $recentQuotation->car_make }} {{ $recentQuotation->car_model }} - {{ number_format($recentQuotation->total_premium, 2) }} KES</p>
+                        <p class="text-sm" style="color:rgba(255,255,255,.8)">Last Quotation</p>
+                        <p class="text-lg font-bold text-white">{{ $recentQuotation->quotation_number }}</p>
+                        <p class="text-sm" style="color:rgba(255,255,255,.8)">{{ $recentQuotation->car_make }} {{ $recentQuotation->car_model }} - {{ number_format($recentQuotation->total_premium, 2) }} KES</p>
                     </div>
-                    <a href="{{ route('quotations.show', $recentQuotation) }}" class="px-4 py-2 bg-white/20 rounded-lg hover:bg-white/30 transition text-sm font-medium">
+                    <a href="{{ route('quotations.show', $recentQuotation) }}" class="dashboard-btn" style="background:rgba(255,255,255,.2);color:#fff">
                         View Details
                     </a>
                 </div>
             </div>
         @endif
 
-        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
-            <div class="p-5 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
-                <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Your Recent Quotations</h2>
-                <a href="{{ route('quotations.create') }}" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition text-sm font-medium">
-                    New Quotation
-                </a>
-            </div>
+        <div class="dashboard-section-label" style="margin-top:32px">Recent Quotations</div>
+        <div class="breakdown-table">
             <div class="overflow-x-auto">
-                <table class="w-full text-sm">
+                <table class="dashboard-table">
                     <thead>
-                        <tr class="bg-gray-50 dark:bg-gray-700/50">
-                            <th class="px-4 py-3 text-left font-medium text-gray-500 dark:text-gray-400">#</th>
-                            <th class="px-4 py-3 text-left font-medium text-gray-500 dark:text-gray-400">Company</th>
-                            <th class="px-4 py-3 text-left font-medium text-gray-500 dark:text-gray-400">Vehicle</th>
-                            <th class="px-4 py-3 text-right font-medium text-gray-500 dark:text-gray-400">Valuation</th>
-                            <th class="px-4 py-3 text-right font-medium text-gray-500 dark:text-gray-400">Premium</th>
-                            <th class="px-4 py-3 text-center font-medium text-gray-500 dark:text-gray-400">Status</th>
-                            <th class="px-4 py-3 text-right font-medium text-gray-500 dark:text-gray-400">Date</th>
+                        <tr>
+                            <th>#</th>
+                            <th>Company</th>
+                            <th>Vehicle</th>
+                            <th>Valuation</th>
+                            <th>Premium</th>
+                            <th>Status</th>
+                            <th>Date</th>
                         </tr>
                     </thead>
-                    <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
+                    <tbody>
                         @forelse($quotations as $q)
-                            <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/30">
-                                <td class="px-4 py-3">
-                                    <a href="{{ route('quotations.show', $q) }}" class="text-blue-600 dark:text-blue-400 hover:underline font-medium">{{ $q->quotation_number }}</a>
+                            <tr>
+                                <td>
+                                    <a href="{{ route('quotations.show', $q) }}" style="color:var(--blue);font-weight:600">{{ $q->quotation_number }}</a>
                                 </td>
-                                <td class="px-4 py-3">{{ $q->company->name }}</td>
-                                <td class="px-4 py-3">{{ $q->car_make }} {{ $q->car_model }} ({{ $q->car_year }})</td>
-                                <td class="px-4 py-3 text-right">{{ number_format($q->car_valuation, 0) }}</td>
-                                <td class="px-4 py-3 text-right font-medium">{{ number_format($q->total_premium, 0) }}</td>
-                                <td class="px-4 py-3 text-center">
-                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300">
-                                        {{ ucfirst($q->status) }}
-                                    </span>
+                                <td>{{ $q->company->name }}</td>
+                                <td>{{ $q->car_make }} {{ $q->car_model }} ({{ $q->car_year }})</td>
+                                <td>{{ number_format($q->car_valuation, 0) }}</td>
+                                <td>{{ number_format($q->total_premium, 0) }}</td>
+                                <td>
+                                    <span class="dashboard-badge dashboard-badge-active">{{ ucfirst($q->status) }}</span>
                                 </td>
-                                <td class="px-4 py-3 text-right text-gray-500">{{ $q->created_at->format('d M Y') }}</td>
+                                <td>{{ $q->created_at->format('d M Y') }}</td>
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="7" class="px-4 py-8 text-center text-gray-500 dark:text-gray-400">
+                                <td colspan="7" class="px-4 py-8 text-center" style="color:var(--text-muted)">
                                     No quotations yet.
-                                    <a href="{{ route('quotations.create') }}" class="text-blue-600 dark:text-blue-400 hover:underline ml-1">Generate your first quotation</a>
+                                    <a href="{{ route('quotations.create') }}" style="color:var(--blue);margin-left:4px">Generate your first quotation</a>
                                 </td>
                             </tr>
                         @endforelse

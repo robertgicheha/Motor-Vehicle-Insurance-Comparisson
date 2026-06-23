@@ -29,6 +29,15 @@ Route::prefix('motor-quote')->name('motor.')->group(function () {
     Route::get('/search', [PublicController::class, 'globalSearch'])->name('search');
 });
 
+Route::prefix('lookup')->name('public.')->group(function () {
+    Route::get('/quotation/{number}', [PublicController::class, 'showQuotation'])->name('quotation.show');
+    Route::get('/sticker/{number}', [PublicController::class, 'showSticker'])->name('sticker.show');
+    Route::get('/quotation/{number}/download', [PublicController::class, 'downloadQuotationPdf'])->name('quotation.download');
+    Route::get('/sticker/{number}/download', [PublicController::class, 'downloadStickerPdf'])->name('sticker.download');
+    Route::post('/quotation/email', [PublicController::class, 'sendQuotationEmail'])->name('quotation.email');
+    Route::post('/sticker/email', [PublicController::class, 'sendStickerEmail'])->name('sticker.email');
+});
+
 Route::get('/quotation/{quotation}/download-pdf', [QuotationController::class, 'publicDownloadPdf'])->name('quotation.download.pdf');
 
 Route::prefix('stickers')->name('stickers.')->group(function () {
@@ -63,6 +72,7 @@ Route::middleware(['auth', 'verified', 'online'])->group(function () {
         Route::resource('users', UserController::class);
         Route::patch('/users/{user}/toggle-status', [UserController::class, 'toggleStatus'])->name('users.toggle-status');
         Route::get('/users/export', [UserController::class, 'export'])->name('users.export');
+        Route::post('/users/import', [UserController::class, 'import'])->name('users.import')->middleware('throttle:3,1');
 
         Route::resource('roles', RoleController::class);
 
@@ -76,8 +86,8 @@ Route::middleware(['auth', 'verified', 'online'])->group(function () {
         Route::get('/stickers', [StickerAdminController::class, 'index'])->name('stickers.index');
 
         Route::get('/reports', [ReportController::class, 'index'])->name('reports.index');
-        Route::post('/reports/generate', [ReportController::class, 'generate'])->name('reports.generate');
-        Route::post('/reports/stickers', [ReportController::class, 'stickerReport'])->name('reports.stickers');
+        Route::post('/reports/generate', [ReportController::class, 'generate'])->name('reports.generate')->middleware('throttle:10,1');
+        Route::post('/reports/stickers', [ReportController::class, 'stickerReport'])->name('reports.stickers')->middleware('throttle:10,1');
         Route::get('/reports/export-csv', [ReportController::class, 'exportCsv'])->name('reports.export-csv');
         Route::get('/reports/export-excel', [ReportController::class, 'exportExcel'])->name('reports.export-excel');
         Route::get('/reports/stickers/export-csv', [ReportController::class, 'exportStickersCsv'])->name('reports.stickers.export-csv');
@@ -86,7 +96,7 @@ Route::middleware(['auth', 'verified', 'online'])->group(function () {
         Route::get('/activity-logs', [AuditLogController::class, 'indexActivity'])->name('audit.activity');
 
         Route::get('/settings', [SettingController::class, 'index'])->name('settings.index');
-        Route::post('/settings', [SettingController::class, 'update'])->name('settings.update');
+        Route::post('/settings', [SettingController::class, 'update'])->name('settings.update')->middleware('throttle:10,1');
     });
 });
 

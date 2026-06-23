@@ -167,4 +167,27 @@ class UserController extends Controller
     {
         return (new UsersExport)->download('users.xlsx');
     }
+
+    public function import(Request $request)
+    {
+        $request->validate([
+            'file' => 'required|file|mimes:xlsx,csv|max:2048',
+        ]);
+
+        $file = $request->file('file');
+        $type = $file->getClientOriginalExtension();
+        $path = $file->store('imports');
+
+        $importer = new UsersImport;
+        $result = $importer->import(storage_path('app/' . $path), $type);
+
+        $message = $result['imported'] . ' users imported successfully.';
+        if (!empty($result['errors'])) {
+            $message .= ' Errors: ' . implode('; ', array_slice($result['errors'], 0, 5));
+        }
+
+        AuditService::activity('users_imported', "{$result['imported']} users imported via file upload");
+
+        return back()->with('success', $message);
+    }
 }

@@ -28,6 +28,21 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerate();
 
+         // Detect city from IP for weather personalisation
+        try {
+            $ip = request()->ip();
+            // Use ip-api.com (free, no key needed)
+            $geo = \Illuminate\Support\Facades\Http::timeout(3)
+                ->get("http://ip-api.com/json/{$ip}", ['fields' => 'city,lat,lon,status']);
+            if ($geo->successful() && $geo->json('status') === 'success') {
+                session(['weather_city' => $geo->json('city')]);
+            }
+        } catch (\Exception $e) {
+            // silently fail — weather will default to Nairobi
+        }
+
+        // return redirect()->intended(RouteServiceProvider::HOME);
+
         return redirect()->intended(route('dashboard', absolute: false));
     }
 

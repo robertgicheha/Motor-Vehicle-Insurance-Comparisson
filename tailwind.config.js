@@ -23,7 +23,9 @@ export default {
                     'blue-dark': '#004f8c',
                     'blue-light': '#e8f2fa',
                     red: '#D0021B',
+                   
                 },
+                micblue: '#005F9E',
                 ga: '#005baa',
                 britam: '#0071bc',
                 sanlam: '#1d3c6e',

@@ -10,7 +10,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>{{ config('app.name', 'Insurance Dashboard') }}</title>
+    <title>{{ config('app.name', 'Motor Vehicle Insurance Dashboard') }}</title>
     <link rel="stylesheet" href="{{ asset('css/dashboard.css') }}">
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <style>
@@ -24,11 +24,11 @@
         .card-hover:hover { transform: translateY(-2px); box-shadow: 0 10px 40px rgba(0,0,0,0.1); }
     </style>
 </head>
-<body class="font-montserrat antialiased bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100">
-    <div class="min-h-screen flex">
+<body class="font-montserrat antialiased bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 overflow-x-hidden">
+    <div class="min-h-screen flex overflow-x-hidden">
         @include('layouts.sidebar')
 
-        <div class="flex-1 flex flex-col" :class="sidebarOpen ? 'lg:ml-64' : 'lg:ml-20'" style="transition: margin-left 0.3s ease;">
+        <div class="flex-1 flex flex-col min-w-0 overflow-x-hidden" :class="sidebarOpen ? 'lg:ml-64' : 'lg:ml-20'" style="transition: margin-left 0.3s ease;">
             @include('layouts.navigation')
 
             <main class="flex-1 p-4 md:p-6 lg:p-8 pt-20">

@@ -1,41 +1,20 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Motor Insurance Quotation | MIC Global Risks</title>
+@extends('layouts.quotation')
 
-<!-- Dedicated CSS -->
-<link rel="stylesheet" href="{{ asset('css/quotation.css') }}">
-</head>
-<body>
+@section('title', 'Motor Insurance Quotation | MIC Global Risks')
 
-<!-- NAV -->
-<nav>
-  <div class="nav-top">
-    <a href="#">About Us</a><a href="#">Contact Us</a><a href="#">Affiliates</a><a href="#">Careers</a>
-  </div>
-  <div class="nav-main">
-    <img src="{{ asset('img/MIC-Global-Risks_logo.png') }}" alt="MIC Global Risks" class="nav-logo">
-    <div class="nav-links">
-      <a href="#">Insurance</a>
-      <a href="#">About Us</a>
-      <a href="#">Contact Us</a>
-      <a href="{{ url('/') }}">Motor Quote</a>
-      <a href="#" class="active">Quotation</a>
-      <a href="{{ route('login') }}" class="nav-cta">Login</a>
-      <a href="{{ route('register') }}" class="nav-cta" style="background:var(--blue-dark)">Register</a>
-    </div>
-  </div>
-</nav>
+@section('styles')
 
-<!-- PAGE HERO -->
+@endsection
+
+@section('content')
+
+{{-- PAGE HERO --}}
 <section class="page-hero">
   <div class="page-hero-inner">
     <div class="breadcrumb">
-      <a href="{{ url('/') }}">Home</a>
+      <a href="#">Home</a>
       <span class="breadcrumb-sep">›</span>
-      <a href="{{ url('/') }}">Motor Quote</a>
+      <a href="{{ route('motor.quote') }}">Motor Quote</a>
       <span class="breadcrumb-sep">›</span>
       <span>Quotation</span>
     </div>
@@ -45,10 +24,10 @@
   </div>
 </section>
 
-<!-- MAIN -->
+{{-- MAIN --}}
 <main class="main-content">
 
-  <!-- ── 1. CUSTOMER SUMMARY ── -->
+  {{-- 1. CUSTOMER SUMMARY --}}
   <div class="section-label">Customer &amp; Vehicle Summary</div>
   <div class="summary-grid">
     <div class="summary-card">
@@ -74,7 +53,7 @@
     </div>
   </div>
 
-  <!-- ── 2. QUOTATION BREAKDOWN (single company mode) ── -->
+  {{-- 2. QUOTATION BREAKDOWN (single company mode) --}}
   <div id="single-breakdown-wrap">
     <div class="section-label">Quotation Summary — <span id="breakdown-company-label">GA Insurance</span></div>
     <div class="breakdown-table">
@@ -87,7 +66,7 @@
           </tr>
         </thead>
         <tbody id="breakdown-rows">
-          <!-- populated by JS -->
+          {{-- populated by JS --}}
         </tbody>
         <tfoot>
           <tr>
@@ -99,7 +78,7 @@
     </div>
   </div>
 
-  <!-- ── 3. COMPARE ALL TABLE ── -->
+  {{-- 3. COMPARE ALL TABLE --}}
   <div id="compare-all-wrap" class="compare-table-wrap">
     <div style="padding:18px 20px 10px;font-size:13px;font-weight:700;color:var(--text)">Premium Comparison — All Insurers</div>
     <table>
@@ -112,7 +91,7 @@
         </tr>
       </thead>
       <tbody id="compare-rows">
-        <!-- populated by JS -->
+        {{-- populated by JS --}}
       </tbody>
       <tfoot>
         <tr>
@@ -125,13 +104,13 @@
     </table>
   </div>
 
-  <!-- ── 4. DOWNLOAD CARDS ── -->
+  {{-- 4. DOWNLOAD CARDS --}}
   <div class="section-label" id="dl-cards-label">Download Quote</div>
   <div class="download-cards" id="dl-cards">
-    <!-- populated by JS based on mode -->
+    {{-- populated by JS based on mode --}}
   </div>
 
-  <!-- ── ACTION BAR ── -->
+  {{-- ACTION BAR --}}
   <div class="action-bar" id="action-bar">
     <span class="action-bar-label">Quotation Actions</span>
     <button class="action-btn action-btn-download" id="btn-download" onclick="actionDownload()">
@@ -148,66 +127,13 @@
     </button>
   </div>
 
-  <!-- ── 5. VALIDITY NOTE ── -->
-  <!-- <div class="validity-note">
-    <strong>Note:</strong> This quotation is valid for <strong>15 days</strong> from the date of issue.
-    Comprehensive cover is subject to a satisfactory valuation report conducted within the first month of cover.
-    Subject to sanction limitation and exclusion clause and standard policy terms and conditions.
-    Geographical limit: Kenya / Uganda / Tanzania (Yellow Card required for TPO outside Kenya).
-  </div> -->
-
-  <!-- ── PDF PREVIEW (print target) ── -->
+  {{-- 5. PDF PREVIEW (print target) --}}
   <div class="pdf-preview" id="pdf-preview">
-    <!-- populated by JS -->
+    {{-- populated by JS --}}
   </div>
 
 </main>
 
-<!-- FOOTER -->
-<footer>
-  <div class="footer-top">
-    <div class="footer-brand">
-      <img src="{{ asset('img/MIC-Global-Risks_logo_no_background.png') }}" alt="MIC Global Risks">
-      <p>Your trusted insurance intermediary — connecting you to Kenya's leading insurers with transparency, speed and expertise.</p>
-      <div class="footer-regions" style="margin-top:14px">
-        <span class="region-pill">Kenya</span>
-        <span class="region-pill">Uganda</span>
-        <span class="region-pill">Tanzania</span>
-      </div>
-    </div>
-    <div class="footer-col">
-      <h5>Company</h5>
-      <a href="#">About Us</a>
-      <a href="#">Our Team</a>
-      <a href="#">Careers</a>
-      <a href="#">Affiliates</a>
-    </div>
-    <div class="footer-col">
-      <h5>Services</h5>
-      <a href="#">Motor Insurance</a>
-      <a href="#">Property Cover</a>
-      <a href="#">Travel Insurance</a>
-      <a href="#">Medical Cover</a>
-    </div>
-    <div class="footer-col">
-      <h5>Contact</h5>
-      <a href="#">6th Floor, 9 West</a>
-      <a href="#">Ring Road Parklands</a>
-      <a href="#">Nairobi, Kenya</a>
-      <a href="#">www.micglobalrisks.com</a>
-    </div>
-  </div>
-  <div class="footer-bottom">
-    <span>© 2026 MIC Global Risks Insurance (Kenya) Limited</span>
-    <div>
-      <a href="#">Privacy Policy</a>
-      <a href="#">Terms &amp; Conditions</a>
-      <a href="#">Contact Us</a>
-    </div>
-  </div>
-</footer>
+@endsection
 
-<!-- Dedicated JS -->
-<script src="{{ asset('js/quotation.js') }}"></script>
-</body>
-</html>
+@section('scripts')

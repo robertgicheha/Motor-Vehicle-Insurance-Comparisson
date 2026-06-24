@@ -45,8 +45,9 @@ class UserController extends Controller
         $onlineUsers = User::where('last_online_at', '>=', now()->subMinutes(5))->count();
         $maleCount = User::where('gender', 'male')->count();
         $femaleCount = User::where('gender', 'female')->count();
+        $roles = Role::all();
 
-        return view('admin.users.index', compact('users', 'totalUsers', 'onlineUsers', 'maleCount', 'femaleCount'));
+        return view('admin.users.index', compact('users', 'totalUsers', 'onlineUsers', 'maleCount', 'femaleCount', 'roles'));
     }
 
     public function create()

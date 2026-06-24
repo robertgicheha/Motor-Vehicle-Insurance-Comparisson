@@ -23,16 +23,60 @@ class QuotationController extends Controller
         $this->premiumCalculator = $premiumCalculator;
     }
 
-    public function index()
-    {
-        $user = auth()->user();
-        if ($user->hasRole('super-admin') || $user->hasRole('admin')) {
-            $quotations = Quotation::with(['user', 'company'])->latest()->paginate(15);
-            return view('quotations.index', compact('quotations'));
+    public function index(Request $request)
+        {
+            $user = auth()->user();
+            $isAdmin = $user->hasRole('super-admin') || $user->hasRole('admin');
+        
+            // ── Base query (scope to own user unless admin) ──────────
+            $query = Quotation::with(['user', 'company'])
+                ->when(! $isAdmin, fn($q) => $q->where('user_id', $user->id))
+                ->latest();
+        
+            // ── Paginated table results ──────────────────────────────
+            $quotations = $query->paginate(20)->withQueryString();
+        
+            // ── Analytics (same scope as query above) ───────────────
+            $analyticsBase = Quotation::query()
+                ->when(! $isAdmin, fn($q) => $q->where('user_id', $user->id));
+        
+            $analytics = [
+                'total'      => (clone $analyticsBase)->count(),
+                'today'      => (clone $analyticsBase)->whereDate('created_at', today())->count(),
+                'this_week'  => (clone $analyticsBase)->whereBetween('created_at', [
+                                    now()->startOfWeek(), now()->endOfWeek()
+                                ])->count(),
+                'this_month' => (clone $analyticsBase)->whereMonth('created_at', now()->month)
+                                    ->whereYear('created_at', now()->year)->count(),
+        
+                // Quotations grouped by company (for bar + doughnut charts)
+                'by_company' => (clone $analyticsBase)
+                    ->join('companies', 'quotations.company_id', '=', 'companies.id')
+                    ->selectRaw('companies.name as company, COUNT(*) as count, SUM(total_premium) as total_premium')
+                    ->groupBy('companies.name')
+                    ->orderByDesc('count')
+                    ->get()
+                    ->toArray(),
+        
+                // Daily counts for last 14 days (trend line)
+                'trend' => (clone $analyticsBase)
+                    ->selectRaw("DATE(created_at) as date, COUNT(*) as count")
+                    ->where('created_at', '>=', now()->subDays(13)->startOfDay())
+                    ->groupByRaw("DATE(created_at)")
+                    ->orderBy('date')
+                    ->get()
+                    ->map(fn($r) => [
+                        'date'  => \Carbon\Carbon::parse($r->date)->format('d M'),
+                        'count' => $r->count,
+                    ])
+                    ->toArray(),
+            ];
+        
+            // ── Users list for admin "Apply for User" modal ──────────
+            $users = $isAdmin ? \App\Models\User::orderBy('name')->get(['id', 'name', 'email']) : collect();
+        
+            return view('quotations.index', compact('quotations', 'analytics', 'users'));
         }
-        $quotations = $user->quotations()->with('company')->latest()->paginate(15);
-        return view('quotations.index', compact('quotations'));
-    }
 
     public function create()
     {
@@ -175,4 +219,9 @@ class QuotationController extends Controller
             abort(403);
         }
     }
+
+    public function preview(Request $request)
+{
+    return view('quotations.preview');
+}
 }

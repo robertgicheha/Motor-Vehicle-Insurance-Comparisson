@@ -97,7 +97,11 @@ Route::middleware(['auth', 'verified', 'online'])->group(function () {
 
         Route::get('/settings', [SettingController::class, 'index'])->name('settings.index');
         Route::post('/settings', [SettingController::class, 'update'])->name('settings.update')->middleware('throttle:10,1');
+
+       
     });
+     Route::get('/quotations/preview', [QuotationController::class, 'preview'])
+        ->name('quotations.preview');
 });
 
 require __DIR__ . '/auth.php';

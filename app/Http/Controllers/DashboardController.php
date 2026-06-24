@@ -20,9 +20,12 @@ class DashboardController extends Controller
 
     public function index()
     {
-        $weather = $this->weatherService->getWeather(
-            config('app.weather_city', 'Nairobi'),
-            config('app.weather_country', 'KE')
+        // $weather = $this->weatherService->getWeather(
+        //     config('app.weather_city', 'Nairobi'),
+        //     config('app.weather_country', 'KE')
+        // );
+        $weather = app(\App\Services\WeatherService::class)->getWeather(
+            session('weather_city', 'Nairobi')
         );
 
         $time = now();

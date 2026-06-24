@@ -13,7 +13,7 @@ return [
     |
     */
 
-    'name' => env('APP_NAME', 'Laravel'),
+    'name' => env('APP_NAME', 'Motor Vehicle Insurance Portal'),
     'weather_city' => env('WEATHER_CITY', 'Nairobi'),
     'weather_country' => env('WEATHER_COUNTRY', 'KE'),
 

@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>{{ $title ?? 'Authentication' }} | Insurance Quotation Portal</title>
+    <title>{{ $title ?? 'Authentication' }} | Motor Vehicle Insurance Portal</title>
     <link rel="stylesheet" href="{{ asset('css/dashboard.css') }}">
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
@@ -23,12 +23,12 @@
             </div>
 
             <div class="mt-12 text-sm text-center text-gray-500">
-                &copy; {{ date('Y') }} MotorCover Portal &mdash; GA, Britam &amp; Sanlam Allianz.
+                &copy; {{ date('Y') }} Motor Vehicle Insurance Portal.
             </div>
         </div>
 
         <div class="hidden lg:block lg:w-[60%] relative bg-slate-800">
-            <img src="https://images.unsplash.com/photo-1573164713988-8665fc963095?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80"
+            <img src="{{ asset('images/hero/vehicle.jpg') }}"
                  alt="Team working"
                  class="absolute inset-0 object-cover w-full h-full opacity-40 mix-blend-overlay">
         </div>

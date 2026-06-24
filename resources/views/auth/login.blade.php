@@ -36,13 +36,13 @@
             </div>
         </div>
 
-        <button type="submit" class="flex justify-center w-full px-4 py-2 text-sm font-medium text-white transition border border-transparent rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#0066B3]" style="background:var(--blue)" onmouseover="this.style.background='var(--blue-dark)'" onmouseout="this.style.background='var(--blue)'">
+        <button type="submit" class="flex justify-center w-full px-4 py-2 text-sm font-medium text-white transition border border-transparent rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#0066B3]" style="background:var(--button-blue)" onmouseover="this.style.background='var(--blue-dark)'" onmouseout="this.style.background='var(--blue)'">
             Sign In
         </button>
     </form>
 
     <div class="mt-6 text-sm text-center">
         <span class="text-gray-500">New here?</span>
-        <a href="{{ route('register') }}" class="font-medium" style="color:var(--blue)">Create an account</a>
+        <a href="{{ route('register') }}" class="font-medium" style="color:var(--button-blue)">Create an account</a>
     </div>
 </x-auth-layout>

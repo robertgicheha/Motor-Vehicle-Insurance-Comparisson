@@ -221,7 +221,7 @@ class QuotationController extends Controller
     }
 
     public function preview(Request $request)
-{
-    return view('quotations.preview');
-}
+    {
+        return view('quotations.preview');
+    }
 }

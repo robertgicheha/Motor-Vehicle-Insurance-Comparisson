@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Mail\StickerMail;
 use App\Models\Company;
+use App\Models\Quotation;
 use App\Models\Sticker;
 use App\Services\AuditService;
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -13,10 +14,14 @@ use Illuminate\Support\Facades\Validator;
 
 class StickerController extends Controller
 {
-    public function create()
+    public function create(Request $request)
     {
+        $quotation = null;
+        if ($request->quotation_id) {
+            $quotation = Quotation::with('company')->find($request->quotation_id);
+        }
         $companies = Company::active()->get();
-        return view('stickers.generate', compact('companies'));
+        return view('stickers.generate', compact('companies', 'quotation'));
     }
 
     public function store(Request $request)
@@ -81,6 +86,55 @@ class StickerController extends Controller
     {
         $sticker->load(['company']);
         return view('stickers.show', compact('sticker'));
+    }
+
+    public function userLookup()
+    {
+        return view('stickers.user-lookup');
+    }
+
+    public function lookupByQuotation(Request $request)
+    {
+        $request->validate(['quotation_number' => 'required|string']);
+
+        $quotation = Quotation::with('company')
+            ->where('quotation_number', $request->quotation_number)
+            ->first();
+
+        if (!$quotation) {
+            return response()->json(['error' => 'No quotation found with that number.'], 404);
+        }
+
+        $user = auth()->user();
+        if (!$user->hasRole('super-admin') && !$user->hasRole('admin') && $quotation->user_id !== $user->id) {
+            return response()->json(['error' => 'You do not have access to this quotation.'], 403);
+        }
+
+        $sticker = Sticker::where('quotation_id', $quotation->id)->first();
+
+        return response()->json([
+            'quotation' => [
+                'id' => $quotation->id,
+                'number' => $quotation->quotation_number,
+                'company' => $quotation->company->name,
+                'car_make' => $quotation->car_make,
+                'car_model' => $quotation->car_model,
+                'car_year' => $quotation->car_year,
+                'car_registration' => $quotation->car_registration,
+                'car_valuation' => $quotation->car_valuation,
+                'total_premium' => $quotation->total_premium,
+                'status' => $quotation->status,
+                'created_at' => $quotation->created_at->format('d M Y'),
+            ],
+            'sticker' => $sticker ? [
+                'id' => $sticker->id,
+                'number' => $sticker->sticker_number,
+                'download_url' => route('stickers.download', $sticker),
+                'print_url' => route('stickers.print', $sticker),
+                'show_url' => route('stickers.show', $sticker),
+            ] : null,
+            'can_generate' => !$sticker,
+        ]);
     }
 
     public function lookup()

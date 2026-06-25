@@ -15,6 +15,10 @@
     </div>
 
     <div class="flex items-center gap-2 md:gap-4">
+        <a href="{{ url('/') }}" class="hidden md:inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition no-underline">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+            Back to Homepage
+        </a>
         <button @click="darkMode = !darkMode" class="p-2 rounded-lg text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none" title="Toggle theme">
             <svg x-show="!darkMode" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/>
@@ -23,6 +27,65 @@
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/>
             </svg>
         </button>
+
+        @php $unreadCount = auth()->user()->unreadNotifications()->count(); @endphp
+
+        <div class="relative" x-data="{ open: false }">
+            <button @click="open = !open" class="relative p-2 rounded-lg text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none" title="Notifications">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+                </svg>
+                @if($unreadCount > 0)
+                    <span class="absolute -top-0.5 -right-0.5 inline-flex items-center justify-center w-4 h-4 text-[9px] font-bold text-white bg-red-500 rounded-full">{{ $unreadCount > 9 ? '9+' : $unreadCount }}</span>
+                @endif
+            </button>
+            <div x-show="open" @click.away="open = false" x-cloak class="absolute right-0 mt-2 w-80 bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 z-50">
+                <div class="px-4 py-3 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
+                    <p class="text-sm font-semibold text-gray-900 dark:text-gray-100">Notifications</p>
+                    @if($unreadCount > 0)
+                        <form action="{{ route('notifications.read-all') }}" method="POST">
+                            @csrf
+                            <button type="submit" class="text-xs text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 font-medium">Mark all read</button>
+                        </form>
+                    @endif
+                </div>
+                <div class="max-h-64 overflow-y-auto">
+                    @php $notifications = auth()->user()->unreadNotifications()->latest()->take(5)->get(); @endphp
+                    @forelse($notifications as $notification)
+                        <div class="px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700/50 border-b border-gray-100 dark:border-gray-700 last:border-b-0">
+                            <div class="flex items-start justify-between gap-2">
+                                <div class="min-w-0 flex-1">
+                                    <p class="text-xs text-gray-800 dark:text-gray-200">{{ $notification->data['message'] ?? 'New notification' }}</p>
+                                    <p class="text-[10px] text-gray-400 mt-0.5">{{ $notification->created_at->diffForHumans() }}</p>
+                                </div>
+                                <div class="flex items-center gap-0.5 shrink-0">
+                                    <form action="{{ route('notifications.read', $notification->id) }}" method="POST" class="inline">
+                                        @csrf
+                                        <button type="submit" class="shrink-0 p-1 text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 rounded transition" title="Mark as read">
+                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                                        </button>
+                                    </form>
+                                    <form action="{{ route('notifications.trash', $notification->id) }}" method="POST" class="inline">
+                                        @csrf @method('DELETE')
+                                        <button type="submit" class="shrink-0 p-1 text-gray-400 hover:text-rose-500 dark:hover:text-rose-400 rounded transition" title="Trash">
+                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    @empty
+                        <div class="px-4 py-8 text-center">
+                            <svg class="w-8 h-8 mx-auto text-gray-300 dark:text-gray-600 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
+                            <p class="text-xs text-gray-400">No new notifications</p>
+                        </div>
+                    @endforelse
+                </div>
+                <a href="{{ route('notifications.index') }}" class="block px-4 py-2.5 text-xs text-center text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 font-medium border-t border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50 rounded-b-xl">
+                    View all notifications
+                </a>
+            </div>
+        </div>
 
         <div class="relative" x-data="{ open: false }">
             <button @click="open = !open" class="flex items-center gap-2 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none">

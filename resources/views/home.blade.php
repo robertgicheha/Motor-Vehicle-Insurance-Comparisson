@@ -69,38 +69,6 @@
 
 </section>
 
-<!-- ══════════════════════════════════════════════
-     SEARCH BAR  –  drop-in replacement for
-     <section class="search-section">
-     ══════════════════════════════════════════════ -->
-<section class="search-section">
-  <div class="search-wrap">
-
-    <!-- icon + input + button -->
-    <div class="search-bar">
-      <span class="search-icon">
-        <!-- magnifier SVG inline so no extra asset needed -->
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
-             stroke="currentColor" stroke-width="2.2"
-             stroke-linecap="round" stroke-linejoin="round">
-          <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
-        </svg>
-      </span>
-      <input type="text"
-             placeholder="Search by quotation number, registration number, vehicle..."
-             id="searchInput">
-      <button onclick="doSearch()">Search</button>
-    </div>
-
-    <!-- chips below the bar -->
-    <div class="category-chips">
-      <span class="chip active" onclick="setChip(this,'Registration No')">Registration No</span>
-      <span class="chip"        onclick="setChip(this,'Quotation No')">Quotation No</span>
-      <span class="chip"        onclick="setChip(this,'Vehicle Number')">Vehicle Number</span>
-    </div>
-
-  </div>
-</section>
 
 
 

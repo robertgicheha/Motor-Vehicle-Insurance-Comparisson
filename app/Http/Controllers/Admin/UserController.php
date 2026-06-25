@@ -52,7 +52,8 @@ class UserController extends Controller
 
     public function create()
     {
-        $roles = Role::all();
+        $isAdmin = auth()->user()->hasRole('admin');
+        $roles = $isAdmin ? Role::where('name', 'user')->get() : Role::all();
         return view('admin.users.create', compact('roles'));
     }
 
@@ -72,6 +73,12 @@ class UserController extends Controller
             return back()->withErrors($validator)->withInput();
         }
 
+        $isAdmin = auth()->user()->hasRole('admin');
+        $requestedRole = Role::findById($request->role);
+        if ($isAdmin && $requestedRole->name !== 'user') {
+            return back()->with('error', 'You can only create users with the User role.')->withInput();
+        }
+
         $user = User::create([
             'first_name' => $request->first_name,
             'last_name' => $request->last_name,
@@ -84,7 +91,7 @@ class UserController extends Controller
             'profile_completed' => true,
         ]);
 
-        $user->assignRole(Role::findById($request->role)->name);
+        $user->assignRole($requestedRole->name);
 
         AuditService::log('create', 'User', $user->id, null, $user->toArray());
         AuditService::activity('user_created', "User {$user->name} created by admin");
@@ -94,7 +101,8 @@ class UserController extends Controller
 
     public function edit(User $user)
     {
-        $roles = Role::all();
+        $isAdmin = auth()->user()->hasRole('admin');
+        $roles = $isAdmin ? Role::where('name', 'user')->get() : Role::all();
         $user->load('roles');
         return view('admin.users.edit', compact('user', 'roles'));
     }
@@ -127,7 +135,12 @@ class UserController extends Controller
         ]);
 
         if ($request->role) {
-            $user->syncRoles([Role::findById($request->role)->name]);
+            $requestedRole = Role::findById($request->role);
+            $isAdmin = auth()->user()->hasRole('admin');
+            if ($isAdmin && $requestedRole->name !== 'user') {
+                return back()->with('error', 'You can only assign the User role.')->withInput();
+            }
+            $user->syncRoles([$requestedRole->name]);
         }
 
         AuditService::log('update', 'User', $user->id, $oldData, $user->toArray());

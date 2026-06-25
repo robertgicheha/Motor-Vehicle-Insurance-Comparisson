@@ -1,566 +1,359 @@
 <x-app-layout>
+<div class="space-y-6 pt-10 fade-in max-w-4xl mx-auto">
 
-{{-- ══════════════════════════════════════════════════════════
-     PAGE HERO
-══════════════════════════════════════════════════════════ --}}
-<div class="qf-hero">
-    <div class="qf-hero__inner">
-        <div>
-            <span class="qf-hero__eyebrow">Motor Insurance</span>
-            <h1 class="qf-hero__title">
-                @if(request('user_id') && isset($targetUser))
-                    New Quotation — <span class="qf-hero__accent">{{ $targetUser->name }}</span>
-                @else
-                    Get Your <span class="qf-hero__accent">Motor Insurance Quote</span>
+    {{-- ─── HERO ─────────────────────────────────────────────────────────── --}}
+    <div class="rounded-2xl bg-micblue px-6 py-7 shadow-sm">
+        <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
+            <div>
+                <p class="text-[10px] font-semibold uppercase tracking-widest text-blue-400">Motor Insurance</p>
+                <h1 class="mt-0.5 text-xl font-bold text-white">
+                    @if(request('on_behalf_of') && isset($targetUser))
+                        New Quotation — <span class="text-blue-300">{{ $targetUser->name }}</span>
+                    @else
+                        Get Your <span class="text-blue-300">Motor Insurance Quote</span>
+                    @endif
+                </h1>
+                <p class="mt-0.5 text-xs text-slate-400">Complete the steps below to generate a personalised insurance quotation.</p>
+            </div>
+            <div class="flex items-center gap-2 shrink-0">
+                @if(request('on_behalf_of') && isset($targetUser))
+                <div class="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-medium border border-white/20 text-white/80 rounded-lg">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+                    Applying as admin for <strong>{{ $targetUser->name }}</strong>
+                </div>
                 @endif
-            </h1>
-            <p class="qf-hero__sub">Complete the steps below to generate a personalised insurance quotation.</p>
+            </div>
         </div>
-        @if(request('user_id') && isset($targetUser))
-        <div class="qf-hero__badge">
-            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
-            Applying as admin for <strong>{{ $targetUser->name }}</strong>
-        </div>
-        @endif
     </div>
-    <div class="qf-hero__grid" aria-hidden="true"></div>
-</div>
 
-{{-- ══════════════════════════════════════════════════════════
-     FORM CONTAINER
-══════════════════════════════════════════════════════════ --}}
-<div class="qf-wrap fade-in">
-
-    {{-- Hidden field for admin applying for a user --}}
-    @if(request('user_id'))
-    <input type="hidden" id="f-user-id" value="{{ request('user_id') }}">
+    {{-- ─── ADMIN: USER SELECTOR ─────────────────────────────────────────── --}}
+    @if(auth()->user()->hasRole('super-admin') || auth()->user()->hasRole('admin'))
+    <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+        <div class="px-6 py-4">
+            <div class="flex flex-col sm:flex-row sm:items-center gap-3">
+                <div class="text-xs font-semibold text-gray-700 dark:text-gray-300 whitespace-nowrap">Generate quotation for:</div>
+                <div class="flex gap-3">
+                    <label class="flex items-center gap-2 cursor-pointer">
+                        <input type="radio" name="generate_for" value="self" onchange="toggleUserSelector('self')"
+                               {{ !request('on_behalf_of') ? 'checked' : '' }}
+                               class="accent-blue-600">
+                        <span class="text-xs text-gray-700 dark:text-gray-300">Myself ({{ auth()->user()->name }})</span>
+                    </label>
+                    <label class="flex items-center gap-2 cursor-pointer">
+                        <input type="radio" name="generate_for" value="other" onchange="toggleUserSelector('other')"
+                               {{ request('on_behalf_of') ? 'checked' : '' }}
+                               class="accent-blue-600">
+                        <span class="text-xs text-gray-700 dark:text-gray-300">Another user</span>
+                    </label>
+                </div>
+            </div>
+            <div id="user-selector-dropdown" class="mt-3 {{ request('on_behalf_of') ? '' : 'hidden' }}">
+                <select id="f-on-behalf-of" onchange="onUserSelected(this.value)"
+                        class="w-full max-w-xs px-3 py-2 text-xs rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none">
+                    <option value="">— Select a user —</option>
+                    @foreach($users as $u)
+                        <option value="{{ $u->id }}" {{ (request('on_behalf_of') == $u->id) ? 'selected' : '' }}
+                                data-first="{{ $u->first_name ?? '' }}"
+                                data-last="{{ $u->last_name ?? '' }}"
+                                data-email="{{ $u->email ?? '' }}"
+                                data-phone="{{ $u->mobile ?? '' }}">
+                            {{ $u->name }} ({{ $u->email }})
+                        </option>
+                    @endforeach
+                </select>
+            </div>
+        </div>
+    </div>
+    <div class="h-4"></div>
     @endif
 
-    {{-- Step Indicators --}}
-    <div class="qf-steps">
-        <div class="qf-step active" id="step-tab-1" onclick="goStep(1)">
-            <div class="qf-step__num">1</div>
-            <div class="qf-step__label">
-                <span class="qf-step__title">Personal Details</span>
-                <span class="qf-step__sub">Contact information</span>
-            </div>
-        </div>
-        <div class="qf-step__connector"></div>
-        <div class="qf-step" id="step-tab-2" onclick="goStep(2)">
-            <div class="qf-step__num">2</div>
-            <div class="qf-step__label">
-                <span class="qf-step__title">Vehicle Details</span>
-                <span class="qf-step__sub">Car information</span>
-            </div>
-        </div>
-        <div class="qf-step__connector"></div>
-        <div class="qf-step" id="step-tab-3" onclick="goStep(3)">
-            <div class="qf-step__num">3</div>
-            <div class="qf-step__label">
-                <span class="qf-step__title">Quote Generation</span>
-                <span class="qf-step__sub">Premium estimates</span>
-            </div>
-        </div>
-    </div>
+    {{-- ─── FORM CARD ─────────────────────────────────────────────────────── --}}
+    <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+        {{-- Hidden fields for signed form token and admin --}}
+        <input type="hidden" id="f-signed" value="{{ $signedToken }}">
+        <input type="hidden" id="f-user-id" value="{{ $targetUser->id ?? '' }}">
+        <input type="hidden" id="f-on-behalf-of-hidden" value="{{ request('on_behalf_of', '') }}">
 
-    {{-- ── STEP 1: Personal Details ── --}}
-    <div class="qf-panel active" id="panel-1">
-        <div class="qf-section-head">
-            <h2 class="qf-section-title">Personal Details</h2>
-            <p class="qf-section-sub">Please fill in the contact details of the insured party.</p>
-        </div>
-        <div class="qf-grid qf-grid--3">
-            <div class="qf-group">
-                <label class="qf-label">Salutation <span class="qf-req">*</span></label>
-                <select id="f-salutation" class="qf-select">
-                    <option value="">Select...</option>
-                    <option>Mr.</option><option>Mrs.</option><option>Miss</option><option>Dr.</option><option>Prof.</option>
-                </select>
-            </div>
-            <div class="qf-group">
-                <label class="qf-label">First Name <span class="qf-req">*</span></label>
-                <input type="text" id="f-first" class="qf-input" placeholder="e.g. John">
-            </div>
-            <div class="qf-group">
-                <label class="qf-label">Middle Name</label>
-                <input type="text" id="f-middle" class="qf-input" placeholder="Optional">
-            </div>
-            <div class="qf-group">
-                <label class="qf-label">Last Name <span class="qf-req">*</span></label>
-                <input type="text" id="f-last" class="qf-input" placeholder="e.g. Doe">
-            </div>
-            <div class="qf-group">
-                <label class="qf-label">Phone Number <span class="qf-req">*</span></label>
-                <input type="tel" id="f-phone" class="qf-input" placeholder="07 XX XXX XXX">
-            </div>
-            <div class="qf-group">
-                <label class="qf-label">Email Address <span class="qf-req">*</span></label>
-                <input type="email" id="f-email" class="qf-input" placeholder="email@example.com">
-            </div>
-        </div>
-        <div class="qf-btn-row">
-            <a href="{{ route('quotations.index') }}" class="qfbtn qfbtn--ghost">← Cancel</a>
-            <button class="qfbtn qfbtn--primary" onclick="goStep(2)">Continue to Vehicle Details →</button>
-        </div>
-    </div>
-
-    {{-- ── STEP 2: Vehicle Details ── --}}
-    <div class="qf-panel" id="panel-2">
-        <div class="qf-section-head">
-            <h2 class="qf-section-title">Vehicle Details</h2>
-            <p class="qf-section-sub">Provide accurate vehicle information for a precise premium calculation.</p>
-        </div>
-        <div class="qf-grid">
-            <div class="qf-group">
-                <label class="qf-label">Registration Number <span class="qf-req">*</span></label>
-                <input type="text" id="f-reg" class="qf-input" placeholder="e.g. KDH 724V">
-            </div>
-            <div class="qf-group">
-                <label class="qf-label">Chassis / Frame Number</label>
-                <input type="text" id="f-chassis" class="qf-input" placeholder="e.g. WVWZZZ1KZ9W123456">
-            </div>
-            <div class="qf-group">
-                <label class="qf-label">Make of Vehicle <span class="qf-req">*</span></label>
-                <select id="f-make" class="qf-select" onchange="toggleOtherMake(this)">
-                    <option value="">Select make...</option>
-                    <option>Toyota</option><option>Honda</option><option>Volkswagen</option>
-                    <option>Subaru</option><option>Nissan</option><option>Mitsubishi</option>
-                    <option>Mazda</option><option>Mercedes-Benz</option><option>BMW</option>
-                    <option>Ford</option><option>Other</option>
-                </select>
-                <input type="text" id="f-make-other" class="qf-input" placeholder="Type your vehicle make..." style="display:none;margin-top:8px">
-            </div>
-            <div class="qf-group">
-                <label class="qf-label">Model Name <span class="qf-req">*</span></label>
-                <input type="text" id="f-model" class="qf-input" placeholder="e.g. Vezel, Mark X, Premio">
-            </div>
-            <div class="qf-group">
-                <label class="qf-label">Body Type</label>
-                <select id="f-body" class="qf-select">
-                    <option value="">Select body type...</option>
-                    <option>Saloon</option><option>Station Wagon (S. Wagon)</option><option>SUV/4x4</option>
-                    <option>Hatchback</option><option>Pick-Up</option><option>Van/Minivan</option>
-                    <option>Convertible</option><option>Coupe</option>
-                </select>
-            </div>
-            <div class="qf-group">
-                <label class="qf-label">Year of Manufacture <span class="qf-req">*</span></label>
-                <select id="f-year" class="qf-select"></select>
-            </div>
-            <div class="qf-group">
-                <label class="qf-label">Color</label>
-                <select id="f-color" class="qf-select" onchange="toggleOtherColor(this)">
-                    <option value="">Select color...</option>
-                    <option>White</option><option>Black</option><option>Silver/Grey</option>
-                    <option>Blue</option><option>Red</option><option>Brown/Maroon</option>
-                    <option>Gold/Champagne</option><option>Green</option><option>Orange</option>
-                    <option>Purple</option><option>Other</option>
-                </select>
-                <input type="text" id="f-color-other" class="qf-input" placeholder="Type your vehicle color..." style="display:none;margin-top:8px">
-            </div>
-            <div class="qf-group">
-                <label class="qf-label">Value of Vehicle (KES) <span class="qf-req">*</span></label>
-                <div class="qf-input-prefix">
-                    <span class="qf-prefix">KES</span>
-                    <input type="number" id="f-value" class="qf-input qf-input--prefixed" placeholder="0" oninput="updatePremiumPreview()">
+        {{-- Step Indicators --}}
+        <div class="px-6 py-5 border-b border-gray-100 dark:border-gray-700">
+            <div class="flex gap-2">
+                <div class="flex-1 px-3 py-2.5 rounded-lg border text-center cursor-pointer transition step-tab active" id="step-tab-1" onclick="goStep(1)">
+                    <div class="text-[9px] font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400 step-num">Step 1</div>
+                    <div class="text-xs font-semibold text-blue-700 dark:text-blue-300 step-title">Personal Details</div>
+                    <div class="text-[10px] text-gray-400">Contact information</div>
+                </div>
+                <div class="flex-1 px-3 py-2.5 rounded-lg border text-center cursor-pointer transition step-tab" id="step-tab-2" onclick="goStep(2)">
+                    <div class="text-[9px] font-bold uppercase tracking-wider text-gray-400 step-num">Step 2</div>
+                    <div class="text-xs font-semibold text-gray-500 dark:text-gray-400 step-title">Vehicle Details</div>
+                    <div class="text-[10px] text-gray-400">Car information</div>
+                </div>
+                <div class="flex-1 px-3 py-2.5 rounded-lg border text-center cursor-pointer transition step-tab" id="step-tab-3" onclick="goStep(3)">
+                    <div class="text-[9px] font-bold uppercase tracking-wider text-gray-400 step-num">Step 3</div>
+                    <div class="text-xs font-semibold text-gray-500 dark:text-gray-400 step-title">Quote Generation</div>
+                    <div class="text-[10px] text-gray-400">Premium estimates</div>
                 </div>
             </div>
         </div>
-        <div class="qf-btn-row">
-            <button class="qfbtn qfbtn--ghost" onclick="goStep(1)">← Back</button>
-            <button class="qfbtn qfbtn--primary" onclick="goStep(3)">Continue to Quote Generation →</button>
+
+        {{-- ── Step 1: Personal Details ── --}}
+        <div class="p-6 step-panel active" id="panel-1">
+            <div class="mb-5">
+                <p class="text-xs font-bold text-gray-800 dark:text-white">Personal Details</p>
+                <p class="text-[10px] text-gray-400 mt-0.5">Please fill in the contact details of the insured party.</p>
+            </div>
+            <div class="grid grid-cols-3 gap-4">
+                <div>
+                    <label class="block text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Salutation <span class="text-rose-500">*</span></label>
+                    <select id="f-salutation" class="w-full px-3 py-2 text-xs rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none">
+                        <option value="">Select...</option>
+                        <option>Mr.</option><option>Mrs.</option><option>Miss</option><option>Dr.</option><option>Prof.</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">First Name <span class="text-rose-500">*</span></label>
+                    <input type="text" id="f-first" class="w-full px-3 py-2 text-xs rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none" placeholder="e.g. John">
+                </div>
+                <div>
+                    <label class="block text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Middle Name</label>
+                    <input type="text" id="f-middle" class="w-full px-3 py-2 text-xs rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Optional">
+                </div>
+                <div>
+                    <label class="block text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Last Name <span class="text-rose-500">*</span></label>
+                    <input type="text" id="f-last" class="w-full px-3 py-2 text-xs rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none" placeholder="e.g. Doe">
+                </div>
+                <div>
+                    <label class="block text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Phone Number <span class="text-rose-500">*</span></label>
+                    <input type="tel" id="f-phone" class="w-full px-3 py-2 text-xs rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none" placeholder="07 XX XXX XXX">
+                </div>
+                <div>
+                    <label class="block text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Email Address <span class="text-rose-500">*</span></label>
+                    <input type="email" id="f-email" class="w-full px-3 py-2 text-xs rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none" placeholder="email@example.com">
+                </div>
+            </div>
+            <div class="flex justify-end gap-2 mt-6 pt-4 border-t border-gray-100 dark:border-gray-700">
+                <a href="{{ route('quotations.index') }}" class="px-4 py-2 text-xs font-medium border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition">← Cancel</a>
+                <button onclick="goStep(2)" class="px-5 py-2 text-xs font-semibold bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition">Continue to Vehicle Details →</button>
+            </div>
         </div>
-    </div>
 
-    {{-- ── STEP 3: Quote Generation ── --}}
-    <div class="qf-panel" id="panel-3">
-        <div class="qf-section-head">
-            <h2 class="qf-section-title">Premium Estimate</h2>
-            <p class="qf-section-sub">Select an insurer card to open its full quotation, or compare all three side by side.</p>
-        </div>
-
-        {{-- Empty state --}}
-        <div id="premium-preview-empty" class="qf-empty-box">
-            <svg width="32" height="32" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" style="margin:0 auto 10px;display:block;color:#9CA3AF"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
-            Go back to Step 2 and enter the <strong>vehicle value</strong> to see premium estimates.
-        </div>
-
-        {{-- Quote cards --}}
-        <div id="premium-preview" style="display:none">
-            <div class="qf-quote-grid">
-
-                {{-- GA Insurance --}}
-                <div class="qf-card" onclick="openQuotePage('GA')">
-                    <div class="qf-card__logo-wrap">
-                        <img src="{{ asset('images/GA Insurance.png') }}" alt="GA Insurance" class="qf-card__logo"
-                             onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
-                        <div class="qf-card__logo-fallback" style="display:none;color:#003087">GA</div>
+        {{-- ── Step 2: Vehicle Details ── --}}
+        <div class="p-6 step-panel" id="panel-2">
+            <div class="mb-5">
+                <p class="text-xs font-bold text-gray-800 dark:text-white">Vehicle Details</p>
+                <p class="text-[10px] text-gray-400 mt-0.5">Provide accurate vehicle information for a precise premium calculation.</p>
+            </div>
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Registration Number <span class="text-rose-500">*</span></label>
+                    <input type="text" id="f-reg" class="w-full px-3 py-2 text-xs rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none" placeholder="e.g. KDH 724V">
+                </div>
+                <div>
+                    <label class="block text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Chassis / Frame Number</label>
+                    <input type="text" id="f-chassis" class="w-full px-3 py-2 text-xs rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none" placeholder="e.g. WVWZZZ1KZ9W123456">
+                </div>
+                <div>
+                    <label class="block text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Make of Vehicle <span class="text-rose-500">*</span></label>
+                    <div class="vehicle-search-wrap-dash">
+                        <input type="text" id="f-make" class="w-full px-3 py-2 text-xs rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Search vehicle make..." autocomplete="off">
+                        <div class="vehicle-dropdown-dash" id="f-make-dropdown"></div>
                     </div>
-                    <div class="qf-card__name" style="color:#003087">GA Insurance</div>
-                    <div class="qf-card__rate">@ 3.5%</div>
-                    <div class="qf-card__premium" id="prev-ga" style="color:#003087">—</div>
-                    <div class="qf-card__cta" style="background:#003087">View Quote →</div>
+                    <input type="hidden" id="f-make-value" value="">
+                    <input type="text" id="f-make-other" class="w-full px-3 py-2 text-xs rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none mt-1.5" placeholder="Type your vehicle make..." style="display:none">
                 </div>
-
-                {{-- Britam --}}
-                <div class="qf-card" onclick="openQuotePage('BRITAM')">
-                    <div class="qf-card__logo-wrap">
-                        <img src="{{ asset('images/britam_logo.png') }}" alt="Britam" class="qf-card__logo"
-                             onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
-                        <div class="qf-card__logo-fallback" style="display:none;color:#E60028">BR</div>
+                <div>
+                    <label class="block text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Model Name <span class="text-rose-500">*</span></label>
+                    <div class="vehicle-search-wrap-dash">
+                        <input type="text" id="f-model" class="w-full px-3 py-2 text-xs rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Select a make first..." autocomplete="off" disabled>
+                        <div class="vehicle-dropdown-dash" id="f-model-dropdown"></div>
                     </div>
-                    <div class="qf-card__name" style="color:#E60028">Britam</div>
-                    <div class="qf-card__rate">@ 4.1%</div>
-                    <div class="qf-card__premium" id="prev-britam" style="color:#E60028">—</div>
-                    <div class="qf-card__cta" style="background:#E60028">View Quote →</div>
+                    <input type="hidden" id="f-model-value" value="">
+                    <input type="text" id="f-model-other" class="w-full px-3 py-2 text-xs rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none mt-1.5" placeholder="Type your vehicle model..." style="display:none">
                 </div>
-
-                {{-- Sanlam Allianz --}}
-                <div class="qf-card" onclick="openQuotePage('SANLAM')">
-                    <div class="qf-card__logo-wrap">
-                        <img src="{{ asset('images/Sanlam-Allianz.png') }}" alt="Sanlam Allianz" class="qf-card__logo"
-                             onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
-                        <div class="qf-card__logo-fallback" style="display:none;color:#0066B3">SA</div>
+                <div>
+                    <label class="block text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Body Type</label>
+                    <select id="f-body" class="w-full px-3 py-2 text-xs rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none">
+                        <option value="">Select body type...</option>
+                        <option>Saloon</option><option>Station Wagon (S. Wagon)</option><option>SUV/4x4</option>
+                        <option>Hatchback</option><option>Pick-Up</option><option>Van/Minivan</option>
+                        <option>Convertible</option><option>Coupe</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Year of Manufacture <span class="text-rose-500">*</span></label>
+                    <select id="f-year" class="w-full px-3 py-2 text-xs rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none"></select>
+                </div>
+                <div>
+                    <label class="block text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Color</label>
+                    <select id="f-color" class="w-full px-3 py-2 text-xs rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none" onchange="toggleOtherColor(this)">
+                        <option value="">Select color...</option>
+                        <option>White</option><option>Black</option><option>Silver/Grey</option>
+                        <option>Blue</option><option>Red</option><option>Brown/Maroon</option>
+                        <option>Gold/Champagne</option><option>Green</option><option>Orange</option>
+                        <option>Purple</option><option>Other</option>
+                    </select>
+                    <input type="text" id="f-color-other" class="w-full px-3 py-2 text-xs rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none mt-1.5" placeholder="Type your vehicle color..." style="display:none">
+                </div>
+                <div>
+                    <label class="block text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Value of Vehicle (KES) <span class="text-rose-500">*</span></label>
+                    <div class="relative">
+                        <span class="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-bold text-gray-400">KES</span>
+                        <input type="text" id="f-value" class="w-full pl-11 pr-3 py-2 text-xs rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none" placeholder="800,000" autocomplete="off">
                     </div>
-                    <div class="qf-card__name" style="color:#0066B3">Sanlam Allianz</div>
-                    <div class="qf-card__rate">@ 4.5%</div>
-                    <div class="qf-card__premium" id="prev-sanlam" style="color:#0066B3">—</div>
-                    <div class="qf-card__cta" style="background:#0066B3">View Quote →</div>
+                    <div class="text-[10px] text-gray-400 mt-1" id="f-value-hint">Enter between KES 800,000 and KES 1,300,000</div>
+                    <div class="text-[10px] text-red-500 font-semibold mt-1" id="f-value-error" style="display:none"></div>
                 </div>
-
-                {{-- Compare All --}}
-                <div class="qf-card qf-card--compare" onclick="openQuotePage('ALL')">
-                    <div class="qf-card__logo-wrap">
-                        <img src="{{ asset('images/benchmarking.png') }}" alt="Compare All" class="qf-card__logo"
-                             onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
-                        <div class="qf-card__logo-fallback" style="display:none;color:#CC0000">📊</div>
-                    </div>
-                    <div class="qf-card__name" style="color:#CC0000">Compare All</div>
-                    <div class="qf-card__rate">All insurers</div>
-                    <div class="qf-card__premium" style="color:#CC0000">3 Quotes</div>
-                    <div class="qf-card__cta" style="background:#CC0000">Compare →</div>
-                </div>
-
             </div>
-
-            {{-- Summary row --}}
-            <div class="qf-summary" id="qf-summary" style="display:none">
-                <div class="qf-summary__item">
-                    <span class="qf-summary__label">Vehicle Value</span>
-                    <span class="qf-summary__val" id="sum-value">—</span>
-                </div>
-                <div class="qf-summary__divider"></div>
-                <div class="qf-summary__item">
-                    <span class="qf-summary__label">Lowest Premium</span>
-                    <span class="qf-summary__val qf-summary__val--green" id="sum-lowest">—</span>
-                </div>
-                <div class="qf-summary__divider"></div>
-                <div class="qf-summary__item">
-                    <span class="qf-summary__label">Highest Premium</span>
-                    <span class="qf-summary__val" id="sum-highest">—</span>
-                </div>
+            <div class="flex justify-between gap-2 mt-6 pt-4 border-t border-gray-100 dark:border-gray-700">
+                <button onclick="goStep(1)" class="px-4 py-2 text-xs font-medium border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition">← Back</button>
+                <button onclick="goStep(3)" class="px-5 py-2 text-xs font-semibold bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition">Continue to Quote Generation →</button>
             </div>
         </div>
 
-        <div class="qf-btn-row">
-            <button class="qfbtn qfbtn--ghost" onclick="goStep(2)">← Back to Vehicle Details</button>
+        {{-- ── Step 3: Quote Generation ── --}}
+        <div class="p-6 step-panel" id="panel-3">
+            <div class="mb-5">
+                <p class="text-xs font-bold text-gray-800 dark:text-white">Premium Estimate</p>
+                <p class="text-[10px] text-gray-400 mt-0.5">Select an insurer card to open its full quotation, or compare all side by side.</p>
+            </div>
+
+            {{-- Empty state --}}
+            <div id="premium-preview-empty" class="text-center py-10 border-1.5 border-dashed border-gray-200 dark:border-gray-700 rounded-xl text-xs text-gray-400 mb-4">
+                Go back to Step 2 and enter the <strong>vehicle value</strong> to see premium estimates.
+            </div>
+
+            {{-- Quote cards --}}
+            <div id="premium-preview" style="display:none" class="space-y-4">
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    {{-- GA Insurance --}}
+                    <div onclick="openQuotePage('GA')" class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-4 text-center cursor-pointer hover:shadow-md hover:-translate-y-0.5 transition flex flex-col items-center gap-1.5">
+                        <div class="h-9 flex items-center justify-center mb-1">
+                            <img src="{{ asset('images/GA Insurance.png') }}" alt="GA Insurance" class="max-h-8 max-w-[90px] object-contain"
+                                 onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+                            <div class="text-xs font-extrabold text-blue-800" style="display:none">GA</div>
+                        </div>
+                        <div class="text-[10px] font-bold text-blue-700 dark:text-blue-400 uppercase tracking-wider">GA Insurance</div>
+                        <div class="text-[10px] text-gray-400">@ 3.5%</div>
+                        <div class="text-base font-extrabold text-blue-700 dark:text-blue-400" id="prev-ga">—</div>
+                        <div class="w-full text-[10px] font-bold text-white bg-blue-700 rounded-md py-1.5 mt-1">View Quote →</div>
+                    </div>
+
+                    {{-- Britam --}}
+                    <div onclick="openQuotePage('BRITAM')" class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-4 text-center cursor-pointer hover:shadow-md hover:-translate-y-0.5 transition flex flex-col items-center gap-1.5">
+                        <div class="h-9 flex items-center justify-center mb-1">
+                            <img src="{{ asset('images/britam_logo.png') }}" alt="Britam" class="max-h-8 max-w-[90px] object-contain"
+                                 onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+                            <div class="text-xs font-extrabold text-red-600" style="display:none">BR</div>
+                        </div>
+                        <div class="text-[10px] font-bold text-red-700 dark:text-red-400 uppercase tracking-wider">Britam</div>
+                        <div class="text-[10px] text-gray-400">@ 4.1%</div>
+                        <div class="text-base font-extrabold text-red-700 dark:text-red-400" id="prev-britam">—</div>
+                        <div class="w-full text-[10px] font-bold text-white bg-red-700 rounded-md py-1.5 mt-1">View Quote →</div>
+                    </div>
+
+                    {{-- Sanlam Allianz --}}
+                    <div onclick="openQuotePage('SANLAM')" class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-4 text-center cursor-pointer hover:shadow-md hover:-translate-y-0.5 transition flex flex-col items-center gap-1.5">
+                        <div class="h-9 flex items-center justify-center mb-1">
+                            <img src="{{ asset('images/Sanlam-Allianz.png') }}" alt="Sanlam Allianz" class="max-h-8 max-w-[90px] object-contain"
+                                 onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+                            <div class="text-xs font-extrabold text-blue-600" style="display:none">SA</div>
+                        </div>
+                        <div class="text-[10px] font-bold text-emerald-700 dark:text-emerald-400 uppercase tracking-wider">Sanlam Allianz</div>
+                        <div class="text-[10px] text-gray-400">@ 4.5%</div>
+                        <div class="text-base font-extrabold text-emerald-700 dark:text-emerald-400" id="prev-sanlam">—</div>
+                        <div class="w-full text-[10px] font-bold text-white bg-emerald-700 rounded-md py-1.5 mt-1">View Quote →</div>
+                    </div>
+
+                    {{-- Compare All --}}
+                    <div onclick="openQuotePage('ALL')" class="bg-white dark:bg-gray-800 border-2 border-red-300 dark:border-red-700 rounded-xl p-4 text-center cursor-pointer hover:shadow-md hover:-translate-y-0.5 transition flex flex-col items-center gap-1.5">
+                        <div class="h-9 flex items-center justify-center mb-1">
+                            <img src="{{ asset('images/benchmarking.png') }}" alt="Compare All" class="max-h-8 max-w-[90px] object-contain"
+                                 onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+                            <div class="text-xs" style="display:none">📊</div>
+                        </div>
+                        <div class="text-[10px] font-bold text-red-700 dark:text-red-400 uppercase tracking-wider">Compare All</div>
+                        <div class="text-[10px] text-gray-400">All insurers</div>
+                        <div class="text-base font-extrabold text-red-700 dark:text-red-400">3 Quotes</div>
+                        <div class="w-full text-[10px] font-bold text-white bg-red-700 rounded-md py-1.5 mt-1">Compare →</div>
+                    </div>
+                </div>
+
+                {{-- Summary row --}}
+                <div id="qf-summary" class="flex items-center gap-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl px-5 py-3" style="display:none">
+                    <div class="flex-1 text-center">
+                        <span class="block text-[10px] font-semibold uppercase tracking-wider text-gray-400">Vehicle Value</span>
+                        <span class="text-sm font-bold text-gray-800 dark:text-white" id="sum-value">—</span>
+                    </div>
+                    <div class="w-px h-8 bg-blue-200 dark:bg-blue-700"></div>
+                    <div class="flex-1 text-center">
+                        <span class="block text-[10px] font-semibold uppercase tracking-wider text-gray-400">Lowest</span>
+                        <span class="text-sm font-bold text-emerald-600" id="sum-lowest">—</span>
+                    </div>
+                    <div class="w-px h-8 bg-blue-200 dark:bg-blue-700"></div>
+                    <div class="flex-1 text-center">
+                        <span class="block text-[10px] font-semibold uppercase tracking-wider text-gray-400">Highest</span>
+                        <span class="text-sm font-bold text-gray-800 dark:text-white" id="sum-highest">—</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex justify-start gap-2 mt-6 pt-4 border-t border-gray-100 dark:border-gray-700">
+                <button onclick="goStep(2)" class="px-4 py-2 text-xs font-medium border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition">← Back to Vehicle Details</button>
+            </div>
         </div>
+
     </div>
+</div>
 
-</div><!-- /qf-wrap -->
-
-{{-- ══════════════════════════════════════════════════════════
-     STYLES
-══════════════════════════════════════════════════════════ --}}
+@push('scripts')
 <style>
-:root {
-    --qf-navy:   #0A1F44;
-    --qf-blue:   #0066B3;
-    --qf-blue-lt:#E8F0FA;
-    --qf-red:    #CC0000;
-    --qf-border: #E5E9F2;
-    --qf-text:   #111827;
-    --qf-muted:  #6B7280;
-    --qf-radius: 10px;
-}
-
-/* ── Hero ── */
-.qf-hero {
-    position: relative;
-    background: linear-gradient(135deg, var(--qf-navy) 0%, #1a3a6e 60%, #0066B3 100%);
-    padding: 44px 32px 40px;
-    overflow: hidden;
-}
-.qf-hero__inner {
-    max-width: 860px;
-    margin: 0 auto;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 24px;
-    position: relative;
-    z-index: 1;
-}
-.qf-hero__grid {
-    position: absolute;
-    inset: 0;
-    background-image:
-        linear-gradient(rgba(255,255,255,.04) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(255,255,255,.04) 1px, transparent 1px);
-    background-size: 48px 48px;
-    pointer-events: none;
-}
-.qf-hero__eyebrow {
-    display: inline-block;
-    font-size: 11px;
-    font-weight: 700;
-    letter-spacing: .12em;
-    text-transform: uppercase;
-    color: rgba(255,255,255,.55);
-    margin-bottom: 10px;
-    border-left: 3px solid var(--qf-red);
-    padding-left: 10px;
-}
-.qf-hero__title {
-    font-size: clamp(1.4rem, 3vw, 2rem);
-    font-weight: 800;
-    color: #fff;
-    line-height: 1.2;
-    margin: 0 0 10px;
-    letter-spacing: -.02em;
-}
-.qf-hero__accent { color: #6EB4F7; }
-.qf-hero__sub { font-size: 13px; color: rgba(255,255,255,.65); margin: 0; line-height: 1.6; }
-.qf-hero__badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    background: rgba(255,255,255,.12);
-    border: 1px solid rgba(255,255,255,.2);
-    padding: 10px 16px;
-    border-radius: 8px;
-    color: #fff;
-    font-size: 12px;
-    white-space: nowrap;
-    flex-shrink: 0;
-}
-
-/* ── Form Wrap ── */
-.qf-wrap {
-    max-width: 860px;
-    margin: 28px auto;
-    padding: 0 20px;
-}
-
-/* ── Steps ── */
-.qf-steps {
-    display: flex;
-    align-items: center;
-    margin-bottom: 28px;
-}
-.qf-step {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    cursor: pointer;
-    padding: 14px 18px;
-    border-radius: var(--qf-radius);
-    border: 1.5px solid var(--qf-border);
-    background: #fff;
-    transition: all .15s;
-    flex: 1;
-}
-.qf-step:hover { border-color: var(--qf-blue); }
-.qf-step.active { border-color: var(--qf-blue); background: var(--qf-blue-lt); }
-.qf-step.done { border-color: #16A34A; background: #039d31; }
-.qf-step__num {
-    width: 32px; height: 32px;
-    border-radius: 50%;
-    background: var(--qf-border);
-    color: var(--qf-muted);
-    font-size: 13px;
-    font-weight: 800;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-    transition: all .15s;
-}
-.qf-step.active .qf-step__num { background: var(--qf-blue); color: #fff; }
-.qf-step.done .qf-step__num { background: #16A34A; color: #fff; }
-.qf-step__label { display: flex; flex-direction: column; }
-.qf-step__title { font-size: 13px; font-weight: 700; color: var(--qf-text); }
-.qf-step__sub { font-size: 11px; color: var(--qf-muted); }
-.qf-step__connector {
-    flex: 0 0 24px;
-    height: 2px;
-    background: var(--qf-border);
-    margin: 0 4px;
-}
-
-/* ── Panel ── */
-.qf-panel { display: none; }
-.qf-panel.active { display: block; }
-
-.qf-section-head { margin-bottom: 22px; }
-.qf-section-title { font-size: 17px; font-weight: 700; color: var(--qf-navy); margin: 0 0 4px; }
-.qf-section-sub { font-size: 13px; color: var(--qf-muted); margin: 0; }
-
-/* ── Form Grid ── */
-.qf-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-.qf-grid--3 { grid-template-columns: repeat(3, 1fr); }
-.qf-group { display: flex; flex-direction: column; }
-.qf-label { font-size: 12px; font-weight: 600; color: #374151; margin-bottom: 6px; }
-.qf-req { color: var(--qf-red); }
-.qf-input, .qf-select {
-    padding: 9px 13px;
-    border: 1.5px solid var(--qf-border);
-    border-radius: 8px;
-    font-size: 13px;
-    color: var(--qf-text);
-    outline: none;
-    background: #fff;
-    transition: border-color .15s, box-shadow .15s;
-}
-.qf-input:focus, .qf-select:focus {
-    border-color: var(--qf-blue);
-    box-shadow: 0 0 0 3px rgba(0,102,179,.1);
-}
-.qf-input-prefix { position: relative; display: flex; }
-.qf-prefix {
-    position: absolute;
-    left: 13px;
-    top: 50%;
-    transform: translateY(-50%);
-    font-size: 12px;
-    font-weight: 700;
-    color: var(--qf-muted);
-    pointer-events: none;
-}
-.qf-input--prefixed { padding-left: 42px; width: 100%; }
-
-/* ── Buttons ── */
-.qf-btn-row { display: flex; justify-content: flex-end; gap: 12px; margin-top: 28px; }
-.qfbtn {
-    display: inline-flex;
-    align-items: center;
-    gap: 7px;
-    padding: 10px 22px;
-    border-radius: 8px;
-    font-size: 13px;
-    font-weight: 600;
-    border: none;
-    cursor: pointer;
-    text-decoration: none;
-    transition: all .15s;
-}
-.qfbtn--primary { background: var(--qf-blue); color: #fff; }
-.qfbtn--primary:hover { background: #0052a3; }
-.qfbtn--ghost {
-    background: #fff;
-    color: var(--qf-muted);
-    border: 1.5px solid var(--qf-border);
-}
-.qfbtn--ghost:hover { border-color: var(--qf-blue); color: var(--qf-blue); }
-
-/* ── Empty state ── */
-.qf-empty-box {
-    text-align: center;
-    padding: 36px 24px;
-    border: 1.5px dashed var(--qf-border);
-    border-radius: 12px;
-    color: var(--qf-muted);
-    font-size: 13px;
-    line-height: 1.7;
-    margin-bottom: 20px;
-}
-
-/* ── Quote Cards ── */
-.qf-quote-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 14px; margin-bottom: 20px; }
-.qf-card {
-    background: #fff;
-    border: 1.5px solid var(--qf-border);
-    border-radius: 12px;
-    padding: 20px 16px;
-    text-align: center;
-    cursor: pointer;
-    transition: box-shadow .2s, transform .15s, border-color .15s;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 6px;
-}
-.qf-card:hover { box-shadow: 0 6px 24px rgba(0,0,0,.1); transform: translateY(-2px); }
-.qf-card--compare { border-color: rgba(204,0,0,.3); }
-.qf-card__logo-wrap {
-    height: 40px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin-bottom: 4px;
-}
-.qf-card__logo { max-height: 34px; max-width: 100px; object-fit: contain; }
-.qf-card__logo-fallback {
-    font-size: 13px; font-weight: 800; display: none; align-items: center; justify-content: center;
-}
-.qf-card__name { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; }
-.qf-card__rate { font-size: 11px; color: var(--qf-muted); }
-.qf-card__premium { font-size: 1.15rem; font-weight: 800; line-height: 1.2; }
-.qf-card__cta {
-    font-size: 11px;
-    font-weight: 700;
-    color: #fff;
-    border-radius: 6px;
-    padding: 6px 12px;
-    margin-top: 6px;
-    width: 100%;
-    box-sizing: border-box;
-}
-
-/* ── Summary ── */
-.qf-summary {
-    display: flex;
-    align-items: center;
-    gap: 0;
-    background: var(--qf-blue-lt);
-    border: 1.5px solid #C5D8EF;
-    border-radius: 10px;
-    padding: 14px 24px;
-    margin-bottom: 8px;
-}
-.qf-summary__item { flex: 1; text-align: center; }
-.qf-summary__label { display: block; font-size: 11px; text-transform: uppercase; letter-spacing: .07em; color: var(--qf-muted); font-weight: 600; margin-bottom: 3px; }
-.qf-summary__val { font-size: 15px; font-weight: 700; color: var(--qf-navy); }
-.qf-summary__val--green { color: #16A34A; }
-.qf-summary__divider { width: 1px; height: 36px; background: #C5D8EF; }
-
-/* ── Responsive ── */
-@media (max-width: 768px) {
-    .qf-hero__inner { flex-direction: column; align-items: flex-start; }
-    .qf-hero__badge { margin-top: 12px; }
-    .qf-steps { flex-direction: column; gap: 6px; }
-    .qf-step__connector { display: none; }
-    .qf-step { width: 100%; }
-    .qf-grid, .qf-grid--3 { grid-template-columns: 1fr; }
-    .qf-quote-grid { grid-template-columns: 1fr 1fr; }
-    .qf-btn-row { justify-content: stretch; flex-direction: column-reverse; }
-    .qfbtn { justify-content: center; }
-}
-@media (max-width: 460px) {
-    .qf-quote-grid { grid-template-columns: 1fr; }
-}
+.vehicle-search-wrap-dash{position:relative}
+.vehicle-dropdown-dash{display:none;position:absolute;top:100%;left:0;right:0;z-index:50;background:#fff;border:1px solid #d1d5db;border-radius:0 0 8px 8px;max-height:220px;overflow-y:auto;box-shadow:0 4px 16px rgba(0,0,0,.1)}
+.vehicle-dropdown-dash.open{display:block}
+.vehicle-dropdown-dash .vehicle-option{padding:8px 12px;font-size:12px;cursor:pointer;border-bottom:1px solid #f3f4f6;transition:background .15s;color:#374151}
+.vehicle-dropdown-dash .vehicle-option:last-child{border-bottom:none}
+.vehicle-dropdown-dash .vehicle-option:hover{background:#eff6ff;color:#2563eb}
+.vehicle-dropdown-dash .vehicle-option-other{border-top:1px solid #e5e7eb;color:#9ca3af;font-style:italic}
+.vehicle-dropdown-dash .vehicle-option-other:hover{color:#2563eb;background:#fef3c7}
 </style>
-
-{{-- ══════════════════════════════════════════════════════════
-     SCRIPTS
-══════════════════════════════════════════════════════════ --}}
 <script>
+// ── Admin: user selector toggle ──
+function toggleUserSelector(val) {
+    var dd = document.getElementById('user-selector-dropdown');
+    var hidden = document.getElementById('f-user-id');
+    if (val === 'self') {
+        dd.classList.add('hidden');
+        if (hidden) hidden.value = '';
+    } else {
+        dd.classList.remove('hidden');
+        document.getElementById('f-on-behalf-of').focus();
+    }
+}
+
+function onUserSelected(userId) {
+    var hidden = document.getElementById('f-user-id');
+    if (!userId) {
+        if (hidden) hidden.value = '';
+        return;
+    }
+    if (hidden) hidden.value = userId;
+    var opt = document.querySelector('#f-on-behalf-of option[value="' + userId + '"]');
+    if (!opt) return;
+    var first = document.getElementById('f-first');
+    var last = document.getElementById('f-last');
+    var email = document.getElementById('f-email');
+    var phone = document.getElementById('f-phone');
+    if (first) first.value = opt.dataset.first || '';
+    if (last) last.value = opt.dataset.last || '';
+    if (email) email.value = opt.dataset.email || '';
+    if (phone) phone.value = opt.dataset.phone || '';
+}
+
 // ── Populate year dropdown ──
 (function () {
-    const sel = document.getElementById('f-year');
-    const max = new Date().getFullYear();
-    for (let y = max; y >= 1990; y--) {
-        const opt = document.createElement('option');
+    var sel = document.getElementById('f-year');
+    var max = new Date().getFullYear();
+    for (var y = max; y >= 1990; y--) {
+        var opt = document.createElement('option');
         opt.value = y; opt.textContent = y;
         sel.appendChild(opt);
     }
@@ -568,34 +361,63 @@
 
 // ── Step navigation ──
 function goStep(n) {
-    [1,2,3].forEach(i => {
-        document.getElementById('step-tab-' + i).classList.remove('active','done');
-        document.getElementById('panel-' + i).classList.remove('active');
+    [1,2,3].forEach(function(i) {
+        var tab = document.getElementById('step-tab-' + i);
+        var panel = document.getElementById('panel-' + i);
+        var num = tab.querySelector('.step-num');
+        var title = tab.querySelector('.step-title');
+        tab.classList.remove('active', 'border-blue-500', 'bg-blue-50', 'dark:bg-blue-900/20');
+        tab.classList.add('border-gray-200', 'dark:border-gray-700');
+        panel.classList.remove('active');
+        panel.style.display = 'none';
+        if (i < n) {
+            tab.classList.add('border-emerald-300', 'bg-emerald-50', 'dark:bg-emerald-900/20');
+            num.className = 'text-[9px] font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400 step-num';
+            title.className = 'text-xs font-semibold text-emerald-700 dark:text-emerald-300 step-title';
+        } else {
+            num.className = 'text-[9px] font-bold uppercase tracking-wider text-gray-400 step-num';
+            title.className = 'text-xs font-semibold text-gray-500 dark:text-gray-400 step-title';
+        }
     });
-    for (let i = 1; i < n; i++) {
-        document.getElementById('step-tab-' + i).classList.add('done');
-    }
-    document.getElementById('step-tab-' + n).classList.add('active');
-    document.getElementById('panel-' + n).classList.add('active');
+    var tab = document.getElementById('step-tab-' + n);
+    var panel = document.getElementById('panel-' + n);
+    tab.classList.remove('border-gray-200', 'dark:border-gray-700', 'border-emerald-300', 'bg-emerald-50', 'dark:bg-emerald-900/20');
+    tab.classList.add('border-blue-500', 'bg-blue-50', 'dark:bg-blue-900/20');
+    var num = tab.querySelector('.step-num');
+    var title = tab.querySelector('.step-title');
+    num.className = 'text-[9px] font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400 step-num';
+    title.className = 'text-xs font-semibold text-blue-700 dark:text-blue-300 step-title';
+    panel.classList.add('active');
+    panel.style.display = 'block';
     window.scrollTo({ top: 0, behavior: 'smooth' });
 }
+document.addEventListener('DOMContentLoaded', function() {
+    document.getElementById('panel-1').style.display = 'block';
+    document.getElementById('panel-2').style.display = 'none';
+    document.getElementById('panel-3').style.display = 'none';
+    var preSelected = document.getElementById('f-on-behalf-of-hidden')?.value;
+    if (preSelected && document.getElementById('f-on-behalf-of')) {
+        document.getElementById('f-on-behalf-of').value = preSelected;
+        onUserSelected(preSelected);
+    }
+});
 
-// ── Other make/color toggles ──
-function toggleOtherMake(sel) {
-    document.getElementById('f-make-other').style.display = sel.value === 'Other' ? '' : 'none';
-}
+// ── Other color toggle ──
 function toggleOtherColor(sel) {
-    document.getElementById('f-color-other').style.display = sel.value === 'Other' ? '' : 'none';
+    var box = document.getElementById('f-color-other');
+    if (sel.value === 'Other') { box.style.display = ''; box.focus(); }
+    else { box.style.display = 'none'; box.value = ''; }
 }
 
 // ── Premium preview ──
 function fmt(n) { return 'KES ' + n.toLocaleString('en-KE', {minimumFractionDigits:0, maximumFractionDigits:0}); }
 
 function updatePremiumPreview() {
-    const val = parseFloat(document.getElementById('f-value').value) || 0;
-    const empty = document.getElementById('premium-preview-empty');
-    const preview = document.getElementById('premium-preview');
-    const summary = document.getElementById('qf-summary');
+    var raw = (document.getElementById('f-value').value || '').replace(/,/g, '');
+    var val = parseFloat(raw) || 0;
+    var empty = document.getElementById('premium-preview-empty');
+    var preview = document.getElementById('premium-preview');
+    var summary = document.getElementById('qf-summary');
 
     if (val < 1) {
         empty.style.display = '';
@@ -605,28 +427,40 @@ function updatePremiumPreview() {
     empty.style.display = 'none';
     preview.style.display = '';
 
-    const rates = { ga: 0.035, britam: 0.041, sanlam: 0.045 };
-    const tax = 0.005; // 0.5% levy
+    var rates = { ga: 0.035, britam: 0.041, sanlam: 0.045 };
+    var tax = 0.005;
 
-    const ga     = val * (rates.ga + tax);
-    const britam = val * (rates.britam + tax);
-    const sanlam = val * (rates.sanlam + tax);
+    var gaAmt     = val * (rates.ga + tax);
+    var britamAmt = val * (rates.britam + tax);
+    var sanlamAmt = val * (rates.sanlam + tax);
 
-    document.getElementById('prev-ga').textContent     = fmt(ga);
-    document.getElementById('prev-britam').textContent = fmt(britam);
-    document.getElementById('prev-sanlam').textContent = fmt(sanlam);
+    document.getElementById('prev-ga').textContent     = fmt(gaAmt);
+    document.getElementById('prev-britam').textContent = fmt(britamAmt);
+    document.getElementById('prev-sanlam').textContent = fmt(sanlamAmt);
 
     document.getElementById('sum-value').textContent   = fmt(val);
-    document.getElementById('sum-lowest').textContent  = fmt(ga);
-    document.getElementById('sum-highest').textContent = fmt(sanlam);
+    document.getElementById('sum-lowest').textContent  = fmt(gaAmt);
+    document.getElementById('sum-highest').textContent = fmt(sanlamAmt);
     summary.style.display = '';
 }
 
-// ── Open quote page (stub — wire to your actual routes) ──
+// ── Open quote page ──
 function openQuotePage(insurer) {
-    const userId = document.getElementById('f-user-id')?.value || null;
-    const data = {
-        insurer,
+    var userId = document.getElementById('f-user-id')?.value || null;
+    var makeHidden = (document.getElementById('f-make-value') || {}).value || '';
+    var makeOther  = (document.getElementById('f-make-other') || {}).value || '';
+    var makeInput  = (document.getElementById('f-make') || {}).value || '';
+    var make       = makeHidden === 'Other' ? makeOther : (makeHidden || makeInput);
+    var modelHidden = (document.getElementById('f-model-value') || {}).value || '';
+    var modelOther  = (document.getElementById('f-model-other') || {}).value || '';
+    var modelInput  = (document.getElementById('f-model') || {}).value || '';
+    var model       = modelHidden === 'Other' ? modelOther : (modelHidden || modelInput);
+    var colorRaw   = (document.getElementById('f-color') || {}).value || '';
+    var colorOther = (document.getElementById('f-color-other') || {}).value || '';
+    var color      = colorRaw === 'Other' ? colorOther : colorRaw;
+    var rawValue   = (document.getElementById('f-value').value || '').replace(/,/g, '');
+    var data = {
+        insurer: insurer,
         salutation : document.getElementById('f-salutation').value,
         first      : document.getElementById('f-first').value,
         middle     : document.getElementById('f-middle').value,
@@ -635,23 +469,233 @@ function openQuotePage(insurer) {
         email      : document.getElementById('f-email').value,
         reg        : document.getElementById('f-reg').value,
         chassis    : document.getElementById('f-chassis').value,
-        make       : document.getElementById('f-make').value === 'Other'
-                        ? document.getElementById('f-make-other').value
-                        : document.getElementById('f-make').value,
-        model      : document.getElementById('f-model').value,
+        make       : make,
+        model      : model,
         body       : document.getElementById('f-body').value,
         year       : document.getElementById('f-year').value,
-        color      : document.getElementById('f-color').value === 'Other'
-                        ? document.getElementById('f-color-other').value
-                        : document.getElementById('f-color').value,
-        value      : document.getElementById('f-value').value,
-        userId,
+        color      : color,
+        value      : rawValue,
+        _signed    : document.getElementById('f-signed').value,
+        userId: userId,
     };
-    // Store in sessionStorage for the quote page to consume
     sessionStorage.setItem('micQuoteData', JSON.stringify(data));
-    // Navigate — adjust route as needed
-    window.location.href = "{{ route('quotations.preview') }}?insurer=" + insurer + (userId ? '&user_id=' + userId : '');
+    clearDraft();
+    var params = '?insurer=' + insurer;
+    if (userId) params += '&on_behalf_of=' + userId;
+    window.location.href = "{{ route('quotations.preview') }}" + params;
 }
-</script>
 
+// ── VEHICLE SEARCH ──
+(function() {
+    var makesCache = [];
+    var modelsCache = {};
+
+    function fetchJSON(url, cb) {
+        var xhr = new XMLHttpRequest();
+        xhr.open('GET', url, true);
+        xhr.onload = function() { if (xhr.status === 200) cb(JSON.parse(xhr.responseText)); };
+        xhr.send();
+    }
+
+    function setupSearch(inputId, dropdownId, hiddenId, otherId, opts) {
+        var input = document.getElementById(inputId);
+        var dropdown = document.getElementById(dropdownId);
+        var hidden = document.getElementById(hiddenId);
+        var other = document.getElementById(otherId);
+        if (!input || !dropdown) return null;
+
+        var items = opts.items || [];
+        var onSelect = opts.onSelect || function(){};
+        var onOther = opts.onOther || function(){};
+
+        input.addEventListener('input', function() {
+            var val = this.value.toLowerCase().trim();
+            if (!val) { dropdown.innerHTML = ''; dropdown.classList.remove('open'); return; }
+            var filtered = items.filter(function(i) { return i.toLowerCase().indexOf(val) > -1; });
+            var html = '';
+            filtered.forEach(function(i) { html += '<div class="vehicle-option" data-value="' + i.replace(/'/g, '&#39;') + '">' + i + '</div>'; });
+            html += '<div class="vehicle-option vehicle-option-other" data-value="__other__">+ Other</div>';
+            dropdown.innerHTML = html;
+            dropdown.classList.add('open');
+        });
+
+        dropdown.addEventListener('click', function(e) {
+            var opt = e.target.closest('.vehicle-option');
+            if (!opt) return;
+            var val = opt.dataset.value;
+            if (val === '__other__') {
+                input.value = '';
+                hidden.value = 'Other';
+                if (other) { other.style.display = ''; other.focus(); }
+                onOther();
+            } else {
+                input.value = val;
+                hidden.value = val;
+                if (other) { other.style.display = 'none'; other.value = ''; }
+                onSelect(val);
+            }
+            dropdown.classList.remove('open');
+        });
+
+        input.addEventListener('blur', function() { setTimeout(function() { dropdown.classList.remove('open'); }, 200); });
+        input.addEventListener('focus', function() { if (this.value.trim()) this.dispatchEvent(new Event('input')); });
+
+        return { setItems: function(newItems) { items = newItems; }, getItems: function() { return items; } };
+    }
+
+    var makeSearch = null;
+    var modelSearch = null;
+
+    function initVehicleSearch() {
+        fetchJSON('/api/vehicle-makes', function(makes) {
+            makesCache = makes;
+            if (makeSearch) makeSearch.setItems(makes);
+        });
+
+        makeSearch = setupSearch('f-make', 'f-make-dropdown', 'f-make-value', 'f-make-other', {
+            items: makesCache,
+            onSelect: function(val) {
+                var mi = document.getElementById('f-model');
+                if (mi) { mi.disabled = false; mi.placeholder = 'Search model...'; mi.value = ''; }
+                var mo = document.getElementById('f-model-other');
+                if (mo) { mo.style.display = 'none'; mo.value = ''; }
+                var mh = document.getElementById('f-model-value');
+                if (mh) mh.value = '';
+                var md = document.getElementById('f-model-dropdown');
+                if (md) { md.innerHTML = ''; md.classList.remove('open'); }
+                fetchJSON('/api/vehicle-models/' + encodeURIComponent(val), function(models) {
+                    modelsCache[val] = models;
+                    if (modelSearch) modelSearch.setItems(models);
+                });
+            },
+            onOther: function() {
+                var mi = document.getElementById('f-model');
+                if (mi) { mi.disabled = false; mi.placeholder = 'Type your vehicle model...'; mi.value = ''; }
+                var mh = document.getElementById('f-model-value');
+                if (mh) mh.value = '';
+                if (modelSearch) modelSearch.setItems([]);
+            }
+        });
+
+        modelSearch = setupSearch('f-model', 'f-model-dropdown', 'f-model-value', 'f-model-other', {
+            items: [],
+            onSelect: function(){},
+            onOther: function(){}
+        });
+    }
+
+    if (document.getElementById('f-make')) initVehicleSearch();
+})();
+
+// ── VALUE FORMATTING & VALIDATION ──
+(function() {
+    var valInput = document.getElementById('f-value');
+    if (!valInput) return;
+
+    valInput.addEventListener('input', function() {
+        var cursor = this.selectionStart;
+        var raw = this.value.replace(/[^0-9]/g, '');
+        if (raw === '') { this.value = ''; return; }
+        var formatted = parseInt(raw, 10).toLocaleString('en-KE');
+        this.value = formatted;
+        this.setSelectionRange(cursor + (formatted.length - this.value.length), cursor + (formatted.length - this.value.length));
+        updatePremiumPreview();
+    });
+
+    valInput.addEventListener('blur', function() {
+        var raw = this.value.replace(/,/g, '');
+        var val = parseInt(raw, 10) || 0;
+        var hint = document.getElementById('f-value-hint');
+        var err = document.getElementById('f-value-error');
+        if (!err) return;
+        if (val > 0 && (val < 800000 || val > 1300000)) {
+            err.textContent = 'Vehicle value must be between KES 800,000 and KES 1,300,000';
+            err.style.display = '';
+            this.style.borderColor = '#e53e3e';
+            if (hint) hint.style.display = 'none';
+        } else {
+            err.style.display = 'none';
+            this.style.borderColor = '';
+            if (hint) hint.style.display = '';
+        }
+    });
+})();
+
+// ── Session Storage for draft resilience ──
+(function() {
+    var STORAGE_KEY = 'micQuoteDraft';
+    var fields = [
+        'f-salutation', 'f-first', 'f-middle', 'f-last', 'f-phone', 'f-email',
+        'f-reg', 'f-chassis', 'f-make', 'f-make-value', 'f-make-other',
+        'f-model', 'f-model-value', 'f-model-other', 'f-body',
+        'f-year', 'f-color', 'f-color-other', 'f-value', 'f-signed'
+    ];
+
+    function saveDraft() {
+        var data = {};
+        fields.forEach(function(id) {
+            var el = document.getElementById(id);
+            if (el) data[id.replace('f-', '')] = el.value;
+        });
+        data.savedAt = new Date().toISOString();
+        try { sessionStorage.setItem(STORAGE_KEY, JSON.stringify(data)); } catch(e) {}
+    }
+
+    function restoreDraft(data) {
+        fields.forEach(function(id) {
+            var key = id.replace('f-', '');
+            var el = document.getElementById(id);
+            if (el && data[key] !== undefined) el.value = data[key];
+        });
+        var makeOther = document.getElementById('f-make-other');
+        var colorOther = document.getElementById('f-color-other');
+        var modelOther = document.getElementById('f-model-other');
+        var makeHidden = document.getElementById('f-make-value');
+        var modelHidden = document.getElementById('f-model-value');
+        if (makeOther && makeHidden && makeHidden.value === 'Other') makeOther.style.display = '';
+        if (modelOther && modelHidden && modelHidden.value === 'Other') modelOther.style.display = '';
+        if (colorOther && document.getElementById('f-color').value === 'Other') colorOther.style.display = '';
+        updatePremiumPreview();
+    }
+
+    function clearDraft() {
+        try { sessionStorage.removeItem(STORAGE_KEY); } catch(e) {}
+    }
+    window.clearDraft = clearDraft;
+
+    try {
+        var saved = sessionStorage.getItem(STORAGE_KEY);
+        if (saved) {
+            var data = JSON.parse(saved);
+            var container = document.querySelector('.step-panel')?.parentElement;
+            if (container && data.savedAt) {
+                var banner = document.createElement('div');
+                banner.className = 'mx-6 mt-4 mb-0 px-4 py-3 rounded-xl bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 flex items-center justify-between gap-3 text-xs text-amber-800 dark:text-amber-300';
+                banner.innerHTML = [
+                    '<span>You have a saved draft from ' + new Date(data.savedAt).toLocaleString() + '.</span>',
+                    '<div class="flex gap-2 shrink-0">',
+                    '<button class="restore-draft px-3 py-1.5 bg-amber-600 text-white rounded-lg text-[10px] font-semibold hover:bg-amber-700 transition">Restore</button>',
+                    '<button class="discard-draft px-3 py-1.5 border border-amber-600 text-amber-700 dark:text-amber-300 rounded-lg text-[10px] font-semibold hover:bg-amber-50 dark:hover:bg-amber-900/20 transition">Discard</button>',
+                    '</div>'
+                ].join('');
+                container.insertBefore(banner, container.firstChild);
+                banner.querySelector('.restore-draft').addEventListener('click', function() { restoreDraft(data); banner.remove(); });
+                banner.querySelector('.discard-draft').addEventListener('click', function() { clearDraft(); banner.remove(); });
+            }
+        }
+    } catch(e) {}
+
+    var saveTimer;
+    document.addEventListener('input', function(e) {
+        if (fields.indexOf(e.target.id) > -1) {
+            clearTimeout(saveTimer);
+            saveTimer = setTimeout(saveDraft, 300);
+        }
+    });
+    document.addEventListener('change', function(e) {
+        if (fields.indexOf(e.target.id) > -1) saveDraft();
+    });
+})();
+</script>
+@endpush
 </x-app-layout>

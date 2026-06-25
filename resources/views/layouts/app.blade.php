@@ -32,24 +32,6 @@
             @include('layouts.navigation')
 
             <main class="flex-1 p-4 md:p-6 lg:p-8 pt-20">
-                @if (session('success'))
-                    <div class="mb-4 p-4 bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-700 rounded-lg text-green-700 dark:text-green-300 fade-in" role="alert">
-                        <span class="font-medium">{{ session('success') }}</span>
-                    </div>
-                @endif
-
-                @if (session('error'))
-                    <div class="mb-4 p-4 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-700 rounded-lg text-red-700 dark:text-red-300 fade-in" role="alert">
-                        <span class="font-medium">{{ session('error') }}</span>
-                    </div>
-                @endif
-
-                @if (session('warning'))
-                    <div class="mb-4 p-4 bg-yellow-50 dark:bg-yellow-900/30 border border-yellow-200 dark:border-yellow-700 rounded-lg text-yellow-700 dark:text-yellow-300 fade-in" role="alert">
-                        <span class="font-medium">{{ session('warning') }}</span>
-                    </div>
-                @endif
-
                 @if ($errors->any())
                     <div class="mb-4 p-4 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-700 rounded-lg text-red-700 dark:text-red-300 fade-in">
                         <ul class="list-disc list-inside text-sm">
@@ -69,6 +51,7 @@
         </div>
     </div>
 
+    <x-toast />
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     @stack('scripts')
 </body>

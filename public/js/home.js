@@ -1,13 +1,18 @@
- // ── COMPANIES DATA ──
-const COMPANIES = {
-  GA:      { name:'GA Insurance Ltd', short:'GA', rate:0.035, taxRate:0.005, color:'#003087', prefix:'GA' },
-  BRITAM:  { name:'Britam General Insurance', short:'BRITAM', rate:0.041, taxRate:0.005, color:'#0066B3', prefix:'BRITAM' },
-  SANLAM:  { name:'Sanlam Allianz Insurance', short:'SA', rate:0.045, taxRate:0.005, color:'#00205B', prefix:'SA' }
-};
+ // ── COMPANIES DATA (dynamic from backend) ──
+const COMPANIES = {};
+let quoteCounters = {};
+
+if (window.MIC_COMPANIES && Array.isArray(window.MIC_COMPANIES)) {
+  window.MIC_COMPANIES.forEach(function(c) {
+    COMPANIES[c.slug] = c;
+    COMPANIES[c.slug.toUpperCase()] = c;
+    quoteCounters[c.slug.toUpperCase()] = 0;
+    quoteCounters[c.slug] = 0;
+  });
+}
 
 // ── QUOTE STORE (in-memory, session) ──
 const quoteStore = {};
-let quoteCounters = {GA:0,BRITAM:0,SA:0};
 let currentIndCompany = null;
 let currentIndQuoteNum = null;
 
@@ -21,8 +26,84 @@ let currentIndQuoteNum = null;
 })();
 
 // ── SEARCH ──
-function doSearch(){ showToast('Searching for: ' + (document.getElementById('searchInput').value||'all products')); }
-function setChip(el,val){ document.querySelectorAll('.chip').forEach(c=>c.classList.remove('active'));el.classList.add('active');document.getElementById('searchInput').value=val; }
+function doSearch(){
+  var q = (document.getElementById('searchInput').value||'').trim();
+  if (!q) { showToast('Please enter a search term.'); return; }
+  var xhr = new XMLHttpRequest();
+  xhr.open('GET', '/motor-quote/search?q=' + encodeURIComponent(q), true);
+  xhr.onload = function(){
+    if (xhr.status === 200) {
+      var data = JSON.parse(xhr.responseText);
+      renderSearchResults(data);
+    } else {
+      showToast('Search failed. Please try again.');
+    }
+  };
+  xhr.send();
+}
+
+function renderSearchResults(data){
+  var section = document.getElementById('searchResults');
+  var grid = document.getElementById('searchResultsGrid');
+  if (!section || !grid) return;
+  grid.innerHTML = '';
+  var all = (data.quotations||[]).concat(data.stickers||[]);
+  if (all.length === 0) {
+    grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:32px 0;color:var(--text-muted);font-size:13px">No results found.</div>';
+    section.style.display = 'block';
+    return;
+  }
+  all.forEach(function(item){
+    var isSticker = !!item.sticker_number;
+    var num = isSticker ? item.sticker_number : item.quotation_number;
+    var vehicle = (item.car_make||'') + ' ' + (item.car_model||'');
+    var reg = item.car_registration || item.vehicle_registration || '';
+    var name = item.customer_name || '';
+    var hashedNum = num ? num.slice(0,3) + '••••' + num.slice(-4) : '••••••';
+    var hashedReg = reg ? reg.slice(0,3) + '••••' : '••••••';
+    var hashedName = name ? name.slice(0,1) + '••••' : '••••••';
+    var card = document.createElement('div');
+    card.className = 'search-result-card';
+    card.innerHTML = `
+      <h4>${isSticker ? 'Certificate' : 'Quotation'}</h4>
+      <div class="sr-detail"><span>Number</span><span class="hashed">${hashedNum}</span></div>
+      ${vehicle ? '<div class="sr-detail"><span>Vehicle</span><span class="blurred">' + vehicle + '</span></div>' : ''}
+      ${reg ? '<div class="sr-detail"><span>Reg No.</span><span class="hashed">' + hashedReg + '</span></div>' : ''}
+      ${name ? '<div class="sr-detail"><span>Name</span><span class="hashed">' + hashedName + '</span></div>' : ''}
+      <div class="sr-actions">
+        <button class="sr-btn-quote" onclick="handleSearchQuote('${num}')">Generate Quote</button>
+        <button class="sr-btn-sticker" onclick="handleSearchSticker('${num}')">Generate Sticker</button>
+      </div>
+    `;
+    grid.appendChild(card);
+  });
+  section.style.display = 'block';
+  section.scrollIntoView({behavior:'smooth'});
+}
+
+function closeSearchResults(){
+  document.getElementById('searchResults').style.display = 'none';
+}
+
+function handleSearchQuote(num){
+  if (window.MIC_GUEST) {
+    sessionStorage.setItem('search_redirect', '/dashboard');
+    openAuthModal();
+    return;
+  }
+  window.location.href = '/quotations?search=' + encodeURIComponent(num);
+}
+
+function handleSearchSticker(num){
+  if (window.MIC_GUEST) {
+    sessionStorage.setItem('search_redirect', '/dashboard');
+    openAuthModal();
+    return;
+  }
+  window.location.href = '/stickers/user-lookup?quotation=' + encodeURIComponent(num);
+}
+
+function setChip(el,val){ document.querySelectorAll('.chip').forEach(c=>c.classList.remove('active'));el.classList.add('active');document.getElementById('searchInput').value=val; doSearch(); }
 
 // ── FORM STEPS ──
 function goStep(n){
@@ -33,36 +114,67 @@ function goStep(n){
   for(let i=1;i<n;i++) document.getElementById('step-tab-'+i).classList.add('done');
 }
 
+function guestGuard(callback) {
+  if (window.MIC_GUEST) {
+    if (typeof callback === 'function') {
+      var match = callback.toString().match(/openQuotePage\('([^']+)'\)/);
+      if (match) {
+        sessionStorage.setItem('pending_quote_company', match[1]);
+        try {
+          if (typeof getFormData === 'function') {
+            var d = getFormData();
+            sessionStorage.setItem('micQuoteData', JSON.stringify({...d, mode: match[1]}));
+          }
+        } catch(e) {}
+      }
+    }
+    sessionStorage.setItem('auth_redirect', match ? '/quotation/' + match[1] : '/dashboard');
+    openAuthModal();
+    return;
+  }
+  if (typeof callback === 'function') callback();
+}
+
 // ── PREMIUM PREVIEW ──
 function updatePremiumPreview(){
-  const v = parseFloat(document.getElementById('f-value').value)||0;
-  const prev = document.getElementById('premium-preview');
-  if(!v){prev.style.display='none';return;}
-  prev.style.display='block';
-  const fmt = n=>n.toLocaleString('en-KE',{minimumFractionDigits:0,maximumFractionDigits:0});
-  document.getElementById('prev-ga').textContent='KES '+fmt(v*0.035);
-  document.getElementById('prev-britam').textContent='KES '+fmt(v*0.041);
-  document.getElementById('prev-sanlam').textContent='KES '+fmt(v*0.045);
+  var raw = (document.getElementById('f-value').value || '').replace(/,/g, '');
+  var v = parseFloat(raw) || 0;
+  var prev = document.getElementById('premium-preview');
+  if (!v) { prev.style.display = 'none'; return; }
+  prev.style.display = 'block';
+  var fmt = function(n) { return n.toLocaleString('en-KE', {minimumFractionDigits:0, maximumFractionDigits:0}); };
+  Object.values(COMPANIES).forEach(function(c){
+    var el = document.getElementById('prev-' + c.slug);
+    if (el) el.textContent = 'KES ' + fmt(v * c.rate);
+  });
 }
 
 // ── COLLECT FORM DATA ──
 function getFormData(){
+  var makeHidden = (document.getElementById('f-make-value') || {}).value || '';
+  var makeEl = document.getElementById('f-make');
+  var make = makeHidden || (makeEl ? makeEl.value : '');
+  var modelHidden = (document.getElementById('f-model-value') || {}).value || '';
+  var modelEl = document.getElementById('f-model');
+  var model = modelHidden || (modelEl ? modelEl.value : '');
+  var valueEl = document.getElementById('f-value');
+  var rawValue = (valueEl ? valueEl.value : '').replace(/,/g, '');
   return {
-    salutation: document.getElementById('f-salutation').value,
-    first: document.getElementById('f-first').value,
-    middle: document.getElementById('f-middle').value,
-    last: document.getElementById('f-last').value,
-    phone: document.getElementById('f-phone').value,
-    email: document.getElementById('f-email').value,
-    reg: document.getElementById('f-reg').value,
-    chassis: document.getElementById('f-chassis').value,
-    make: document.getElementById('f-make').value,
-    model: document.getElementById('f-model').value,
-    body: document.getElementById('f-body').value,
-    year: document.getElementById('f-year').value,
-    color: document.getElementById('f-color').value,
-    value: parseFloat(document.getElementById('f-value').value)||0,
-    cover: document.getElementById('f-cover').value
+    salutation: (document.getElementById('f-salutation') || {}).value || '',
+    first: (document.getElementById('f-first') || {}).value || '',
+    middle: (document.getElementById('f-middle') || {}).value || '',
+    last: (document.getElementById('f-last') || {}).value || '',
+    phone: (document.getElementById('f-phone') || {}).value || '',
+    email: (document.getElementById('f-email') || {}).value || '',
+    reg: (document.getElementById('f-reg') || {}).value || '',
+    chassis: (document.getElementById('f-chassis') || {}).value || '',
+    make: make,
+    model: model,
+    body: (document.getElementById('f-body') || {}).value || '',
+    year: (document.getElementById('f-year') || {}).value || '',
+    color: (document.getElementById('f-color') || {}).value || '',
+    value: parseFloat(rawValue) || 0,
+    cover: (document.getElementById('f-cover') || {}).value || ''
   };
 }
 
@@ -134,41 +246,42 @@ function genQuoteNum(prefix){
 // }
 
 function openQuotePage(company) {
-  // Gather all form data
-  const salutation = document.getElementById('f-salutation')?.value || '';
-  const firstName  = document.getElementById('f-first')?.value     || '';
-  const lastName   = document.getElementById('f-last')?.value      || '';
-  const phone      = document.getElementById('f-phone')?.value     || '';
-  const email      = document.getElementById('f-email')?.value     || '';
-  const reg        = document.getElementById('f-reg')?.value       || '';
-  const chassis    = document.getElementById('f-chassis')?.value   || '';
-  const makeRaw    = document.getElementById('f-make')?.value      || '';
-  const makeOther  = document.getElementById('f-make-other')?.value|| '';
-  const make       = makeRaw === 'Other' ? makeOther : makeRaw;
-  const model      = document.getElementById('f-model')?.value     || '';
-  const body       = document.getElementById('f-body')?.value      || '';
-  const year       = document.getElementById('f-year')?.value      || '';
-  const colorRaw   = document.getElementById('f-color')?.value     || '';
-  const colorOther = document.getElementById('f-color-other')?.value|| '';
-  const color      = colorRaw === 'Other' ? colorOther : colorRaw;
-  // value field may exist in panel-2 or panel-3
-  const valueEl    = document.getElementById('f-value');
-  const value      = parseFloat(valueEl?.value) || 0;
- 
-  const prefix = company === 'ALL' ? 'MIC' : company;
-  const qNum   = `${prefix}-${new Date().getFullYear()}/${String(Math.floor(Math.random()*9000)+1000)}`;
- 
-  const data = {
-    salutation, firstName, lastName, phone, email,
-    reg, chassis, make, model, body, year, color, value,
-    quoteNum: qNum,
-    mode: company
+  var salutation = (document.getElementById('f-salutation') || {}).value || '';
+  var firstName  = (document.getElementById('f-first') || {}).value     || '';
+  var lastName   = (document.getElementById('f-last') || {}).value      || '';
+  var phone      = (document.getElementById('f-phone') || {}).value     || '';
+  var email      = (document.getElementById('f-email') || {}).value     || '';
+  var reg        = (document.getElementById('f-reg') || {}).value       || '';
+  var chassis    = (document.getElementById('f-chassis') || {}).value   || '';
+  var makeHidden = (document.getElementById('f-make-value') || {}).value || '';
+  var makeOther  = (document.getElementById('f-make-other') || {}).value || '';
+  var makeInput  = (document.getElementById('f-make') || {}).value      || '';
+  var make       = makeHidden === 'Other' ? makeOther : (makeHidden || makeInput);
+  var modelHidden = (document.getElementById('f-model-value') || {}).value || '';
+  var modelOther  = (document.getElementById('f-model-other') || {}).value || '';
+  var modelInput  = (document.getElementById('f-model') || {}).value      || '';
+  var model       = modelHidden === 'Other' ? modelOther : (modelHidden || modelInput);
+  var body       = (document.getElementById('f-body') || {}).value      || '';
+  var year       = (document.getElementById('f-year') || {}).value      || '';
+  var colorRaw   = (document.getElementById('f-color') || {}).value     || '';
+  var colorOther = (document.getElementById('f-color-other') || {}).value|| '';
+  var color      = colorRaw === 'Other' ? colorOther : colorRaw;
+  var valueEl    = document.getElementById('f-value');
+  var value      = parseFloat((valueEl ? valueEl.value : '').replace(/,/g, '')) || 0;
+
+  var prefix = company === 'ALL' ? 'MIC' : company;
+  var qNum   = prefix + '-' + new Date().getFullYear() + '/' + String(Math.floor(Math.random()*9000)+1000);
+
+  var data = {
+    salutation: salutation, firstName: firstName, lastName: lastName,
+    phone: phone, email: email, reg: reg, chassis: chassis,
+    make: make, model: model, body: body, year: year, color: color,
+    value: value, quoteNum: qNum, mode: company
   };
- 
+
   try { sessionStorage.setItem('micQuoteData', JSON.stringify(data)); } catch(e) {}
- 
-  // Navigate to quotation page
-  window.location.href = `quotation.html?company=${company}`;
+
+  window.location.href = '/quotation/' + company;
 }
 
 function closeQuotePage(){
@@ -177,35 +290,39 @@ function closeQuotePage(){
 
 // ── OPEN INDIVIDUAL QUOTE ──
 function openIndividualQuote(key, qn){
-  const d = getFormData();
-  if(!d.first||!d.last||!d.value){
-    showToast('Please complete the form first.');return;
-  }
-  const co = COMPANIES[key];
-  currentIndCompany=key;
-  if(qn){
-    currentIndQuoteNum=qn;
-  } else {
-    currentIndQuoteNum = genQuoteNum(co.prefix);
-    quoteStore[currentIndQuoteNum]={data:d,company:key,quoteNum:currentIndQuoteNum};
-  }
-  document.getElementById('indQuoteNum').textContent=currentIndQuoteNum;
-  renderIndividualQuote(key,d,co,currentIndQuoteNum);
-  document.getElementById('indQuotePage').classList.add('open');
-  document.getElementById('indBackBtn').onclick=()=>closeIndividual();
-  window.scrollTo(0,0);
+  guestGuard(function(){
+    var d = getFormData();
+    if(!d.first||!d.last||!d.value){
+      showToast('Please complete the form first.');return;
+    }
+    var co = COMPANIES[key];
+    currentIndCompany=key;
+    if(qn){
+      currentIndQuoteNum=qn;
+    } else {
+      currentIndQuoteNum = genQuoteNum(co.prefix);
+      quoteStore[currentIndQuoteNum]={data:d,company:key,quoteNum:currentIndQuoteNum};
+    }
+    document.getElementById('indQuoteNum').textContent=currentIndQuoteNum;
+    renderIndividualQuote(key,d,co,currentIndQuoteNum);
+    document.getElementById('indQuotePage').classList.add('open');
+    document.getElementById('indBackBtn').onclick=function(){ closeIndividual(); };
+    window.scrollTo(0,0);
+  });
 }
 
 function openCompareAll(){
-  const d = getFormData();
-  if(!d.first||!d.last||!d.value){showToast('Please complete the form first.');return;}
-  currentIndCompany='ALL';
-  currentIndQuoteNum='COMPARE-'+new Date().getFullYear()+'/'+String(Math.floor(Math.random()*900)+100);
-  document.getElementById('indQuoteNum').textContent=currentIndQuoteNum;
-  renderCompareAll(d);
-  document.getElementById('indQuotePage').classList.add('open');
-  document.getElementById('indBackBtn').onclick=()=>closeIndividual();
-  window.scrollTo(0,0);
+  guestGuard(function(){
+    var d = getFormData();
+    if(!d.first||!d.last||!d.value){showToast('Please complete the form first.');return;}
+    currentIndCompany='ALL';
+    currentIndQuoteNum='COMPARE-'+new Date().getFullYear()+'/'+String(Math.floor(Math.random()*900)+100);
+    document.getElementById('indQuoteNum').textContent=currentIndQuoteNum;
+    renderCompareAll(d);
+    document.getElementById('indQuotePage').classList.add('open');
+    document.getElementById('indBackBtn').onclick=function(){ closeIndividual(); };
+    window.scrollTo(0,0);
+  });
 }
 
 function closeIndividual(){
@@ -298,9 +415,12 @@ function renderCompareAll(d){
     </div>
   `;
 
+  const companies = window.MIC_COMPANIES || [];
+  const totalCos = companies.length;
+
   // Three individual quotes stacked
-  ['GA','BRITAM','SANLAM'].forEach((key,i)=>{
-    const co=COMPANIES[key];
+  companies.forEach(function(co, i){
+    const key = co.slug;
     const qn=genQuoteNum(co.prefix);
     quoteStore[qn]={data:d,company:key,quoteNum:qn};
     const premium=d.value*co.rate;
@@ -311,7 +431,7 @@ function renderCompareAll(d){
         <div class="doc-header">
           <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px">
             <div>
-              <div style="font-size:10px;opacity:.6;text-transform:uppercase;letter-spacing:.08em">${i+1} of 3 · Motor Insurance Quotation</div>
+              <div style="font-size:10px;opacity:.6;text-transform:uppercase;letter-spacing:.08em">${i+1} of ${totalCos} · Motor Insurance Quotation</div>
               <h2 style="font-size:1.2rem">${co.name}</h2>
             </div>
             <div style="text-align:right">
@@ -331,26 +451,37 @@ function renderCompareAll(d){
   });
 
   // Side-by-side comparison table
+  let headerCols = '<div>Details</div>';
+  companies.forEach(function(co){ headerCols += '<div>'+co.name+'</div>'; });
   html+=`
     <div class="compare-view">
       <div class="compare-header-strip">
-        <div>Details</div>
-        <div>GA Insurance</div>
-        <div>Britam</div>
-        <div>Sanlam Allianz</div>
+        ${headerCols}
       </div>
   `;
-  const rows=[
-    ['Premium Rate','3.5%','4.1%','4.5%'],
-    ['Basic Premium','KES '+fmt(d.value*0.035),'KES '+fmt(d.value*0.041),'KES '+fmt(d.value*0.045)],
-    ['Taxes (0.5%)','KES '+fmt(d.value*0.035*0.005),'KES '+fmt(d.value*0.041*0.005),'KES '+fmt(d.value*0.045*0.005)],
-    ['TOTAL','KES '+fmt(d.value*0.035*1.005),'KES '+fmt(d.value*0.041*1.005),'KES '+fmt(d.value*0.045*1.005)],
-    ['Cover Type',d.cover,d.cover,d.cover],
-    ['Region','Kenya/Uganda/TZ','Kenya/Uganda/TZ','Kenya/Uganda/TZ']
-  ];
-  rows.forEach((r,i)=>{
+  const rows=[];
+  // Basic rows
+  let rateRow = ['Premium Rate'];
+  let basicRow = ['Basic Premium'];
+  let taxRow = ['Taxes (0.5%)'];
+  let totalRow = ['TOTAL'];
+  let coverRow = ['Cover Type'];
+  let regionRow = ['Region'];
+  companies.forEach(function(co){
+    rateRow.push((co.rate*100).toFixed(1)+'%');
+    basicRow.push('KES '+fmt(d.value*co.rate));
+    taxRow.push('KES '+fmt(d.value*co.rate*0.005));
+    totalRow.push('KES '+fmt(d.value*co.rate*1.005));
+    coverRow.push(d.cover);
+    regionRow.push('Kenya/Uganda/TZ');
+  });
+  rows.push(rateRow, basicRow, taxRow, totalRow, coverRow, regionRow);
+  rows.forEach(function(r, i){
     const hi=i===3?' highlight':'';
-    html+=`<div class="compare-row${hi}"><div>${r[0]}</div><div>${r[1]}</div><div>${r[2]}</div><div>${r[3]}</div></div>`;
+    let rowHtml = '<div class="compare-row'+hi+'">';
+    r.forEach(function(cell){ rowHtml += '<div>'+cell+'</div>'; });
+    rowHtml += '</div>';
+    html+=rowHtml;
   });
   html+=`</div>`;
   document.getElementById('indQuoteContent').innerHTML=html;
@@ -358,9 +489,12 @@ function renderCompareAll(d){
 
 // ── CONFIRM & DOWNLOAD ──
 function confirmAndDownload(){
-  const d=getFormData();
-  const co=currentIndCompany==='ALL'?COMPANIES.BRITAM:COMPANIES[currentIndCompany];
-  const premium=d.value*co.rate;
+  guestGuard(function(){
+    var d=getFormData();
+    var companiesArr = window.MIC_COMPANIES || [];
+    var co=currentIndCompany==='ALL'||currentIndCompany==='COMPARE'?(companiesArr[0]||{}):COMPANIES[currentIndCompany];
+    if(!co||!co.rate){ showToast('No company selected.'); return; }
+    var premium=d.value*co.rate;
   const tax=premium*co.taxRate;
   const total=premium+tax;
   const fmt=n=>n.toLocaleString('en-KE',{minimumFractionDigits:0,maximumFractionDigits:0});
@@ -379,16 +513,37 @@ function confirmAndDownload(){
   document.getElementById('m-tax').textContent='KES '+fmt(tax);
   document.getElementById('m-total').textContent='KES '+fmt(total);
   document.getElementById('confirmModal').classList.add('open');
+  });
 }
 
 function closeModal(){
   document.getElementById('confirmModal').classList.remove('open');
 }
 
+// ── AUTH MODAL ──
+function openAuthModal(tab){
+  if (!sessionStorage.getItem('auth_redirect')) {
+    sessionStorage.setItem('auth_redirect', window.location.href);
+  }
+  document.getElementById('authModal').style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+  if(tab && window.Alpine){
+    const alps = document.querySelector('[x-data]');
+    if(alps) alps.__x.$data.tab = tab;
+  }
+}
+
+function closeAuthModal(){
+  document.getElementById('authModal').style.display = 'none';
+  document.body.style.overflow = '';
+}
+
 function proceedDownload(){
-  closeModal();
-  showToast('Preparing your quotation for download...');
-  setTimeout(()=>window.print(),800);
+  guestGuard(function(){
+    closeModal();
+    showToast('Preparing your quotation for download...');
+    setTimeout(function(){ window.print(); },800);
+  });
 }
 
 // ── COPY QUOTE NUM ──
@@ -516,28 +671,244 @@ window.toggleOtherColor = function (sel) {
 
 
 // ── PATCH getFormData() to read the "other" inputs ─────────
-//    Override the existing getFormData so "Other" values
-//    are substituted before anything else uses them.
-//    Place this AFTER your original getFormData definition.
 const _origGetFormData = window.getFormData || (function(){
-  // safety shim in case script order changes
   return function(){ return {}; };
 })();
 
 window.getFormData = function () {
-  const d = _origGetFormData();
+  var d = _origGetFormData();
 
-  // make: if "Other" was chosen, use the free-text box
   if (d.make === 'Other') {
-    const ov = (document.getElementById('f-make-other') || {}).value || '';
+    var ov = (document.getElementById('f-make-other') || {}).value || '';
     d.make = ov.trim() || 'Other';
   }
 
-  // color: same treatment
+  if (d.model === 'Other') {
+    var ov = (document.getElementById('f-model-other') || {}).value || '';
+    d.model = ov.trim() || 'Other';
+  }
+
   if (d.color === 'Other') {
-    const ov = (document.getElementById('f-color-other') || {}).value || '';
+    var ov = (document.getElementById('f-color-other') || {}).value || '';
     d.color = ov.trim() || 'Other';
   }
 
   return d;
 };
+
+
+// ═══════════════════════════════════════════════════════════
+//  VEHICLE SEARCH / AUTOCOMPLETE
+// ═══════════════════════════════════════════════════════════
+
+(function() {
+  var makesCache = [];
+  var modelsCache = {};
+
+  function fetchMakes() {
+    var xhr = new XMLHttpRequest();
+    xhr.open('GET', '/api/vehicle-makes', true);
+    xhr.onload = function() {
+      if (xhr.status === 200) {
+        makesCache = JSON.parse(xhr.responseText);
+      }
+    };
+    xhr.send();
+  }
+
+  function fetchModels(make, callback) {
+    if (modelsCache[make]) {
+      callback(modelsCache[make]);
+      return;
+    }
+    var xhr = new XMLHttpRequest();
+    xhr.open('GET', '/api/vehicle-models/' + encodeURIComponent(make), true);
+    xhr.onload = function() {
+      if (xhr.status === 200) {
+        modelsCache[make] = JSON.parse(xhr.responseText);
+        callback(modelsCache[make]);
+      }
+    };
+    xhr.send();
+  }
+
+  function setupSearch(inputId, dropdownId, hiddenId, otherId, options) {
+    var input = document.getElementById(inputId);
+    var dropdown = document.getElementById(dropdownId);
+    var hidden = document.getElementById(hiddenId);
+    var other = document.getElementById(otherId);
+    if (!input || !dropdown) return;
+
+    var items = options.items || [];
+    var onSelect = options.onSelect || function() {};
+    var onOther = options.onOther || function() {};
+
+    input.addEventListener('input', function() {
+      var val = this.value.toLowerCase().trim();
+      if (!val) { dropdown.innerHTML = ''; dropdown.classList.remove('open'); return; }
+
+      var filtered = items.filter(function(item) {
+        return item.toLowerCase().indexOf(val) > -1;
+      });
+
+      var html = '';
+      filtered.forEach(function(item) {
+        html += '<div class="vehicle-option" data-value="' + item.replace(/'/g, '&#39;') + '">' + item + '</div>';
+      });
+      html += '<div class="vehicle-option vehicle-option-other" data-value="__other__">+ Other</div>';
+      dropdown.innerHTML = html;
+      dropdown.classList.add('open');
+    });
+
+    dropdown.addEventListener('click', function(e) {
+      var opt = e.target.closest('.vehicle-option');
+      if (!opt) return;
+      var val = opt.dataset.value;
+      if (val === '__other__') {
+        input.value = '';
+        hidden.value = 'Other';
+        if (other) { other.style.display = 'block'; other.focus(); }
+        onOther();
+      } else {
+        input.value = val;
+        hidden.value = val;
+        if (other) { other.style.display = 'none'; other.value = ''; }
+        onSelect(val);
+      }
+      dropdown.classList.remove('open');
+    });
+
+    input.addEventListener('blur', function() {
+      setTimeout(function() { dropdown.classList.remove('open'); }, 200);
+    });
+
+    input.addEventListener('focus', function() {
+      if (this.value.trim()) {
+        this.dispatchEvent(new Event('input'));
+      }
+    });
+
+    return {
+      setItems: function(newItems) { items = newItems; },
+      getItems: function() { return items; }
+    };
+  }
+
+  // Initialize make search
+  var makeSearch = null;
+  var modelSearch = null;
+
+  function initMakeSearch() {
+    if (makeSearch) return;
+    fetchMakes();
+    makeSearch = setupSearch('f-make', 'f-make-dropdown', 'f-make-value', 'f-make-other', {
+      items: makesCache,
+      onSelect: function(val) {
+        var modelInput = document.getElementById('f-model');
+        var modelOther = document.getElementById('f-model-other');
+        if (modelInput) {
+          modelInput.disabled = false;
+          modelInput.placeholder = 'Search model...';
+          modelInput.value = '';
+        }
+        if (modelOther) { modelOther.style.display = 'none'; modelOther.value = ''; }
+        var modelHidden = document.getElementById('f-model-value');
+        if (modelHidden) modelHidden.value = '';
+        fetchModels(val, function(models) {
+          if (modelSearch) {
+            modelSearch.setItems(models);
+          }
+        });
+      },
+      onOther: function() {
+        var modelInput = document.getElementById('f-model');
+        if (modelInput) {
+          modelInput.disabled = false;
+          modelInput.placeholder = 'Type your vehicle model...';
+          modelInput.value = '';
+        }
+        var modelHidden = document.getElementById('f-model-value');
+        if (modelHidden) modelHidden.value = '';
+        var modelDropdown = document.getElementById('f-model-dropdown');
+        if (modelDropdown) { modelDropdown.innerHTML = ''; modelDropdown.classList.remove('open'); }
+        if (modelSearch) modelSearch.setItems([]);
+      }
+    });
+
+    // Re-fetch makes once loaded and update items
+    var checkMakes = setInterval(function() {
+      if (makesCache.length > 0) {
+        makeSearch.setItems(makesCache);
+        clearInterval(checkMakes);
+      }
+    }, 100);
+    setTimeout(function() { clearInterval(checkMakes); }, 5000);
+  }
+
+  function initModelSearch() {
+    modelSearch = setupSearch('f-model', 'f-model-dropdown', 'f-model-value', 'f-model-other', {
+      items: [],
+      onSelect: function() {},
+      onOther: function() {}
+    });
+  }
+
+  if (document.getElementById('f-make')) {
+    initMakeSearch();
+    initModelSearch();
+  }
+
+
+  // ═══════════════════════════════════════════════════════════
+  //  VEHICLE VALUE FORMATTING & VALIDATION
+  // ═══════════════════════════════════════════════════════════
+
+  var valueInput = document.getElementById('f-value');
+  if (valueInput) {
+    valueInput.addEventListener('input', function() {
+      var cursor = this.selectionStart;
+      var raw = this.value.replace(/[^0-9]/g, '');
+      if (raw === '') { this.value = ''; return; }
+      var formatted = parseInt(raw, 10).toLocaleString('en-KE');
+      var diff = formatted.length - this.value.length;
+      this.value = formatted;
+      this.setSelectionRange(cursor + diff, cursor + diff);
+
+      // Update premium preview
+      updatePremiumPreview();
+    });
+
+    valueInput.addEventListener('blur', function() {
+      var raw = this.value.replace(/,/g, '');
+      var val = parseInt(raw, 10) || 0;
+      var hint = document.getElementById('f-value-hint');
+      var err = document.getElementById('f-value-error');
+      if (!err) return;
+
+      if (val > 0 && (val < 800000 || val > 1300000)) {
+        err.textContent = 'Vehicle value must be between KES 800,000 and KES 1,300,000';
+        err.style.display = 'block';
+        this.style.borderColor = '#CC0000';
+        if (hint) hint.style.display = 'none';
+      } else {
+        err.style.display = 'none';
+        this.style.borderColor = '';
+        if (hint) hint.style.display = '';
+      }
+    });
+  }
+
+  // ── Update toggleOtherMake for new make input ──
+  var oldToggleMake = window.toggleOtherMake;
+  window.toggleOtherMake = function(sel) {
+    var box = document.getElementById('f-make-other');
+    if (!box) { if (oldToggleMake) oldToggleMake(sel); return; }
+    if (sel && sel.value === 'Other') {
+      box.style.display = 'block';
+      box.focus();
+    } else {
+      box.style.display = 'none';
+      box.value = '';
+    }
+  };
+})();

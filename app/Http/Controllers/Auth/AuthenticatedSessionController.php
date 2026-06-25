@@ -41,7 +41,9 @@ class AuthenticatedSessionController extends Controller
             // silently fail — weather will default to Nairobi
         }
 
-        // return redirect()->intended(RouteServiceProvider::HOME);
+        if ($redirectTo = $request->input('redirect_to')) {
+            return redirect($redirectTo);
+        }
 
         return redirect()->intended(route('dashboard', absolute: false));
     }

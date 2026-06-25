@@ -19,6 +19,7 @@
 <meta name="keywords"
       content="motor insurance Kenya, car insurance quote Kenya, comprehensive motor cover, GA Insurance, Britam motor, Sanlam Allianz, vehicle insurance Nairobi, third party insurance Kenya">
 <meta name="author" content="MIC Global Risks Insurance">
+<meta name="csrf-token" content="{{ csrf_token() }}">
 <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1">
 <meta name="theme-color" content="#0066B3">
 <link rel="canonical" href="https://www.micglobalrisks.com/motor-quote/">
@@ -107,28 +108,35 @@
 <!-- Stylesheet -->
 
 <link rel="stylesheet" href="{{ asset('css/home.css') }}">
+@vite(['resources/css/app.css'])
+<script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 
 </head>
 <body>
 
-<!-- NAV -->
-<nav>
-  <div class="nav-top">
-    <a href="#">About Us</a><a href="#">Contact Us</a><a href="#">Affiliates</a><a href="#">Careers</a>
-  </div>
-  <div class="nav-main">
-    <img src="{{ asset('images/MIC-Global-Risks_logo.png') }}" alt="MIC Global Risks" class="nav-logo">
-    <div class="nav-links">
-      <a href="#">Insurance</a>
-      <a href="#">About Us</a>
-      <a href="#">Contact Us</a>
-      <!-- <a href="#">Trusts</a> -->
-      <a href="#" class="active">Motor Quote</a>
-      <a href="#">Help</a>
-      <a href="#" class="nav-cta">Get a Quote</a>
-    </div>
-  </div>
-</nav>
+<x-public-header/>
+
+@inject('companyModel', 'App\Models\Company')
+@inject('settingModel', 'App\Models\Setting')
+@php
+    $__companies = $companies ?? $companyModel->active()->with('rates')->get();
+    $__compareAllLogo = $settingModel->getValue('compare_all_logo');
+    $__compareAllLogoUrl = $__compareAllLogo ? asset('storage/' . $__compareAllLogo) : asset('images/benchmarking.png');
+    $companyColors = ['#003087', '#0066B3', '#00205B', '#D0021B'];
+    $__companyData = $__companies->map(function ($c, $i) use ($companyColors) {
+        $rate = $c->rates->firstWhere('value_type', 'percentage');
+        return [
+            'slug' => $c->slug,
+            'name' => $c->name,
+            'logo' => $c->logoUrl(),
+            'rate' => $rate ? (float) $rate->percentage / 100 : 0,
+            'taxRate' => 0.005,
+            'color' => $companyColors[$i % count($companyColors)],
+            'prefix' => $c->getInitials(),
+            'logoFallback' => $c->logoUrl(),
+        ];
+    })->values();
+@endphp
 
 <!-- ══════════════════════════════════════════════
      HERO  –  drop-in replacement for <section class="hero">
@@ -230,7 +238,16 @@
   </div>
 </section>
 
-
+<!-- ── SEARCH RESULTS ── -->
+<section class="search-results-section" id="searchResults" style="display:none">
+  <div class="search-results-inner">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+      <h3 style="font-size:16px;font-weight:700;color:var(--text)">Search Results</h3>
+      <button onclick="closeSearchResults()" style="background:none;border:none;font-size:20px;cursor:pointer;color:var(--text-muted)">&times;</button>
+    </div>
+    <div id="searchResultsGrid" class="search-results-grid"></div>
+  </div>
+</section>
 
 <!-- ── QUOTE FORM ── -->
 <section class="section" style="background:#F9F9FF">
@@ -305,25 +322,21 @@
         </div>
         <div class="form-group">
           <label>Make of Vehicle <span class="req">*</span></label>
-          <select id="f-make" onchange="toggleOtherMake(this)">
-            <option value="">Select make...</option>
-            <option>Toyota</option>
-            <option>Honda</option>
-            <option>Volkswagen</option>
-            <option>Subaru</option>
-            <option>Nissan</option>
-            <option>Mitsubishi</option>
-            <option>Mazda</option>
-            <option>Mercedes-Benz</option>
-            <option>BMW</option>
-            <option>Ford</option>
-            <option>Other</option>
-          </select>
+          <div class="vehicle-search-wrap">
+            <input type="text" id="f-make" placeholder="Search vehicle make..." autocomplete="off">
+            <div class="vehicle-dropdown" id="f-make-dropdown"></div>
+          </div>
+          <input type="hidden" id="f-make-value" value="">
           <input type="text" id="f-make-other" placeholder="Type your vehicle make..." style="display:none;margin-top:8px">
         </div>
         <div class="form-group">
           <label>Model Name <span class="req">*</span></label>
-          <input type="text" id="f-model" placeholder="e.g. Vezel, Mark X, Premio">
+          <div class="vehicle-search-wrap">
+            <input type="text" id="f-model" placeholder="Select a make first..." autocomplete="off" disabled>
+            <div class="vehicle-dropdown" id="f-model-dropdown"></div>
+          </div>
+          <input type="hidden" id="f-model-value" value="">
+          <input type="text" id="f-model-other" placeholder="Type your vehicle model..." style="display:none;margin-top:8px">
         </div>
         <div class="form-group">
           <label>Body Type</label>
@@ -359,7 +372,9 @@
         </div>
         <div class="form-group">
           <label>Value of Vehicle (KES) <span class="req">*</span></label>
-          <input type="number" id="f-value" placeholder="Enter value of the vehicle..." oninput="updatePremiumPreview()">
+          <input type="text" id="f-value" placeholder="e.g. 800,000" autocomplete="off">
+          <div class="value-range-hint" id="f-value-hint">Enter between KES 800,000 and KES 1,300,000</div>
+          <div class="value-error" id="f-value-error" style="display:none"></div>
         </div>
       </div>
       <div class="btn-group">
@@ -381,55 +396,34 @@
         <div id="premium-preview" style="display:none">
           <div style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:14px">Click a card to open the full quotation</div>
           <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px">
- 
-            <!-- GA Insurance -->
-            <div class="preview-card" onclick="openQuotePage('GA')" style="background:white;border:1.5px solid var(--border);border-radius:var(--radius);padding:16px 14px;text-align:center;cursor:pointer;transition:box-shadow .2s,transform .15s">
+
+            @foreach ($__companyData as $cd)
+            <div class="preview-card" onclick="guestGuard(function(){ openQuotePage('{{ $cd['slug'] }}'); })" style="background:white;border:1.5px solid var(--border);border-radius:var(--radius);padding:16px 14px;text-align:center;cursor:pointer;transition:box-shadow .2s,transform .15s">
               <div style="height:36px;display:flex;align-items:center;justify-content:center;margin-bottom:8px">
-                <img src="img/GA Insurance.png" alt="GA Insurance" style="max-height:32px;max-width:90px;object-fit:contain" onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
-                <span style="display:none;font-size:11px;font-weight:800;color:var(--ga-blue)">GA INSURANCE</span>
+                @if ($cd['logo'])
+                <img src="{{ $cd['logo'] }}" alt="{{ $cd['name'] }}" style="max-height:32px;max-width:90px;object-fit:contain" onerror="fallbackLogo(this,'{{ $cd['slug'] }}')">
+                @endif
+                <span style="{{ $cd['logo'] ? 'display:none' : '' }};font-size:11px;font-weight:800;color:{{ $cd['color'] }}">{{ strtoupper($cd['name']) }}</span>
               </div>
-              <div style="font-size:11px;color:var(--ga-blue);font-weight:700;margin-bottom:6px">GA INSURANCE</div>
-              <div style="font-size:1.1rem;font-weight:700;color:var(--ga-blue)" id="prev-ga">—</div>
-              <div style="font-size:11px;color:var(--text-muted);margin-bottom:10px">@ 3.5%</div>
-              <div style="font-size:11px;font-weight:700;color:white;background:var(--ga-blue);border-radius:5px;padding:5px 0">View Quote ↗</div>
+              <div style="font-size:11px;color:{{ $cd['color'] }};font-weight:700;margin-bottom:6px">{{ strtoupper($cd['name']) }}</div>
+              <div style="font-size:1.1rem;font-weight:700;color:{{ $cd['color'] }}" id="prev-{{ $cd['slug'] }}">—</div>
+              <div style="font-size:11px;color:var(--text-muted);margin-bottom:10px">@ {{ $cd['rate'] * 100 }}%</div>
+              <div style="font-size:11px;font-weight:700;color:white;background:{{ $cd['color'] }};border-radius:5px;padding:5px 0">View Quote ↗</div>
             </div>
- 
-            <!-- Britam -->
-            <div class="preview-card" onclick="openQuotePage('BRITAM')" style="background:white;border:1.5px solid var(--border);border-radius:var(--radius);padding:16px 14px;text-align:center;cursor:pointer;transition:box-shadow .2s,transform .15s">
-              <div style="height:36px;display:flex;align-items:center;justify-content:center;margin-bottom:8px">
-                <img src="img/britam_logo.png" alt="Britam" style="max-height:32px;max-width:90px;object-fit:contain" onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
-                <span style="display:none;font-size:11px;font-weight:800;color:var(--britam-blue)">BRITAM</span>
-              </div>
-              <div style="font-size:11px;color:var(--britam-blue);font-weight:700;margin-bottom:6px">BRITAM</div>
-              <div style="font-size:1.1rem;font-weight:700;color:var(--britam-blue)" id="prev-britam">—</div>
-              <div style="font-size:11px;color:var(--text-muted);margin-bottom:10px">@ 4.1%</div>
-              <div style="font-size:11px;font-weight:700;color:white;background:var(--britam-blue);border-radius:5px;padding:5px 0">View Quote ↗</div>
-            </div>
- 
-            <!-- Sanlam Allianz -->
-            <div class="preview-card" onclick="openQuotePage('SANLAM')" style="background:white;border:1.5px solid var(--border);border-radius:var(--radius);padding:16px 14px;text-align:center;cursor:pointer;transition:box-shadow .2s,transform .15s">
-              <div style="height:36px;display:flex;align-items:center;justify-content:center;margin-bottom:8px">
-                <img src="img/Sanlam Allianz.png" alt="Sanlam Allianz" style="max-height:32px;max-width:90px;object-fit:contain" onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
-                <span style="display:none;font-size:11px;font-weight:800;color:var(--sanlam-blue)">SANLAM</span>
-              </div>
-              <div style="font-size:11px;color:var(--sanlam-blue);font-weight:700;margin-bottom:6px">SANLAM ALLIANZ</div>
-              <div style="font-size:1.1rem;font-weight:700;color:var(--sanlam-blue)" id="prev-sanlam">—</div>
-              <div style="font-size:11px;color:var(--text-muted);margin-bottom:10px">@ 4.5%</div>
-              <div style="font-size:11px;font-weight:700;color:white;background:var(--sanlam-blue);border-radius:5px;padding:5px 0">View Quote ↗</div>
-            </div>
- 
+            @endforeach
+
             <!-- Compare All -->
-            <div class="preview-card" onclick="openQuotePage('ALL')" style="background:white;border:1.5px solid #D0021B;border-radius:var(--radius);padding:16px 14px;text-align:center;cursor:pointer;transition:box-shadow .2s,transform .15s">
+            <div class="preview-card" onclick="guestGuard(function(){ openQuotePage('ALL'); })" style="background:white;border:1.5px solid #D0021B;border-radius:var(--radius);padding:16px 14px;text-align:center;cursor:pointer;transition:box-shadow .2s,transform .15s">
               <div style="height:36px;display:flex;align-items:center;justify-content:center;margin-bottom:8px">
-                <img src="img/benchmarking.png" alt="Compare All" style="max-height:32px;max-width:90px;object-fit:contain" onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
+                <img src="{{ $__compareAllLogoUrl }}" alt="Compare All" style="max-height:32px;max-width:90px;object-fit:contain" onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
                 <span style="display:none;font-size:18px">📊</span>
               </div>
               <div style="font-size:11px;color:#D0021B;font-weight:700;margin-bottom:6px">COMPARE ALL</div>
-              <div style="font-size:1.1rem;font-weight:700;color:#D0021B">3 Quotes</div>
+              <div style="font-size:1.1rem;font-weight:700;color:#D0021B">{{ $__companyData->count() }} Quotes</div>
               <div style="font-size:11px;color:var(--text-muted);margin-bottom:10px">All insurers</div>
               <div style="font-size:11px;font-weight:700;color:white;background:#D0021B;border-radius:5px;padding:5px 0">Compare ↗</div>
             </div>
- 
+
           </div>
         </div>
       </div>
@@ -448,34 +442,27 @@
   </div>
   <div class="company-cards">
 
-    <div class="company-card">
-      <div class="company-logo-box"><img src="img/GA Insurance.png" alt="GA Insurance" class="nav-logo"></div>
-      <div class="company-name">GA Insurance Ltd Kenya
+    @foreach ($__companyData as $cd)
+    <a href="{{ route('generate.quote', $cd['slug']) }}" class="company-card no-underline" style="cursor:pointer;display:block">
+      <div class="company-logo-box">
+        @if ($cd['logo'])
+        <img src="{{ $cd['logo'] }}" alt="{{ $cd['name'] }}" class="nav-logo" onerror="fallbackLogo(this,'{{ $cd['slug'] }}')">
+        @else
+        <span style="font-size:11px;font-weight:800;color:{{ $cd['color'] }}">{{ strtoupper($cd['name']) }}</span>
+        @endif
       </div>
-      <div class="company-rate">Rate: <strong>3.5%</strong> of vehicle value</div>
-      <button class="btn btn-primary" style="width:100%;justify-content:center;font-size:11px;padding:5px 10px" onclick="openIndividualQuote('GA')">Generate Quote ↗</button>
-    </div>
+      <div class="company-name">{{ $cd['name'] }}</div>
+      <div class="company-rate">Rate: <strong>{{ $cd['rate'] * 100 }}%</strong> of vehicle value</div>
+      <button class="btn btn-primary" style="width:100%;justify-content:center;font-size:11px;padding:5px 10px">Generate Quote ↗</button>
+    </a>
+    @endforeach
 
-    <div class="company-card" style="border-color:var(--blue)">
-      <div class="company-logo-box"><img src="img/britam_logo.png" alt="Britam"></div>
-      <div class="company-name">Britam General Insurance</div>
-      <div class="company-rate">Rate: <strong>4.1%</strong> of vehicle value</div>
-      <button class="btn btn-primary" style="width:100%;justify-content:center;font-size:11px;padding:5px 10px" onclick="openIndividualQuote('BRITAM')">Generate Quote ↗</button>
-    </div>
-
-    <div class="company-card">
-      <div class="company-logo-box"><img src="img/Sanlam-Allianz.svg" alt="Sanlam Allianz"></div>
-      <div class="company-name">Sanlam Allianz Insurance</div>
-      <div class="company-rate">Rate: <strong>4.5%</strong> of vehicle value</div>
-      <button class="btn btn-primary" style="width:100%;justify-content:center;font-size:11px;padding:5px 10px" onclick="openIndividualQuote('SANLAM')">Generate Quote ↗</button>
-    </div>
-
-    <div class="company-card">
-      <div class="company-logo-box"><img src="img/benchmarking.png" alt="Compare All"></div>
+    <a href="{{ route('generate.quote', 'compare-all') }}" class="company-card no-underline" style="cursor:pointer;display:block">
+      <div class="company-logo-box"><img src="{{ $__compareAllLogoUrl }}" alt="Compare All" onerror="this.style.display='none';this.nextElementSibling.style.display='block'"><span style="display:none;font-size:18px">📊</span></div>
       <div class="company-name">Compare All</div>
       <div class="company-rate">Compare rates from all insurers</div>
-      <button class="btn btn-primary" style="width:100%;justify-content:center;font-size:11px;padding:5px 10px" onclick="openIndividualQuote('COMPARE')">Generate Quote ↗</button>
-    </div>
+      <button class="btn btn-primary" style="width:100%;justify-content:center;font-size:11px;padding:5px 10px">Compare All ↗</button>
+    </a>
 
   </div>
 </section>
@@ -490,10 +477,13 @@
     <div class="regen-icon">🔍</div>
     <h3>Regenerate Your Quotation</h3>
     <p>Enter your unique quotation number (e.g. GA-2026/001, BRITAM-2026/003) to retrieve and regenerate your insurance quote.</p>
-    <div class="regen-input-row">
-      <input type="text" id="regenInput" placeholder="e.g. GA-2026/001">
-      <button class="btn btn-primary" onclick="regenQuote()">Retrieve →</button>
-    </div>
+    <form method="POST" action="{{ route('motor.lookup.quotation') }}" style="display:contents">
+      @csrf
+      <div class="regen-input-row">
+        <input type="text" name="number" id="regenInput" placeholder="e.g. GA-2026/001" required>
+        <button type="submit" class="btn btn-primary">Retrieve →</button>
+      </div>
+    </form>
     <div id="regen-result" style="margin-top:14px;font-size:13.5px;color:var(--text-muted)"></div>
   </div>
 </section>
@@ -603,51 +593,32 @@
 <!-- TOAST -->
 <div class="toast" id="toast"></div>
 
-<!-- FOOTER -->
-<footer class="site-footer">
-  <div class="footer-top-grid">
-    <div class="footer-brand-col">
-      <img src="{{ asset('images/MIC-Global-Risks_logo_no_background.png') }}" alt="MIC Global Risks" class="footer-brand-logo">
-      <p class="footer-brand-desc">Your trusted insurance intermediary — connecting you to Kenya's leading insurers with transparency, speed and expertise.</p>
-      <div class="footer-regions">
-        <span class="region-pill">Kenya</span>
-        <span class="region-pill">Uganda</span>
-        <span class="region-pill">Tanzania</span>
-      </div>
-    </div>
-    <div class="footer-nav-col">
-      <h5 class="footer-col-title">Company</h5>
-      <a href="#">About Us</a>
-      <a href="#">Our Team</a>
-      <a href="#">Careers</a>
-      <a href="#">Affiliates</a>
-    </div>
-    <div class="footer-nav-col">
-      <h5 class="footer-col-title">Services</h5>
-      <a href="#">Motor Insurance</a>
-      <a href="#">Property Cover</a>
-      <a href="#">Travel Insurance</a>
-      <a href="#">Medical Cover</a>
-    </div>
-    <div class="footer-nav-col">
-      <h5 class="footer-col-title">Contact</h5>
-      <a href="#">6th Floor, 9 West</a>
-      <a href="#">Ring Road Parklands</a>
-      <a href="#">Nairobi, Kenya</a>
-      <a href="#">www.micglobalrisks.com</a>
-    </div>
-  </div>
-  <div class="footer-bottom-bar">
-    <span>© 2026 MIC Global Risks Insurance (Kenya) Limited</span>
-    <div class="footer-bottom-links">
-      <a href="#">Privacy Policy</a>
-      <a href="#">Terms &amp; Conditions</a>
-      <a href="#">Contact Us</a>
-    </div>
-  </div>
-</footer>
+<x-auth-modal/>
 
+<x-public-footer/>
 
+<script>
+window.MIC_COMPANIES = @json($__companyData);
+window.MIC_GUEST = @json(auth()->guest());
+window.MIC_MODE = 'all';
+window.MIC_SELECTED_COMPANY = null;
+window.hardcodedLogos = @json(collect(\App\Models\Company::hardcodedLogoMap())->mapWithKeys(fn($p, $s) => [$s => asset($p)]));
+function guestGuard(callback) {
+  if (window.MIC_GUEST) { openAuthModal(); return; }
+  if (typeof callback === 'function') callback();
+}
+function fallbackLogo(el, slug) {
+  var hardcoded = (window.hardcodedLogos || {})[slug];
+  if (hardcoded && el.src !== hardcoded) {
+    el.onerror = function() { el.style.display = 'none'; if (el.nextElementSibling) el.nextElementSibling.style.display = 'block'; };
+    el.src = hardcoded;
+    return;
+  }
+  el.style.display = 'none';
+  if (el.nextElementSibling) el.nextElementSibling.style.display = 'block';
+}
+</script>
 <script src="{{ asset('js/home.js') }}"></script>
+@yield('scripts')
 </body>
 </html>

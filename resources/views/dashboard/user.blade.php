@@ -1,136 +1,681 @@
 <x-app-layout>
-    <div class="fade-in">
-        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+<div class="space-y-6 pt-10 fade-in">
+
+    {{-- ─── HERO ─────────────────────────────────────────────────────────── --}}
+    <div class="rounded-2xl bg-micblue px-6 py-7 shadow-sm">
+        <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
             <div>
-                <h1 class="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white">
-                    {{ $greeting }}, {{ auth()->user()->first_name ?: auth()->user()->name }}!
-                </h1>
-                <p class="text-gray-500 dark:text-gray-400 mt-1">Compare and generate insurance quotations</p>
+                <p class="text-[10px] font-semibold uppercase tracking-widest text-blue-400">Dashboard</p>
+                <h1 class="mt-0.5 text-xl font-bold text-white">{{ $greeting }}, {{ auth()->user()->first_name ?: auth()->user()->name }}!</h1>
+                <p class="mt-0.5 text-xs text-slate-400">Compare and generate insurance quotations</p>
             </div>
-
-            @if(isset($weather))
-                <div class="flex items-center gap-3 p-3 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
-                    <div class="text-3xl">
-                        @if(str_contains(strtolower($weather['condition']), 'clear'))
-                            ☀️
-                        @elseif(str_contains(strtolower($weather['condition']), 'cloud'))
-                            ☁️
-                        @elseif(str_contains(strtolower($weather['condition']), 'rain'))
-                            🌧️
-                        @elseif(str_contains(strtolower($weather['condition']), 'snow'))
-                            ❄️
-                        @else
-                            🌤️
-                        @endif
+            <div class="flex items-center gap-2 shrink-0">
+                @if(isset($weather))
+                    <div class="flex items-center gap-2 px-3 py-1.5 text-xs font-medium border border-white/20 text-white/80 rounded-lg">
+                        <span>
+                            @if(str_contains(strtolower($weather['condition']), 'clear')) ☀️
+                            @elseif(str_contains(strtolower($weather['condition']), 'cloud')) ☁️
+                            @elseif(str_contains(strtolower($weather['condition']), 'rain')) 🌧️
+                            @elseif(str_contains(strtolower($weather['condition']), 'snow')) ❄️
+                            @else 🌤️
+                            @endif
+                        </span>
+                        <span>{{ $weather['temperature'] }}°C</span>
                     </div>
-                    <div>
-                        <p class="text-lg font-semibold text-gray-900 dark:text-white">{{ $weather['temperature'] }}°C</p>
-                        <p class="text-xs text-gray-500 dark:text-gray-400 capitalize">{{ $weather['description'] }} in {{ $weather['city'] }}</p>
-                    </div>
-                </div>
-            @endif
+                @endif
+                <a href="{{ route('quotations.create') }}"
+                   class="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold bg-blue-500 hover:bg-blue-400 text-white rounded-lg transition">
+                    <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
+                    New Quotation
+                </a>
+            </div>
+        </div>
 
-            <a href="{{ route('quotations.create') }}" class="dashboard-btn dashboard-btn-primary">
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-                New Quotation
+        {{-- ─── KPI CARDS (4-COLUMN) ────────────────────────────────────── --}}
+        <div class="mt-6 grid grid-cols-2 md:grid-cols-4 gap-3">
+            <a href="{{ route('quotations.index') }}" class="kpi-card p-4 block hover:opacity-80 transition">
+                <div class="accent-bar"></div>
+                <p class="kpi-eyebrow">Total Quotations</p>
+                <p class="kpi-value mt-1">{{ $totalQuotations }}</p>
+                <span class="kpi-delta neutral mt-1.5 inline-block">All your quotes</span>
+            </a>
+            <a href="{{ route('quotations.index') }}" class="kpi-card p-4 block hover:opacity-80 transition">
+                <div class="accent-bar" style="background:linear-gradient(90deg,#34d399,#6ee7b7)"></div>
+                <p class="kpi-eyebrow">This Week</p>
+                <p class="kpi-value mt-1">{{ $weeklyQuotations }}</p>
+                <span class="kpi-delta up mt-1.5 inline-block">Generated this week</span>
+            </a>
+            <a href="{{ route('stickers.user-lookup') }}" class="kpi-card p-4 block hover:opacity-80 transition">
+                <div class="accent-bar" style="background:linear-gradient(90deg,#818cf8,#a5b4fc)"></div>
+                <p class="kpi-eyebrow">Stickers</p>
+                <p class="kpi-value mt-1">{{ $stickersCount }}</p>
+                <span class="kpi-delta up mt-1.5 inline-block">Certificates issued</span>
+            </a>
+            <a href="{{ route('profile.edit') }}" class="kpi-card p-4 block hover:opacity-80 transition">
+                <div class="accent-bar" style="background:linear-gradient(90deg,#fb7185,#fda4af)"></div>
+                <p class="kpi-eyebrow">Profile</p>
+                <p class="kpi-value mt-1">{{ $profileCompletion }}%</p>
+                <span class="kpi-delta up mt-1.5 inline-block">Profile complete</span>
             </a>
         </div>
 
-        <div class="dashboard-section-label">Overview</div>
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div class="dashboard-card">
-                <div class="flex items-center gap-3">
-                    <div class="p-3 rounded-lg" style="background:var(--blue-light)">
-                        <svg class="w-6 h-6" style="color:var(--blue)" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-                    </div>
-                    <div>
-                        <p class="dashboard-stat-label">Total Quotations</p>
-                        <p class="dashboard-stat-value">{{ $totalQuotations }}</p>
-                    </div>
+        {{-- ─── STATUS BAR (LAST QUOTATION) ─────────────────────────────── --}}
+        @if(isset($recentQuotation))
+            <div class="bg-blue-600 rounded-2xl px-5 py-4 flex items-center justify-between shadow-sm">
+                <div>
+                    <p class="text-[10px] font-semibold uppercase tracking-widest text-blue-200">Last Quotation</p>
+                    <p class="text-sm font-bold text-white mt-0.5">{{ $recentQuotation->quotation_number }}</p>
+                    <p class="text-xs text-blue-200">{{ $recentQuotation->car_make }} {{ $recentQuotation->car_model }} - {{ number_format($recentQuotation->total_premium, 2) }} KES</p>
+                </div>
+                <a href="{{ route('quotations.show', $recentQuotation) }}"
+                   class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-white/20 text-white rounded-lg hover:bg-white/30 transition">
+                    View Details
+                </a>
+            </div>
+        @endif
+    </div>
+
+    {{-- ─── TWO-COLUMN GRID ─────────────────────────────────────────────── --}}
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+        {{-- ─── LEFT COLUMN (2/3) ───────────────────────────────────────── --}}
+        <div class="lg:col-span-2 space-y-6">
+
+            {{-- A. QUOTATION TREND CHART ─────────────────────────────────── --}}
+            @if(isset($monthlyQuotations) && count($monthlyQuotations) > 0)
+            <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+                <div class="px-5 py-4 border-b border-gray-100 dark:border-gray-700">
+                    <h2 class="text-xs font-semibold text-gray-800 dark:text-white">Quotation Activity</h2>
+                    <p class="text-[10px] text-gray-400 mt-0.5">Monthly trend</p>
+                </div>
+                <div class="p-5">
+                    <canvas id="activityChart" height="200"></canvas>
                 </div>
             </div>
+            @endif
 
-            <div class="dashboard-card">
-                <div class="flex items-center gap-3">
-                    <div class="p-3 rounded-lg" style="background:var(--blue-light)">
-                        <svg class="w-6 h-6" style="color:var(--blue)" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
-                    </div>
+            {{-- B. RECENT QUOTATIONS TABLE ────────────────────────────────── --}}
+            <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+                <div class="px-5 py-4 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between">
                     <div>
-                        <p class="dashboard-stat-label">Today</p>
-                        <p class="dashboard-stat-value">{{ $todayQuotations }}</p>
+                        <h2 class="text-xs font-semibold text-gray-800 dark:text-white">Recent Quotations</h2>
+                        <p class="text-[10px] text-gray-400 mt-0.5">Your latest generated quotations</p>
                     </div>
+                    <a href="{{ route('quotations.index') }}" class="text-[10px] font-medium text-blue-600 hover:text-blue-800 dark:text-blue-400">View all</a>
                 </div>
-            </div>
-
-            <div class="dashboard-card">
-                <div class="flex items-center gap-3">
-                    <div class="p-3 rounded-lg" style="background:var(--blue-light)">
-                        <svg class="w-6 h-6" style="color:var(--blue)" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
-                    </div>
-                    <div>
-                        <p class="dashboard-stat-label">Companies</p>
-                        <p class="dashboard-stat-value">{{ $companies->count() }}</p>
-                    </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-xs">
+                        <thead>
+                            <tr class="bg-gray-50 dark:bg-gray-700/40">
+                                <th class="px-5 py-2.5 text-left font-semibold text-gray-400 uppercase tracking-wider text-[10px]">#</th>
+                                <th class="px-5 py-2.5 text-left font-semibold text-gray-400 uppercase tracking-wider text-[10px]">Company</th>
+                                <th class="px-5 py-2.5 text-left font-semibold text-gray-400 uppercase tracking-wider text-[10px]">Vehicle</th>
+                                <th class="px-5 py-2.5 text-right font-semibold text-gray-400 uppercase tracking-wider text-[10px]">Valuation</th>
+                                <th class="px-5 py-2.5 text-right font-semibold text-gray-400 uppercase tracking-wider text-[10px]">Premium</th>
+                                <th class="px-5 py-2.5 text-center font-semibold text-gray-400 uppercase tracking-wider text-[10px]">Status</th>
+                                <th class="px-5 py-2.5 text-right font-semibold text-gray-400 uppercase tracking-wider text-[10px]">Date</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
+                            @forelse($recentQuotations ?? $quotations->take(5) as $q)
+                                <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/30">
+                                    <td class="px-5 py-2.5">
+                                        <a href="{{ route('quotations.show', $q) }}" class="font-medium text-blue-600 hover:text-blue-800">{{ $q->quotation_number }}</a>
+                                    </td>
+                                    <td class="px-5 py-2.5 font-medium text-gray-800 dark:text-white">{{ $q->company->name }}</td>
+                                    <td class="px-5 py-2.5 text-gray-500 dark:text-gray-400">{{ $q->car_make }} {{ $q->car_model }} ({{ $q->car_year }})</td>
+                                    <td class="px-5 py-2.5 text-right text-gray-500 dark:text-gray-400">{{ number_format($q->car_valuation, 0) }}</td>
+                                    <td class="px-5 py-2.5 text-right font-medium text-gray-800 dark:text-white">{{ number_format($q->total_premium, 0) }}</td>
+                                    <td class="px-5 py-2.5 text-center">
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">
+                                            {{ ucfirst($q->status) }}
+                                        </span>
+                                    </td>
+                                    <td class="px-5 py-2.5 text-right text-gray-500 dark:text-gray-400">{{ $q->created_at->format('d M Y') }}</td>
+                                </tr>
+                            @empty
+                                <tr>
+                                    <td colspan="7" class="px-5 py-10 text-center text-xs text-gray-400">
+                                        No quotations yet.
+                                        <a href="{{ route('quotations.create') }}" class="text-blue-600 hover:underline ml-1">Generate your first quotation</a>
+                                    </td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>
 
-        @if(isset($recentQuotation))
-            <div class="dashboard-card" style="background:linear-gradient(135deg, var(--blue) 0%, #004f8c 100%);border:none;margin-top:16px">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <p class="text-sm" style="color:rgba(255,255,255,.8)">Last Quotation</p>
-                        <p class="text-lg font-bold text-white">{{ $recentQuotation->quotation_number }}</p>
-                        <p class="text-sm" style="color:rgba(255,255,255,.8)">{{ $recentQuotation->car_make }} {{ $recentQuotation->car_model }} - {{ number_format($recentQuotation->total_premium, 2) }} KES</p>
-                    </div>
-                    <a href="{{ route('quotations.show', $recentQuotation) }}" class="dashboard-btn" style="background:rgba(255,255,255,.2);color:#fff">
-                        View Details
+        {{-- ─── RIGHT COLUMN (1/3) ───────────────────────────────────────── --}}
+        <div class="space-y-6">
+
+            {{-- A. QUICK ACTIONS ─────────────────────────────────────────── --}}
+            <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+                <div class="px-5 py-4 border-b border-gray-100 dark:border-gray-700">
+                    <h2 class="text-xs font-semibold text-gray-800 dark:text-white">Quick Actions</h2>
+                    <p class="text-[10px] text-gray-400 mt-0.5">Frequently used tasks</p>
+                </div>
+                <div class="p-4 grid grid-cols-2 gap-2">
+                    <a href="{{ route('quotations.create') }}" class="flex items-center gap-2 px-3 py-2.5 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:border-blue-300 dark:hover:border-blue-700 transition no-underline">
+                        <div class="w-8 h-8 rounded-lg bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center shrink-0">
+                            <svg class="w-4 h-4 text-blue-600 dark:text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
+                        </div>
+                        <div>
+                            <div class="text-xs font-semibold text-gray-800 dark:text-white">New Quotation</div>
+                            <div class="text-[10px] text-gray-400">Generate a quote</div>
+                        </div>
+                    </a>
+                    <a href="{{ route('quotations.index') }}" class="flex items-center gap-2 px-3 py-2.5 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:border-blue-300 dark:hover:border-blue-700 transition no-underline">
+                        <div class="w-8 h-8 rounded-lg bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center shrink-0">
+                            <svg class="w-4 h-4 text-emerald-600 dark:text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+                        </div>
+                        <div>
+                            <div class="text-xs font-semibold text-gray-800 dark:text-white">My Quotations</div>
+                            <div class="text-[10px] text-gray-400">View all quotes</div>
+                        </div>
+                    </a>
+                    <a href="{{ route('stickers.user-lookup') }}" class="flex items-center gap-2 px-3 py-2.5 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:border-blue-300 dark:hover:border-blue-700 transition no-underline">
+                        <div class="w-8 h-8 rounded-lg bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center shrink-0">
+                            <svg class="w-4 h-4 text-amber-600 dark:text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z"/></svg>
+                        </div>
+                        <div>
+                            <div class="text-xs font-semibold text-gray-800 dark:text-white">Stickers</div>
+                            <div class="text-[10px] text-gray-400">View certificates</div>
+                        </div>
+                    </a>
+                    <a href="{{ route('profile.edit') }}" class="flex items-center gap-2 px-3 py-2.5 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:border-blue-300 dark:hover:border-blue-700 transition no-underline">
+                        <div class="w-8 h-8 rounded-lg bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center shrink-0">
+                            <svg class="w-4 h-4 text-purple-600 dark:text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+                        </div>
+                        <div>
+                            <div class="text-xs font-semibold text-gray-800 dark:text-white">My Profile</div>
+                            <div class="text-[10px] text-gray-400">Update details</div>
+                        </div>
                     </a>
                 </div>
             </div>
-        @endif
 
-        <div class="dashboard-section-label" style="margin-top:32px">Recent Quotations</div>
-        <div class="breakdown-table">
-            <div class="overflow-x-auto">
-                <table class="dashboard-table">
-                    <thead>
-                        <tr>
-                            <th>#</th>
-                            <th>Company</th>
-                            <th>Vehicle</th>
-                            <th>Valuation</th>
-                            <th>Premium</th>
-                            <th>Status</th>
-                            <th>Date</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @forelse($quotations as $q)
-                            <tr>
-                                <td>
-                                    <a href="{{ route('quotations.show', $q) }}" style="color:var(--blue);font-weight:600">{{ $q->quotation_number }}</a>
-                                </td>
-                                <td>{{ $q->company->name }}</td>
-                                <td>{{ $q->car_make }} {{ $q->car_model }} ({{ $q->car_year }})</td>
-                                <td>{{ number_format($q->car_valuation, 0) }}</td>
-                                <td>{{ number_format($q->total_premium, 0) }}</td>
-                                <td>
-                                    <span class="dashboard-badge dashboard-badge-active">{{ ucfirst($q->status) }}</span>
-                                </td>
-                                <td>{{ $q->created_at->format('d M Y') }}</td>
-                            </tr>
-                        @empty
-                            <tr>
-                                <td colspan="7" class="px-4 py-8 text-center" style="color:var(--text-muted)">
-                                    No quotations yet.
-                                    <a href="{{ route('quotations.create') }}" style="color:var(--blue);margin-left:4px">Generate your first quotation</a>
-                                </td>
-                            </tr>
-                        @endforelse
-                    </tbody>
-                </table>
+            {{-- B. ACTIVITY CALENDAR ─────────────────────────────────────── --}}
+            <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+                <div class="px-5 py-4 border-b border-gray-100 dark:border-gray-700">
+                    <h2 class="text-xs font-semibold text-gray-800 dark:text-white">Activity Calendar</h2>
+                    <p class="text-[10px] text-gray-400 mt-0.5">Quotation submission days</p>
+                </div>
+                <div class="p-4" x-data="{
+                    month: new Date().getMonth(),
+                    year: new Date().getFullYear(),
+                    selectedDate: null,
+                    selectedItems: [],
+                    quotationDates: {{ json_encode($quotationDates->map(fn($d, $key) => ['date' => $key, 'count' => $d['count']])->values()) }},
+                    daysInMonth() { return new Date(this.year, this.month + 1, 0).getDate(); },
+                    firstDay() { return new Date(this.year, this.month, 1).getDay(); },
+                    monthName() { return new Date(this.year, this.month).toLocaleString('default', { month: 'long' }); },
+                    hasQuotations(day) {
+                        const dateStr = this.year + '-' + String(this.month + 1).padStart(2, '0') + '-' + String(day).padStart(2, '0');
+                        return this.quotationDates.some(d => d.date === dateStr);
+                    },
+                    getQuotations(day) {
+                        const dateStr = this.year + '-' + String(this.month + 1).padStart(2, '0') + '-' + String(day).padStart(2, '0');
+                        return this.quotationDates.filter(d => d.date === dateStr);
+                    },
+                    prevMonth() {
+                        if (this.month === 0) { this.month = 11; this.year--; }
+                        else { this.month--; }
+                        this.selectedDate = null;
+                        this.selectedItems = [];
+                    },
+                    nextMonth() {
+                        if (this.month === 11) { this.month = 0; this.year++; }
+                        else { this.month++; }
+                        this.selectedDate = null;
+                        this.selectedItems = [];
+                    },
+                    selectDay(day) {
+                        if (this.hasQuotations(day)) {
+                            this.selectedDate = day;
+                            this.selectedItems = this.getQuotations(day);
+                        }
+                    }
+                }">
+                    <div class="flex items-center justify-between mb-3">
+                        <button @click="prevMonth()" class="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition">
+                            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
+                        </button>
+                        <span class="text-xs font-semibold text-gray-800 dark:text-white" x-text="monthName() + ' ' + year"></span>
+                        <button @click="nextMonth()" class="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition">
+                            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+                        </button>
+                    </div>
+
+                    <div class="grid grid-cols-7 gap-0.5 text-center mb-1">
+                        <template x-for="d in ['S','M','T','W','T','F','S']" :key="d">
+                            <div class="text-[10px] font-semibold text-gray-400 py-1" x-text="d"></div>
+                        </template>
+                    </div>
+
+                    <div class="grid grid-cols-7 gap-0.5 text-center">
+                        <template x-for="blank in firstDay()" :key="'b' + blank">
+                            <div></div>
+                        </template>
+                        <template x-for="day in daysInMonth()" :key="day">
+                            <div>
+                                <div @click="selectDay(day)"
+                                     :class="{
+                                         'bg-blue-600 text-white shadow-sm': selectedDate === day,
+                                         'hover:bg-gray-100 dark:hover:bg-gray-700/50': selectedDate !== day,
+                                         'cursor-pointer': hasQuotations(day),
+                                         'cursor-default': !hasQuotations(day)
+                                     }"
+                                     class="relative w-full aspect-square flex items-center justify-center text-[11px] font-medium text-gray-700 dark:text-gray-300 rounded-lg transition">
+                                    <span x-text="day"></span>
+                                    <template x-if="hasQuotations(day)">
+                                        <span class="absolute -top-0.5 -right-0.5 w-2 h-2 bg-emerald-500 rounded-full border border-white dark:border-gray-800"></span>
+                                    </template>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+
+                    <template x-if="selectedDate && selectedItems.length > 0">
+                        <div class="mt-3 pt-3 border-t border-gray-100 dark:border-gray-700">
+                            <p class="text-[10px] font-semibold text-gray-500 dark:text-gray-400 mb-2">
+                                Quotations on <span x-text="selectedDate + ' ' + monthName() + ' ' + year"></span>:
+                            </p>
+                            <ul class="space-y-1">
+                                <template x-for="(item, idx) in selectedItems" :key="idx">
+                                    <li class="text-[11px] text-blue-600 dark:text-blue-400 font-medium">
+                                        <span x-text="item.date + ' (' + item.count + ' quotation' + (item.count > 1 ? 's' : '') + ')'"></span>
+                                    </li>
+                                </template>
+                            </ul>
+                        </div>
+                    </template>
+                </div>
+            </div>
+
+            {{-- B. RECENT ACTIVITY ───────────────────────────────────────── --}}
+            <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+                <div class="px-5 py-4 border-b border-gray-100 dark:border-gray-700">
+                    <h2 class="text-xs font-semibold text-gray-800 dark:text-white">Recent Activity</h2>
+                    <p class="text-[10px] text-gray-400 mt-0.5">Your latest actions</p>
+                </div>
+                <div class="p-4 space-y-3">
+                    @forelse($recentActivities as $activity)
+                        @php
+                            $description = $activity->description ?? $activity['description'] ?? 'Action performed';
+                            $activityUserId = $activity->user_id ?? $activity['user_id'] ?? null;
+                            $timeAgo = $activity->created_at?->diffForHumans() ?? $activity['time_ago'] ?? '';
+
+                            if ($activityUserId && (int)$activityUserId === (int)auth()->id()) {
+                                $description = preg_replace('/^User\s+\S+(\s+\S+)?\s+/', 'You ', $description);
+                                $description = str_replace(['updated profile', 'logged in'], ['updated your profile', 'logged in'], $description);
+                            } else if ($activityUserId) {
+                                $activityUser = \App\Models\User::find($activityUserId);
+                                if ($activityUser) {
+                                    $description = preg_replace('/^User\s+\S+(\s+\S+)?/', $activityUser->name, $description);
+                                }
+                            }
+
+                            $descLower = strtolower($description);
+                            if (str_contains($descLower, 'quotation') || str_contains($descLower, 'quote')) {
+                                $bgColor = 'bg-blue-500';
+                                $iconColor = 'text-blue-100';
+                                $icon = 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z';
+                            } elseif (str_contains($descLower, 'login') || str_contains($descLower, 'register') || str_contains($descLower, 'sign')) {
+                                $bgColor = 'bg-emerald-500';
+                                $iconColor = 'text-emerald-100';
+                                $icon = 'M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1';
+                            } elseif (str_contains($descLower, 'profile') || str_contains($descLower, 'update')) {
+                                $bgColor = 'bg-purple-500';
+                                $iconColor = 'text-purple-100';
+                                $icon = 'M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z';
+                            } elseif (str_contains($descLower, 'sticker') || str_contains($descLower, 'certificate')) {
+                                $bgColor = 'bg-amber-500';
+                                $iconColor = 'text-amber-100';
+                                $icon = 'M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z';
+                            } else {
+                                $bgColor = 'bg-gray-500';
+                                $iconColor = 'text-gray-100';
+                                $icon = 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z';
+                            }
+                        @endphp
+                        <div class="flex items-start gap-3">
+                            <div class="w-7 h-7 rounded-full {{ $bgColor }} flex items-center justify-center shrink-0">
+                                <svg class="w-3.5 h-3.5 {{ $iconColor }} text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="{{ $icon }}"/>
+                                </svg>
+                            </div>
+                            <div class="min-w-0 flex-1">
+                                <p class="text-[11px] font-medium text-gray-800 dark:text-white leading-tight">{{ $description }}</p>
+                                <p class="text-[10px] text-gray-400 mt-0.5">{{ $timeAgo }}</p>
+                            </div>
+                        </div>
+                    @empty
+                        <div class="text-center py-6">
+                            <svg class="w-8 h-8 mx-auto text-gray-300 dark:text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                            <p class="text-xs text-gray-400 mt-2">No recent activity</p>
+                        </div>
+                    @endforelse
+                </div>
+            </div>
+
+            {{-- C. NOTIFICATIONS & ALERTS ─────────────────────────────────--}}
+            <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+                <div class="px-5 py-4 border-b border-gray-100 dark:border-gray-700">
+                    <h2 class="text-xs font-semibold text-gray-800 dark:text-white">Notifications &amp; Alerts</h2>
+                    <p class="text-[10px] text-gray-400 mt-0.5">Your latest updates</p>
+                </div>
+                <div class="p-4 space-y-3">
+                    @forelse($recentNotifications as $n)
+                        @php
+                            $notifMsg = $n->data['message'] ?? $n->data['action'] ?? 'Notification';
+                            $descLower = strtolower($notifMsg);
+                            if (str_contains($descLower, 'quotation') || str_contains($descLower, 'quote')) {
+                                $bgColor = 'bg-blue-500'; $icon = 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z';
+                            } elseif (str_contains($descLower, 'sticker') || str_contains($descLower, 'certificate')) {
+                                $bgColor = 'bg-amber-500'; $icon = 'M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z';
+                            } elseif (str_contains($descLower, 'status') || str_contains($descLower, 'change')) {
+                                $bgColor = 'bg-purple-500'; $icon = 'M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z';
+                            } else {
+                                $bgColor = 'bg-gray-500'; $icon = 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z';
+                            }
+                        @endphp
+                        <div class="flex items-start gap-3">
+                            <div class="w-7 h-7 rounded-full {{ $bgColor }} flex items-center justify-center shrink-0">
+                                <svg class="w-3.5 h-3.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="{{ $icon }}"/>
+                                </svg>
+                            </div>
+                            <div class="min-w-0 flex-1">
+                                <p class="text-[11px] font-medium text-gray-800 dark:text-white leading-tight">{{ $notifMsg }}</p>
+                                <p class="text-[10px] text-gray-400 mt-0.5">{{ $n->created_at->diffForHumans() }}</p>
+                            </div>
+                        </div>
+                    @empty
+                        <div class="text-center py-4">
+                            <svg class="w-6 h-6 mx-auto text-gray-300 dark:text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+                            </svg>
+                            <p class="text-xs text-gray-400 mt-2">No notifications yet</p>
+                        </div>
+                    @endforelse
+                </div>
+                @if($unreadCount > 0)
+                <div class="px-4 py-3 border-t border-gray-100 dark:border-gray-700">
+                    <a href="{{ route('notifications.index') }}" class="text-[10px] font-semibold text-blue-600 hover:text-blue-800 dark:text-blue-400">View all notifications →</a>
+                </div>
+                @endif
             </div>
         </div>
     </div>
+
+    {{-- ─── FULL-WIDTH QUOTATIONS TABLE ──────────────────────────────── --}}
+    <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+        <div class="px-5 py-4 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between">
+            <div>
+                <h2 class="text-xs font-semibold text-gray-800 dark:text-white">All Quotations</h2>
+                <p class="text-[10px] text-gray-400 mt-0.5">Complete list of your generated quotations</p>
+            </div>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="w-full text-xs">
+                <thead>
+                    <tr class="bg-gray-50 dark:bg-gray-700/40">
+                        <th class="px-5 py-2.5 text-left font-semibold text-gray-400 uppercase tracking-wider text-[10px]">#</th>
+                        <th class="px-5 py-2.5 text-left font-semibold text-gray-400 uppercase tracking-wider text-[10px]">Company</th>
+                        <th class="px-5 py-2.5 text-left font-semibold text-gray-400 uppercase tracking-wider text-[10px]">Vehicle</th>
+                        <th class="px-5 py-2.5 text-right font-semibold text-gray-400 uppercase tracking-wider text-[10px]">Valuation</th>
+                        <th class="px-5 py-2.5 text-right font-semibold text-gray-400 uppercase tracking-wider text-[10px]">Premium</th>
+                        <th class="px-5 py-2.5 text-center font-semibold text-gray-400 uppercase tracking-wider text-[10px]">Status</th>
+                        <th class="px-5 py-2.5 text-right font-semibold text-gray-400 uppercase tracking-wider text-[10px]">Date</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
+                    @forelse($quotations->take(5) as $q)
+                        <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/30">
+                            <td class="px-5 py-2.5">
+                                <a href="{{ route('quotations.show', $q) }}" class="font-medium text-blue-600 hover:text-blue-800">{{ $q->quotation_number }}</a>
+                            </td>
+                            <td class="px-5 py-2.5 font-medium text-gray-800 dark:text-white">{{ $q->company->name }}</td>
+                            <td class="px-5 py-2.5 text-gray-500 dark:text-gray-400">{{ $q->car_make }} {{ $q->car_model }} ({{ $q->car_year }})</td>
+                            <td class="px-5 py-2.5 text-right text-gray-500 dark:text-gray-400">{{ number_format($q->car_valuation, 0) }}</td>
+                            <td class="px-5 py-2.5 text-right font-medium text-gray-800 dark:text-white">{{ number_format($q->total_premium, 0) }}</td>
+                            <td class="px-5 py-2.5 text-center">
+                                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">
+                                    {{ ucfirst($q->status) }}
+                                </span>
+                            </td>
+                            <td class="px-5 py-2.5 text-right text-gray-500 dark:text-gray-400">{{ $q->created_at->format('d M Y') }}</td>
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="7" class="px-5 py-10 text-center text-xs text-gray-400">
+                                No quotations yet.
+                                <a href="{{ route('quotations.create') }}" class="text-blue-600 hover:underline ml-1">Generate your first quotation</a>
+                            </td>
+                        </tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {{-- ─── PENDING QUOTE SECTION ──────────────────────────────── --}}
+    <div id="pending-quote-section" class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden" style="display:none;">
+        <div class="px-5 py-4 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between">
+            <div>
+                <h2 class="text-xs font-semibold text-gray-800 dark:text-white">Pending Quote</h2>
+                <p class="text-[10px] text-gray-400 mt-0.5">Quote generated from your session</p>
+            </div>
+            <a id="pq-view-link" href="#" class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-blue-500 text-white rounded-lg hover:bg-blue-400 transition">
+                View Full Quote
+            </a>
+        </div>
+        <div class="p-4">
+            <div class="flex items-center gap-3 mb-3">
+                <div id="pq-company-color" class="w-3 h-3 rounded-full" style="background:#0066B3"></div>
+                <span id="pq-company" class="text-sm font-bold text-gray-800 dark:text-white">—</span>
+            </div>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
+                <div><span class="text-gray-400">Name</span><p id="pq-name" class="font-medium text-gray-800 dark:text-white">—</p></div>
+                <div><span class="text-gray-400">Vehicle</span><p id="pq-vehicle" class="font-medium text-gray-800 dark:text-white">—</p></div>
+                <div><span class="text-gray-400">Reg</span><p id="pq-reg" class="font-medium text-gray-800 dark:text-white">—</p></div>
+                <div><span class="text-gray-400">Value</span><p id="pq-value" class="font-medium text-gray-800 dark:text-white">—</p></div>
+                <div><span class="text-gray-400">Rate</span><p id="pq-rate" class="font-medium text-gray-800 dark:text-white">—</p></div>
+                <div><span class="text-gray-400">Premium</span><p id="pq-premium" class="font-medium text-gray-800 dark:text-white">—</p></div>
+                <div><span class="text-gray-400">Tax</span><p id="pq-tax" class="font-medium text-gray-800 dark:text-white">—</p></div>
+                <div><span class="text-gray-400">Total</span><p id="pq-total" class="font-medium text-gray-800 dark:text-white">—</p></div>
+            </div>
+            <div class="mt-3 pt-3 border-t border-gray-100 dark:border-gray-700 flex items-center justify-between">
+                <span class="text-[10px] text-gray-400">Quote #<span id="pq-quote-num">—</span></span>
+            </div>
+        </div>
+    </div>
+</div>
+
+@push('scripts')
+@php
+    $_companyColors = ['#003087', '#0066B3', '#00205B', '#D0021B'];
+    $_idx = 0;
+    $_companyData = $companies->map(function($c) use ($_companyColors, &$_idx) {
+        $rate = $c->rates->firstWhere('value_type', 'percentage');
+        return [
+            'slug' => $c->slug,
+            'name' => $c->name,
+            'rate' => $rate ? (float) $rate->percentage / 100 : 0,
+            'taxRate' => 0.005,
+            'color' => $_companyColors[$_idx++ % 4],
+            'prefix' => $c->getInitials(),
+        ];
+    })->values();
+@endphp
+<script>
+window.MIC_COMPANIES = @json($_companyData);
+</script>
+<script>
+(function(){
+  var pendingCompany = sessionStorage.getItem('pending_quote_company');
+  var pendingData = sessionStorage.getItem('micQuoteData');
+  if (pendingCompany && pendingData) {
+    sessionStorage.removeItem('pending_quote_company');
+    try {
+      var data = JSON.parse(pendingData);
+      var company = (window.MIC_COMPANIES || []).find(function(c) { return c.slug === pendingCompany; });
+      if (company) {
+        var premium = (data.value || 0) * company.rate;
+        var tax = premium * company.taxRate;
+        var total = premium + tax;
+        var fmt = function(n) { return 'KES ' + Number(n).toLocaleString('en-KE', {minimumFractionDigits:0, maximumFractionDigits:0}); };
+        var quoteNum = company.prefix + '-' + new Date().getFullYear() + '/' + String(Math.floor(Math.random()*9000)+1000);
+        var name = [data.salutation, data.firstName, data.lastName].filter(Boolean).join(' ');
+        document.getElementById('pending-quote-section').style.display = 'block';
+        document.getElementById('pq-company').textContent = company.name;
+        document.getElementById('pq-company-color').style.background = company.color;
+        document.getElementById('pq-name').textContent = name || '—';
+        document.getElementById('pq-vehicle').textContent = ((data.make || '') + ' ' + (data.model || '')).trim() || '—';
+        document.getElementById('pq-reg').textContent = data.reg || '—';
+        document.getElementById('pq-value').textContent = fmt(data.value);
+        document.getElementById('pq-premium').textContent = fmt(premium);
+        document.getElementById('pq-tax').textContent = fmt(tax);
+        document.getElementById('pq-total').textContent = fmt(total);
+        document.getElementById('pq-rate').textContent = (company.rate * 100).toFixed(1) + '%';
+        document.getElementById('pq-quote-num').textContent = quoteNum;
+        document.getElementById('pq-view-link').href = '/quotation/' + pendingCompany;
+        sessionStorage.setItem('micQuoteData', JSON.stringify(data));
+      }
+    } catch(e) { console.warn('Could not render pending quote:', e); }
+  }
+})();
+</script>
+<script>
+// ─── Notification Sound ─────────────────────────────────────────────
+(function() {
+    let lastCount = {{ $unreadCount ?? 0 }};
+    var audioCtx = null;
+
+    function playChime() {
+        try {
+            if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            var osc = audioCtx.createOscillator();
+            var gain = audioCtx.createGain();
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.frequency.setValueAtTime(880, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(1320, audioCtx.currentTime + 0.1);
+            gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.3);
+            osc.start(audioCtx.currentTime);
+            osc.stop(audioCtx.currentTime + 0.3);
+        } catch(e) { /* silent fallback */ }
+    }
+
+    document.addEventListener('notifications-updated', function(e) {
+        var newCount = e.detail && typeof e.detail.count !== 'undefined' ? e.detail.count : 0;
+        if (newCount > lastCount) {
+            playChime();
+        }
+        lastCount = newCount;
+    });
+})();
+
+// ─── Page-load sound: chime if new unread since last visit ─────────
+(function() {
+    var currentCount = {{ auth()->user()->unreadNotifications()->count() }};
+    var stored = sessionStorage.getItem('mic_unread_count');
+    if (stored !== null && parseInt(stored) < currentCount) {
+        try {
+            var audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            var osc = audioCtx.createOscillator();
+            var gain = audioCtx.createGain();
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.frequency.setValueAtTime(880, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(1320, audioCtx.currentTime + 0.1);
+            gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.3);
+            osc.start(audioCtx.currentTime);
+            osc.stop(audioCtx.currentTime + 0.3);
+        } catch(e) {}
+    }
+    sessionStorage.setItem('mic_unread_count', currentCount);
+})();
+
+document.addEventListener('DOMContentLoaded', function () {
+    @if(isset($monthlyQuotations) && count($monthlyQuotations) > 0)
+    var ctx = document.getElementById('activityChart');
+    if (ctx) {
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: {!! json_encode(collect($monthlyQuotations)->pluck('month')->toArray()) !!},
+                datasets: [{
+                    label: 'Quotations',
+                    data: {!! json_encode(collect($monthlyQuotations)->pluck('total')->toArray()) !!},
+                    borderColor: '#3b82f6',
+                    backgroundColor: 'rgba(59,130,246,0.08)',
+                    fill: true,
+                    tension: 0.4,
+                    pointBackgroundColor: '#3b82f6',
+                    pointBorderColor: '#fff',
+                    pointBorderWidth: 2,
+                    pointRadius: 4,
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        grid: { color: 'rgba(0,0,0,0.04)' },
+                        ticks: { color: '#9ca3af', font: { size: 10 } }
+                    },
+                    x: {
+                        grid: { display: false },
+                        ticks: { color: '#9ca3af', font: { size: 10 } }
+                    }
+                }
+            }
+        });
+    }
+    @endif
+
+    // ─── Session Storage: Draft recovery for /quotations/create ─────
+    var createForm = document.getElementById('quotation-create-form');
+    if (createForm) {
+        var inputs = createForm.querySelectorAll('input, select, textarea');
+        var savedData = sessionStorage.getItem('quotation_draft');
+        if (savedData) {
+            var parsed = JSON.parse(savedData);
+            var confirmed = confirm('You have unsaved quotation data from a previous session. Would you like to restore it?');
+            if (confirmed) {
+                for (var key in parsed) {
+                    var input = createForm.querySelector('[name="' + key + '"]');
+                    if (input) input.value = parsed[key];
+                }
+            } else {
+                sessionStorage.removeItem('quotation_draft');
+            }
+        }
+        inputs.forEach(function (el) {
+            el.addEventListener('change', function () {
+                var data = {};
+                inputs.forEach(function (inp) {
+                    if (inp.name) data[inp.name] = inp.value;
+                });
+                sessionStorage.setItem('quotation_draft', JSON.stringify(data));
+            });
+        });
+        createForm.addEventListener('submit', function () {
+            sessionStorage.removeItem('quotation_draft');
+        });
+    }
+});
+</script>
+@endpush
 </x-app-layout>

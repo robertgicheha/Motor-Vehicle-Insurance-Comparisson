@@ -3,10 +3,13 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\ChangeRequest;
 use App\Models\Company;
 use App\Models\Rate;
+use App\Notifications\NewChangeRequest;
 use App\Services\AuditService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 
@@ -29,18 +32,44 @@ class CompanyController extends Controller
             'name' => 'required|string|unique:companies,name',
             'description' => 'nullable|string',
             'is_active' => 'boolean',
+            'logo' => 'nullable|image|mimes:png,jpg,jpeg,svg,webp|max:2048',
         ]);
 
         if ($validator->fails()) {
             return back()->withErrors($validator)->withInput();
         }
 
-        $company = Company::create([
+        $data = [
             'name' => $request->name,
             'slug' => Str::slug($request->name),
             'description' => $request->description,
             'is_active' => $request->boolean('is_active', true),
-        ]);
+        ];
+
+        if (auth()->user()->hasRole('admin')) {
+            if ($request->hasFile('logo')) {
+                $data['logo'] = 'pending-upload';
+            }
+            $changeRequest = ChangeRequest::create([
+                'user_id' => auth()->id(),
+                'type' => 'company',
+                'action' => 'create',
+                'data' => $data,
+                'reason' => $request->input('reason', ''),
+            ]);
+            $superAdmins = \App\Models\User::role('super-admin')->get();
+            foreach ($superAdmins as $sa) {
+                $sa->notify(new NewChangeRequest($changeRequest));
+            }
+            AuditService::activity('company_create_requested', "Company {$data['name']} creation requested by " . auth()->user()->name);
+            return redirect()->route('admin.companies.index')->with('info', 'Your request to create a new company has been sent to the super-admin for approval.');
+        }
+
+        if ($request->hasFile('logo')) {
+            $data['logo'] = $request->file('logo')->store('logos', 'public');
+        }
+
+        $company = Company::create($data);
 
         AuditService::log('create', 'Company', $company->id, null, $company->toArray());
         AuditService::activity('company_created', "Company {$company->name} created");
@@ -59,25 +88,77 @@ class CompanyController extends Controller
             'name' => 'required|string|unique:companies,name,' . $company->id,
             'description' => 'nullable|string',
             'is_active' => 'boolean',
+            'logo' => 'nullable|image|mimes:png,jpg,jpeg,svg,webp|max:2048',
         ]);
 
         if ($validator->fails()) {
             return back()->withErrors($validator)->withInput();
         }
 
-        $oldData = $company->toArray();
-        $company->update([
+        $data = [
             'name' => $request->name,
             'slug' => Str::slug($request->name),
             'description' => $request->description,
             'is_active' => $request->boolean('is_active', true),
-        ]);
+        ];
+
+        if (auth()->user()->hasRole('admin')) {
+            $changeRequest = ChangeRequest::create([
+                'user_id' => auth()->id(),
+                'type' => 'company',
+                'action' => 'update',
+                'data' => array_merge($data, ['company_id' => $company->id, 'company_name' => $company->name]),
+                'reason' => $request->input('reason', ''),
+            ]);
+            $superAdmins = \App\Models\User::role('super-admin')->get();
+            foreach ($superAdmins as $sa) {
+                $sa->notify(new NewChangeRequest($changeRequest));
+            }
+            AuditService::activity('company_update_requested', "Company {$company->name} update requested by " . auth()->user()->name);
+            return redirect()->route('admin.companies.index')->with('info', 'Your update request has been sent to the super-admin for approval.');
+        }
+
+        if ($request->hasFile('logo')) {
+            if ($company->logo) {
+                Storage::disk('public')->delete($company->logo);
+            }
+            $data['logo'] = $request->file('logo')->store('logos', 'public');
+        }
+
+        $oldData = $company->toArray();
+        $company->update($data);
 
         AuditService::log('update', 'Company', $company->id, $oldData, $company->toArray());
         AuditService::activity('company_updated', "Company {$company->name} updated");
 
         return redirect()->route('admin.companies.index')->with('success', 'Company updated.');
     }
+
+    public function toggleStatus(Company $company)
+    {
+        if (auth()->user()->hasRole('admin')) {
+            $changeRequest = ChangeRequest::create([
+                'user_id' => auth()->id(),
+                'type' => 'company',
+                'action' => $company->is_active ? 'deactivate' : 'activate',
+                'data' => ['company_id' => $company->id, 'company_name' => $company->name, 'is_active' => !$company->is_active],
+                'reason' => '',
+            ]);
+            $superAdmins = \App\Models\User::role('super-admin')->get();
+            foreach ($superAdmins as $sa) {
+                $sa->notify(new NewChangeRequest($changeRequest));
+            }
+            AuditService::activity('company_toggle_requested', "Company {$company->name} status change requested by " . auth()->user()->name);
+            return back()->with('info', 'Your request to change the company status has been sent to the super-admin for approval.');
+        }
+
+        $company->update(['is_active' => !$company->is_active]);
+        AuditService::log($company->is_active ? 'activate' : 'deactivate', 'Company', $company->id);
+        AuditService::activity('company_toggled', "Company {$company->name} " . ($company->is_active ? 'activated' : 'deactivated'));
+        return back()->with('success', 'Company status updated.');
+    }
+
+    // --- Rate Management ---
 
     public function rates(Company $company)
     {
@@ -101,10 +182,30 @@ class CompanyController extends Controller
             return back()->withErrors($validator);
         }
 
+        if (auth()->user()->hasRole('admin')) {
+            $changeData = $request->only(['value', 'percentage', 'min_value', 'max_value', 'min_premium', 'notes', 'value_type']);
+            $changeData['rate_id'] = $rate->id;
+            $changeData['rate_name'] = $rate->item_name;
+            $changeData['company_id'] = $company->id;
+            $changeData['company_name'] = $company->name;
+
+            $changeRequest = ChangeRequest::create([
+                'user_id' => auth()->id(),
+                'type' => 'rate',
+                'action' => 'update',
+                'data' => $changeData,
+                'reason' => $request->input('reason', ''),
+            ]);
+            $superAdmins = \App\Models\User::role('super-admin')->get();
+            foreach ($superAdmins as $sa) {
+                $sa->notify(new NewChangeRequest($changeRequest));
+            }
+            AuditService::activity('rate_update_requested', "Rate {$rate->item_name} update for {$company->name} requested by " . auth()->user()->name);
+            return back()->with('info', 'Your rate update request has been sent to the super-admin for approval.');
+        }
+
         $rate->update($request->only(['value', 'percentage', 'min_value', 'max_value', 'min_premium', 'notes', 'value_type']));
-
         AuditService::activity('rate_updated', "Rate {$rate->item_name} updated for {$company->name}");
-
         return back()->with('success', "{$rate->item_name} rate updated.");
     }
 
@@ -123,23 +224,51 @@ class CompanyController extends Controller
             return back()->withErrors($validator);
         }
 
+        if (auth()->user()->hasRole('admin')) {
+            $changeData = $request->only(['category', 'item_name', 'value', 'value_type', 'percentage', 'min_value']);
+            $changeData['company_id'] = $company->id;
+            $changeData['company_name'] = $company->name;
+
+            $changeRequest = ChangeRequest::create([
+                'user_id' => auth()->id(),
+                'type' => 'rate',
+                'action' => 'create',
+                'data' => $changeData,
+                'reason' => $request->input('reason', ''),
+            ]);
+            $superAdmins = \App\Models\User::role('super-admin')->get();
+            foreach ($superAdmins as $sa) {
+                $sa->notify(new NewChangeRequest($changeRequest));
+            }
+            AuditService::activity('rate_create_requested', "New rate for {$company->name} requested by " . auth()->user()->name);
+            return back()->with('info', 'Your rate creation request has been sent to the super-admin for approval.');
+        }
+
         $company->rates()->create($request->all());
         AuditService::activity('rate_created', "Rate {$request->item_name} added for {$company->name}");
-
         return back()->with('success', 'Rate added.');
     }
 
     public function destroyRate(Company $company, Rate $rate)
     {
+        if (auth()->user()->hasRole('admin')) {
+            $changeRequest = ChangeRequest::create([
+                'user_id' => auth()->id(),
+                'type' => 'rate',
+                'action' => 'delete',
+                'data' => ['rate_id' => $rate->id, 'rate_name' => $rate->item_name, 'company_id' => $company->id, 'company_name' => $company->name],
+                'reason' => '',
+            ]);
+            $superAdmins = \App\Models\User::role('super-admin')->get();
+            foreach ($superAdmins as $sa) {
+                $sa->notify(new NewChangeRequest($changeRequest));
+            }
+            AuditService::activity('rate_delete_requested', "Rate {$rate->item_name} deletion for {$company->name} requested by " . auth()->user()->name);
+            return back()->with('info', 'Your rate deletion request has been sent to the super-admin for approval.');
+        }
+
         $rate->delete();
         AuditService::activity('rate_deleted', "Rate {$rate->item_name} deleted for {$company->name}");
         return back()->with('success', 'Rate deleted.');
-    }
-
-    public function toggleStatus(Company $company)
-    {
-        $company->update(['is_active' => !$company->is_active]);
-        AuditService::activity('company_toggled', "Company {$company->name} " . ($company->is_active ? 'activated' : 'deactivated'));
-        return back()->with('success', 'Company status updated.');
     }
 }

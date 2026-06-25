@@ -4,12 +4,16 @@ namespace App\Http\Controllers;
 
 use App\Mail\QuotationMail;
 use App\Models\Quotation;
+use App\Models\QuoteSession;
 use App\Models\Company;
 use App\Models\Rate;
+use App\Models\User;
+use App\Notifications\QuotationStatusChanged;
 use App\Services\PremiumCalculationService;
 use App\Services\AuditService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\DB;
@@ -23,10 +27,62 @@ class QuotationController extends Controller
         $this->premiumCalculator = $premiumCalculator;
     }
 
+    public function tracker()
+    {
+        $user = auth()->user();
+        $isAdmin = $user->hasRole('super-admin') || $user->hasRole('admin');
+
+        $query = Quotation::with(['user', 'company'])
+            ->when(!$isAdmin, fn($q) => $q->where('user_id', $user->id))
+            ->latest();
+
+        $quotations = $query->paginate(20);
+
+        $stats = [
+            'total' => (clone $query)->count(),
+            'active' => (clone $query)->where('status', 'active')->count(),
+            'pending' => (clone $query)->where('status', 'pending')->count(),
+            'expired' => (clone $query)->where('status', 'expired')->count(),
+            'processing' => (clone $query)->where('status', 'processing')->count(),
+            'completed' => (clone $query)->where('status', 'completed')->count(),
+            'closed' => (clone $query)->where('status', 'closed')->count(),
+            'insuring_sticker' => (clone $query)->where('status', 'insuring_sticker')->count(),
+            'draft' => (clone $query)->where('status', 'draft')->count(),
+            'generated' => (clone $query)->where('status', 'generated')->count(),
+        ];
+
+        return view('quotations.tracker', compact('quotations', 'stats'));
+    }
+
+    public function updateStatus(Request $request, Quotation $quotation)
+    {
+        $this->authorizeView($quotation);
+
+        $request->validate(['status' => 'required|string']);
+
+        $oldStatus = $quotation->status;
+        $quotation->update(['status' => $request->status]);
+
+        AuditService::log('update', 'Quotation', $quotation->id, ['status' => $oldStatus], ['status' => $request->status]);
+        AuditService::activity('quotation_status_changed', "Quotation {$quotation->quotation_number} changed from {$oldStatus} to {$request->status}");
+
+        $admins = User::role(['super-admin', 'admin'])->get();
+        foreach ($admins as $admin) {
+            $admin->notify(new QuotationStatusChanged($quotation, $oldStatus, $request->status));
+        }
+        try {
+            $quotation->user->notify(new QuotationStatusChanged($quotation, $oldStatus, $request->status));
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::warning("Failed to notify quotation owner: " . $e->getMessage());
+        }
+
+        return back()->with('success', "Quotation status updated to {$request->status}.");
+    }
+
     public function index(Request $request)
-        {
-            $user = auth()->user();
-            $isAdmin = $user->hasRole('super-admin') || $user->hasRole('admin');
+    {
+        $user = auth()->user();
+        $isAdmin = $user->hasRole('super-admin') || $user->hasRole('admin');
         
             // ── Base query (scope to own user unless admin) ──────────
             $query = Quotation::with(['user', 'company'])
@@ -80,12 +136,34 @@ class QuotationController extends Controller
 
     public function create()
     {
+        $user = auth()->user();
+        $isAdmin = $user->hasRole('super-admin') || $user->hasRole('admin');
+
+        QuoteSession::updateOrCreate(
+            ['user_id' => $user->id, 'status' => 'started'],
+            [
+                'started_at' => now(),
+                'expires_at' => now()->addHours(2),
+            ]
+        );
+
+        $signedToken = Crypt::encrypt([
+            'user_id' => auth()->id(),
+            'expires' => now()->addHours(2)->timestamp,
+        ]);
         $companies = Company::active()->get();
         $rates = Rate::whereIn('company_id', $companies->pluck('id'))
             ->where('category', 'Cover Limits')
             ->get()
             ->groupBy('company_id');
-        return view('quotations.create', compact('companies', 'rates'));
+
+        $users = $isAdmin ? User::orderBy('name')->get(['id', 'name', 'email', 'first_name', 'last_name', 'mobile']) : collect();
+        $targetUser = null;
+        if ($isAdmin && request('on_behalf_of')) {
+            $targetUser = User::find(request('on_behalf_of'));
+        }
+
+        return view('quotations.create', compact('companies', 'rates', 'signedToken', 'users', 'targetUser'));
     }
 
     public function calculate(Request $request)
@@ -123,6 +201,19 @@ class QuotationController extends Controller
 
     public function store(Request $request)
     {
+        try {
+            $token = Crypt::decrypt($request->input('_signed'));
+            if (!isset($token['user_id']) || $token['user_id'] !== (int) auth()->id() || !isset($token['expires']) || $token['expires'] < now()->timestamp) {
+                return back()->withErrors(['_signed' => 'Invalid or expired form token. Please try again.'])->withInput();
+            }
+        } catch (\Exception $e) {
+            return back()->withErrors(['_signed' => 'Invalid form token. Please try again.'])->withInput();
+        }
+
+        QuoteSession::where('user_id', auth()->id())
+            ->where('status', 'started')
+            ->update(['status' => 'completed', 'completed_at' => now()]);
+
         $validator = Validator::make($request->all(), [
             'car_make' => 'required|string|max:255',
             'car_model' => 'required|string|max:255',
@@ -135,17 +226,24 @@ class QuotationController extends Controller
             'total_premium' => 'required|numeric',
             'excess_own_damage' => 'nullable|numeric',
             'excess_theft' => 'nullable|numeric',
+            'on_behalf_of' => 'nullable|exists:users,id',
         ]);
 
         if ($validator->fails()) {
             return back()->withErrors($validator)->withInput();
         }
 
-        $quotation = DB::transaction(function () use ($request) {
+        $isAdmin = auth()->user()->hasRole('super-admin') || auth()->user()->hasRole('admin');
+        $targetUserId = $isAdmin && $request->filled('on_behalf_of')
+            ? (int) $request->on_behalf_of
+            : auth()->id();
+
+        $company = \App\Models\Company::find($request->company_id);
+        $quotation = DB::transaction(function () use ($request, $company, $targetUserId) {
             $quotation = Quotation::create([
-                'user_id' => auth()->id(),
+                'user_id' => $targetUserId,
                 'company_id' => $request->company_id,
-                'quotation_number' => Quotation::generateNumber(),
+                'quotation_number' => Quotation::generateNumber($company),
                 'car_make' => $request->car_make,
                 'car_model' => $request->car_model,
                 'car_year' => $request->car_year,
@@ -156,7 +254,7 @@ class QuotationController extends Controller
                 'total_premium' => $request->total_premium,
                 'excess_own_damage' => $request->excess_own_damage,
                 'excess_theft' => $request->excess_theft,
-                'status' => 'generated',
+                'status' => 'processing',
                 'breakdown' => $request->breakdown ?? [],
             ]);
 
@@ -166,13 +264,23 @@ class QuotationController extends Controller
             return $quotation;
         });
 
-        $user = auth()->user();
-        if ($user && $user->email) {
+        $targetUser = User::find($targetUserId);
+        if ($targetUser && $targetUser->email) {
             try {
-                Mail::to($user->email)->send(new QuotationMail($quotation));
+                Mail::to($targetUser->email)->send(new QuotationMail($quotation));
             } catch (\Exception $e) {
                 \Illuminate\Support\Facades\Log::warning("Failed to send quotation email: " . $e->getMessage());
             }
+        }
+
+        $admins = User::role(['super-admin', 'admin'])->get();
+        foreach ($admins as $admin) {
+            $admin->notify(new QuotationStatusChanged($quotation, 'new', 'processing'));
+        }
+        try {
+            $quotation->user->notify(new QuotationStatusChanged($quotation, 'new', 'processing'));
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::warning("Failed to notify quotation owner: " . $e->getMessage());
         }
 
         return redirect()->route('quotations.show', $quotation)
@@ -222,6 +330,17 @@ class QuotationController extends Controller
 
     public function preview(Request $request)
     {
-        return view('quotations.preview');
+        $companies = Company::active()->with('rates')->get()->map(function ($c) {
+            $rate = $c->rates->firstWhere('value_type', 'percentage');
+            return [
+                'id' => $c->id,
+                'slug' => $c->slug,
+                'name' => $c->name,
+                'rate' => $rate ? (float) $rate->percentage / 100 : 0,
+                'taxRate' => 0.005,
+            ];
+        })->values();
+
+        return view('quotations.preview', compact('companies'));
     }
 }

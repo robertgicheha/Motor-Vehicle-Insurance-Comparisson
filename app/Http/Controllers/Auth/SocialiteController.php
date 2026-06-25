@@ -44,8 +44,14 @@ class SocialiteController extends Controller
                 'avatar' => $googleUser->avatar,
                 'password' => Hash::make(str()->random(16)),
                 'is_active' => true,
+                'email_verified_at' => now(),
             ]);
             $user->assignRole('user');
+
+            $admins = User::role(['super-admin', 'admin'])->get();
+            if ($admins->isNotEmpty()) {
+                \Illuminate\Support\Facades\Notification::send($admins, new \App\Notifications\UserRegistered($user));
+            }
         }
 
         AuditService::log('login', 'User', $user->id, null, ['method' => 'google']);

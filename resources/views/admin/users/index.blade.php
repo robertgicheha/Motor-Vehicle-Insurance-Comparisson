@@ -35,14 +35,14 @@
         {{-- Stat strip --}}
         {{-- KPI row --}}
             <div class="mt-6 grid grid-cols-2 md:grid-cols-4 gap-3">
-                <div class="kpi-card p-4">
+                <a href="{{ route('admin.users.index') }}" class="kpi-card p-4 block hover:opacity-80 transition">
                     <div class="accent-bar"></div>
                     <p class="kpi-eyebrow">Total Users</p>
                     <p class="kpi-value mt-1">{{ $totalUsers }}</p>
                     <span class="kpi-delta neutral mt-1.5 inline-block">
                         Registered accounts
                     </span>
-                </div>
+                </a>
 
                 <div class="kpi-card p-4">
                     <div class="accent-bar"
@@ -62,7 +62,7 @@
                     @endif
                 </div>
 
-                <div class="kpi-card p-4">
+                <a href="{{ route('admin.users.index', ['gender' => 'male']) }}" class="kpi-card p-4 block hover:opacity-80 transition">
                     <div class="accent-bar"
                         style="background:linear-gradient(90deg,#818cf8,#a5b4fc)">
                     </div>
@@ -71,9 +71,9 @@
                     <span class="kpi-delta up mt-1.5 inline-block">
                         {{ $totalUsers > 0 ? round(($maleCount / $totalUsers) * 100) : 0 }}% of users
                     </span>
-                </div>
+                </a>
 
-                <div class="kpi-card p-4">
+                <a href="{{ route('admin.users.index', ['gender' => 'female']) }}" class="kpi-card p-4 block hover:opacity-80 transition">
                     <div class="accent-bar"
                         style="background:linear-gradient(90deg,#fb7185,#fda4af)">
                     </div>
@@ -82,7 +82,7 @@
                     <span class="kpi-delta up mt-1.5 inline-block">
                         {{ $totalUsers > 0 ? round(($femaleCount / $totalUsers) * 100) : 0 }}% of users
                     </span>
-                </div>
+                </a>
             </div>
     </div>
 

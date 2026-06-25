@@ -1,518 +1,488 @@
 <x-app-layout>
+<div class="space-y-6 pt-10 fade-in" x-data="quotationsPage()" x-init="init()">
 
-<div class="quotations-page" x-data="quotationsPage()" x-init="init()">
-
-    {{-- ══════════════════════════════════════════ --}}
-    {{-- HERO BAND                                  --}}
-    {{-- ══════════════════════════════════════════ --}}
-    <div class="hero-band px-6 pt-16 mt-10 pb-12 md:px-10">
-        <div class="relative mx-auto">
-
-            {{-- Top row --}}
-            <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-4 mb-8">
-                <div>
-                    <p style="font-size:9px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,0.45);margin-bottom:8px;">
-                        MIC Global Risks · Insurance Management
-                    </p>
-                    <h1 style="font-size:18px;font-weight:800;color:#fff;line-height:1.2;letter-spacing:-.3px;">
-                        Quotation Registry
-                    </h1>
-                    <p style="color:rgba(255,255,255,0.55);margin-top:5px;font-size:11px;max-width:380px;line-height:1.5;">
-                        All motor insurance quotations across active underwriters — GA Insurance and Sanlam Allianz.
-                    </p>
-                </div>
-                <div class="flex flex-wrap gap-2 md:mt-1">
-                    @if(auth()->user()->hasRole('super-admin') || auth()->user()->hasRole('admin'))
-                    <button @click="applyModal = true"
-                        style="display:inline-flex;align-items:center;gap:6px;background:#F59E0B;color:#1a1a1a;font-size:11px;font-weight:700;padding:7px 14px;border-radius:7px;border:none;cursor:pointer;white-space:nowrap;transition:background .15s;">
-                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
-                        </svg>
-                        Apply for User
-                    </button>
-                    @endif
-                    <button @click="newQuoteModal = true"
-                        style="display:inline-flex;align-items:center;gap:6px;background:rgba(255,255,255,0.1);color:#fff;font-size:11px;font-weight:600;padding:7px 14px;border-radius:7px;border:1px solid rgba(255,255,255,0.2);cursor:pointer;white-space:nowrap;transition:background .15s;">
-                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-                        </svg>
-                        New Quotation
-                    </button>
-                </div>
+    {{-- ─── HERO ─────────────────────────────────────────────────────────── --}}
+    <div class="rounded-2xl bg-micblue px-6 py-7 shadow-sm">
+        <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
+            <div>
+                <p class="text-[10px] font-semibold uppercase tracking-widest text-blue-400">MIC Global Risks · Insurance Management</p>
+                <h1 class="mt-0.5 text-xl font-bold text-white">Quotation Registry</h1>
+                <p class="mt-0.5 text-xs text-slate-400">All motor insurance quotations across active underwriters</p>
             </div>
+            <div class="flex items-center gap-2 shrink-0">
+                @if(auth()->user()->hasRole('super-admin') || auth()->user()->hasRole('admin'))
+                <button @click="applyModal = true"
+                    class="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-medium border border-white/20 text-white/80 rounded-lg hover:bg-white/10 transition">
+                    <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+                    Apply for User
+                </button>
+                @endif
+                <button @click="newQuoteModal = true"
+                    class="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold bg-blue-500 hover:bg-blue-400 text-white rounded-lg transition">
+                    <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
+                    New Quotation
+                </button>
+            </div>
+        </div>
 
-            {{-- KPI row --}}
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
-                <div class="kpi-card p-4">
-                    <div class="accent-bar"></div>
-                    <p class="kpi-eyebrow">Total Quotations</p>
-                    <p class="kpi-value mt-1">{{ $analytics['total'] }}</p>
-                    <span class="kpi-delta neutral mt-1.5 inline-block">All time</span>
-                </div>
-                <div class="kpi-card p-4">
-                    <div class="accent-bar" style="background:linear-gradient(90deg,#34d399,#6ee7b7)"></div>
-                    <p class="kpi-eyebrow">Today</p>
-                    <p class="kpi-value mt-1">{{ $analytics['today'] }}</p>
-                    @if($analytics['today'] > 0)
-                        <span class="kpi-delta up mt-1.5 inline-block">↑ Active</span>
-                    @else
-                        <span class="kpi-delta neutral mt-1.5 inline-block">No new</span>
-                    @endif
-                </div>
-                <div class="kpi-card p-4">
-                    <div class="accent-bar" style="background:linear-gradient(90deg,#818cf8,#a5b4fc)"></div>
-                    <p class="kpi-eyebrow">This Week</p>
-                    <p class="kpi-value mt-1">{{ $analytics['this_week'] }}</p>
-                    <span class="kpi-delta up mt-1.5 inline-block">↑ {{ $analytics['this_week'] }} new</span>
-                </div>
-                <div class="kpi-card p-4">
-                    <div class="accent-bar" style="background:linear-gradient(90deg,#fb7185,#fda4af)"></div>
-                    <p class="kpi-eyebrow">This Month</p>
-                    <p class="kpi-value mt-1">{{ $analytics['this_month'] }}</p>
-                    <span class="kpi-delta up mt-1.5 inline-block">↑ {{ $analytics['this_month'] }} new</span>
-                </div>
+        {{-- KPI row --}}
+        <div class="mt-6 grid grid-cols-2 md:grid-cols-4 gap-3">
+            <div class="kpi-card p-4">
+                <div class="accent-bar"></div>
+                <p class="kpi-eyebrow">Total Quotations</p>
+                <p class="kpi-value mt-1">{{ $analytics['total'] }}</p>
+                <span class="kpi-delta neutral mt-1.5 inline-block">All time</span>
+            </div>
+            <div class="kpi-card p-4">
+                <div class="accent-bar" style="background:linear-gradient(90deg,#34d399,#6ee7b7)"></div>
+                <p class="kpi-eyebrow">Today</p>
+                <p class="kpi-value mt-1">{{ $analytics['today'] }}</p>
+                @if($analytics['today'] > 0)
+                    <span class="kpi-delta up mt-1.5 inline-block">Active</span>
+                @else
+                    <span class="kpi-delta neutral mt-1.5 inline-block">No new</span>
+                @endif
+            </div>
+            <div class="kpi-card p-4">
+                <div class="accent-bar" style="background:linear-gradient(90deg,#818cf8,#a5b4fc)"></div>
+                <p class="kpi-eyebrow">This Week</p>
+                <p class="kpi-value mt-1">{{ $analytics['this_week'] }}</p>
+                <span class="kpi-delta up mt-1.5 inline-block">{{ $analytics['this_week'] }} new</span>
+            </div>
+            <div class="kpi-card p-4">
+                <div class="accent-bar" style="background:linear-gradient(90deg,#fb7185,#fda4af)"></div>
+                <p class="kpi-eyebrow">This Month</p>
+                <p class="kpi-value mt-1">{{ $analytics['this_month'] }}</p>
+                <span class="kpi-delta up mt-1.5 inline-block">{{ $analytics['this_month'] }} new</span>
             </div>
         </div>
     </div>
 
-    {{-- ══════════════════════════════════════════ --}}
-    {{-- ANALYTICS CARDS                            --}}
-    {{-- ══════════════════════════════════════════ --}}
-    <div class="mx-auto px-6 md:px-10 floating-cards-row">
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
-
-            <div class="analytics-card p-4 md:col-span-2">
-                <p class="section-eyebrow mb-1">Analytics</p>
-                <h3 style="font-size:12px;font-weight:700;color:#111827;margin-bottom:12px;">Quotations by Underwriter</h3>
-                <div class="chart-wrap">
-                    <canvas id="companyChart"></canvas>
-                </div>
+    {{-- ─── CHARTS ROW ───────────────────────────────────────────────────── --}}
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+        <div class="md:col-span-2 bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+            <div class="px-5 py-4 border-b border-gray-100 dark:border-gray-700">
+                <p class="text-[10px] font-semibold uppercase tracking-widest text-gray-400">Analytics</p>
+                <h3 class="text-xs font-bold text-gray-800 dark:text-white mt-0.5">Quotations by Underwriter</h3>
             </div>
-
-            <div class="analytics-card p-4">
-                <p class="section-eyebrow mb-1">Premium</p>
-                <h3 style="font-size:12px;font-weight:700;color:#111827;margin-bottom:12px;">Distribution by Insurer</h3>
-                <div class="chart-wrap">
-                    <canvas id="premiumChart"></canvas>
-                </div>
+            <div class="p-5">
+                <canvas id="companyChart" height="200"></canvas>
             </div>
         </div>
-
-        <div class="analytics-card p-4 mt-3">
-            <p class="section-eyebrow mb-1">Trend</p>
-            <h3 style="font-size:12px;font-weight:700;color:#111827;margin-bottom:10px;">Daily Quotations — Last 14 Days</h3>
-            <div style="height:140px;position:relative;">
-                <canvas id="trendChart"></canvas>
+        <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+            <div class="px-5 py-4 border-b border-gray-100 dark:border-gray-700">
+                <p class="text-[10px] font-semibold uppercase tracking-widest text-gray-400">Premium</p>
+                <h3 class="text-xs font-bold text-gray-800 dark:text-white mt-0.5">Distribution by Insurer</h3>
+            </div>
+            <div class="p-5">
+                <canvas id="premiumChart" height="200"></canvas>
             </div>
         </div>
     </div>
 
-    {{-- ══════════════════════════════════════════ --}}
-    {{-- TABLE SECTION                              --}}
-    {{-- ══════════════════════════════════════════ --}}
-    <div class="mx-auto px-6 md:px-10 mt-4 pb-12">
-        <div class="analytics-card overflow-hidden">
+    {{-- Trend chart --}}
+    <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+        <div class="px-5 py-4 border-b border-gray-100 dark:border-gray-700">
+            <p class="text-[10px] font-semibold uppercase tracking-widest text-gray-400">Trend</p>
+            <h3 class="text-xs font-bold text-gray-800 dark:text-white mt-0.5">Daily Quotations — Last 14 Days</h3>
+        </div>
+        <div class="p-5">
+            <canvas id="trendChart" height="120"></canvas>
+        </div>
+    </div>
 
-            {{-- Toolbar --}}
-            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 border-b border-gray-200 dark:border-gray-700">
-                <div class="flex items-center gap-2">
-                    <p class="section-eyebrow">Quotations</p>
-                    <span style="font-size:10px;color:#9ca3af;font-weight:500;">{{ $quotations->total() }} records</span>
-                </div>
-                <div class="flex items-center gap-2 flex-wrap">
-                    <div class="relative">
-                        <svg class="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.35-4.35M17 11A6 6 0 105 11a6 6 0 0012 0z"/>
-                        </svg>
-                        <input x-model="search" @input.debounce.300ms="filterTable()"
-                            type="text" placeholder="Search quotations…" class="toolbar-search"/>
-                    </div>
-                    <select x-model="statusFilter" @change="filterTable()"
-                        style="border:1px solid #e5e7eb;border-radius:7px;padding:6px 10px;font-size:11px;font-weight:600;color:#374151;background:#fff;cursor:pointer;">
-                        <option value="">All statuses</option>
-                        <option value="active">Active</option>
-                        <option value="draft">Draft</option>
-                        <option value="expired">Expired</option>
-                    </select>
-                    <button class="btn-secondary" style="font-size:11px;padding:6px 12px;">
-                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
-                        </svg>
-                        Export
-                    </button>
-                </div>
+    {{-- ─── TABLE ─────────────────────────────────────────────────────────── --}}
+    <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+        <div class="px-5 py-4 border-b border-gray-100 dark:border-gray-700 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <div>
+                <h2 class="text-xs font-semibold text-gray-800 dark:text-white">Quotations</h2>
+                <p class="text-[10px] text-gray-400 mt-0.5">{{ $quotations->total() }} records</p>
             </div>
+            <div class="flex items-center gap-2 flex-wrap">
+                <div class="relative">
+                    <svg class="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.35-4.35M17 11A6 6 0 105 11a6 6 0 0012 0z"/>
+                    </svg>
+                    <input x-model="search" @input.debounce.300ms="filterTable()"
+                        type="text" placeholder="Search quotations..."
+                        class="pl-8 pr-3 py-1.5 text-xs rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200 focus:ring-2 focus:ring-blue-500 outline-none w-44">
+                </div>
+                <select x-model="statusFilter" @change="filterTable()"
+                    class="px-3 py-1.5 text-xs rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200 focus:ring-2 focus:ring-blue-500 outline-none">
+                    <option value="">All statuses</option>
+                    <option value="processing">Processing</option>
+                    <option value="completed">Completed</option>
+                    <option value="active">Active</option>
+                    <option value="draft">Draft</option>
+                    <option value="closed">Closed</option>
+                    <option value="insuring_sticker">Insuring Sticker</option>
+                    <option value="expired">Expired</option>
+                </select>
+                <button class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium border border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                    Export
+                </button>
+            </div>
+        </div>
 
-            {{-- Table --}}
-            <div class="overflow-x-auto">
-                <table class="data-table w-full">
-                    <thead>
-                        <tr>
-                            <th class="text-left">#</th>
+        <div class="overflow-x-auto">
+            <table class="w-full text-xs">
+                <thead>
+                    <tr class="bg-gray-50 dark:bg-gray-700/40">
+                        <th class="px-5 py-2.5 text-left font-semibold text-gray-400 uppercase tracking-wider text-[10px]">#</th>
+                        @if(auth()->user()->hasRole('super-admin') || auth()->user()->hasRole('admin'))
+                            <th class="px-5 py-2.5 text-left font-semibold text-gray-400 uppercase tracking-wider text-[10px]">User</th>
+                        @endif
+                        <th class="px-5 py-2.5 text-left font-semibold text-gray-400 uppercase tracking-wider text-[10px]">Underwriter</th>
+                        <th class="px-5 py-2.5 text-left font-semibold text-gray-400 uppercase tracking-wider text-[10px]">Vehicle</th>
+                        <th class="px-5 py-2.5 text-right font-semibold text-gray-400 uppercase tracking-wider text-[10px]">Valuation</th>
+                        <th class="px-5 py-2.5 text-right font-semibold text-gray-400 uppercase tracking-wider text-[10px]">Premium</th>
+                        <th class="px-5 py-2.5 text-center font-semibold text-gray-400 uppercase tracking-wider text-[10px]">Status</th>
+                        <th class="px-5 py-2.5 text-right font-semibold text-gray-400 uppercase tracking-wider text-[10px]">Date</th>
+                        <th class="px-5 py-2.5 text-right font-semibold text-gray-400 uppercase tracking-wider text-[10px]">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
+                    @forelse($quotations as $q)
+                        <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/30"
+                            x-show="rowVisible($el)"
+                            data-search="{{ strtolower($q->quotation_number . ' ' . $q->car_make . ' ' . $q->car_model . ' ' . ($q->user->name ?? '') . ' ' . ($q->company->name ?? '')) }}"
+                            data-status="{{ strtolower($q->status) }}">
+                            <td class="px-5 py-2.5">
+                                <a href="{{ route('quotations.show', $q) }}" class="font-medium text-blue-600 hover:text-blue-800">{{ $q->quotation_number }}</a>
+                            </td>
                             @if(auth()->user()->hasRole('super-admin') || auth()->user()->hasRole('admin'))
-                                <th class="text-left">User</th>
+                                <td class="px-5 py-2.5">
+                                    <div class="flex items-center gap-2.5">
+                                        <div class="w-7 h-7 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white text-[10px] font-bold shrink-0">
+                                            {{ strtoupper(substr($q->user->name, 0, 2)) }}
+                                        </div>
+                                        <span class="font-medium text-gray-800 dark:text-white">{{ $q->user->name }}</span>
+                                    </div>
+                                </td>
                             @endif
-                            <th class="text-left">Underwriter</th>
-                            <th class="text-left">Vehicle</th>
-                            <th class="text-right">Valuation (KES)</th>
-                            <th class="text-right">Premium (KES)</th>
-                            <th class="text-center">Status</th>
-                            <th class="text-right">Date</th>
-                            <th class="text-right">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @forelse($quotations as $q)
-                            <tr x-show="rowVisible($el)"
-                                data-search="{{ strtolower($q->quotation_number . ' ' . $q->car_make . ' ' . $q->car_model . ' ' . ($q->user->name ?? '') . ' ' . ($q->company->name ?? '')) }}"
-                                data-status="{{ strtolower($q->status) }}">
-                                <td>
-                                    <a href="{{ route('quotations.show', $q) }}" class="qnum-link">{{ $q->quotation_number }}</a>
-                                </td>
-                                @if(auth()->user()->hasRole('super-admin') || auth()->user()->hasRole('admin'))
-                                    <td>
-                                        <div class="flex items-center gap-1.5">
-                                            <div style="width:22px;height:22px;border-radius:50%;background:#dbeafe;color:#1d4ed8;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0;">
-                                                {{ strtoupper(substr($q->user->name, 0, 1)) }}
-                                            </div>
-                                            <span style="font-size:11px;color:#374151;">{{ $q->user->name }}</span>
-                                        </div>
-                                    </td>
-                                @endif
-                                <td style="font-size:11px;font-weight:600;color:#1f2937;">{{ $q->company->name }}</td>
-                                <td>
-                                    <p style="font-size:11px;font-weight:600;color:#1f2937;margin:0;">{{ $q->car_make }} {{ $q->car_model }}</p>
-                                    <p style="font-size:10px;color:#9ca3af;margin:0;">{{ $q->car_year }}</p>
-                                </td>
-                                <td class="text-right" style="font-size:11px;font-family:monospace;color:#6b7280;">{{ number_format($q->car_valuation, 0) }}</td>
-                                <td class="text-right" style="font-size:11px;font-family:monospace;font-weight:700;color:#111827;">{{ number_format($q->total_premium, 0) }}</td>
-                                <td class="text-center">
-                                    @php
-                                        $s = strtolower($q->status);
-                                        $cls = match($s) { 'active' => 'status-active', 'draft' => 'status-draft', 'expired' => 'status-expired', default => 'status-active' };
-                                    @endphp
-                                    <span class="status-pill {{ $cls }}">{{ ucfirst($q->status) }}</span>
-                                </td>
-                                <td class="text-right" style="font-size:10px;color:#6b7280;">
-                                    <div>{{ $q->created_at->format('d M Y') }}</div>
-                                    <div style="color:#9ca3af;">{{ $q->created_at->format('H:i') }}</div>
-                                </td>
-                                <td class="text-right">
-                                    <div class="flex items-center justify-end gap-1">
-                                        <a href="{{ route('quotations.show', $q) }}"
-                                            class="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg transition" title="View">
-                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
-                                            </svg>
-                                        </a>
-                                        @if(auth()->user()->hasRole('super-admin') || auth()->user()->hasRole('admin'))
-                                        <button @click="openApplyFor({{ $q->user_id }}, '{{ addslashes($q->user->name) }}')"
-                                            class="p-1.5 text-amber-600 hover:bg-amber-50 rounded-lg transition" title="Apply for this user">
-                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
-                                            </svg>
+                            <td class="px-5 py-2.5 font-medium text-gray-800 dark:text-white">{{ $q->company->name }}</td>
+                            <td class="px-5 py-2.5">
+                                <span class="font-medium text-gray-800 dark:text-white">{{ $q->car_make }} {{ $q->car_model }}</span>
+                                <p class="text-[10px] text-gray-400">{{ $q->car_year }}</p>
+                            </td>
+                            <td class="px-5 py-2.5 text-right text-gray-500 dark:text-gray-400 font-mono">{{ number_format($q->car_valuation, 0) }}</td>
+                            <td class="px-5 py-2.5 text-right font-bold text-gray-800 dark:text-white font-mono">{{ number_format($q->total_premium, 0) }}</td>
+                            <td class="px-5 py-2.5 text-center">
+                                @php
+                                    $statusColors = [
+                                        'processing' => 'bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
+                                        'completed' => 'bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400',
+                                        'closed' => 'bg-gray-50 text-gray-500 dark:bg-gray-700 dark:text-gray-400',
+                                        'insuring_sticker' => 'bg-amber-50 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
+                                        'active' => 'bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400',
+                                        'draft' => 'bg-gray-50 text-gray-500 dark:bg-gray-700 dark:text-gray-400',
+                                        'expired' => 'bg-red-50 text-red-700 dark:bg-red-900/30 dark:text-red-400',
+                                        'generated' => 'bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
+                                        'pending' => 'bg-yellow-50 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400',
+                                    ];
+                                @endphp
+                                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium {{ $statusColors[$q->status] ?? 'bg-gray-50 text-gray-500 dark:bg-gray-700 dark:text-gray-400' }}">{{ ucfirst(str_replace('_', ' ', $q->status)) }}</span>
+                            </td>
+                            <td class="px-5 py-2.5 text-right text-gray-500 dark:text-gray-400">{{ $q->created_at->format('d M Y') }}</td>
+                            <td class="px-5 py-2.5 text-right">
+                                <div class="flex items-center justify-end gap-1">
+                                    <a href="{{ route('quotations.show', $q) }}"
+                                        class="p-1.5 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-md transition" title="View">
+                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0zM2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                                    </a>
+                                    @if(auth()->user()->hasRole('super-admin') || auth()->user()->hasRole('admin'))
+                                    <button @click="openApplyFor({{ $q->user_id }}, '{{ addslashes($q->user->name) }}')"
+                                        class="p-1.5 text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/20 rounded-md transition" title="Apply for this user">
+                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+                                    </button>
+                                    @endif
+                                    <form action="{{ route('quotations.destroy', $q) }}" method="POST"
+                                        onsubmit="return confirm('Permanently delete quotation {{ $q->quotation_number }}?')">
+                                        @csrf @method('DELETE')
+                                        <button type="submit" class="p-1.5 text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-md transition" title="Delete">
+                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
                                         </button>
-                                        @endif
-                                        <form action="{{ route('quotations.destroy', $q) }}" method="POST"
-                                            onsubmit="return confirm('Permanently delete quotation {{ $q->quotation_number }}?')">
-                                            @csrf @method('DELETE')
-                                            <button type="submit" class="p-1.5 text-red-500 hover:bg-red-50 rounded-lg transition" title="Delete">
-                                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
-                                                </svg>
-                                            </button>
-                                        </form>
-                                    </div>
-                                </td>
-                            </tr>
-                        @empty
-                            <tr>
-                                <td colspan="9" style="padding:48px;text-align:center;">
-                                    <div style="display:flex;flex-direction:column;align-items:center;gap:10px;">
-                                        <div style="width:44px;height:44px;background:#f3f4f6;border-radius:50%;display:flex;align-items:center;justify-content:center;">
-                                            <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-                                            </svg>
-                                        </div>
-                                        <p style="font-size:12px;color:#6b7280;font-weight:500;margin:0;">No quotations yet</p>
-                                        <button @click="newQuoteModal = true" class="btn-primary" style="font-size:11px;padding:6px 14px;">Create first quotation</button>
-                                    </div>
-                                </td>
-                            </tr>
-                        @endforelse
-                    </tbody>
-                </table>
-            </div>
-
-            @if($quotations->hasPages())
-                <div class="p-4 border-t border-gray-200 dark:border-gray-700 flex items-center justify-between">
-                    <p style="font-size:11px;color:#6b7280;">
-                        Showing {{ $quotations->firstItem() }}–{{ $quotations->lastItem() }} of {{ $quotations->total() }}
-                    </p>
-                    {{ $quotations->links() }}
-                </div>
-            @endif
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                    @empty
+                        <tr><td colspan="{{ auth()->user()->hasRole('super-admin') || auth()->user()->hasRole('admin') ? 9 : 8 }}" class="px-5 py-10 text-center text-xs text-gray-400">No quotations yet.</td></tr>
+                    @endforelse
+                </tbody>
+            </table>
         </div>
+
+        @if($quotations->hasPages())
+            <div class="px-5 py-3 border-t border-gray-100 dark:border-gray-700">{{ $quotations->links() }}</div>
+        @endif
     </div>
 
-    {{-- ══════════════════════════════════════════ --}}
-    {{-- NEW QUOTATION MODAL (inline multi-step)    --}}
-    {{-- ══════════════════════════════════════════ --}}
-    <div x-show="newQuoteModal" x-transition.opacity class="modal-overlay" style="display:none;align-items:flex-start;padding-top:40px;">
-        <div class="modal-box" style="max-width:680px;max-height:calc(100vh - 80px);overflow-y:auto;" @click.stop>
-
-            {{-- Modal header --}}
-            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
+    {{-- ─── NEW QUOTATION MODAL (slide-in drawer) ───────────────────────── --}}
+    <div id="newQuoteModal" class="fixed inset-0 z-50 hidden">
+        <div class="absolute inset-0 bg-black/40 backdrop-blur-sm" onclick="closeNewQuoteModal()"></div>
+        <div class="absolute inset-y-0 right-0 w-full max-w-2xl bg-white dark:bg-gray-900 shadow-2xl flex flex-col overflow-hidden">
+            <div class="px-6 py-4 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between shrink-0">
                 <div>
-                    <p class="section-eyebrow" style="margin-bottom:3px;">New Quotation</p>
-                    <h3 style="font-size:15px;font-weight:700;color:#111827;margin:0;">Motor Insurance Quote</h3>
+                    <p class="text-[10px] font-semibold uppercase tracking-widest text-gray-400">New Quotation</p>
+                    <h2 class="text-sm font-bold text-gray-900 dark:text-white mt-0.5">Motor Insurance Quote</h2>
                 </div>
-                <button @click="newQuoteModal = false; resetQuoteForm()"
-                    style="width:28px;height:28px;border-radius:7px;background:#f3f4f6;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;">
-                    <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                    </svg>
+                <button onclick="closeNewQuoteModal()" class="p-1.5 text-gray-400 hover:text-gray-700 dark:hover:text-white rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
                 </button>
             </div>
 
-            {{-- Step indicators --}}
-            <div style="display:flex;gap:0;margin-bottom:20px;border-radius:8px;overflow:hidden;border:1px solid #e5e7eb;">
-                <template x-for="(label, i) in ['Personal Details', 'Vehicle Details', 'Quote Generation']" :key="i">
-                    <div @click="quoteStep = i + 1"
-                        :style="`flex:1;padding:8px 10px;text-align:center;cursor:pointer;transition:all .2s;
-                            background: quoteStep === i+1 ? '#1E40AF' : (quoteStep > i+1 ? '#dbeafe' : '#f9fafb');
-                            border-right: i < 2 ? '1px solid #e5e7eb' : 'none';`">
-                        <div :style="`font-size:9px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;
-                            color: quoteStep === i+1 ? 'rgba(255,255,255,0.7)' : (quoteStep > i+1 ? '#1d4ed8' : '#9ca3af');`">
-                            Step <span x-text="i+1"></span>
+            <div class="flex-1 overflow-y-auto px-6 py-5">
+                {{-- Step indicators --}}
+                <div class="flex gap-2 mb-6">
+                    <template x-for="(label, i) in ['Personal Details', 'Vehicle Details', 'Quote Generation']" :key="i">
+                        <div @click="quoteStep = i + 1" class="flex-1 px-3 py-2.5 rounded-lg border text-center cursor-pointer transition"
+                            :class="{
+                                'border-blue-500 bg-blue-50 dark:bg-blue-900/20': quoteStep === i+1,
+                                'border-emerald-300 bg-emerald-50 dark:bg-emerald-900/20': quoteStep > i+1,
+                                'border-gray-200 dark:border-gray-700': quoteStep < i+1
+                            }">
+                            <div class="text-[9px] font-bold uppercase tracking-wider"
+                                :class="{
+                                    'text-blue-600 dark:text-blue-400': quoteStep === i+1,
+                                    'text-emerald-600 dark:text-emerald-400': quoteStep > i+1,
+                                    'text-gray-400': quoteStep < i+1
+                                }">Step <span x-text="i+1"></span></div>
+                            <div class="text-xs font-semibold mt-0.5"
+                                :class="{
+                                    'text-blue-700 dark:text-blue-300': quoteStep === i+1,
+                                    'text-emerald-700 dark:text-emerald-300': quoteStep > i+1,
+                                    'text-gray-500 dark:text-gray-400': quoteStep < i+1
+                                }" x-text="label"></div>
                         </div>
-                        <div :style="`font-size:11px;font-weight:600;margin-top:1px;
-                            color: quoteStep === i+1 ? '#fff' : (quoteStep > i+1 ? '#1d4ed8' : '#374151');`"
-                            x-text="label"></div>
-                    </div>
-                </template>
-            </div>
-
-            {{-- Step 1: Personal Details --}}
-            <div x-show="quoteStep === 1">
-                <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;">
-                    <div class="mf-group">
-                        <label class="mf-label">Salutation <span style="color:#ef4444">*</span></label>
-                        <select x-model="qf.salutation" class="mf-input">
-                            <option value="">Select...</option>
-                            <option>Mr.</option><option>Mrs.</option><option>Miss</option><option>Dr.</option><option>Prof.</option>
-                        </select>
-                    </div>
-                    <div class="mf-group">
-                        <label class="mf-label">First Name <span style="color:#ef4444">*</span></label>
-                        <input x-model="qf.first_name" type="text" placeholder="e.g. John" class="mf-input">
-                    </div>
-                    <div class="mf-group">
-                        <label class="mf-label">Middle Name</label>
-                        <input x-model="qf.middle_name" type="text" placeholder="Optional" class="mf-input">
-                    </div>
-                    <div class="mf-group">
-                        <label class="mf-label">Last Name <span style="color:#ef4444">*</span></label>
-                        <input x-model="qf.last_name" type="text" placeholder="e.g. Doe" class="mf-input">
-                    </div>
-                    <div class="mf-group">
-                        <label class="mf-label">Phone Number <span style="color:#ef4444">*</span></label>
-                        <input x-model="qf.phone" type="tel" placeholder="07XX XXX XXX" class="mf-input">
-                    </div>
-                    <div class="mf-group">
-                        <label class="mf-label">Email Address <span style="color:#ef4444">*</span></label>
-                        <input x-model="qf.email" type="email" placeholder="email@example.com" class="mf-input">
-                    </div>
+                    </template>
                 </div>
-                <div style="display:flex;justify-content:flex-end;margin-top:16px;">
-                    <button @click="quoteStep = 2" class="btn-primary" style="font-size:11px;padding:7px 16px;">
-                        Continue to Vehicle Details →
-                    </button>
-                </div>
-            </div>
 
-            {{-- Step 2: Vehicle Details --}}
-            <div x-show="quoteStep === 2">
-                <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
-                    <div class="mf-group">
-                        <label class="mf-label">Registration Number <span style="color:#ef4444">*</span></label>
-                        <input x-model="qf.reg" type="text" placeholder="e.g. KDH 724V" class="mf-input">
+                {{-- Step 1: Personal Details --}}
+                <div x-show="quoteStep === 1" class="space-y-4">
+                    <div>
+                        <p class="text-xs font-bold text-gray-800 dark:text-white">Personal Details</p>
+                        <p class="text-[10px] text-gray-400 mt-0.5">Please fill in the contact details of the insured party.</p>
                     </div>
-                    <div class="mf-group">
-                        <label class="mf-label">Chassis / Frame Number</label>
-                        <input x-model="qf.chassis" type="text" placeholder="Optional" class="mf-input">
-                    </div>
-                    <div class="mf-group">
-                        <label class="mf-label">Make of Vehicle <span style="color:#ef4444">*</span></label>
-                        <select x-model="qf.make" class="mf-input">
-                            <option value="">Select make...</option>
-                            <option>Toyota</option><option>Honda</option><option>Volkswagen</option>
-                            <option>Subaru</option><option>Nissan</option><option>Mitsubishi</option>
-                            <option>Mazda</option><option>Mercedes-Benz</option><option>BMW</option>
-                            <option>Ford</option><option>Other</option>
-                        </select>
-                        <input x-show="qf.make === 'Other'" x-model="qf.make_other" type="text" placeholder="Type vehicle make…" class="mf-input" style="margin-top:6px;">
-                    </div>
-                    <div class="mf-group">
-                        <label class="mf-label">Model Name <span style="color:#ef4444">*</span></label>
-                        <input x-model="qf.model" type="text" placeholder="e.g. Vezel, Mark X" class="mf-input">
-                    </div>
-                    <div class="mf-group">
-                        <label class="mf-label">Body Type</label>
-                        <select x-model="qf.body" class="mf-input">
-                            <option value="">Select body type...</option>
-                            <option>Saloon</option><option>Station Wagon</option><option>SUV/4x4</option>
-                            <option>Hatchback</option><option>Pick-Up</option><option>Van/Minivan</option>
-                            <option>Convertible</option><option>Coupe</option>
-                        </select>
-                    </div>
-                    <div class="mf-group">
-                        <label class="mf-label">Year of Manufacture <span style="color:#ef4444">*</span></label>
-                        <select x-model="qf.year" class="mf-input">
-                            <option value="">Select year...</option>
-                            <template x-for="y in yearRange" :key="y">
-                                <option :value="y" x-text="y"></option>
-                            </template>
-                        </select>
-                    </div>
-                    <div class="mf-group">
-                        <label class="mf-label">Color</label>
-                        <select x-model="qf.color" class="mf-input">
-                            <option value="">Select color...</option>
-                            <option>White</option><option>Black</option><option>Silver/Grey</option>
-                            <option>Blue</option><option>Red</option><option>Brown/Maroon</option>
-                            <option>Gold/Champagne</option><option>Green</option><option>Other</option>
-                        </select>
-                        <input x-show="qf.color === 'Other'" x-model="qf.color_other" type="text" placeholder="Type color…" class="mf-input" style="margin-top:6px;">
-                    </div>
-                    <div class="mf-group">
-                        <label class="mf-label">Value of Vehicle (KES) <span style="color:#ef4444">*</span></label>
-                        <input x-model="qf.value" @input="calcPremiums()" type="number" placeholder="e.g. 1500000" class="mf-input">
-                    </div>
-                </div>
-                <div style="display:flex;justify-content:space-between;margin-top:16px;">
-                    <button @click="quoteStep = 1" class="btn-secondary" style="font-size:11px;padding:7px 14px;">← Back</button>
-                    <button @click="quoteStep = 3" class="btn-primary" style="font-size:11px;padding:7px 16px;">Continue to Quotes →</button>
-                </div>
-            </div>
-
-            {{-- Step 3: Quote Generation --}}
-            <div x-show="quoteStep === 3">
-                <div style="background:#f8fafc;border:1px solid #e5e7eb;border-radius:10px;padding:14px;margin-bottom:14px;">
-                    <p style="font-size:11px;font-weight:700;color:#374151;margin:0 0 4px;">Premium Estimate</p>
-                    <p style="font-size:10px;color:#9ca3af;margin:0 0 14px;">Click a card to proceed to the full quotation form.</p>
-
-                    <div x-show="!qf.value" style="text-align:center;padding:16px;color:#9ca3af;font-size:11px;border:1.5px dashed #e5e7eb;border-radius:8px;">
-                        ← Go back to Step 2 and enter the vehicle value to see estimates.
-                    </div>
-
-                    <div x-show="qf.value" style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px;">
-
-                        {{-- GA Insurance --}}
-                        <div @click="proceedToCreate('GA')" style="background:#fff;border:1.5px solid #e5e7eb;border-radius:9px;padding:14px;text-align:center;cursor:pointer;transition:box-shadow .2s,transform .15s;"
-                            onmouseover="this.style.boxShadow='0 4px 16px rgba(0,0,0,.1)';this.style.transform='translateY(-1px)'"
-                            onmouseout="this.style.boxShadow='none';this.style.transform='none'">
-                            <p style="font-size:10px;font-weight:700;color:#1E40AF;margin:0 0 4px;">GA INSURANCE</p>
-                            <p style="font-size:18px;font-weight:800;color:#1E40AF;margin:0;line-height:1.1;" x-text="premiums.ga ? 'KES ' + premiums.ga.toLocaleString() : '—'"></p>
-                            <p style="font-size:10px;color:#9ca3af;margin:2px 0 10px;">@ 3.5%</p>
-                            <div style="font-size:10px;font-weight:700;color:#fff;background:#1E40AF;border-radius:5px;padding:4px 0;">View Quote ↗</div>
+                    <div class="grid grid-cols-3 gap-3">
+                        <div>
+                            <label class="block text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Salutation <span class="text-rose-500">*</span></label>
+                            <select x-model="qf.salutation" class="w-full px-3 py-2 text-xs rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none">
+                                <option value="">Select...</option>
+                                <option>Mr.</option><option>Mrs.</option><option>Miss</option><option>Dr.</option><option>Prof.</option>
+                            </select>
                         </div>
-
-                        {{-- Sanlam Allianz --}}
-                        <div @click="proceedToCreate('SANLAM')" style="background:#fff;border:1.5px solid #e5e7eb;border-radius:9px;padding:14px;text-align:center;cursor:pointer;transition:box-shadow .2s,transform .15s;"
-                            onmouseover="this.style.boxShadow='0 4px 16px rgba(0,0,0,.1)';this.style.transform='translateY(-1px)'"
-                            onmouseout="this.style.boxShadow='none';this.style.transform='none'">
-                            <p style="font-size:10px;font-weight:700;color:#065f46;margin:0 0 4px;">SANLAM ALLIANZ</p>
-                            <p style="font-size:18px;font-weight:800;color:#065f46;margin:0;line-height:1.1;" x-text="premiums.sanlam ? 'KES ' + premiums.sanlam.toLocaleString() : '—'"></p>
-                            <p style="font-size:10px;color:#9ca3af;margin:2px 0 10px;">@ 4.5%</p>
-                            <div style="font-size:10px;font-weight:700;color:#fff;background:#065f46;border-radius:5px;padding:4px 0;">View Quote ↗</div>
+                        <div>
+                            <label class="block text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">First Name <span class="text-rose-500">*</span></label>
+                            <input x-model="qf.first_name" type="text" placeholder="e.g. John" class="w-full px-3 py-2 text-xs rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none">
                         </div>
-
-                        {{-- Compare All --}}
-                        <div @click="proceedToCreate('ALL')" style="background:#fff;border:1.5px solid #fca5a5;border-radius:9px;padding:14px;text-align:center;cursor:pointer;transition:box-shadow .2s,transform .15s;grid-column:span 2;"
-                            onmouseover="this.style.boxShadow='0 4px 16px rgba(0,0,0,.1)';this.style.transform='translateY(-1px)'"
-                            onmouseout="this.style.boxShadow='none';this.style.transform='none'">
-                            <p style="font-size:10px;font-weight:700;color:#c0392b;margin:0 0 2px;">COMPARE ALL INSURERS</p>
-                            <p style="font-size:10px;color:#9ca3af;margin:0 0 8px;">Side-by-side comparison of all available quotes</p>
-                            <div style="font-size:10px;font-weight:700;color:#fff;background:#c0392b;border-radius:5px;padding:4px 0;">Compare All ↗</div>
+                        <div>
+                            <label class="block text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Middle Name</label>
+                            <input x-model="qf.middle_name" type="text" placeholder="Optional" class="w-full px-3 py-2 text-xs rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Last Name <span class="text-rose-500">*</span></label>
+                            <input x-model="qf.last_name" type="text" placeholder="e.g. Doe" class="w-full px-3 py-2 text-xs rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Phone Number <span class="text-rose-500">*</span></label>
+                            <input x-model="qf.phone" type="tel" placeholder="07XX XXX XXX" class="w-full px-3 py-2 text-xs rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Email Address <span class="text-rose-500">*</span></label>
+                            <input x-model="qf.email" type="email" placeholder="email@example.com" class="w-full px-3 py-2 text-xs rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none">
                         </div>
                     </div>
+                    <div class="flex justify-end gap-2 pt-2">
+                        <a href="{{ route('quotations.index') }}" class="px-4 py-2 text-xs font-medium border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition">← Cancel</a>
+                        <button @click="quoteStep = 2" class="px-5 py-2 text-xs font-semibold bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition">Continue to Vehicle Details →</button>
+                    </div>
                 </div>
-                <div style="display:flex;justify-content:flex-start;">
-                    <button @click="quoteStep = 2" class="btn-secondary" style="font-size:11px;padding:7px 14px;">← Back to Vehicle Details</button>
+
+                {{-- Step 2: Vehicle Details --}}
+                <div x-show="quoteStep === 2" class="space-y-4">
+                    <div>
+                        <p class="text-xs font-bold text-gray-800 dark:text-white">Vehicle Details</p>
+                        <p class="text-[10px] text-gray-400 mt-0.5">Provide accurate vehicle information for a precise premium calculation.</p>
+                    </div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Registration Number <span class="text-rose-500">*</span></label>
+                            <input x-model="qf.reg" type="text" placeholder="e.g. KDH 724V" class="w-full px-3 py-2 text-xs rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Chassis / Frame Number</label>
+                            <input x-model="qf.chassis" type="text" placeholder="Optional" class="w-full px-3 py-2 text-xs rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Make of Vehicle <span class="text-rose-500">*</span></label>
+                            <select x-model="qf.make" class="w-full px-3 py-2 text-xs rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none">
+                                <option value="">Select make...</option>
+                                <option>Toyota</option><option>Honda</option><option>Volkswagen</option>
+                                <option>Subaru</option><option>Nissan</option><option>Mitsubishi</option>
+                                <option>Mazda</option><option>Mercedes-Benz</option><option>BMW</option>
+                                <option>Ford</option><option>Other</option>
+                            </select>
+                            <input x-show="qf.make === 'Other'" x-model="qf.make_other" type="text" placeholder="Type vehicle make…" class="w-full px-3 py-2 text-xs rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none mt-1.5">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Model Name <span class="text-rose-500">*</span></label>
+                            <input x-model="qf.model" type="text" placeholder="e.g. Vezel, Mark X" class="w-full px-3 py-2 text-xs rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Body Type</label>
+                            <select x-model="qf.body" class="w-full px-3 py-2 text-xs rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none">
+                                <option value="">Select body type...</option>
+                                <option>Saloon</option><option>Station Wagon</option><option>SUV/4x4</option>
+                                <option>Hatchback</option><option>Pick-Up</option><option>Van/Minivan</option>
+                                <option>Convertible</option><option>Coupe</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Year of Manufacture <span class="text-rose-500">*</span></label>
+                            <input x-model="qf.year" type="number" placeholder="e.g. 2020" class="w-full px-3 py-2 text-xs rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Color</label>
+                            <select x-model="qf.color" class="w-full px-3 py-2 text-xs rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none">
+                                <option value="">Select color...</option>
+                                <option>White</option><option>Black</option><option>Silver/Grey</option>
+                                <option>Blue</option><option>Red</option><option>Brown/Maroon</option>
+                                <option>Gold/Champagne</option><option>Green</option><option>Other</option>
+                            </select>
+                            <input x-show="qf.color === 'Other'" x-model="qf.color_other" type="text" placeholder="Type color…" class="w-full px-3 py-2 text-xs rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none mt-1.5">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Value of Vehicle (KES) <span class="text-rose-500">*</span></label>
+                            <div class="relative">
+                                <span class="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-bold text-gray-400">KES</span>
+                                <input x-model="qf.value" @input="calcPremiums()" type="number" placeholder="0" class="w-full pl-11 pr-3 py-2 text-xs rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex justify-between pt-2">
+                        <button @click="quoteStep = 1" class="px-4 py-2 text-xs font-medium border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition">← Back</button>
+                        <button @click="quoteStep = 3" class="px-5 py-2 text-xs font-semibold bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition">Continue to Quote Generation →</button>
+                    </div>
+                </div>
+
+                {{-- Step 3: Quote Generation --}}
+                <div x-show="quoteStep === 3" class="space-y-4">
+                    <div>
+                        <p class="text-xs font-bold text-gray-800 dark:text-white">Premium Estimate</p>
+                        <p class="text-[10px] text-gray-400 mt-0.5">Select an insurer card to open its full quotation, or compare all side by side.</p>
+                    </div>
+
+                    <div x-show="!qf.value" class="text-center py-8 border-1.5 border-dashed border-gray-200 dark:border-gray-700 rounded-xl text-xs text-gray-400">
+                        Go back to Step 2 and enter the <strong>vehicle value</strong> to see premium estimates.
+                    </div>
+
+                    <div x-show="qf.value" class="space-y-4">
+                        <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                            <div @click="proceedToCreate('GA')" class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-4 text-center cursor-pointer hover:shadow-md hover:-translate-y-0.5 transition flex flex-col items-center gap-1.5">
+                                <div class="text-[10px] font-bold text-blue-700 dark:text-blue-400 uppercase tracking-wider">GA Insurance</div>
+                                <div class="text-[10px] text-gray-400">@ 3.5%</div>
+                                <div class="text-lg font-extrabold text-blue-700 dark:text-blue-400" x-text="'KES ' + (premiums.ga ? premiums.ga.toLocaleString() : '—')"></div>
+                                <div class="w-full text-[10px] font-bold text-white bg-blue-700 rounded-md py-1.5 mt-1">View Quote →</div>
+                            </div>
+                            <div @click="proceedToCreate('BRITAM')" class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-4 text-center cursor-pointer hover:shadow-md hover:-translate-y-0.5 transition flex flex-col items-center gap-1.5">
+                                <div class="text-[10px] font-bold text-red-700 dark:text-red-400 uppercase tracking-wider">Britam</div>
+                                <div class="text-[10px] text-gray-400">@ 4.1%</div>
+                                <div class="text-lg font-extrabold text-red-700 dark:text-red-400" x-text="'KES ' + (premiums.britam ? premiums.britam.toLocaleString() : '—')"></div>
+                                <div class="w-full text-[10px] font-bold text-white bg-red-700 rounded-md py-1.5 mt-1">View Quote →</div>
+                            </div>
+                            <div @click="proceedToCreate('SANLAM')" class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-4 text-center cursor-pointer hover:shadow-md hover:-translate-y-0.5 transition flex flex-col items-center gap-1.5">
+                                <div class="text-[10px] font-bold text-emerald-700 dark:text-emerald-400 uppercase tracking-wider">Sanlam Allianz</div>
+                                <div class="text-[10px] text-gray-400">@ 4.5%</div>
+                                <div class="text-lg font-extrabold text-emerald-700 dark:text-emerald-400" x-text="'KES ' + (premiums.sanlam ? premiums.sanlam.toLocaleString() : '—')"></div>
+                                <div class="w-full text-[10px] font-bold text-white bg-emerald-700 rounded-md py-1.5 mt-1">View Quote →</div>
+                            </div>
+                            <div @click="proceedToCreate('ALL')" class="bg-white dark:bg-gray-800 border-2 border-red-300 dark:border-red-700 rounded-xl p-4 text-center cursor-pointer hover:shadow-md hover:-translate-y-0.5 transition flex flex-col items-center gap-1.5">
+                                <div class="text-[10px] font-bold text-red-700 dark:text-red-400 uppercase tracking-wider">Compare All</div>
+                                <div class="text-[10px] text-gray-400">All insurers</div>
+                                <div class="text-lg font-extrabold text-red-700 dark:text-red-400">3 Quotes</div>
+                                <div class="w-full text-[10px] font-bold text-white bg-red-700 rounded-md py-1.5 mt-1">Compare →</div>
+                            </div>
+                        </div>
+
+                        {{-- Summary --}}
+                        <div class="flex items-center gap-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl px-5 py-3">
+                            <div class="flex-1 text-center">
+                                <span class="block text-[10px] font-semibold uppercase tracking-wider text-gray-400">Vehicle Value</span>
+                                <span class="text-sm font-bold text-gray-800 dark:text-white" x-text="'KES ' + (qf.value ? parseFloat(qf.value).toLocaleString() : '0')"></span>
+                            </div>
+                            <div class="w-px h-8 bg-blue-200 dark:bg-blue-700"></div>
+                            <div class="flex-1 text-center">
+                                <span class="block text-[10px] font-semibold uppercase tracking-wider text-gray-400">Lowest</span>
+                                <span class="text-sm font-bold text-emerald-600" x-text="'KES ' + (premiums.ga ? premiums.ga.toLocaleString() : '0')"></span>
+                            </div>
+                            <div class="w-px h-8 bg-blue-200 dark:bg-blue-700"></div>
+                            <div class="flex-1 text-center">
+                                <span class="block text-[10px] font-semibold uppercase tracking-wider text-gray-400">Highest</span>
+                                <span class="text-sm font-bold text-gray-800 dark:text-white" x-text="'KES ' + (premiums.sanlam ? premiums.sanlam.toLocaleString() : '0')"></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex justify-start pt-2">
+                        <button @click="quoteStep = 2" class="px-4 py-2 text-xs font-medium border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition">← Back to Vehicle Details</button>
+                    </div>
                 </div>
             </div>
 
+            {{-- Modal footer --}}
+            <div class="px-6 py-4 border-t border-gray-100 dark:border-gray-800 shrink-0 text-right">
+                <button @click="resetQuoteForm()" class="px-4 py-2 text-xs font-medium border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition">Reset</button>
+            </div>
         </div>
     </div>
 
-    {{-- ══════════════════════════════════════════ --}}
-    {{-- ADMIN: APPLY FOR USER MODAL               --}}
-    {{-- ══════════════════════════════════════════ --}}
+    {{-- ─── ADMIN: APPLY FOR USER MODAL (slide-in drawer) ───────────────── --}}
     @if(auth()->user()->hasRole('super-admin') || auth()->user()->hasRole('admin'))
-    <div x-show="applyModal" x-transition.opacity class="modal-overlay" style="display:none">
-        <div class="modal-box" @click.stop>
-            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;">
+    <div id="applyModal" class="fixed inset-0 z-50 hidden">
+        <div class="absolute inset-0 bg-black/40 backdrop-blur-sm" onclick="closeApplyModal()"></div>
+        <div class="absolute inset-y-0 right-0 w-full max-w-md bg-white dark:bg-gray-900 shadow-2xl flex flex-col">
+            <div class="px-6 py-4 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between shrink-0">
                 <div>
-                    <p class="section-eyebrow" style="margin-bottom:3px;">Admin Action</p>
-                    <h3 style="font-size:14px;font-weight:700;color:#111827;margin:0;">Apply Quotation for User</h3>
+                    <p class="text-[10px] font-semibold uppercase tracking-widest text-gray-400">Admin Action</p>
+                    <h2 class="text-sm font-bold text-gray-900 dark:text-white mt-0.5">Apply Quotation for User</h2>
                 </div>
-                <button @click="applyModal = false"
-                    style="width:28px;height:28px;border-radius:7px;background:#f3f4f6;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;">
-                    <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                    </svg>
+                <button onclick="closeApplyModal()" class="p-1.5 text-gray-400 hover:text-gray-700 dark:hover:text-white rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
                 </button>
             </div>
-
-            <form action="{{ route('quotations.create') }}" method="GET">
-                @csrf
-                <div style="margin-bottom:14px;">
-                    <label style="display:block;font-size:10px;font-weight:700;color:#374151;margin-bottom:6px;text-transform:uppercase;letter-spacing:.06em;">Select User</label>
-                    <select name="on_behalf_of" x-model="selectedUser" required
-                        style="width:100%;border:1px solid #d1d5db;border-radius:8px;padding:8px 10px;font-size:12px;background:#fff;color:#111827;outline:none;">
-                        <option value="">— Choose a user —</option>
-                        @foreach($users ?? [] as $user)
-                            <option value="{{ $user->id }}">{{ $user->name }} ({{ $user->email }})</option>
-                        @endforeach
-                    </select>
-                </div>
-                <div x-show="applyUserName" style="background:#eff6ff;border-radius:8px;padding:10px 12px;font-size:11px;color:#1d4ed8;margin-bottom:12px;display:flex;gap:6px;align-items:center;">
-                    <svg class="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                    </svg>
-                    Creating on behalf of <strong x-text="applyUserName" style="margin-left:3px;"></strong>
-                </div>
-                <div style="background:#fffbeb;border:1px solid #fcd34d;border-radius:8px;padding:10px 12px;font-size:10px;color:#92400e;margin-bottom:16px;">
-                    The quotation will be saved under the selected user's account.
-                </div>
-                <div style="display:flex;gap:8px;">
-                    <button type="button" @click="applyModal = false" class="btn-secondary" style="flex:1;justify-content:center;font-size:11px;padding:7px;">Cancel</button>
-                    <button type="submit" class="btn-primary" style="flex:1;justify-content:center;font-size:11px;padding:7px;" :disabled="!selectedUser">
-                        Create Quotation
-                    </button>
-                </div>
-            </form>
+            <div class="flex-1 overflow-y-auto px-6 py-5">
+                <form id="applyForm" action="{{ route('quotations.create') }}" method="GET" class="space-y-4">
+                    @csrf
+                    <div>
+                        <label class="block text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Select User</label>
+                        <select name="on_behalf_of" x-model="selectedUser" required
+                            class="w-full px-3 py-2 text-xs rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none">
+                            <option value="">— Choose a user —</option>
+                            @foreach($users ?? [] as $user)
+                                <option value="{{ $user->id }}">{{ $user->name }} ({{ $user->email }})</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div x-show="applyUserName" class="bg-blue-50 dark:bg-blue-900/20 rounded-lg px-3 py-2.5 text-xs text-blue-700 dark:text-blue-300 flex gap-2 items-center">
+                        <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        Creating on behalf of <strong x-text="applyUserName" class="ml-1"></strong>
+                    </div>
+                    <div class="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg px-3 py-2.5 text-[10px] text-amber-800 dark:text-amber-300">
+                        The quotation will be saved under the selected user's account.
+                    </div>
+                </form>
+            </div>
+            <div class="px-6 py-4 border-t border-gray-100 dark:border-gray-800 flex items-center justify-end gap-2 shrink-0">
+                <button onclick="closeApplyModal()" class="px-4 py-2 text-xs font-medium border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition">Cancel</button>
+                <button onclick="document.getElementById('applyForm').submit()" class="px-5 py-2 text-xs font-semibold bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition">Create Quotation</button>
+            </div>
         </div>
     </div>
     @endif
 
 </div>
-
-@push('styles')
-<style>
-.mf-group { display:flex; flex-direction:column; }
-.mf-label { font-size:10px; font-weight:600; color:#374151; margin-bottom:4px; text-transform:uppercase; letter-spacing:.06em; }
-.mf-input {
-    border:1px solid #e5e7eb; border-radius:7px; padding:7px 10px;
-    font-size:12px; color:#111827; background:#fff; outline:none;
-    transition:border-color .15s, box-shadow .15s; width:100%; box-sizing:border-box;
-    font-family:inherit;
-}
-.mf-input:focus { border-color:#1E40AF; box-shadow:0 0 0 3px rgba(30,64,175,.1); }
-</style>
-@endpush
 
 @push('scripts')
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
@@ -521,24 +491,19 @@ function quotationsPage() {
     return {
         search: '',
         statusFilter: '',
-        applyModal: false,
         selectedUser: '',
         applyUserName: '',
-        newQuoteModal: false,
         quoteStep: 1,
         qf: {
             salutation:'', first_name:'', middle_name:'', last_name:'',
             phone:'', email:'', reg:'', chassis:'', make:'', make_other:'',
             model:'', body:'', year:'', color:'', color_other:'', value:''
         },
-        premiums: { ga: 0, sanlam: 0 },
-        yearRange: [],
+        premiums: { ga: 0, britam: 0, sanlam: 0 },
         companyData: @json($analytics['by_company'] ?? []),
         trendData:   @json($analytics['trend'] ?? []),
 
         init() {
-            const cur = new Date().getFullYear();
-            this.yearRange = Array.from({length: cur - 1979}, (_, i) => cur - i);
             this.$nextTick(() => {
                 this.buildCompanyChart();
                 this.buildPremiumChart();
@@ -549,6 +514,7 @@ function quotationsPage() {
         calcPremiums() {
             const v = parseFloat(this.qf.value) || 0;
             this.premiums.ga     = Math.round(v * 0.035);
+            this.premiums.britam = Math.round(v * 0.041);
             this.premiums.sanlam = Math.round(v * 0.045);
         },
 
@@ -556,7 +522,8 @@ function quotationsPage() {
             const p = new URLSearchParams();
             Object.entries(this.qf).forEach(([k, v]) => { if (v) p.set(k, v); });
             p.set('insurer', insurer);
-            window.location.href = '{{ route("quotations.create") }}?' + p.toString();
+            sessionStorage.setItem('micQuoteData', JSON.stringify(this.qf));
+            window.location.href = '{{ route("quotations.preview") }}?' + p.toString();
         },
 
         resetQuoteForm() {
@@ -564,13 +531,7 @@ function quotationsPage() {
             this.qf = { salutation:'', first_name:'', middle_name:'', last_name:'',
                 phone:'', email:'', reg:'', chassis:'', make:'', make_other:'',
                 model:'', body:'', year:'', color:'', color_other:'', value:'' };
-            this.premiums = { ga: 0, sanlam: 0 };
-        },
-
-        openApplyFor(userId, userName) {
-            this.selectedUser  = userId;
-            this.applyUserName = userName;
-            this.applyModal    = true;
+            this.premiums = { ga: 0, britam: 0, sanlam: 0 };
         },
 
         rowVisible(el) {
@@ -646,6 +607,25 @@ function quotationsPage() {
         }
     }
 }
+
+// ── Modal helpers (non-Alpine) ──
+function openNewQuoteModal() {
+    document.getElementById('newQuoteModal').classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+}
+function closeNewQuoteModal() {
+    document.getElementById('newQuoteModal').classList.add('hidden');
+    document.body.style.overflow = '';
+    const page = document.querySelector('[x-data]').__x.$data;
+    if (page) page.resetQuoteForm();
+}
+function closeApplyModal() {
+    document.getElementById('applyModal').classList.add('hidden');
+    document.body.style.overflow = '';
+}
+document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') { closeNewQuoteModal(); closeApplyModal(); }
+});
 </script>
 @endpush
 </x-app-layout>

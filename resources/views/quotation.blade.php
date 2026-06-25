@@ -3,31 +3,172 @@
 @section('title', 'Motor Insurance Quotation | MIC Global Risks')
 
 @section('styles')
+<style>
+  .hero-card {
+    background: linear-gradient(135deg, var(--blue-dark) 0%, var(--blue) 60%, #0091d5 100%);
+    border-radius: var(--radius-lg);
+    padding: 32px 36px;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+    margin-bottom: 32px;
+    box-shadow: var(--shadow-md);
+  }
+  .hero-card-left h2 {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .1em;
+    color: rgba(255,255,255,.6);
+    margin-bottom: 6px;
+  }
+  .hero-card-left .quote-number {
+    font-size: 1.6rem;
+    font-weight: 800;
+    letter-spacing: -.01em;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .copy-btn {
+    background: rgba(255,255,255,.15);
+    border: 1px solid rgba(255,255,255,.25);
+    border-radius: 6px;
+    padding: 4px 10px;
+    font-size: 11px;
+    font-weight: 600;
+    color: #fff;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    transition: background .15s;
+  }
+  .copy-btn:hover { background: rgba(255,255,255,.25); }
+  .copy-btn.copied { background: rgba(16,185,129,.6); border-color: rgba(16,185,129,.4); }
+  .hero-card-right {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+  }
+  .hero-card-right img {
+    max-height: 52px;
+    max-width: 160px;
+    object-fit: contain;
+  }
+  .toast-container {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .toast {
+    background: #1f2937;
+    color: #fff;
+    padding: 12px 20px;
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 600;
+    box-shadow: 0 8px 24px rgba(0,0,0,.2);
+    animation: toast-in .3s ease;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .toast.success { background: #065f46; }
+  @keyframes toast-in { from { opacity:0; transform:translateX(40px); } to { opacity:1; transform:translateX(0); } }
 
+  .comparison-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 16px;
+    margin-bottom: 32px;
+  }
+  .comparison-card {
+    background: var(--white);
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 20px;
+    box-shadow: var(--shadow);
+    transition: box-shadow .2s, transform .15s;
+    cursor: pointer;
+  }
+  .comparison-card:hover {
+    box-shadow: var(--shadow-md);
+    transform: translateY(-2px);
+  }
+  .comparison-card.selected {
+    border-color: var(--blue);
+    box-shadow: 0 0 0 2px rgba(0,102,179,.15);
+  }
+  .comparison-card-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 14px;
+    padding-bottom: 10px;
+    border-bottom: 1.5px solid var(--blue-light);
+  }
+  .comparison-card-header img {
+    max-height: 30px;
+    max-width: 80px;
+    object-fit: contain;
+  }
+  .comparison-card-header .initials {
+    font-size: 13px;
+    font-weight: 800;
+    letter-spacing: .06em;
+  }
+  .comparison-card-body {
+    font-size: 12px;
+  }
+  .comparison-card-body .cmp-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 4px 0;
+    gap: 8px;
+  }
+  .comparison-card-body .cmp-row span:first-child { color: var(--text-muted); }
+  .comparison-card-body .cmp-row span:last-child { font-weight: 700; font-variant-numeric: tabular-nums; }
+  .comparison-card-body .cmp-total {
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1.5px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    font-weight: 800;
+    font-size: 14px;
+  }
+</style>
 @endsection
 
 @section('content')
-
-{{-- PAGE HERO --}}
-<section class="page-hero">
-  <div class="page-hero-inner">
-    <div class="breadcrumb">
-      <a href="#">Home</a>
-      <span class="breadcrumb-sep">›</span>
-      <a href="{{ route('motor.quote') }}">Motor Quote</a>
-      <span class="breadcrumb-sep">›</span>
-      <span>Quotation</span>
-    </div>
-    <h1>Motor Insurance Quotation</h1>
-    <p>Your personalised premium breakdown from Kenya's leading motor insurers. Review, compare and download your quotation below.</p>
-    <div class="quote-ref-badge"><span>Ref:</span> <span id="hero-quote-num">—</span></div>
-  </div>
-</section>
-
-{{-- MAIN --}}
 <main class="main-content">
 
-  {{-- 1. CUSTOMER SUMMARY --}}
+  <div class="toast-container" id="toast-container"></div>
+
+  <div class="hero-card">
+    <div class="hero-card-left">
+      <h2>Motor Insurance Quotation</h2>
+      <div class="quote-number">
+        <span id="hero-quote-num">—</span>
+        <button class="copy-btn" id="copy-quote-btn" onclick="copyQuoteNumber()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+          Copy
+        </button>
+      </div>
+      <p style="font-size:13px;color:rgba(255,255,255,.65);margin-top:4px">Your personalised premium breakdown</p>
+    </div>
+    <div class="hero-card-right">
+      <img id="hero-company-logo" src="" alt="Company Logo" style="display:none">
+    </div>
+  </div>
+
   <div class="section-label">Customer &amp; Vehicle Summary</div>
   <div class="summary-grid">
     <div class="summary-card">
@@ -53,9 +194,8 @@
     </div>
   </div>
 
-  {{-- 2. QUOTATION BREAKDOWN (single company mode) --}}
   <div id="single-breakdown-wrap">
-    <div class="section-label">Quotation Summary — <span id="breakdown-company-label">GA Insurance</span></div>
+    <div class="section-label">Quotation Summary — <span id="breakdown-company-label"></span></div>
     <div class="breakdown-table">
       <table>
         <thead>
@@ -65,9 +205,7 @@
             <th style="text-align:right">Amount (KES)</th>
           </tr>
         </thead>
-        <tbody id="breakdown-rows">
-          {{-- populated by JS --}}
-        </tbody>
+        <tbody id="breakdown-rows"></tbody>
         <tfoot>
           <tr>
             <td colspan="2">Total Premium (incl. taxes)</td>
@@ -78,42 +216,38 @@
     </div>
   </div>
 
-  {{-- 3. COMPARE ALL TABLE --}}
+  <div class="section-label">Compare Premiums Across Insurers</div>
+  <div class="comparison-grid" id="comparison-grid"></div>
+
   <div id="compare-all-wrap" class="compare-table-wrap">
-    <div style="padding:18px 20px 10px;font-size:13px;font-weight:700;color:var(--text)">Premium Comparison — All Insurers</div>
+    <div style="padding:18px 20px 10px;font-size:13px;font-weight:700;color:var(--text)">Detailed Premium Comparison — All Insurers</div>
     <table>
       <thead>
         <tr>
           <th>Description</th>
-          <th>GA Insurance</th>
-          <th>Britam</th>
-          <th>Sanlam Allianz</th>
+          <th id="cmp-head-0">Insurer 1</th>
+          <th id="cmp-head-1">Insurer 2</th>
+          <th id="cmp-head-2">Insurer 3</th>
         </tr>
       </thead>
-      <tbody id="compare-rows">
-        {{-- populated by JS --}}
-      </tbody>
+      <tbody id="compare-rows"></tbody>
       <tfoot>
         <tr>
           <td>Total Premium (incl. taxes)</td>
-          <td id="cmp-total-ga">—</td>
-          <td id="cmp-total-britam">—</td>
-          <td id="cmp-total-sanlam">—</td>
+          <td id="cmp-total-0">—</td>
+          <td id="cmp-total-1">—</td>
+          <td id="cmp-total-2">—</td>
         </tr>
       </tfoot>
     </table>
   </div>
 
-  {{-- 4. DOWNLOAD CARDS --}}
   <div class="section-label" id="dl-cards-label">Download Quote</div>
-  <div class="download-cards" id="dl-cards">
-    {{-- populated by JS based on mode --}}
-  </div>
+  <div class="download-cards" id="dl-cards"></div>
 
-  {{-- ACTION BAR --}}
   <div class="action-bar" id="action-bar">
     <span class="action-bar-label">Quotation Actions</span>
-    <button class="action-btn action-btn-download" id="btn-download" onclick="actionDownload()">
+    <button class="action-btn action-btn-download" onclick="actionDownload()">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
       Download PDF
     </button>
@@ -127,13 +261,37 @@
     </button>
   </div>
 
-  {{-- 5. PDF PREVIEW (print target) --}}
-  <div class="pdf-preview" id="pdf-preview">
-    {{-- populated by JS --}}
-  </div>
+  <div class="pdf-preview" id="pdf-preview"></div>
 
 </main>
-
 @endsection
 
 @section('scripts')
+<script>
+window.quotationData = @json($companyData);
+window.quotationTaxRate = {{ $taxRate }};
+window.quotationCompanies = @json($companies->map(fn($c) => ['slug' => $c->slug, 'name' => $c->name, 'logo' => $c->logoUrl()]));
+window.hardcodedLogos = @json($hardcodedLogos ?? []);
+window.selectedCompanySlug = {{ $selectedCompany ? json_encode($selectedCompany->slug) : 'null' }};
+@php
+    $_quotationDbData = $userQuotation ? [
+        'firstName' => $userQuotation->user->first_name ?? '',
+        'lastName' => $userQuotation->user->last_name ?? '',
+        'salutation' => '',
+        'phone' => $userQuotation->user->mobile ?? '',
+        'email' => $userQuotation->user->email ?? '',
+        'reg' => $userQuotation->car_registration ?? '',
+        'chassis' => '',
+        'make' => $userQuotation->car_make ?? '',
+        'model' => $userQuotation->car_model ?? '',
+        'body' => '',
+        'year' => $userQuotation->car_year ?? '',
+        'color' => '',
+        'value' => (float)($userQuotation->car_valuation ?? 0),
+        'quoteNum' => $userQuotation->quotation_number ?? '',
+    ] : null;
+@endphp
+window.quotationDbData = @json($_quotationDbData);
+window.MIC_AUTH = @json(auth()->check());
+</script>
+@endsection

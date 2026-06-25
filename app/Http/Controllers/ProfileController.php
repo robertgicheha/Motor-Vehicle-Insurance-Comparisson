@@ -2,10 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use App\Mail\PendingEmailVerification;
 use App\Models\User;
 use App\Services\AuditService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Facades\Validator;
 
 class ProfileController extends Controller
@@ -25,6 +28,7 @@ class ProfileController extends Controller
             'last_name' => 'required|string|max:255',
             'mobile' => 'required|string|max:20',
             'gender' => 'nullable|in:male,female,other',
+            'email' => 'nullable|email|max:255|unique:users,email,' . $user->id,
         ]);
 
         if ($validator->fails()) {
@@ -32,6 +36,7 @@ class ProfileController extends Controller
         }
 
         $oldData = $user->toArray();
+
         $user->update([
             'first_name' => $request->first_name,
             'last_name' => $request->last_name,
@@ -44,7 +49,57 @@ class ProfileController extends Controller
         AuditService::log('update', 'User', $user->id, $oldData, $user->toArray());
         AuditService::activity('profile_updated', "User {$user->name} updated profile");
 
-        return back()->with('success', 'Profile updated successfully.');
+        if ($request->filled('email') && $request->email !== $user->email) {
+            $token = bin2hex(random_bytes(32));
+
+            $user->update([
+                'pending_email' => $request->email,
+                'email_verify_token' => $token,
+            ]);
+
+            $verificationUrl = URL::temporarySignedRoute(
+                'profile.verify.email',
+                now()->addMinutes(60),
+                ['token' => $token]
+            );
+
+            Mail::to($request->email)->send(new PendingEmailVerification($user, $verificationUrl));
+
+            return back()->with('profile_success', 'A verification link has been sent to your new email address. Your email will be updated once you verify it.');
+        }
+
+        return back()->with('profile_success', 'Profile updated successfully.');
+    }
+
+    public function verifyNewEmail(Request $request)
+    {
+        $request->validate([
+            'token' => 'required|string',
+        ]);
+
+        if (!URL::hasValidSignature($request)) {
+            return redirect()->route('profile.edit')->withErrors(['email' => 'The verification link is invalid or has expired.']);
+        }
+
+        $user = auth()->user();
+
+        if ($user->email_verify_token !== $request->token) {
+            return redirect()->route('profile.edit')->withErrors(['email' => 'Invalid verification token.']);
+        }
+
+        if (!$user->pending_email) {
+            return redirect()->route('profile.edit')->withErrors(['email' => 'No pending email change found.']);
+        }
+
+        $user->update([
+            'email' => $user->pending_email,
+            'pending_email' => null,
+            'email_verify_token' => null,
+        ]);
+
+        AuditService::activity('email_changed', "User {$user->name} changed email address");
+
+        return redirect()->route('profile.edit')->with('profile_success', 'Your email address has been updated successfully.');
     }
 
     public function updatePassword(Request $request)
@@ -61,6 +116,6 @@ class ProfileController extends Controller
         auth()->user()->update(['password' => Hash::make($request->password)]);
         AuditService::activity('password_changed', 'User changed password');
 
-        return back()->with('success', 'Password updated.');
+        return back()->with('password_success', 'Password updated.');
     }
 }

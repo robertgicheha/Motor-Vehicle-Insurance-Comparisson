@@ -34,7 +34,34 @@ class PublicController extends Controller
         $taxRate = 0.005;
         $coverage = $this->getCoverageData($companies);
 
-        return view('quotation', compact('companies', 'selectedCompany', 'taxRate', 'coverage'));
+        $companyColors = ['#003087', '#0066B3', '#00205B', '#D0021B'];
+        $companyData = $companies->map(function ($c, $i) use ($companyColors, $taxRate) {
+            $rate = $c->rates->firstWhere('value_type', 'percentage');
+            return [
+                'slug' => $c->slug,
+                'name' => $c->name,
+                'logo' => $c->logoUrl(),
+                'rate' => $rate ? (float) $rate->percentage / 100 : 0,
+                'taxRate' => $taxRate,
+                'color' => $companyColors[$i % count($companyColors)],
+                'prefix' => $c->getInitials(),
+            ];
+        })->values();
+
+        $hardcodedLogos = [];
+        foreach (Company::hardcodedLogoMap() as $slug => $path) {
+            $hardcodedLogos[$slug] = asset($path);
+        }
+
+        $userQuotation = null;
+        if (auth()->check() && $selectedCompany) {
+            $userQuotation = auth()->user()->quotations()
+                ->where('company_id', $selectedCompany->id)
+                ->latest()
+                ->first();
+        }
+
+        return view('quotation', compact('companies', 'selectedCompany', 'taxRate', 'coverage', 'companyData', 'userQuotation', 'hardcodedLogos'));
     }
 
     public function lookupQuotation(Request $request)
@@ -142,6 +169,56 @@ class PublicController extends Controller
         }
     }
 
+    public function storeQuotationFromSession(Request $request)
+    {
+        $request->validate([
+            'company_slug' => 'required|string|exists:companies,slug',
+            'car_make' => 'required|string|max:255',
+            'car_model' => 'required|string|max:255',
+            'car_year' => 'required|integer',
+            'car_registration' => 'nullable|string|max:50',
+            'car_valuation' => 'required|numeric|min:0',
+        ]);
+
+        $company = Company::where('slug', $request->company_slug)->firstOrFail();
+        $rate = $company->rates->firstWhere('value_type', 'percentage');
+        $ratePercent = $rate ? (float) $rate->percentage / 100 : 0;
+        $premium = $request->car_valuation * $ratePercent;
+        $tax = $premium * 0.005;
+        $total = $premium + $tax;
+
+        $quotation = auth()->user()->quotations()->create([
+            'company_id' => $company->id,
+            'quotation_number' => Quotation::generateNumber($company),
+            'car_make' => $request->car_make,
+            'car_model' => $request->car_model,
+            'car_year' => $request->car_year,
+            'car_registration' => $request->car_registration,
+            'car_valuation' => $request->car_valuation,
+            'premium' => $premium,
+            'pvt_premium' => 0,
+            'total_premium' => $total,
+            'excess_own_damage' => 0,
+            'excess_theft' => 0,
+            'status' => 'generated',
+            'breakdown' => [
+                'basic_premium' => $premium,
+                'ira_levy' => $tax,
+                'rate' => $ratePercent,
+            ],
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'quotation' => [
+                'id' => $quotation->id,
+                'quotation_number' => $quotation->quotation_number,
+                'premium' => $premium,
+                'total_premium' => $total,
+            ],
+        ]);
+    }
+
     public function globalSearch(Request $request)
     {
         $q = $request->q;
@@ -168,6 +245,40 @@ class PublicController extends Controller
             'quotations' => $quotations,
             'stickers' => $stickers,
         ]);
+    }
+
+    public function generateQuote(?string $company = null)
+    {
+        $companies = Company::active()->with('rates')->get();
+        $selectedCompany = null;
+        $mode = 'all';
+
+        if ($company && $company !== 'compare-all') {
+            $selectedCompany = $companies->firstWhere('slug', $company);
+            if ($selectedCompany) {
+                $mode = 'single';
+            }
+        } elseif ($company === 'compare-all') {
+            $mode = 'compare';
+        }
+
+        $companyColors = ['#003087', '#0066B3', '#00205B', '#D0021B'];
+        $companyData = $companies->map(function ($c, $i) use ($companyColors) {
+            $rate = $c->rates->firstWhere('value_type', 'percentage');
+            return [
+                'slug' => $c->slug,
+                'name' => $c->name,
+                'logo' => $c->logoUrl(),
+                'rate' => $rate ? (float) $rate->percentage / 100 : 0,
+                'taxRate' => 0.005,
+                'color' => $companyColors[$i % count($companyColors)],
+                'prefix' => $c->getInitials(),
+            ];
+        })->values();
+
+        $coverage = $this->getCoverageData($companies);
+
+        return view('public.generate-quote', compact('companies', 'selectedCompany', 'mode', 'companyData', 'coverage'));
     }
 
     private function getCoverageData(Collection $companies): array

@@ -135,6 +135,30 @@
         </div>
       </div>
 
+      <div class="db-section-label">Quick Actions</div>
+      <div class="db-kpi-grid" style="margin-top:0">
+        <a href="{{ route('admin.users.create') }}" class="db-kpi" style="--accent:#1756c8;--icon-bg:#e8f0fc;cursor:pointer;text-decoration:none;display:flex;flex-direction:column;">
+          <div class="db-kpi-icon"><i class="ti ti-user-plus" aria-hidden="true"></i></div>
+          <div class="db-kpi-label" style="margin-bottom:0">Add User</div>
+          <div class="db-kpi-sub">Create a new user account</div>
+        </a>
+        <a href="{{ route('admin.reports.index') }}" class="db-kpi" style="--accent:#0f7a65;--icon-bg:#e1f5ee;cursor:pointer;text-decoration:none;display:flex;flex-direction:column;">
+          <div class="db-kpi-icon"><i class="ti ti-report" aria-hidden="true"></i></div>
+          <div class="db-kpi-label" style="margin-bottom:0">Generate Reports</div>
+          <div class="db-kpi-sub">Export quotation data</div>
+        </a>
+        <a href="{{ route('admin.companies.create') }}" class="db-kpi" style="--accent:#d4860e;--icon-bg:#fef3c7;cursor:pointer;text-decoration:none;display:flex;flex-direction:column;">
+          <div class="db-kpi-icon"><i class="ti ti-building-plus" aria-hidden="true"></i></div>
+          <div class="db-kpi-label" style="margin-bottom:0">Add Company</div>
+          <div class="db-kpi-sub">Register a new insurer</div>
+        </a>
+        <a href="{{ route('quotations.index') }}" class="db-kpi" style="--accent:#7c3aed;--icon-bg:#ede9fe;cursor:pointer;text-decoration:none;display:flex;flex-direction:column;">
+          <div class="db-kpi-icon"><i class="ti ti-file-description" aria-hidden="true"></i></div>
+          <div class="db-kpi-label" style="margin-bottom:0">View Quotations</div>
+          <div class="db-kpi-sub">Browse all quotations</div>
+        </a>
+      </div>
+
       <div class="db-section-label">Analytics</div>
       <div class="db-chart-grid">
         <div class="db-card">
@@ -147,75 +171,219 @@
         </div>
       </div>
 
-      <div class="db-chart-grid" style="margin-top:14px">
+      <div class="db-section-label">Activity &amp; Alerts</div>
+      <div class="db-chart-grid">
         <div class="db-card">
-          <div class="db-card-header"><span><span class="dot"></span>Recent Activity</span></div>
+          <div class="db-card-header"><span><span class="dot"></span>System Activity</span></div>
           <div class="db-activity-list">
+            @forelse($allActivities as $a)
+            @php
+              $descLower = strtolower($a->description ?? $a->action);
+              $dotColor = str_contains($descLower, 'quotation') ? '#1756c8'
+                : (str_contains($descLower, 'sticker') ? '#0f7a65'
+                : (str_contains($descLower, 'user') ? '#7c3aed'
+                : (str_contains($descLower, 'rate') || str_contains($descLower, 'company') ? '#d4860e'
+                : '#c0392b')));
+            @endphp
             <div class="db-activity-item">
-              <div class="db-activity-dot" style="background:#1756c8"></div>
+              <div class="db-activity-dot" style="background:{{ $dotColor }}"></div>
               <div>
-                <div class="db-activity-text">New quotation QT-2024/0042 generated for Toyota Corolla</div>
-                <div class="db-activity-time">2 minutes ago · John Kamau</div>
+                <div class="db-activity-text">{{ $a->description ?? $a->action }}</div>
+                <div class="db-activity-time">{{ $a->created_at->diffForHumans() }} &middot; {{ $a->user->name ?? 'System' }}</div>
               </div>
             </div>
+            @empty
             <div class="db-activity-item">
-              <div class="db-activity-dot" style="background:#0f7a65"></div>
+              <div class="db-activity-dot" style="background:#7a8baa"></div>
               <div>
-                <div class="db-activity-text">Sticker SK-2024/0018 issued &amp; emailed to client</div>
-                <div class="db-activity-time">14 minutes ago · Jane Muthoni</div>
+                <div class="db-activity-text">No activity recorded yet.</div>
+                <div class="db-activity-time">System</div>
               </div>
             </div>
-            <div class="db-activity-item">
-              <div class="db-activity-dot" style="background:#d4860e"></div>
-              <div>
-                <div class="db-activity-text">GA Insurance rate updated to 4.1% by admin</div>
-                <div class="db-activity-time">1 hour ago · Admin</div>
-              </div>
-            </div>
+            @endforelse
+          </div>
+          <a href="{{ route('admin.audit.activity') }}" style="display:inline-block;margin-top:10px;font-size:10px;font-weight:600;color:#1756c8;text-decoration:none;">View all activity →</a>
+        </div>
+        <div class="db-card">
+          <div class="db-card-header"><span><span class="dot"></span>My Activity</span></div>
+          <div class="db-activity-list">
+            @forelse($myActivities as $a)
             <div class="db-activity-item">
               <div class="db-activity-dot" style="background:#7c3aed"></div>
               <div>
-                <div class="db-activity-text">New user account created for sales team</div>
-                <div class="db-activity-time">3 hours ago · System</div>
+                <div class="db-activity-text">{{ $a->description ?? $a->action }}</div>
+                <div class="db-activity-time">{{ $a->created_at->diffForHumans() }}</div>
               </div>
             </div>
+            @empty
             <div class="db-activity-item">
-              <div class="db-activity-dot" style="background:#c0392b"></div>
+              <div class="db-activity-dot" style="background:#7a8baa"></div>
               <div>
-                <div class="db-activity-text">Quotation QT-2024/0039 expired — no sticker issued</div>
-                <div class="db-activity-time">Yesterday · Auto-system</div>
+                <div class="db-activity-text">No personal activity yet.</div>
+                <div class="db-activity-time">Start performing actions to see them here</div>
               </div>
             </div>
+            @endforelse
+          </div>
+        </div>
+      </div>
+
+      <div class="db-chart-grid" style="margin-top:14px">
+        <div class="db-card">
+          <div class="db-card-header"><span><span class="dot"></span>Quotation Calendar</span></div>
+          <div x-data="{
+            month: new Date().getMonth(),
+            year: new Date().getFullYear(),
+            selectedDate: null,
+            selectedItems: [],
+            quotationDates: {{ json_encode($quotationDates->map(fn($d) => ['date' => $d['date'], 'count' => $d['count']])->values()) }},
+            allQuotationData: {{ json_encode($quotationDates) }},
+            daysInMonth() { return new Date(this.year, this.month + 1, 0).getDate(); },
+            firstDay() { return new Date(this.year, this.month, 1).getDay(); },
+            monthName() { return new Date(this.year, this.month).toLocaleString('default', { month: 'long' }); },
+            hasQuotations(day) {
+              const dateStr = this.year + '-' + String(this.month + 1).padStart(2, '0') + '-' + String(day).padStart(2, '0');
+              return this.quotationDates.some(d => d.date === dateStr);
+            },
+            getQuotations(day) {
+              const dateStr = this.year + '-' + String(this.month + 1).padStart(2, '0') + '-' + String(day).padStart(2, '0');
+              return this.allQuotationData.filter(d => d.date === dateStr);
+            },
+            prevMonth() {
+              if (this.month === 0) { this.month = 11; this.year--; }
+              else { this.month--; }
+              this.selectedDate = null; this.selectedItems = [];
+            },
+            nextMonth() {
+              if (this.month === 11) { this.month = 0; this.year++; }
+              else { this.month++; }
+              this.selectedDate = null; this.selectedItems = [];
+            },
+            selectDay(day) {
+              if (this.hasQuotations(day)) {
+                this.selectedDate = day;
+                this.selectedItems = this.getQuotations(day);
+              }
+            }
+          }">
+            <div class="flex items-center justify-between mb-3">
+              <button @click="prevMonth()" class="p-1 text-gray-400 hover:text-gray-600 transition" style="background:none;border:none;cursor:pointer">
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
+              </button>
+              <span class="text-xs font-semibold text-gray-800" x-text="monthName() + ' ' + year"></span>
+              <button @click="nextMonth()" class="p-1 text-gray-400 hover:text-gray-600 transition" style="background:none;border:none;cursor:pointer">
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+              </button>
+            </div>
+            <div class="grid grid-cols-7 gap-0.5 text-center mb-1">
+              <template x-for="d in ['S','M','T','W','T','F','S']" :key="d">
+                <div class="text-[10px] font-semibold text-gray-400 py-1" x-text="d"></div>
+              </template>
+            </div>
+            <div class="grid grid-cols-7 gap-0.5 text-center">
+              <template x-for="blank in firstDay()" :key="'b' + blank">
+                <div></div>
+              </template>
+              <template x-for="day in daysInMonth()" :key="day">
+                <div>
+                  <div @click="selectDay(day)"
+                    :class="{
+                      'bg-blue-600 text-white shadow-sm': selectedDate === day,
+                      'hover:bg-gray-100': selectedDate !== day,
+                      'cursor-pointer': hasQuotations(day),
+                      'cursor-default': !hasQuotations(day)
+                    }"
+                    class="relative w-full aspect-square flex items-center justify-center text-[11px] font-medium text-gray-700 rounded-lg transition">
+                    <span x-text="day"></span>
+                    <template x-if="hasQuotations(day)">
+                      <span class="absolute -top-0.5 -right-0.5 w-2 h-2 bg-emerald-500 rounded-full border border-white"></span>
+                    </template>
+                  </div>
+                </div>
+              </template>
+            </div>
+            <template x-if="selectedDate && selectedItems.length > 0">
+              <div class="mt-3 pt-3 border-t border-gray-100">
+                <p class="text-[10px] font-semibold text-gray-500 mb-2">
+                  Quotations on <span x-text="selectedDate + ' ' + monthName() + ' ' + year"></span>:
+                </p>
+                <template x-for="(dayData, idx) in selectedItems" :key="idx">
+                  <div class="space-y-1">
+                    <template x-for="(item, iidx) in dayData.items" :key="iidx">
+                      <template x-if="iidx === 0 || dayData.count <= 1">
+                        <a x-bind:href="'{{ url('quotations') }}/' + item.id" class="flex items-center justify-between py-1 px-2 rounded hover:bg-gray-50 text-[11px] text-gray-700 no-underline">
+                          <span>
+                            <span class="font-semibold text-blue-600" x-text="item.quotation_number"></span>
+                            <span class="text-gray-500" x-text="' — ' + item.user_name"></span>
+                          </span>
+                          <span class="text-gray-400 text-[10px]" x-text="item.company"></span>
+                        </a>
+                      </template>
+                    </template>
+                    <template x-if="dayData.count > 1">
+                      <a x-bind:href="'{{ route('quotations.index') }}' + '?date=' + dayData.date" class="block py-1 text-[10px] font-semibold text-blue-600 hover:underline text-center">
+                        <span x-text="'1 + ' + (dayData.count - 1) + ' more'"></span>
+                      </a>
+                    </template>
+                  </div>
+                </template>
+              </div>
+            </template>
           </div>
         </div>
         <div class="db-card">
-          <div class="db-card-header"><span><span class="dot"></span>Quick Stats</span></div>
-          <div class="db-quick-stats">
-            <div class="db-quick-stat">
-              <div class="db-quick-stat-label">Avg. Premium</div>
-              <div class="db-quick-stat-value">KES 48,200</div>
+          <div class="db-card-header"><span><span class="dot"></span>Notifications &amp; Alerts</span></div>
+          <div class="db-activity-list">
+            <div class="db-activity-item" style="margin-bottom:6px">
+              <div class="db-activity-dot" style="background:#1756c8"></div>
+              <div style="font-weight:600;font-size:10px;color:#7a8baa;text-transform:uppercase;letter-spacing:0.6px">Unread Notifications</div>
             </div>
-            <div class="db-quick-stat">
-              <div class="db-quick-stat-label">Avg. Vehicle Value</div>
-              <div class="db-quick-stat-value">KES 1.05M</div>
+            @forelse($unreadNotifications as $n)
+            <div class="db-activity-item">
+              <div class="db-activity-dot" style="background:#3b82f6"></div>
+              <div>
+                <div class="db-activity-text">{{ $n->data['message'] ?? $n->data['action'] ?? 'Notification' }}</div>
+                <div class="db-activity-time">{{ $n->created_at->diffForHumans() }}</div>
+              </div>
             </div>
-            <div class="db-quick-stat">
-              <div class="db-quick-stat-label">GA Insurance</div>
-              <div class="db-quick-stat-value">4.1% rate</div>
+            @empty
+            <div class="db-activity-item">
+              <div class="db-activity-dot" style="background:#7a8baa"></div>
+              <div>
+                <div class="db-activity-text">No unread notifications</div>
+                <div class="db-activity-time">You are all caught up</div>
+              </div>
             </div>
-            <div class="db-quick-stat">
-              <div class="db-quick-stat-label">Sanlam Allianz</div>
-              <div class="db-quick-stat-value">6.5% rate</div>
-            </div>
-            <div class="db-quick-stat">
-              <div class="db-quick-stat-label">Pending Stickers</div>
-              <div class="db-quick-stat-value">7</div>
-            </div>
-            <div class="db-quick-stat">
-              <div class="db-quick-stat-label">Emails Failed</div>
-              <div class="db-quick-stat-value">2</div>
-            </div>
+            @endforelse
+            @if($unreadCount > 5)
+            <a href="{{ route('admin.notifications.index') }}" class="text-[10px] font-semibold text-blue-600 hover:underline" style="display:block;margin-top:6px;">+{{ $unreadCount - 5 }} more unread</a>
+            @endif
           </div>
+          <div style="height:10px"></div>
+          <div class="db-activity-list">
+            <div class="db-activity-item" style="margin-bottom:6px">
+              <div class="db-activity-dot" style="background:#c0392b"></div>
+              <div style="font-weight:600;font-size:10px;color:#7a8baa;text-transform:uppercase;letter-spacing:0.6px">Recent Audit Alerts</div>
+            </div>
+            @forelse($recentAlerts as $alert)
+            <div class="db-activity-item">
+              <div class="db-activity-dot" style="background:#d4860e"></div>
+              <div>
+                <div class="db-activity-text">{{ $alert->action }} on {{ $alert->model ?? 'system' }}</div>
+                <div class="db-activity-time">{{ $alert->created_at->diffForHumans() }} &middot; {{ $alert->user->name ?? 'System' }}</div>
+              </div>
+            </div>
+            @empty
+            <div class="db-activity-item">
+              <div class="db-activity-dot" style="background:#7a8baa"></div>
+              <div>
+                <div class="db-activity-text">No recent alerts</div>
+                <div class="db-activity-time">System is operating normally</div>
+              </div>
+            </div>
+            @endforelse
+          </div>
+          <a href="{{ route('admin.audit.index') }}" style="display:inline-block;margin-top:10px;font-size:10px;font-weight:600;color:#1756c8;text-decoration:none;">View full audit log →</a>
         </div>
       </div>
 

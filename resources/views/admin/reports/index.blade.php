@@ -1,22 +1,61 @@
 <x-app-layout>
-    <div class="space-y-6 fade-in">
-        <div>
-            <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Reports</h1>
-            <p class="text-gray-500 dark:text-gray-400 mt-1">Generate and export reports for quotations and certificates</p>
+<div class="space-y-6 pt-10 fade-in">
+
+    <div class="rounded-2xl bg-micblue px-6 py-7 shadow-sm">
+        <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
+            <div>
+                <p class="text-[10px] font-semibold uppercase tracking-widest text-blue-400">Reporting</p>
+                <h1 class="mt-0.5 text-xl font-bold text-white">Reports</h1>
+                <p class="mt-0.5 text-xs text-slate-400">Generate and export reports for quotations and certificates</p>
+            </div>
         </div>
 
-        <div class="flex gap-1 bg-gray-100 dark:bg-gray-800 p-1 rounded-xl w-fit">
-            <button onclick="switchTab('quotations')" id="tab-quotations" class="px-5 py-2 rounded-lg text-sm font-semibold transition bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm">Quotations</button>
-            <button onclick="switchTab('stickers')" id="tab-stickers" class="px-5 py-2 rounded-lg text-sm font-semibold transition text-gray-500 dark:text-gray-400 hover:text-gray-700">Certificates</button>
+        <div class="mt-6 grid grid-cols-2 md:grid-cols-4 gap-3">
+            <div class="kpi-card p-4">
+                <div class="accent-bar"></div>
+                <p class="kpi-eyebrow">Companies</p>
+                <p class="kpi-value mt-1">{{ $companies->count() }}</p>
+                <span class="kpi-delta neutral mt-1.5 inline-block">Active insurers</span>
+            </div>
+            <div class="kpi-card p-4">
+                <div class="accent-bar" style="background:linear-gradient(90deg,#34d399,#6ee7b7)"></div>
+                <p class="kpi-eyebrow">Quotations</p>
+                <p class="kpi-value mt-1">{{ $stats->quotations_count ?? 0 }}</p>
+                <span class="kpi-delta up mt-1.5 inline-block">Generated quotes</span>
+            </div>
+            <div class="kpi-card p-4">
+                <div class="accent-bar" style="background:linear-gradient(90deg,#818cf8,#a5b4fc)"></div>
+                <p class="kpi-eyebrow">Certificates</p>
+                <p class="kpi-value mt-1">{{ $stats->stickers_count ?? 0 }}</p>
+                <span class="kpi-delta up mt-1.5 inline-block">Insurance certificates</span>
+            </div>
+            <div class="kpi-card p-4">
+                <div class="accent-bar" style="background:linear-gradient(90deg,#fb7185,#fda4af)"></div>
+                <p class="kpi-eyebrow">Report Types</p>
+                <p class="kpi-value mt-1">2</p>
+                <span class="kpi-delta neutral mt-1.5 inline-block">Quotations &amp; Certificates</span>
+            </div>
         </div>
+    </div>
 
-        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-            <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Report Filters</h3>
-            <form id="reportForm" class="grid grid-cols-1 md:grid-cols-4 gap-4">
+    <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+        <div class="px-5 py-4 border-b border-gray-100 dark:border-gray-700 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <div>
+                <h2 class="text-xs font-semibold text-gray-800 dark:text-white">Report Filters</h2>
+                <p class="text-[10px] text-gray-400 mt-0.5">Configure and generate your report</p>
+            </div>
+            <div class="flex gap-1 bg-gray-100 dark:bg-gray-700 p-0.5 rounded-lg">
+                <button onclick="switchTab('quotations')" id="tab-quotations" class="px-3 py-1.5 text-xs font-semibold rounded-lg transition bg-white dark:bg-gray-600 text-gray-800 dark:text-white shadow-sm">Quotations</button>
+                <button onclick="switchTab('stickers')" id="tab-stickers" class="px-3 py-1.5 text-xs font-semibold rounded-lg transition text-gray-500 dark:text-gray-400 hover:text-gray-700">Certificates</button>
+            </div>
+        </div>
+        <div class="px-5 py-4 space-y-4">
+            <form id="reportForm" class="grid grid-cols-1 md:grid-cols-4 gap-3">
                 <input type="hidden" name="report_type" id="report_type" value="quotations">
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Company</label>
-                    <select name="company_id" id="filter_company" class="w-full px-4 py-2.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm">
+                    <label class="block text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Company</label>
+                    <select name="company_id" id="filter_company"
+                            class="w-full px-3 py-1.5 text-xs rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200 focus:ring-2 focus:ring-blue-500 outline-none">
                         <option value="">All Companies</option>
                         @foreach($companies as $c)
                             <option value="{{ $c->id }}">{{ $c->name }}</option>
@@ -24,8 +63,9 @@
                     </select>
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Period</label>
-                    <select name="period" id="filter_period" class="w-full px-4 py-2.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm">
+                    <label class="block text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Period</label>
+                    <select name="period" id="filter_period"
+                            class="w-full px-3 py-1.5 text-xs rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200 focus:ring-2 focus:ring-blue-500 outline-none">
                         <option value="">All Time</option>
                         <option value="today">Today</option>
                         <option value="week">This Week</option>
@@ -33,239 +73,257 @@
                     </select>
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">From</label>
+                    <label class="block text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">From</label>
                     <input type="date" name="date_from" id="filter_from"
-                           class="w-full px-4 py-2.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm">
+                           class="w-full px-3 py-1.5 text-xs rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200 focus:ring-2 focus:ring-blue-500 outline-none">
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">To</label>
+                    <label class="block text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">To</label>
                     <input type="date" name="date_to" id="filter_to"
-                           class="w-full px-4 py-2.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm">
+                           class="w-full px-3 py-1.5 text-xs rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200 focus:ring-2 focus:ring-blue-500 outline-none">
                 </div>
             </form>
-            <div class="flex flex-wrap gap-3 mt-4">
-                <button onclick="generateReport()" class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition text-sm font-medium">Generate Report</button>
-                <button onclick="exportReport('csv')" id="export-btn" class="px-6 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition text-sm font-medium">Export CSV</button>
-            </div>
-        </div>
-
-        <div id="reportResults" class="hidden space-y-6">
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-4" id="summaryCards"></div>
-
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-5">
-                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4" id="chart1-title">Quotations by Company</h3>
-                    <canvas id="reportCompanyChart" height="200"></canvas>
-                </div>
-                <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-5">
-                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4" id="chart2-title">Daily Trend</h3>
-                    <canvas id="reportDailyChart" height="200"></canvas>
-                </div>
-            </div>
-
-            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
-                <div class="p-5 border-b border-gray-200 dark:border-gray-700">
-                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white" id="table-title">Detailed Report</h3>
-                </div>
-                <div class="overflow-x-auto" id="reportTable"></div>
+            <div class="flex flex-wrap gap-2">
+                <button onclick="generateReport()" class="px-4 py-1.5 text-xs font-semibold bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition">Generate Report</button>
+                <button onclick="exportReport('csv')" id="export-btn" class="px-4 py-1.5 text-xs font-medium border border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition">Export CSV</button>
             </div>
         </div>
     </div>
 
-    @push('scripts')
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
-    <script>
-        let charts = { company: null, daily: null };
-        let currentTab = 'quotations';
+    <div id="reportResults" class="hidden space-y-6">
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-3" id="summaryCards"></div>
 
-        function switchTab(tab) {
-            currentTab = tab;
-            document.getElementById('report_type').value = tab;
-            document.querySelectorAll('[id^="tab-"]').forEach(el => {
-                el.classList.remove('bg-white', 'dark:bg-gray-700', 'text-gray-900', 'dark:text-white', 'shadow-sm');
-                el.classList.add('text-gray-500', 'dark:text-gray-400');
-            });
-            const btn = document.getElementById('tab-' + tab);
-            btn.classList.remove('text-gray-500', 'dark:text-gray-400');
-            btn.classList.add('bg-white', 'dark:bg-gray-700', 'text-gray-900', 'dark:text-white', 'shadow-sm');
-            document.getElementById('reportResults').classList.add('hidden');
-        }
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+            <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-5">
+                <h3 class="text-xs font-semibold text-gray-800 dark:text-white mb-3" id="chart1-title">Quotations by Company</h3>
+                <canvas id="reportCompanyChart" height="200"></canvas>
+            </div>
+            <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-5">
+                <h3 class="text-xs font-semibold text-gray-800 dark:text-white mb-3" id="chart2-title">Daily Trend</h3>
+                <canvas id="reportDailyChart" height="200"></canvas>
+            </div>
+        </div>
 
-        function getFormData() {
-            const form = document.getElementById('reportForm');
-            const data = new FormData(form);
-            const params = new URLSearchParams();
-            data.forEach((v, k) => { if(v) params.append(k, v); });
-            return params;
-        }
+        <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+            <div class="px-5 py-4 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between">
+                <h3 class="text-xs font-semibold text-gray-800 dark:text-white" id="table-title">Detailed Report</h3>
+                <span class="text-[10px] text-gray-400">Report data</span>
+            </div>
+            <div class="overflow-x-auto" id="reportTable"></div>
+        </div>
+    </div>
+</div>
 
-        function generateReport() {
-            const params = getFormData();
-            const endpoint = currentTab === 'stickers'
-                ? '{{ route('admin.reports.stickers') }}'
-                : '{{ route('admin.reports.generate') }}';
+@push('scripts')
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+<script>
+    let charts = { company: null, daily: null };
+    let currentTab = 'quotations';
 
-            fetch(endpoint, {
-                method: 'POST',
-                headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}', 'Accept': 'application/json' },
-                body: params
-            })
-            .then(r => r.json())
-            .then(d => {
-                document.getElementById('reportResults').classList.remove('hidden');
-                if (currentTab === 'stickers') {
-                    renderStickerReport(d);
-                } else {
-                    renderQuotationReport(d);
-                }
-            });
-        }
+    function switchTab(tab) {
+        currentTab = tab;
+        document.getElementById('report_type').value = tab;
+        document.querySelectorAll('[id^="tab-"]').forEach(el => {
+            el.classList.remove('bg-white', 'dark:bg-gray-600', 'text-gray-800', 'dark:text-white', 'shadow-sm');
+            el.classList.add('text-gray-500', 'dark:text-gray-400');
+        });
+        const btn = document.getElementById('tab-' + tab);
+        btn.classList.remove('text-gray-500', 'dark:text-gray-400');
+        btn.classList.add('bg-white', 'dark:bg-gray-600', 'text-gray-800', 'dark:text-white', 'shadow-sm');
+        document.getElementById('reportResults').classList.add('hidden');
+    }
 
-        function renderQuotationReport(d) {
-            document.getElementById('chart1-title').textContent = 'Quotations by Company';
-            document.getElementById('chart2-title').textContent = 'Daily Trend';
-            document.getElementById('table-title').textContent = 'Detailed Report - Quotations';
-            document.getElementById('summaryCards').innerHTML = `
-                <div class="p-4 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700">
-                    <p class="text-xs text-gray-500">Total Quotations</p>
-                    <p class="text-2xl font-bold text-gray-900 dark:text-white">${d.summary.total_quotations}</p>
-                </div>
-                <div class="p-4 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700">
-                    <p class="text-xs text-gray-500">Total Premium</p>
-                    <p class="text-2xl font-bold text-blue-600">KES ${Number(d.summary.total_premium).toLocaleString()}</p>
-                </div>
-                <div class="p-4 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700">
-                    <p class="text-xs text-gray-500">Avg Premium</p>
-                    <p class="text-2xl font-bold text-green-600">KES ${Number(d.summary.average_premium).toLocaleString()}</p>
-                </div>
-                <div class="p-4 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700">
-                    <p class="text-xs text-gray-500">Avg Valuation</p>
-                    <p class="text-2xl font-bold text-purple-600">KES ${Number(d.summary.average_valuation).toLocaleString()}</p>
-                </div>
-            `;
-            const labels = Object.keys(d.by_company);
-            const counts = Object.values(d.by_company).map(v => v.count);
-            renderChart('reportCompanyChart', labels, counts, 'bar', 'Quotations');
-            renderChart('reportDailyChart', Object.keys(d.by_day), Object.values(d.by_day).map(v => v.count), 'line', 'Quotations');
-            renderQuotationTable(d.quotations);
-        }
+    function getFormData() {
+        const form = document.getElementById('reportForm');
+        const data = new FormData(form);
+        const params = new URLSearchParams();
+        data.forEach((v, k) => { if(v) params.append(k, v); });
+        return params;
+    }
 
-        function renderStickerReport(d) {
-            document.getElementById('chart1-title').textContent = 'Certificates by Company';
-            document.getElementById('chart2-title').textContent = 'Daily Trend';
-            document.getElementById('table-title').textContent = 'Detailed Report - Certificates';
-            document.getElementById('summaryCards').innerHTML = `
-                <div class="p-4 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700">
-                    <p class="text-xs text-gray-500">Total Certificates</p>
-                    <p class="text-2xl font-bold text-gray-900 dark:text-white">${d.summary.total_stickers}</p>
-                </div>
-                <div class="p-4 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700">
-                    <p class="text-xs text-gray-500">Total Premium</p>
-                    <p class="text-2xl font-bold text-blue-600">KES ${Number(d.summary.total_premium).toLocaleString()}</p>
-                </div>
-                <div class="p-4 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700">
-                    <p class="text-xs text-gray-500">Total Downloads</p>
-                    <p class="text-2xl font-bold text-green-600">${d.summary.total_downloads}</p>
-                </div>
-                <div class="p-4 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700">
-                    <p class="text-xs text-gray-500">Avg Premium</p>
-                    <p class="text-2xl font-bold text-purple-600">KES ${Number(d.summary.average_premium).toLocaleString()}</p>
-                </div>
-            `;
-            const labels = Object.keys(d.by_company);
-            const counts = Object.values(d.by_company).map(v => v.count);
-            renderChart('reportCompanyChart', labels, counts, 'bar', 'Certificates');
-            renderChart('reportDailyChart', Object.keys(d.by_day), Object.values(d.by_day).map(v => v.count), 'line', 'Certificates');
-            renderStickerTable(d.stickers);
-        }
+    function generateReport() {
+        const params = getFormData();
+        const endpoint = currentTab === 'stickers'
+            ? '{{ route('admin.reports.stickers') }}'
+            : '{{ route('admin.reports.generate') }}';
 
-        function renderChart(canvasId, labels, data, type, label) {
-            if (charts[type === 'bar' ? 'company' : 'daily']) {
-                charts[type === 'bar' ? 'company' : 'daily'].destroy();
-            }
-            const ctx = document.getElementById(canvasId).getContext('2d');
-            const chart = new Chart(ctx, {
-                type: type,
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        label: label,
-                        data: data,
-                        backgroundColor: type === 'bar' ? ['rgba(59,130,246,0.7)', 'rgba(139,92,246,0.7)'] : 'rgba(59,130,246,0.1)',
-                        borderColor: type === 'bar' ? ['rgb(59,130,246)', 'rgb(139,92,246)'] : 'rgb(59,130,246)',
-                        borderWidth: 2,
-                        borderRadius: type === 'bar' ? 6 : 0,
-                        fill: type === 'line',
-                        tension: type === 'line' ? 0.4 : 0,
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    plugins: { legend: { display: false } },
-                    scales: { y: { beginAtZero: true, grid: { color: 'rgba(0,0,0,0.05)' } }, x: { grid: { display: false } } }
-                }
-            });
-            if (type === 'bar') charts.company = chart;
-            else charts.daily = chart;
-        }
-
-        function renderQuotationTable(quotations) {
-            if (!quotations.length) {
-                document.getElementById('reportTable').innerHTML = '<p class="p-4 text-center text-gray-500">No data found</p>';
-                return;
-            }
-            let html = '<table class="w-full text-sm"><thead><tr class="bg-gray-50 dark:bg-gray-700/50">';
-            html += '<th class="px-4 py-3 text-left">#</th><th class="px-4 py-3 text-left">User</th><th class="px-4 py-3 text-left">Company</th><th class="px-4 py-3 text-left">Vehicle</th><th class="px-4 py-3 text-right">Valuation</th><th class="px-4 py-3 text-right">Premium</th><th class="px-4 py-3 text-center">Status</th><th class="px-4 py-3 text-right">Date</th></tr></thead><tbody>';
-            quotations.forEach(q => {
-                html += `<tr class="border-t border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/30">
-                    <td class="px-4 py-3 font-medium">${q.quotation_number}</td>
-                    <td class="px-4 py-3">${q.user?.name || 'N/A'}</td>
-                    <td class="px-4 py-3">${q.company?.name || 'N/A'}</td>
-                    <td class="px-4 py-3">${q.car_make} ${q.car_model}</td>
-                    <td class="px-4 py-3 text-right">${Number(q.car_valuation).toLocaleString()}</td>
-                    <td class="px-4 py-3 text-right font-medium">${Number(q.total_premium).toLocaleString()}</td>
-                    <td class="px-4 py-3 text-center"><span class="px-2 py-0.5 rounded-full text-xs bg-green-100 text-green-800">${q.status}</span></td>
-                    <td class="px-4 py-3 text-right text-gray-500">${new Date(q.created_at).toLocaleDateString()}</td>
-                </tr>`;
-            });
-            html += '</tbody></table>';
-            document.getElementById('reportTable').innerHTML = html;
-        }
-
-        function renderStickerTable(stickers) {
-            if (!stickers.length) {
-                document.getElementById('reportTable').innerHTML = '<p class="p-4 text-center text-gray-500">No data found</p>';
-                return;
-            }
-            let html = '<table class="w-full text-sm"><thead><tr class="bg-gray-50 dark:bg-gray-700/50">';
-            html += '<th class="px-4 py-3 text-left">#</th><th class="px-4 py-3 text-left">Company</th><th class="px-4 py-3 text-left">Customer</th><th class="px-4 py-3 text-left">Vehicle</th><th class="px-4 py-3 text-right">Premium</th><th class="px-4 py-3 text-center">Downloads</th><th class="px-4 py-3 text-center">Via</th><th class="px-4 py-3 text-center">Status</th><th class="px-4 py-3 text-right">Date</th></tr></thead><tbody>';
-            stickers.forEach(s => {
-                html += `<tr class="border-t border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/30">
-                    <td class="px-4 py-3 font-mono text-xs font-bold">${s.sticker_number}</td>
-                    <td class="px-4 py-3">${s.company?.name || 'N/A'}</td>
-                    <td class="px-4 py-3">${s.customer_name}</td>
-                    <td class="px-4 py-3">${s.car_make} ${s.car_model} (${s.car_year})</td>
-                    <td class="px-4 py-3 text-right font-medium">KES ${Number(s.premium).toLocaleString()}</td>
-                    <td class="px-4 py-3 text-center font-semibold">${s.download_count || 0}</td>
-                    <td class="px-4 py-3 text-center"><span class="px-2 py-0.5 rounded text-xs bg-gray-100 text-gray-600">${(s.created_via || 'web').toUpperCase()}</span></td>
-                    <td class="px-4 py-3 text-center"><span class="px-2 py-0.5 rounded-full text-xs bg-green-100 text-green-800">${s.status}</span></td>
-                    <td class="px-4 py-3 text-right text-gray-500">${new Date(s.created_at).toLocaleDateString()}</td>
-                </tr>`;
-            });
-            html += '</tbody></table>';
-            document.getElementById('reportTable').innerHTML = html;
-        }
-
-        function exportReport(type) {
-            const params = getFormData();
-            let url;
+        fetch(endpoint, {
+            method: 'POST',
+            headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}', 'Accept': 'application/json' },
+            body: params
+        })
+        .then(r => r.json())
+        .then(d => {
+            document.getElementById('reportResults').classList.remove('hidden');
             if (currentTab === 'stickers') {
-                url = '{{ route('admin.reports.stickers.export-csv') }}';
+                renderStickerReport(d);
             } else {
-                url = '{{ route('admin.reports.export-csv') }}';
+                renderQuotationReport(d);
             }
-            window.location.href = url + '?' + params.toString();
+        });
+    }
+
+    function renderQuotationReport(d) {
+        document.getElementById('chart1-title').textContent = 'Quotations by Company';
+        document.getElementById('chart2-title').textContent = 'Daily Trend';
+        document.getElementById('table-title').textContent = 'Detailed Report - Quotations';
+        document.getElementById('summaryCards').innerHTML = `
+            <div class="kpi-card p-4">
+                <div class="accent-bar"></div>
+                <p class="kpi-eyebrow">Total Quotations</p>
+                <p class="kpi-value mt-1">${d.summary.total_quotations}</p>
+                <span class="kpi-delta neutral mt-1.5 inline-block">Generated quotes</span>
+            </div>
+            <div class="kpi-card p-4">
+                <div class="accent-bar" style="background:linear-gradient(90deg,#34d399,#6ee7b7)"></div>
+                <p class="kpi-eyebrow">Total Premium</p>
+                <p class="kpi-value mt-1 text-emerald-500">KES ${Number(d.summary.total_premium).toLocaleString()}</p>
+                <span class="kpi-delta up mt-1.5 inline-block">Total premium amount</span>
+            </div>
+            <div class="kpi-card p-4">
+                <div class="accent-bar" style="background:linear-gradient(90deg,#818cf8,#a5b4fc)"></div>
+                <p class="kpi-eyebrow">Avg Premium</p>
+                <p class="kpi-value mt-1 text-blue-500">KES ${Number(d.summary.average_premium).toLocaleString()}</p>
+                <span class="kpi-delta up mt-1.5 inline-block">Average per quote</span>
+            </div>
+            <div class="kpi-card p-4">
+                <div class="accent-bar" style="background:linear-gradient(90deg,#fb7185,#fda4af)"></div>
+                <p class="kpi-eyebrow">Avg Valuation</p>
+                <p class="kpi-value mt-1 text-rose-500">KES ${Number(d.summary.average_valuation).toLocaleString()}</p>
+                <span class="kpi-delta neutral mt-1.5 inline-block">Average car value</span>
+            </div>
+        `;
+        const labels = Object.keys(d.by_company);
+        const counts = Object.values(d.by_company).map(v => v.count);
+        renderChart('reportCompanyChart', labels, counts, 'bar', 'Quotations');
+        renderChart('reportDailyChart', Object.keys(d.by_day), Object.values(d.by_day).map(v => v.count), 'line', 'Quotations');
+        renderQuotationTable(d.quotations);
+    }
+
+    function renderStickerReport(d) {
+        document.getElementById('chart1-title').textContent = 'Certificates by Company';
+        document.getElementById('chart2-title').textContent = 'Daily Trend';
+        document.getElementById('table-title').textContent = 'Detailed Report - Certificates';
+        document.getElementById('summaryCards').innerHTML = `
+            <div class="kpi-card p-4">
+                <div class="accent-bar"></div>
+                <p class="kpi-eyebrow">Total Certificates</p>
+                <p class="kpi-value mt-1">${d.summary.total_stickers}</p>
+                <span class="kpi-delta neutral mt-1.5 inline-block">Generated certificates</span>
+            </div>
+            <div class="kpi-card p-4">
+                <div class="accent-bar" style="background:linear-gradient(90deg,#34d399,#6ee7b7)"></div>
+                <p class="kpi-eyebrow">Total Premium</p>
+                <p class="kpi-value mt-1 text-emerald-500">KES ${Number(d.summary.total_premium).toLocaleString()}</p>
+                <span class="kpi-delta up mt-1.5 inline-block">Total premium amount</span>
+            </div>
+            <div class="kpi-card p-4">
+                <div class="accent-bar" style="background:linear-gradient(90deg,#818cf8,#a5b4fc)"></div>
+                <p class="kpi-eyebrow">Total Downloads</p>
+                <p class="kpi-value mt-1 text-blue-500">${d.summary.total_downloads}</p>
+                <span class="kpi-delta up mt-1.5 inline-block">Certificate downloads</span>
+            </div>
+            <div class="kpi-card p-4">
+                <div class="accent-bar" style="background:linear-gradient(90deg,#fb7185,#fda4af)"></div>
+                <p class="kpi-eyebrow">Avg Premium</p>
+                <p class="kpi-value mt-1 text-rose-500">KES ${Number(d.summary.average_premium).toLocaleString()}</p>
+                <span class="kpi-delta neutral mt-1.5 inline-block">Average per certificate</span>
+            </div>
+        `;
+        const labels = Object.keys(d.by_company);
+        const counts = Object.values(d.by_company).map(v => v.count);
+        renderChart('reportCompanyChart', labels, counts, 'bar', 'Certificates');
+        renderChart('reportDailyChart', Object.keys(d.by_day), Object.values(d.by_day).map(v => v.count), 'line', 'Certificates');
+        renderStickerTable(d.stickers);
+    }
+
+    function renderChart(canvasId, labels, data, type, label) {
+        if (charts[type === 'bar' ? 'company' : 'daily']) {
+            charts[type === 'bar' ? 'company' : 'daily'].destroy();
         }
-    </script>
-    @endpush
+        const ctx = document.getElementById(canvasId).getContext('2d');
+        const chart = new Chart(ctx, {
+            type: type,
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: label,
+                    data: data,
+                    backgroundColor: type === 'bar' ? ['rgba(59,130,246,0.7)', 'rgba(139,92,246,0.7)'] : 'rgba(59,130,246,0.1)',
+                    borderColor: type === 'bar' ? ['rgb(59,130,246)', 'rgb(139,92,246)'] : 'rgb(59,130,246)',
+                    borderWidth: 2,
+                    borderRadius: type === 'bar' ? 6 : 0,
+                    fill: type === 'line',
+                    tension: type === 'line' ? 0.4 : 0,
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: { legend: { display: false } },
+                scales: { y: { beginAtZero: true, grid: { color: 'rgba(0,0,0,0.05)' } }, x: { grid: { display: false } } }
+            }
+        });
+        if (type === 'bar') charts.company = chart;
+        else charts.daily = chart;
+    }
+
+    function renderQuotationTable(quotations) {
+        if (!quotations.length) {
+            document.getElementById('reportTable').innerHTML = '<p class="p-5 text-center text-xs text-gray-400">No data found</p>';
+            return;
+        }
+        let html = '<table class="w-full text-xs"><thead><tr class="bg-gray-50 dark:bg-gray-700/40">';
+        html += '<th class="px-5 py-2.5 text-left font-semibold text-gray-400 uppercase tracking-wider text-[10px]">#</th><th class="px-5 py-2.5 text-left font-semibold text-gray-400 uppercase tracking-wider text-[10px]">User</th><th class="px-5 py-2.5 text-left font-semibold text-gray-400 uppercase tracking-wider text-[10px]">Company</th><th class="px-5 py-2.5 text-left font-semibold text-gray-400 uppercase tracking-wider text-[10px]">Vehicle</th><th class="px-5 py-2.5 text-right font-semibold text-gray-400 uppercase tracking-wider text-[10px]">Valuation</th><th class="px-5 py-2.5 text-right font-semibold text-gray-400 uppercase tracking-wider text-[10px]">Premium</th><th class="px-5 py-2.5 text-center font-semibold text-gray-400 uppercase tracking-wider text-[10px]">Status</th><th class="px-5 py-2.5 text-right font-semibold text-gray-400 uppercase tracking-wider text-[10px]">Date</th></tr></thead><tbody class="divide-y divide-gray-100 dark:divide-gray-700">';
+        quotations.forEach(q => {
+            html += `<tr class="hover:bg-gray-50 dark:hover:bg-gray-700/30">
+                <td class="px-5 py-2.5 font-medium text-gray-800 dark:text-white">${q.quotation_number}</td>
+                <td class="px-5 py-2.5 text-gray-500 dark:text-gray-400">${q.user?.name || 'N/A'}</td>
+                <td class="px-5 py-2.5 text-gray-500 dark:text-gray-400">${q.company?.name || 'N/A'}</td>
+                <td class="px-5 py-2.5 text-gray-500 dark:text-gray-400">${q.car_make} ${q.car_model}</td>
+                <td class="px-5 py-2.5 text-right text-gray-500 dark:text-gray-400">${Number(q.car_valuation).toLocaleString()}</td>
+                <td class="px-5 py-2.5 text-right font-medium text-gray-800 dark:text-white">${Number(q.total_premium).toLocaleString()}</td>
+                <td class="px-5 py-2.5 text-center"><span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">${q.status}</span></td>
+                <td class="px-5 py-2.5 text-right text-gray-500 dark:text-gray-400">${new Date(q.created_at).toLocaleDateString()}</td>
+            </tr>`;
+        });
+        html += '</tbody></table>';
+        document.getElementById('reportTable').innerHTML = html;
+    }
+
+    function renderStickerTable(stickers) {
+        if (!stickers.length) {
+            document.getElementById('reportTable').innerHTML = '<p class="p-5 text-center text-xs text-gray-400">No data found</p>';
+            return;
+        }
+        let html = '<table class="w-full text-xs"><thead><tr class="bg-gray-50 dark:bg-gray-700/40">';
+        html += '<th class="px-5 py-2.5 text-left font-semibold text-gray-400 uppercase tracking-wider text-[10px]">#</th><th class="px-5 py-2.5 text-left font-semibold text-gray-400 uppercase tracking-wider text-[10px]">Company</th><th class="px-5 py-2.5 text-left font-semibold text-gray-400 uppercase tracking-wider text-[10px]">Customer</th><th class="px-5 py-2.5 text-left font-semibold text-gray-400 uppercase tracking-wider text-[10px]">Vehicle</th><th class="px-5 py-2.5 text-right font-semibold text-gray-400 uppercase tracking-wider text-[10px]">Premium</th><th class="px-5 py-2.5 text-center font-semibold text-gray-400 uppercase tracking-wider text-[10px]">Downloads</th><th class="px-5 py-2.5 text-center font-semibold text-gray-400 uppercase tracking-wider text-[10px]">Via</th><th class="px-5 py-2.5 text-center font-semibold text-gray-400 uppercase tracking-wider text-[10px]">Status</th><th class="px-5 py-2.5 text-right font-semibold text-gray-400 uppercase tracking-wider text-[10px]">Date</th></tr></thead><tbody class="divide-y divide-gray-100 dark:divide-gray-700">';
+        stickers.forEach(s => {
+            html += `<tr class="hover:bg-gray-50 dark:hover:bg-gray-700/30">
+                <td class="px-5 py-2.5 font-mono text-[10px] font-bold text-gray-800 dark:text-white">${s.sticker_number}</td>
+                <td class="px-5 py-2.5 text-gray-500 dark:text-gray-400">${s.company?.name || 'N/A'}</td>
+                <td class="px-5 py-2.5 text-gray-500 dark:text-gray-400">${s.customer_name}</td>
+                <td class="px-5 py-2.5 text-gray-500 dark:text-gray-400">${s.car_make} ${s.car_model} (${s.car_year})</td>
+                <td class="px-5 py-2.5 text-right font-medium text-gray-800 dark:text-white">KES ${Number(s.premium).toLocaleString()}</td>
+                <td class="px-5 py-2.5 text-center font-semibold text-gray-800 dark:text-white">${s.download_count || 0}</td>
+                <td class="px-5 py-2.5 text-center"><span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400">${(s.created_via || 'web').toUpperCase()}</span></td>
+                <td class="px-5 py-2.5 text-center"><span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">${s.status}</span></td>
+                <td class="px-5 py-2.5 text-right text-gray-500 dark:text-gray-400">${new Date(s.created_at).toLocaleDateString()}</td>
+            </tr>`;
+        });
+        html += '</tbody></table>';
+        document.getElementById('reportTable').innerHTML = html;
+    }
+
+    function exportReport(type) {
+        const params = getFormData();
+        let url;
+        if (currentTab === 'stickers') {
+            url = '{{ route('admin.reports.stickers.export-csv') }}';
+        } else {
+            url = '{{ route('admin.reports.export-csv') }}';
+        }
+        window.location.href = url + '?' + params.toString();
+    }
+</script>
+@endpush
 </x-app-layout>

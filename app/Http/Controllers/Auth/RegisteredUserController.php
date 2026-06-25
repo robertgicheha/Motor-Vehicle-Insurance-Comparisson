@@ -9,9 +9,11 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Notification;
 use Illuminate\Validation\Rules;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
+use App\Notifications\QuotationStatusChanged;
 
 class RegisteredUserController extends Controller
 {
@@ -52,6 +54,11 @@ class RegisteredUserController extends Controller
 
         event(new Registered($user));
 
+        $admins = User::role(['super-admin', 'admin'])->get();
+        if ($admins->isNotEmpty()) {
+            Notification::send($admins, new \App\Notifications\UserRegistered($user));
+        }
+
         Auth::login($user);
 
          // Detect city from IP for weather personalisation
@@ -67,7 +74,9 @@ class RegisteredUserController extends Controller
             // silently fail — weather will default to Nairobi
         }
 
-        // return redirect()->intended(RouteServiceProvider::HOME);
+        if ($redirectTo = $request->input('redirect_to')) {
+            return redirect($redirectTo);
+        }
 
         return redirect(route('dashboard', absolute: false));
     }

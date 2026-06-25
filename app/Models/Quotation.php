@@ -40,11 +40,13 @@ class Quotation extends Model
         return $this->hasMany(QuotationItem::class);
     }
 
-    public static function generateNumber()
+    public static function generateNumber(?Company $company = null): string
     {
-        $prefix = 'Q';
-        $date = now()->format('Ymd');
-        $last = static::whereDate('created_at', today())->count() + 1;
-        return $prefix . $date . str_pad($last, 4, '0', STR_PAD_LEFT);
+        $prefix = $company ? $company->getInitials() : 'INS';
+        $today = now()->format('Ymd');
+        $seq = static::where('company_id', $company?->id)
+            ->whereDate('created_at', today())
+            ->count() + 1;
+        return $prefix . '-' . $seq;
     }
 }

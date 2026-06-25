@@ -25,9 +25,16 @@
 <body>
     <div class="header">
         <div style="display:flex;justify-content:space-between;align-items:center">
-            <div>
-                <h1>Insurance Quotation</h1>
-                <p>{{ $quotation->company->name }}</p>
+            <div style="display:flex;align-items:center;gap:12px">
+                @if($quotation->company->logo)
+                    <img src="{{ public_path('storage/' . $quotation->company->logo) }}" class="company-logo" alt="{{ $quotation->company->name }}">
+                @else
+                    <span style="font-size:16px;font-weight:800;color:#fff">{{ $quotation->company->getInitials() }}</span>
+                @endif
+                <div>
+                    <h1>Insurance Quotation</h1>
+                    <p>{{ $quotation->company->name }}</p>
+                </div>
             </div>
             <div style="text-align:right">
                 <span class="badge badge-active">{{ strtoupper($quotation->status) }}</span>

@@ -27,7 +27,11 @@
 <body>
     <div class="wrapper">
         <div class="header">
-            <img src="{{ $message->embed(public_path('img/MIC-Global-Risks_logo_no_background.png')) }}" alt="MIC Global Risks" style="max-height:50px;max-width:160px;margin-bottom:8px;filter:brightness(0) invert(1)">
+            @if($quotation->company->logo)
+                <img src="{{ $message->embed(public_path('storage/' . $quotation->company->logo)) }}" alt="{{ $quotation->company->name }}" style="max-height:50px;max-width:160px;margin-bottom:8px;">
+            @else
+                <img src="{{ $message->embed(public_path('img/MIC-Global-Risks_logo_no_background.png')) }}" alt="MIC Global Risks" style="max-height:50px;max-width:160px;margin-bottom:8px;filter:brightness(0) invert(1)">
+            @endif
             <h1>Insurance Quotation Generated</h1>
             <p>{{ $quotation->quotation_number }}</p>
         </div>

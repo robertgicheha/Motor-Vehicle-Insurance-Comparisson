@@ -37,5 +37,6 @@
                  class="absolute inset-0 object-cover w-full h-full opacity-40 mix-blend-overlay">
         </div>
     </div>
+    <x-toast />
 </body>
 </html>

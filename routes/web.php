@@ -2,8 +2,11 @@
 
 use App\Http\Controllers\Api\StickerApiController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\Admin\NotificationController as AdminNotificationController;
 use App\Http\Controllers\PublicController;
+use App\Http\Controllers\VehicleDataController;
 use App\Http\Controllers\QuotationController;
 use App\Http\Controllers\StickerController;
 use App\Http\Controllers\Auth\SocialiteController;
@@ -14,6 +17,13 @@ use App\Http\Controllers\Admin\CompanyController;
 use App\Http\Controllers\Admin\ReportController;
 use App\Http\Controllers\Admin\SettingController;
 use App\Http\Controllers\Admin\AuditLogController;
+use App\Http\Controllers\Admin\AnalyticsController;
+use App\Http\Controllers\Admin\HelpController;
+use App\Http\Controllers\Admin\CompareAllController;
+use App\Http\Controllers\Admin\RateSettingController;
+use App\Http\Controllers\Admin\HealthCheckController;
+use App\Http\Controllers\Admin\ChangeRequestController;
+use App\Http\Controllers\User\HelpController as UserHelpController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -21,7 +31,11 @@ Route::get('/', function () {
 })->name('home');
 
 Route::get('/motor-quote', [PublicController::class, 'motorQuote'])->name('motor.quote');
-Route::get('/motor-quote/quotation/{company?}', [PublicController::class, 'quotation'])->name('motor.quotation');
+Route::get('/generate-quote/{company?}', [PublicController::class, 'generateQuote'])->name('generate.quote');
+Route::get('/quotation/{company?}', [PublicController::class, 'quotation'])->name('motor.quotation');
+
+Route::get('/api/vehicle-makes', [VehicleDataController::class, 'makes']);
+Route::get('/api/vehicle-models/{make}', [VehicleDataController::class, 'models']);
 
 Route::prefix('motor-quote')->name('motor.')->group(function () {
     Route::post('/lookup-quotation', [PublicController::class, 'lookupQuotation'])->name('lookup.quotation');
@@ -51,20 +65,42 @@ Route::prefix('stickers')->name('stickers.')->group(function () {
 });
 
 Route::post('/api/sticker/generate', [StickerApiController::class, 'generate']);
+Route::post('/api/quotation/from-session', [PublicController::class, 'storeQuotationFromSession'])->middleware('auth')->name('api.quotation.from-session');
 
 Route::get('auth/google', [SocialiteController::class, 'redirectToGoogle'])->name('auth.google');
 Route::get('auth/google/callback', [SocialiteController::class, 'handleGoogleCallback']);
 
-Route::middleware(['auth', 'verified', 'online'])->group(function () {
+Route::middleware(['auth', 'online'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::patch('/profile/password', [ProfileController::class, 'updatePassword'])->name('profile.password');
+    Route::get('/profile/verify-email', [ProfileController::class, 'verifyNewEmail'])->name('profile.verify.email');
 
+    Route::get('/quotations/tracker', [QuotationController::class, 'tracker'])->name('quotations.tracker');
+    Route::patch('/quotations/{quotation}/update-status', [QuotationController::class, 'updateStatus'])->name('quotations.update-status');
     Route::resource('quotations', QuotationController::class)->except(['edit', 'update']);
     Route::post('/quotations/calculate', [QuotationController::class, 'calculate'])->name('quotations.calculate');
     Route::get('/quotations/{quotation}/download-pdf', [QuotationController::class, 'downloadPdf'])->name('quotations.download.pdf');
+
+    Route::get('/help', [UserHelpController::class, 'index'])->name('user.help.index');
+    Route::post('/help', [UserHelpController::class, 'store'])->name('user.help.store');
+
+    Route::get('/stickers/user-lookup', [StickerController::class, 'userLookup'])->name('stickers.user-lookup');
+    Route::post('/api/sticker/lookup-by-quotation', [StickerController::class, 'lookupByQuotation'])->name('stickers.lookup-by-quotation');
+
+    Route::prefix('notifications')->name('notifications.')->group(function () {
+        Route::get('/', [NotificationController::class, 'index'])->name('index');
+        Route::post('{id}/read', [NotificationController::class, 'markAsRead'])->name('read');
+        Route::post('read-all', [NotificationController::class, 'markAllAsRead'])->name('read-all');
+        Route::post('{id}/mark-unread', [NotificationController::class, 'markAsUnread'])->name('mark-unread');
+        Route::delete('{id}/trash', [NotificationController::class, 'trash'])->name('trash');
+        Route::post('trash-all', [NotificationController::class, 'trashAll'])->name('trash-all');
+        Route::post('{id}/restore', [NotificationController::class, 'restore'])->name('restore');
+        Route::delete('{id}', [NotificationController::class, 'destroy'])->name('destroy');
+        Route::delete('trash/empty', [NotificationController::class, 'emptyTrash'])->name('empty-trash');
+    });
 
     Route::middleware(['role:super-admin|admin'])->prefix('admin')->name('admin.')->group(function () {
         Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
@@ -83,6 +119,10 @@ Route::middleware(['auth', 'verified', 'online'])->group(function () {
         Route::patch('/companies/{company}/rates/{rate}', [CompanyController::class, 'updateRate'])->name('companies.rates.update');
         Route::delete('/companies/{company}/rates/{rate}', [CompanyController::class, 'destroyRate'])->name('companies.rates.destroy');
 
+        Route::get('/compare-all', [CompareAllController::class, 'index'])->name('compare-all.index');
+        Route::post('/compare-all', [CompareAllController::class, 'update'])->name('compare-all.update');
+        Route::delete('/compare-all', [CompareAllController::class, 'destroy'])->name('compare-all.destroy');
+
         Route::get('/stickers', [StickerAdminController::class, 'index'])->name('stickers.index');
 
         Route::get('/reports', [ReportController::class, 'index'])->name('reports.index');
@@ -98,9 +138,36 @@ Route::middleware(['auth', 'verified', 'online'])->group(function () {
         Route::get('/settings', [SettingController::class, 'index'])->name('settings.index');
         Route::post('/settings', [SettingController::class, 'update'])->name('settings.update')->middleware('throttle:10,1');
 
-       
+        Route::get('/analytics', [AnalyticsController::class, 'index'])->name('analytics.index');
+
+        Route::get('/notifications', [AdminNotificationController::class, 'index'])->name('notifications.index');
+        Route::post('/notifications/{id}/read', [AdminNotificationController::class, 'markAsRead'])->name('notifications.read');
+        Route::post('/notifications/read-all', [AdminNotificationController::class, 'markAllAsRead'])->name('notifications.read-all');
+        Route::post('/notifications/{id}/mark-unread', [AdminNotificationController::class, 'markAsUnread'])->name('notifications.mark-unread');
+        Route::delete('/notifications/{id}', [AdminNotificationController::class, 'destroy'])->name('notifications.destroy');
+        Route::delete('/notifications/clear-all', [AdminNotificationController::class, 'clearAll'])->name('notifications.clear-all');
+
+        Route::get('/help', [HelpController::class, 'index'])->name('help.index');
+        Route::get('/help/{enquiry}', [HelpController::class, 'show'])->name('help.show');
+        Route::post('/help/{enquiry}/status', [HelpController::class, 'updateStatus'])->name('help.update-status');
+        Route::post('/help/{enquiry}/respond', [HelpController::class, 'respond'])->name('help.respond');
+
+        Route::prefix('health')->name('health.')->group(function () {
+            Route::get('/', [HealthCheckController::class, 'index'])->name('index');
+            Route::post('/run', [HealthCheckController::class, 'run'])->name('run');
+        });
+
+        Route::prefix('change-requests')->name('change-requests.')->group(function () {
+            Route::get('/', [ChangeRequestController::class, 'index'])->name('index');
+            Route::get('/{changeRequest}', [ChangeRequestController::class, 'show'])->name('show');
+            Route::patch('/{changeRequest}/approve', [ChangeRequestController::class, 'approve'])->name('approve');
+            Route::patch('/{changeRequest}/decline', [ChangeRequestController::class, 'decline'])->name('decline');
+        });
+
+        Route::get('/rate-settings', [RateSettingController::class, 'index'])->name('rate-settings.index');
     });
-     Route::get('/quotations/preview', [QuotationController::class, 'preview'])
+
+    Route::get('/quotations/preview', [QuotationController::class, 'preview'])
         ->name('quotations.preview');
 });
 

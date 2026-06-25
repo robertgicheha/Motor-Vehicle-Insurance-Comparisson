@@ -1,331 +1,362 @@
-
-// ═══════════════════════════════════════════════════════
-//  QUOTATION PAGE  –  main.js
-//  Reads URL params or sessionStorage set by index.html
-// ═══════════════════════════════════════════════════════
-
-const RATES = {
-  GA:     { rate: 0.035, label: '3.5%', name: 'GA Insurance Ltd',         color: '#005baa', imgSrc: 'img/GA Insurance.png'    },
-  BRITAM: { rate: 0.041, label: '4.1%', name: 'Britam General Insurance', color: '#0071bc', imgSrc: 'img/britam_logo.png'     },
-  SANLAM: { rate: 0.045, label: '4.5%', name: 'Sanlam Allianz Insurance', color: '#1d3c6e', imgSrc: 'img/Sanlam-Allianz.png'  }
-};
-const TAX_RATE = 0.005; // 0.5% IRA levy
-
-const COMPANY_META = {
-  GA: {
-    address: 'GA Insurance Ltd, GA Building, Hospital Road, Upper Hill, P.O. Box 42166 - 00100 Nairobi',
-    website: 'www.gainsurance.co.ke'
-  },
-  BRITAM: {
-    address: 'Britam General Insurance Company (Kenya) Limited\nBritam Centre, Junction of Mara and Ragati Road, Upper Hill\nP.O. BOX 30375 - 0100 Nairobi',
-    website: 'www.britam.com'
-  },
-  SANLAM: {
-    address: 'Sanlam Allianz Insurance Company Limited\nSanlam Tower, Hospital Road, Upper Hill\nP.O. Box 30522 - 00100 Nairobi',
-    website: 'www.sanlam.co.ke'
-  }
-};
-
 function fmt(n) {
   return 'KES ' + Number(n).toLocaleString('en-KE', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
 }
-function calcPremiums(vehicleValue) {
-  const result = {};
-  for (const [key, cfg] of Object.entries(RATES)) {
-    const basic = vehicleValue * cfg.rate;
-    const tax   = basic * TAX_RATE;
-    const total = basic + tax;
-    result[key] = { basic, tax, total };
-  }
-  return result;
+
+function getCompanyData() {
+  return window.quotationData || [];
 }
 
-// ── READ DATA ──
+function getCompanyBySlug(slug) {
+  return getCompanyData().find(function(c) { return c.slug === slug; }) || null;
+}
+
+function calcPremiums(vehicleValue, company) {
+  var basic = vehicleValue * company.rate;
+  var tax = basic * (company.taxRate || 0.005);
+  var total = basic + tax;
+  return { basic: basic, tax: tax, total: total };
+}
+
 function getFormData() {
+  if (window.quotationDbData) {
+    return window.quotationDbData;
+  }
   try {
-    const raw = sessionStorage.getItem('micQuoteData');
-    if (raw) return JSON.parse(raw);
+    var raw = sessionStorage.getItem('micQuoteData');
+    if (raw) {
+      var d = JSON.parse(raw);
+      return {
+        salutation: d.salutation || '',
+        firstName: d.firstName || d.first || '',
+        lastName: d.lastName || d.last || '',
+        phone: d.phone || '',
+        email: d.email || '',
+        reg: d.reg || '',
+        chassis: d.chassis || '',
+        make: d.make || '',
+        model: d.model || '',
+        body: d.body || '',
+        year: d.year || '',
+        color: d.color || '',
+        value: Number(d.value) || 0,
+        quoteNum: d.quoteNum || '',
+      };
+    }
   } catch(e) {}
-  // demo fallback
   return {
-    salutation: 'Mr.',
-    firstName: 'Robert',
-    lastName: 'Gicheha',
-    phone: '+254 010 351 517',
-    email: 'r.gicheha@example.com',
-    reg: 'KDH 724V',
-    chassis: 'WVWZZZ1KZ9W123456',
-    make: 'Volkswagen',
-    model: 'Golf',
-    body: 'Hatchback',
-    year: '2018',
-    color: 'Silver/Grey',
-    value: 800000,
-    quoteNum: 'MIC-2026/0042',
-    mode: 'ALL'   // 'GA' | 'BRITAM' | 'SANLAM' | 'ALL'
+    salutation: '',
+    firstName: '',
+    lastName: '',
+    phone: '',
+    email: '',
+    reg: '',
+    chassis: '',
+    make: '',
+    model: '',
+    body: '',
+    year: '',
+    color: '',
+    value: 0,
+    quoteNum: '',
   };
 }
 
-// ── URL PARAM OVERRIDE ──
-function getMode() {
-  const p = new URLSearchParams(window.location.search);
-  return p.get('company') || getFormData().mode || 'ALL';
-}
-
 function genQuoteNum(company) {
-  const d = new Date();
-  const y = d.getFullYear();
-  const n = String(Math.floor(Math.random() * 9000) + 1000);
-  return `${company}-${y}/${n}`;
+  var d = new Date();
+  var y = d.getFullYear();
+  var n = String(Math.floor(Math.random() * 9000) + 1000);
+  return (company.prefix || 'MIC') + '-' + y + '/' + n;
 }
 
-// ── SHOW ACTION BAR ──
-// Called the first time a download card is clicked; stays visible thereafter.
 function showActionBar() {
   document.getElementById('action-bar').classList.add('visible');
 }
 
-// ── POPULATE PAGE ──
-function init() {
-  const fd   = getFormData();
-  const mode = getMode();
-  const value = Number(fd.value) || 800000;
-  const prems = calcPremiums(value);
-  const qNum  = fd.quoteNum || genQuoteNum(mode === 'ALL' ? 'MIC' : mode);
-
-  // Hero
-  document.getElementById('hero-quote-num').textContent = qNum;
-
-  // Summary
-  document.getElementById('s-name').textContent    = `${fd.salutation || ''} ${fd.firstName} ${fd.lastName}`.trim();
-  document.getElementById('s-phone').textContent   = fd.phone || '—';
-  document.getElementById('s-email').textContent   = fd.email || '—';
-  document.getElementById('s-reg').textContent     = fd.reg   || '—';
-  document.getElementById('s-make').textContent    = `${fd.make} ${fd.model}`.trim() || '—';
-  document.getElementById('s-year').textContent    = `${fd.year}  •  ${fd.body || '—'}`;
-  document.getElementById('s-color').textContent   = fd.color   || '—';
-  document.getElementById('s-chassis').textContent = fd.chassis || '—';
-  document.getElementById('s-value').textContent   = fmt(value);
-
-  if (mode === 'ALL') {
-    renderCompareAll(value, prems, fd, qNum);
-    // Pre-build preview for the first company so Download/Print work immediately
-    buildPDFPreview('GA', value, prems['GA'], fd, qNum);
-  } else {
-    renderSingle(mode, value, prems, fd, qNum);
-    // renderSingle already calls buildPDFPreview
+function copyQuoteNumber() {
+  var el = document.getElementById('hero-quote-num');
+  var text = el.textContent;
+  if (!text || text === '—') return;
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(function() {
+      var btn = document.getElementById('copy-quote-btn');
+      btn.classList.add('copied');
+      btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Copied';
+      setTimeout(function() {
+        btn.classList.remove('copied');
+        btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg> Copy';
+      }, 2000);
+    });
   }
 }
 
-// ── SINGLE COMPANY MODE ──
-function renderSingle(company, value, prems, fd, qNum) {
-  const cfg = RATES[company];
-  const p   = prems[company];
-
-  document.getElementById('single-breakdown-wrap').style.display = '';
-  document.getElementById('compare-all-wrap').style.display      = 'none';
-
-  document.getElementById('breakdown-company-label').textContent = cfg.name;
-
-  const rows = [
-    ['Estimated Vehicle Value', '—', fmt(value)],
-    ['Basic Annual Premium', `@ ${cfg.label} of vehicle value`, fmt(p.basic)],
-    ['Windscreen Premium', 'Included', 'KES 0'],
-    ['Radio / Cassette Premium', 'Included', 'KES 0'],
-    ['IRA Levy (Training Levy)', `@ 0.5% of basic premium`, fmt(p.tax)],
-  ];
-  const tbody = document.getElementById('breakdown-rows');
-  tbody.innerHTML = rows.map(([desc, note, amt]) =>
-    `<tr><td>${desc}</td><td style="color:var(--text-muted);font-size:12.5px">${note}</td><td>${amt}</td></tr>`
-  ).join('');
-  document.getElementById('breakdown-total').textContent = fmt(p.total);
-
-  // Download cards: the 3 companies + "Download All"
-  renderDownloadCards(company, value, prems, fd, qNum);
-
-  // PDF preview for print
-  buildPDFPreview(company, value, prems[company], fd, qNum);
+function showToast(message, type) {
+  type = type || 'success';
+  var container = document.getElementById('toast-container');
+  if (!container) return;
+  var toast = document.createElement('div');
+  toast.className = 'toast ' + type;
+  var icon = type === 'success' ? '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>' : '';
+  toast.innerHTML = icon + message;
+  container.appendChild(toast);
+  setTimeout(function() { toast.remove(); }, 3000);
 }
 
-// ── COMPARE ALL MODE ──
-function renderCompareAll(value, prems, fd, qNum) {
-  document.getElementById('single-breakdown-wrap').style.display = 'none';
-  document.getElementById('compare-all-wrap').style.display      = '';
-  document.getElementById('dl-cards-label').textContent          = 'Download Individual Quote';
-
-  const rows = [
-    { label: 'Estimated Vehicle Value', ga: fmt(value), britam: fmt(value), sanlam: fmt(value) },
-    { label: 'Premium Rate', ga: '3.5%', britam: '4.1%', sanlam: '4.5%' },
-    { label: 'Basic Annual Premium', ga: fmt(prems.GA.basic), britam: fmt(prems.BRITAM.basic), sanlam: fmt(prems.SANLAM.basic) },
-    { label: 'IRA Levy (0.5%)',       ga: fmt(prems.GA.tax),   britam: fmt(prems.BRITAM.tax),   sanlam: fmt(prems.SANLAM.tax)   },
-  ];
-  document.getElementById('compare-rows').innerHTML = rows.map(r =>
-    `<tr><td>${r.label}</td><td>${r.ga}</td><td>${r.britam}</td><td>${r.sanlam}</td></tr>`
-  ).join('');
-  document.getElementById('cmp-total-ga').textContent     = fmt(prems.GA.total);
-  document.getElementById('cmp-total-britam').textContent = fmt(prems.BRITAM.total);
-  document.getElementById('cmp-total-sanlam').textContent = fmt(prems.SANLAM.total);
-
-  // Four download cards
-  renderDownloadCards('ALL', value, prems, fd, qNum);
+function fallbackLogo(el, slug) {
+  var hardcoded = (window.hardcodedLogos || {})[slug];
+  if (hardcoded && el.src !== hardcoded) {
+    el.onerror = function() { el.style.display = 'none'; if (el.nextElementSibling) el.nextElementSibling.style.display = 'block'; };
+    el.src = hardcoded;
+    return;
+  }
+  el.style.display = 'none';
+  if (el.nextElementSibling) el.nextElementSibling.style.display = 'block';
 }
 
-function renderDownloadCards(mode, value, prems, fd, qNum) {
-  const container = document.getElementById('dl-cards');
-  const companies = [
-    { key: 'GA',     btnClass: 'dl-btn-ga',     btnLabel: 'Download GA Quote' },
-    { key: 'BRITAM', btnClass: 'dl-btn-britam',  btnLabel: 'Download Britam Quote' },
-    { key: 'SANLAM', btnClass: 'dl-btn-sanlam',  btnLabel: 'Download Sanlam Quote' },
-  ];
+function renderCompanyLogo(slug) {
+  var companies = window.quotationCompanies || [];
+  var company = companies.find(function(c) { return c.slug === slug; });
+  var img = document.getElementById('hero-company-logo');
+  if (company && company.logo) {
+    img.src = company.logo;
+    img.style.display = 'block';
+    img.onerror = function() { fallbackLogo(img, slug); };
+  } else {
+    img.style.display = 'none';
+  }
+}
 
-  let html = companies.map(({ key, btnClass, btnLabel }) => {
-    const cfg = RATES[key];
-    const p   = prems[key];
-    const selected = (mode === key) ? 'border-color:var(--blue);box-shadow:0 0 0 2px rgba(0,102,179,.15)' : '';
-    return `
-      <div class="dl-card" style="${selected}" onclick="downloadQuote('${key}')">
-        <div class="dl-card-logo">
-          <img src="${cfg.imgSrc}" alt="${cfg.name}" onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
-          <span class="logo-text" style="display:none">${key}</span>
-        </div>
-        <div class="dl-card-name">${cfg.name}</div>
-        <div class="dl-card-rate">Rate: <strong>${cfg.label}</strong> of vehicle value</div>
-        <div class="dl-card-premium">${fmt(p.total)}<small>Total incl. taxes</small></div>
-        <button class="dl-btn ${btnClass}">${btnLabel} ↓</button>
-      </div>`;
+function renderComparisonGrid(companies, value, selectedSlug) {
+  var container = document.getElementById('comparison-grid');
+  if (!container) return;
+  var html = companies.map(function(c) {
+    var p = calcPremiums(value, c);
+    var isSelected = c.slug === selectedSlug;
+    var logo = c.logo || '';
+    return '<div class="comparison-card' + (isSelected ? ' selected' : '') + '" onclick="downloadQuote(\'' + c.slug + '\')">' +
+      '<div class="comparison-card-header">' +
+        (logo ? '<img src="' + logo + '" alt="' + c.name + '" onerror="fallbackLogo(this,\'' + c.slug + '\')">' : '') +
+        '<span class="initials" style="color:' + c.color + '">' + (c.prefix || c.slug.toUpperCase()) + '</span>' +
+      '</div>' +
+      '<div class="comparison-card-body">' +
+        '<div class="cmp-row"><span>Rate</span><span>' + (c.rate * 100).toFixed(1) + '%</span></div>' +
+        '<div class="cmp-row"><span>Basic Premium</span><span>' + fmt(p.basic) + '</span></div>' +
+        '<div class="cmp-row"><span>IRA Levy</span><span>' + fmt(p.tax) + '</span></div>' +
+        '<div class="cmp-total"><span>Total</span><span>' + fmt(p.total) + '</span></div>' +
+      '</div>' +
+    '</div>';
   }).join('');
+  container.innerHTML = html;
+}
 
-  // "Download All" card
-  html += `
-    <div class="dl-card compare-card" onclick="downloadAll()">
-      <div class="dl-card-logo">
-        <img src="img/benchmarking.png" alt="Compare All" onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
-        <span class="logo-text" style="display:none;color:var(--red)">ALL</span>
-      </div>
-      <div class="dl-card-name">Download All Quotes</div>
-      <div class="dl-card-rate">Full comparison of all insurers</div>
-      <div class="dl-card-premium" style="color:var(--red)">3 Quotes<small>GA · Britam · Sanlam</small></div>
-      <button class="dl-btn dl-btn-all">Download All ↓</button>
-    </div>`;
+function renderCompareTable(companies, value) {
+  var names = companies.map(function(c) { return c.name; });
+  var maxCols = 3;
+  for (var i = 0; i < maxCols; i++) {
+    var th = document.getElementById('cmp-head-' + i);
+    var td = document.getElementById('cmp-total-' + i);
+    if (companies[i]) {
+      if (th) th.textContent = companies[i].name;
+      var p = calcPremiums(value, companies[i]);
+      if (td) td.textContent = fmt(p.total);
+    } else {
+      if (th) { th.textContent = '—'; th.style.display = 'none'; }
+      if (td) { td.textContent = '—'; td.style.display = 'none'; }
+    }
+  }
+
+  var rows = [
+    { label: 'Estimated Vehicle Value', vals: companies.map(function() { return fmt(value); }) },
+    { label: 'Premium Rate', vals: companies.map(function(c) { return (c.rate * 100).toFixed(1) + '%'; }) },
+    { label: 'Basic Annual Premium', vals: companies.map(function(c) { return fmt(calcPremiums(value, c).basic); }) },
+    { label: 'IRA Levy (0.5%)', vals: companies.map(function(c) { return fmt(calcPremiums(value, c).tax); }) },
+  ];
+  var tbody = document.getElementById('compare-rows');
+  if (!tbody) return;
+  tbody.innerHTML = rows.map(function(r) {
+    var cells = '<td>' + r.label + '</td>';
+    for (var i = 0; i < maxCols; i++) {
+      cells += '<td>' + (r.vals[i] || '—') + '</td>';
+    }
+    return '<tr>' + cells + '</tr>';
+  }).join('');
+}
+
+function renderDownloadCards(activeCompany, value, prems, fd, qNum) {
+  var container = document.getElementById('dl-cards');
+  var companies = getCompanyData();
+
+  var html = companies.map(function(c) {
+    var p = calcPremiums(value, c);
+    var selected = (c.slug === activeCompany.slug) ? 'border-color:var(--blue);box-shadow:0 0 0 2px rgba(0,102,179,.15)' : '';
+    var logo = c.logo || '';
+    return '<div class="dl-card" style="' + selected + '" onclick="downloadQuote(\'' + c.slug + '\')">' +
+      '<div class="dl-card-logo">' +
+        (logo ? '<img src="' + logo + '" alt="' + c.name + '" onerror="fallbackLogo(this,\'' + c.slug + '\')">' : '') +
+        '<span class="logo-text" style="display:' + (logo ? 'none' : 'block') + '">' + (c.prefix || c.slug) + '</span>' +
+      '</div>' +
+      '<div class="dl-card-name">' + c.name + '</div>' +
+      '<div class="dl-card-rate">Rate: <strong>' + (c.rate * 100).toFixed(1) + '%</strong> of vehicle value</div>' +
+      '<div class="dl-card-premium">' + fmt(p.total) + '<small>Total incl. taxes</small></div>' +
+      '<button class="dl-btn" style="background:' + c.color + ';color:#fff">Download ' + c.name.split(' ')[0] + ' Quote ↓</button>' +
+    '</div>';
+  }).join('');
 
   container.innerHTML = html;
 }
 
-// ── BUILD LETTERHEAD BANNER ──
-// Logo images sit directly on the coloured banner background.
-// No CSS filter is applied so logos render in their natural colours.
-function buildLetterheadBanner(cfg, meta, now) {
-  return `
-    <div class="pdf-letterhead" style="background:${cfg.color}">
-      <div class="pdf-lh-left">
-        <img src="${cfg.imgSrc}" alt="${cfg.name}"
-             onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
-        <span class="pdf-lh-name">${cfg.name.split(' ')[0].toUpperCase()}</span>
-      </div>
-      <div class="pdf-lh-right">
-        <p>${meta.address.replace(/\n/g,'<br>')}<br>Website: ${meta.website}</p>
-      </div>
-    </div>`;
-}
-
-// ── BUILD PDF PREVIEW (printable letterhead) ──
 function buildPDFPreview(company, value, prem, fd, qNum) {
-  const cfg  = RATES[company];
-  const meta = COMPANY_META[company];
-  const now  = new Date().toLocaleString('en-KE', { dateStyle: 'long', timeStyle: 'short' });
-  const name = `${fd.salutation || ''} ${fd.firstName} ${fd.lastName}`.trim();
+  var name = [fd.salutation, fd.firstName, fd.lastName].filter(Boolean).join(' ') || '—';
+  var now = new Date().toLocaleString('en-KE', { dateStyle: 'long', timeStyle: 'short' });
+  var logo = company.logo || '';
+  var html =
+    '<div class="pdf-letterhead" style="background:' + company.color + '">' +
+      '<div class="pdf-lh-left">' +
+        (logo ? '<img src="' + logo + '" alt="' + company.name + '" onerror="fallbackLogo(this,\'' + company.slug + '\')">' : '') +
+        '<span class="pdf-lh-name" style="display:' + (logo ? 'none' : 'block') + ';color:#fff;font-size:22px;font-weight:800">' + (company.prefix || company.slug) + '</span>' +
+      '</div>' +
+      '<div class="pdf-lh-right"><p style="color:rgba(255,255,255,.92);font-size:12px;line-height:1.75;margin:0">' + company.name + '<br>Website: micglobalrisks.com</p></div>' +
+    '</div>' +
+    '<div class="pdf-body">' +
+      '<p style="margin-top:4px">' + now + '</p>' +
+      '<p>Dear ' + name + ',</p>' +
+      '<h2>RE: PRIVATE CAR INSURANCE QUOTE</h2>' +
+      '<p class="pdf-date">Quotation Reference: <strong>' + qNum + '</strong></p>' +
+      '<p>Thank you for requesting us to provide a quote for the above mentioned. We are pleased to submit the quote</p>' +
+      '<table><thead><tr><th>Owner\'s Name</th><th>Vehicle Make</th><th>Year of Manufacture</th></tr></thead><tbody><tr><td>' + name + '</td><td>' + (fd.make || '—') + '</td><td>' + (fd.year || '—') + '</td></tr></tbody></table>' +
+      '<table><thead><tr><th>Registration Number</th><th>Vehicle Estimated Price</th><th>Phone Number</th></tr></thead><tbody><tr><td>' + (fd.reg || '—') + '</td><td>' + fmt(value) + '</td><td>' + (fd.phone || '—') + '</td></tr></tbody></table>' +
+      '<table><thead><tr><th colspan="2">COVER TYPE</th></tr></thead><tbody><tr><td>Scope of Cover</td><td>Comprehensive</td></tr><tr><td>Frequency</td><td>Annually</td></tr></tbody></table>' +
+      '<table><thead><tr><th colspan="2" style="background:' + company.color + ';color:#fff;border-color:' + company.color + '">SCHEDULE OF INSURANCE</th></tr></thead><tbody>' +
+        '<tr><td>Basic Annual Premium</td><td>' + fmt(prem.basic) + '</td></tr>' +
+        '<tr><td>Annual Premium + Taxes</td><td>' + fmt(prem.total) + '</td></tr>' +
+        '<tr><td>Windscreen Annual Premium</td><td>KES 0</td></tr>' +
+        '<tr><td>Radio Cassette Premium</td><td>KES 0</td></tr>' +
+      '</tbody></table>' +
+    '</div>' +
+    '<div class="pdf-footer-text">KENYA | UGANDA | TANZANIA | Rate subject to satisfactory valuation report</div>';
 
-  const html = `
-    ${buildLetterheadBanner(cfg, meta, now)}
-    <div class="pdf-body">
-      <p style="margin-top:4px">${now}</p>
-      <p>Dear ${name},</p>
-      <h2>RE: PRIVATE CAR INSURANCE QUOTE</h2>
-      <p class="pdf-date">Quotation Reference: <strong>${qNum}</strong></p>
-      <p>Thank you for requesting us to provide a quote for the above mentioned. We are pleased to submit the quote</p>
-
-      <table>
-        <thead>
-          <tr>
-            <th>Owner's Name</th><th>Vehicle Make</th><th>Year of Manufacture</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td>${name}</td>
-            <td>${fd.make || '—'}</td>
-            <td>${fd.year || '—'}</td>
-          </tr>
-        </tbody>
-      </table>
-
-      <table>
-        <thead>
-          <tr>
-            <th>Registration Number</th><th>Vehicle Estimated Price</th><th>Phone Number</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td>${fd.reg || '—'}</td>
-            <td>${fmt(value)}</td>
-            <td>${fd.phone || '—'}</td>
-          </tr>
-        </tbody>
-      </table>
-
-      <table>
-        <thead><tr><th colspan="2">COVER TYPE</th></tr></thead>
-        <tbody>
-          <tr><td>Scope of Cover</td><td>Comprehensive</td></tr>
-          <tr><td>Frequency</td><td>Annually</td></tr>
-        </tbody>
-      </table>
-
-      <table>
-        <thead><tr><th colspan="2" style="background:${cfg.color};color:#fff;border-color:${cfg.color}">SCHEDULE OF INSURANCE</th></tr></thead>
-        <tbody>
-          <tr><td>Basic Annual Premium</td><td>${fmt(prem.basic)}</td></tr>
-          <tr><td>Annual Premium + Taxes</td><td>${fmt(prem.total)}</td></tr>
-          <tr><td>Windscreen Annual Premium</td><td>KES 0</td></tr>
-          <tr><td>Radio Cassette Premium</td><td>KES 0</td></tr>
-        </tbody>
-      </table>`;
-
-  const wrap = document.getElementById('pdf-preview');
+  var wrap = document.getElementById('pdf-preview');
   wrap.innerHTML = html;
-  // keep hidden — only shown via Preview button or download trigger
   wrap.style.display = 'none';
 }
 
-// ── ACTION BAR HANDLERS ──
+function saveSessionQuotation(fd, slug) {
+  if (window.quotationDbData) return;
+  if (!window.MIC_AUTH) return;
+  try {
+    var raw = sessionStorage.getItem('micQuoteData');
+    if (!raw) return;
+    var data = JSON.parse(raw);
+    var company = slug ? getCompanyBySlug(slug) : null;
+    if (!company) return;
+    fetch('/api/quotation/from-session', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '' },
+      body: JSON.stringify({
+        company_slug: slug,
+        car_make: data.make || '',
+        car_model: data.model || '',
+        car_year: data.year || '',
+        car_registration: data.reg || '',
+        car_valuation: Number(data.value) || 0,
+      }),
+    }).then(function(r) { return r.json(); }).then(function(res) {
+      if (res.success) {
+        window.quotationDbData = fd;
+        window.quotationDbData.quoteNum = res.quotation.quotation_number;
+        document.getElementById('hero-quote-num').textContent = res.quotation.quotation_number;
+        try { sessionStorage.removeItem('micQuoteData'); } catch(e) {}
+        try { sessionStorage.removeItem('pending_quote_company'); } catch(e) {}
+        showToast('Quotation generated', 'success');
+      }
+    }).catch(function(e) { console.warn('Failed to save quotation:', e); });
+  } catch(e) {}
+}
 
-let _activeCompany = null;
+function init() {
+  var fd = getFormData();
+  var companies = getCompanyData();
+  var slug = window.selectedCompanySlug;
+  var value = Number(fd.value) || 800000;
+  var company = slug ? getCompanyBySlug(slug) : (companies[0] || null);
+
+  if (!company) {
+    document.getElementById('hero-quote-num').textContent = fd.quoteNum || '—';
+    return;
+  }
+
+  saveSessionQuotation(fd, slug);
+
+  var prems = calcPremiums(value, company);
+  var qNum = fd.quoteNum || genQuoteNum(company);
+
+  renderCompanyLogo(slug);
+
+  document.getElementById('hero-quote-num').textContent = qNum;
+
+  document.getElementById('s-name').textContent = [fd.salutation, fd.firstName, fd.lastName].filter(Boolean).join(' ') || '—';
+  document.getElementById('s-phone').textContent = fd.phone || '—';
+  document.getElementById('s-email').textContent = fd.email || '—';
+  document.getElementById('s-reg').textContent = fd.reg || '—';
+  document.getElementById('s-make').textContent = ((fd.make || '') + ' ' + (fd.model || '')).trim() || '—';
+  document.getElementById('s-year').textContent = (fd.year || '—') + '  •  ' + (fd.body || '—');
+  document.getElementById('s-color').textContent = fd.color || '—';
+  document.getElementById('s-chassis').textContent = fd.chassis || '—';
+  document.getElementById('s-value').textContent = fmt(value);
+
+  document.getElementById('single-breakdown-wrap').style.display = '';
+  document.getElementById('compare-all-wrap').style.display = '';
+  document.getElementById('breakdown-company-label').textContent = company.name;
+
+  var rows = [
+    ['Estimated Vehicle Value', '—', fmt(value)],
+    ['Basic Annual Premium', '@ ' + (company.rate * 100).toFixed(1) + '% of vehicle value', fmt(prems.basic)],
+    ['Windscreen Premium', 'Included', 'KES 0'],
+    ['Radio / Cassette Premium', 'Included', 'KES 0'],
+    ['IRA Levy (Training Levy)', '@ 0.5% of basic premium', fmt(prems.tax)],
+  ];
+  var tbody = document.getElementById('breakdown-rows');
+  tbody.innerHTML = rows.map(function(r) {
+    return '<tr><td>' + r[0] + '</td><td style="color:var(--text-muted);font-size:12.5px">' + r[1] + '</td><td>' + r[2] + '</td></tr>';
+  }).join('');
+  document.getElementById('breakdown-total').textContent = fmt(prems.total);
+
+  renderComparisonGrid(companies, value, slug);
+  renderCompareTable(companies, value);
+  renderDownloadCards(company, value, prems, fd, qNum);
+  buildPDFPreview(company, value, prems, fd, qNum);
+
+  try {
+    var raw = sessionStorage.getItem('micQuoteData');
+    if (raw) showToast('Quotation generated', 'success');
+  } catch(e) {}
+}
 
 function actionDownload() {
-  const wrap = document.getElementById('pdf-preview');
+  var wrap = document.getElementById('pdf-preview');
   if (!wrap.innerHTML.trim()) return;
   wrap.style.display = 'block';
-  setTimeout(() => {
+  setTimeout(function() {
     window.print();
-    setTimeout(() => {
+    setTimeout(function() {
       if (!document.getElementById('btn-preview').classList.contains('active')) {
         wrap.style.display = 'none';
       }
     }, 500);
   }, 150);
+  showToast('Quotation downloaded', 'success');
 }
 
 function actionPrint() {
-  const wrap = document.getElementById('pdf-preview');
+  var wrap = document.getElementById('pdf-preview');
   if (!wrap.innerHTML.trim()) return;
   wrap.style.display = 'block';
-  setTimeout(() => window.print(), 150);
+  setTimeout(function() { window.print(); }, 150);
+  showToast('Quotation printed', 'success');
 }
 
 function actionTogglePreview() {
-  const wrap = document.getElementById('pdf-preview');
-  const btn  = document.getElementById('btn-preview');
+  var wrap = document.getElementById('pdf-preview');
+  var btn = document.getElementById('btn-preview');
   if (wrap.style.display === 'none' || !wrap.style.display) {
     wrap.style.display = 'block';
     btn.classList.add('active');
@@ -336,80 +367,25 @@ function actionTogglePreview() {
   }
 }
 
-// ── DOWNLOAD CARD CLICK — builds preview, triggers print dialog ──
-function downloadQuote(company) {
-  _activeCompany = company;
-  const fd    = getFormData();
-  const value = Number(fd.value) || 800000;
-  const prems = calcPremiums(value);
-  const qNum  = fd.quoteNum || genQuoteNum(company);
-  buildPDFPreview(company, value, prems[company], fd, qNum);
-
-  // Reset preview button to non-active state
+function downloadQuote(slug) {
+  var company = getCompanyBySlug(slug);
+  if (!company) return;
+  var fd = getFormData();
+  var value = Number(fd.value) || 800000;
+  var prems = calcPremiums(value, company);
+  var qNum = fd.quoteNum || genQuoteNum(company);
+  buildPDFPreview(company, value, prems, fd, qNum);
   document.getElementById('btn-preview').classList.remove('active');
-
-  // Reveal the action bar now that a quote has been selected
   showActionBar();
-
-  // Trigger download immediately
   document.getElementById('pdf-preview').style.display = 'block';
-  setTimeout(() => window.print(), 150);
+  setTimeout(function() { window.print(); }, 150);
+  showToast('Quotation downloaded', 'success');
 }
 
-function downloadAll() {
-  _activeCompany = 'ALL';
-  const fd    = getFormData();
-  const value = Number(fd.value) || 800000;
-  const prems = calcPremiums(value);
+window.addEventListener('message', function(e) {
+  if (e.data === 'quote-generated') showToast('Quotation generated', 'success');
+  if (e.data === 'quote-downloaded') showToast('Quotation downloaded', 'success');
+  if (e.data === 'quote-printed') showToast('Quotation printed', 'success');
+});
 
-  // Reveal the action bar
-  showActionBar();
-
-  const pages = ['GA', 'BRITAM', 'SANLAM'].map(key => {
-    const cfg  = RATES[key];
-    const meta = COMPANY_META[key];
-    const p    = prems[key];
-    const now  = new Date().toLocaleString('en-KE', { dateStyle: 'long', timeStyle: 'short' });
-    const name = `${fd.salutation || ''} ${fd.firstName} ${fd.lastName}`.trim();
-    const qNum = fd.quoteNum || genQuoteNum(key);
-    return `
-      <div style="page-break-after:always">
-        ${buildLetterheadBanner(cfg, meta, now)}
-        <div class="pdf-body">
-          <p style="margin-top:4px">${now}</p>
-          <p>Dear ${name},</p>
-          <h2>RE: PRIVATE CAR INSURANCE QUOTE</h2>
-          <p class="pdf-date">Quotation Reference: <strong>${qNum}</strong></p>
-          <p>Thank you for requesting us to provide a quote for the above mentioned. We are pleased to submit the quote</p>
-          <table>
-            <thead><tr><th>Owner's Name</th><th>Vehicle Make</th><th>Year of Manufacture</th></tr></thead>
-            <tbody><tr><td>${name}</td><td>${fd.make} ${fd.model}</td><td>${fd.year}</td></tr></tbody>
-          </table>
-          <table>
-            <thead><tr><th>Registration Number</th><th>Vehicle Estimated Price</th><th>Phone Number</th></tr></thead>
-            <tbody><tr><td>${fd.reg}</td><td>${fmt(value)}</td><td>${fd.phone}</td></tr></tbody>
-          </table>
-          <table>
-            <thead><tr><th colspan="2" style="background:${cfg.color};color:#fff;border-color:${cfg.color}">SCHEDULE OF INSURANCE</th></tr></thead>
-            <tbody>
-              <tr><td>Basic Annual Premium (@ ${cfg.label})</td><td>${fmt(p.basic)}</td></tr>
-              <tr><td>Annual Premium + Taxes</td><td>${fmt(p.total)}</td></tr>
-              <tr><td>Windscreen Annual Premium</td><td>KES 0</td></tr>
-              <tr><td>Radio Cassette Premium</td><td>KES 0</td></tr>
-            </tbody>
-          </table>
-          <p>Quotation valid for fifteen (15) days · Subject to standard policy terms and conditions</p>
-          <p>For and on behalf of ${cfg.name}</p>
-        </div>
-        <div class="pdf-footer-text">KENYA | UGANDA | TANZANIA | Rate subject to satisfactory valuation report</div>
-      </div>`;
-  }).join('');
-
-  const wrap = document.getElementById('pdf-preview');
-  wrap.innerHTML = pages;
-  wrap.style.display = 'block';
-  setTimeout(() => window.print(), 150);
-}
-
-// ── INIT ──
 document.addEventListener('DOMContentLoaded', init);

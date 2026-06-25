@@ -3,19 +3,21 @@
 namespace App\Models;
 
 use Database\Factories\UserFactory;
-use Illuminate\Database\Eloquent\Attributes\Fillable;
+
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Spatie\Permission\Traits\HasRoles;
 
-#[Fillable(['first_name', 'last_name', 'name', 'email', 'password', 'mobile', 'gender', 'is_active', 'profile_completed', 'google_id', 'avatar', 'last_online_at'])]
-#[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable
 {
     /** @use HasFactory<UserFactory> */
     use HasFactory, Notifiable, HasRoles;
+
+    protected $fillable = ['first_name', 'last_name', 'name', 'email', 'password', 'mobile', 'gender', 'is_active', 'profile_completed', 'google_id', 'avatar', 'last_online_at', 'pending_email', 'email_verify_token'];
+
+    #[Hidden(['password', 'remember_token'])]
 
     protected function casts(): array
     {
@@ -31,6 +33,11 @@ class User extends Authenticatable
     public function quotations()
     {
         return $this->hasMany(Quotation::class);
+    }
+
+    public function enquiries()
+    {
+        return $this->hasMany(Enquiry::class);
     }
 
     public function auditLogs()

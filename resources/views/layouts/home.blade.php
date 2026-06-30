@@ -1,3 +1,36 @@
+@inject('companyModel', 'App\Models\Company')
+@inject('settingModel', 'App\Models\Setting')
+@inject('quoteModel', 'App\Models\Quotation')
+@php
+    $__companies = $companies ?? $companyModel->active()->with('rates')->get();
+    $__compareAllLogo = $settingModel->getValue('compare_all_logo');
+    $__compareAllLogoUrl = $__compareAllLogo ? asset('storage/' . $__compareAllLogo) : asset('images/benchmarking.png');
+    $__companyStats = $companyStats ?? $quoteModel->selectRaw('company_id, COUNT(*) as total, SUM(total_premium) as total_premium')
+        ->whereIn('company_id', $__companies->pluck('id'))
+        ->groupBy('company_id')
+        ->get()
+        ->keyBy('company_id');
+    $__totalQuotes = $__companyStats->sum('total');
+    $companyColors = ['#003087', '#0066B3', '#00205B', '#D0021B', '#7c3aed', '#0f7a65'];
+    $__companyData = $__companies->map(function ($c, $i) use ($companyColors, $__companyStats) {
+        $rate = $c->rates->firstWhere('item_name', 'Premium Rate');
+        $iraLevy = $c->rates->firstWhere('item_name', 'IRA Levy');
+        $stats = $__companyStats->get($c->id);
+        return [
+            'slug' => $c->slug,
+            'name' => $c->name,
+            'logo' => $c->logoUrl(),
+            'rate' => $rate ? (float) $rate->percentage / 100 : 0,
+            'taxRate' => $iraLevy ? (float) $iraLevy->percentage / 100 : 0.005,
+            'color' => $companyColors[$i % count($companyColors)],
+            'prefix' => $c->getInitials(),
+            'logoFallback' => $c->logoUrl(),
+            'quote_count' => $stats ? $stats->total : 0,
+            'total_premium' => $stats ? $stats->total_premium : 0,
+        ];
+    })->values();
+@endphp
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -15,9 +48,9 @@
 
 <title>Motor Vehicle Insurance Portal | MIC Global Risks</title>
 <meta name="description"
-      content="Get an instant motor insurance quote in Kenya. Compare comprehensive premiums from GA Insurance, Britam, and Sanlam Allianz. Download your quotation in seconds.">
+      content="Get an instant motor insurance quote in Kenya. Compare comprehensive premiums from {{ $__companies->pluck('name')->implode(', ') }}. Download your quotation in seconds.">
 <meta name="keywords"
-      content="motor insurance Kenya, car insurance quote Kenya, comprehensive motor cover, GA Insurance, Britam motor, Sanlam Allianz, vehicle insurance Nairobi, third party insurance Kenya">
+      content="motor insurance Kenya, car insurance quote Kenya, comprehensive motor cover, {{ $__companies->pluck('name')->implode(', ') }}, vehicle insurance Nairobi, third party insurance Kenya">
 <meta name="author" content="MIC Global Risks Insurance">
 <meta name="csrf-token" content="{{ csrf_token() }}">
 <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1">
@@ -30,7 +63,7 @@
 <meta property="og:type"        content="website">
 <meta property="og:site_name"   content="MIC Global Risks Insurance">
 <meta property="og:title"       content="Motor Insurance Quote Portal | MIC Global Risks">
-<meta property="og:description" content="Compare motor insurance premiums from GA Insurance, Britam, and Sanlam Allianz. Get your instant quote and download your certificate — all in one place.">
+<meta property="og:description" content="Compare motor insurance premiums from {{ $__companies->pluck('name')->implode(', ') }}. Get your instant quote and download your certificate — all in one place.">
 <meta property="og:url"         content="https://www.micglobalrisks.com/motor-quote/">
 <meta property="og:image"       content="https://www.micglobalrisks.com/img/MIC-Global-Risks_logo.png">
 <meta property="og:image:width"  content="1200">
@@ -45,7 +78,7 @@
 <meta name="twitter:site"        content="@MICGlobalRisks">
 <meta name="twitter:creator"     content="@MICGlobalRisks">
 <meta name="twitter:title"       content="Motor Insurance Quote Portal | MIC Global Risks">
-<meta name="twitter:description" content="Compare motor insurance premiums from GA Insurance, Britam, and Sanlam Allianz. Instant quotes, downloadable certificates.">
+<meta name="twitter:description" content="Compare motor insurance premiums from {{ $__companies->pluck('name')->implode(', ') }}. Instant quotes, downloadable certificates.">
 <meta name="twitter:image"       content="https://www.micglobalrisks.com/img/MIC-Global-Risks_logo.png">
 <meta name="twitter:image:alt"   content="MIC Global Risks Motor Insurance Quote Portal">
 
@@ -115,28 +148,6 @@
 <body>
 
 <x-public-header/>
-
-@inject('companyModel', 'App\Models\Company')
-@inject('settingModel', 'App\Models\Setting')
-@php
-    $__companies = $companies ?? $companyModel->active()->with('rates')->get();
-    $__compareAllLogo = $settingModel->getValue('compare_all_logo');
-    $__compareAllLogoUrl = $__compareAllLogo ? asset('storage/' . $__compareAllLogo) : asset('images/benchmarking.png');
-    $companyColors = ['#003087', '#0066B3', '#00205B', '#D0021B'];
-    $__companyData = $__companies->map(function ($c, $i) use ($companyColors) {
-        $rate = $c->rates->firstWhere('value_type', 'percentage');
-        return [
-            'slug' => $c->slug,
-            'name' => $c->name,
-            'logo' => $c->logoUrl(),
-            'rate' => $rate ? (float) $rate->percentage / 100 : 0,
-            'taxRate' => 0.005,
-            'color' => $companyColors[$i % count($companyColors)],
-            'prefix' => $c->getInitials(),
-            'logoFallback' => $c->logoUrl(),
-        ];
-    })->values();
-@endphp
 
 <!-- ══════════════════════════════════════════════
      HERO  –  drop-in replacement for <section class="hero">
@@ -436,35 +447,89 @@
 </section>
 
 <section class="section section-alt" style="background-color: #005F9E;">
-  <div style="text-align:center;margin-bottom:20px">
+  <div style="text-align:center;margin-bottom:24px">
     <div class="section-title" style="color:#F9F9FF;font-size:20px">Choose Your Insurer</div>
-    <div class="section-sub" style="color:#F9F9FF;font-size:15px;margin-top:4px">Select an insurer to generate a tailored quote.</div>
+    <div class="section-sub" style="color:#F9F9FF;font-size:15px;margin-top:4px" x-data="{tq: '{{ $__totalQuotes }}'}" x-init="setInterval(() => { fetch('{{ route("motor.stats") }}').then(r=>r.json()).then(d => { tq = d.total_quotes; }).catch(()=>{}); }, 30000);">Select an insurer to generate a tailored quote. <strong style="color:#fff"><span x-text="tq">{{ $__totalQuotes }}</span></strong> quotes generated across all insurers.</div>
   </div>
-  <div class="company-cards">
+  <div class="company-cards" style="gap:20px" x-data="companyStats()" x-init="init()">
 
     @foreach ($__companyData as $cd)
-    <a href="{{ route('generate.quote', $cd['slug']) }}" class="company-card no-underline" style="cursor:pointer;display:block">
-      <div class="company-logo-box">
+    <a href="{{ route('generate.quote', $cd['slug']) }}" class="company-card no-underline" style="cursor:pointer;display:block;border:2px solid transparent;border-color:{{ $cd['color'] }}40;position:relative;overflow:hidden;transition:all .25s ease;border-radius:16px;box-shadow:0 4px 20px rgba(0,0,0,0.08)">
+      <div style="position:absolute;top:0;left:0;right:0;height:4px;background:{{ $cd['color'] }}"></div>
+      <div class="company-logo-box" style="height:48px;margin-bottom:12px">
         @if ($cd['logo'])
-        <img src="{{ $cd['logo'] }}" alt="{{ $cd['name'] }}" class="nav-logo" onerror="fallbackLogo(this,'{{ $cd['slug'] }}')">
+        <img src="{{ $cd['logo'] }}" alt="{{ $cd['name'] }}" class="nav-logo" style="max-height:40px" onerror="fallbackLogo(this,'{{ $cd['slug'] }}')">
         @else
-        <span style="font-size:11px;font-weight:800;color:{{ $cd['color'] }}">{{ strtoupper($cd['name']) }}</span>
+        <span style="font-size:13px;font-weight:800;color:{{ $cd['color'] }}">{{ strtoupper($cd['name']) }}</span>
         @endif
       </div>
-      <div class="company-name">{{ $cd['name'] }}</div>
-      <div class="company-rate">Rate: <strong>{{ $cd['rate'] * 100 }}%</strong> of vehicle value</div>
-      <button class="btn btn-primary" style="width:100%;justify-content:center;font-size:11px;padding:5px 10px">Generate Quote ↗</button>
+      <div class="company-name" style="font-size:14px;font-weight:700;margin-bottom:4px;color:#1a1a2e">{{ $cd['name'] }}</div>
+      <div style="display:flex;align-items:center;justify-content:center;gap:16px;margin-bottom:12px">
+        <div style="text-align:center">
+          <div style="font-size:10px;color:#6b7280;font-weight:500">Rate</div>
+          <div style="font-size:13px;font-weight:800;color:{{ $cd['color'] }}">{{ $cd['rate'] * 100 }}%</div>
+        </div>
+        <div style="width:1px;height:24px;background:#e5e7eb"></div>
+        <div style="text-align:center">
+          <div style="font-size:10px;color:#6b7280;font-weight:500">Quotes</div>
+          <div style="font-size:13px;font-weight:800;color:{{ $cd['color'] }}" x-text="stats['{{ $cd['slug'] }}'] ?? '{{ $cd['quote_count'] }}'">0</div>
+        </div>
+      </div>
+      <button class="btn btn-primary" style="width:100%;justify-content:center;font-size:12px;padding:8px 10px;background:{{ $cd['color'] }};border-color:{{ $cd['color'] }};border-radius:10px;font-weight:700">Get Quote ↗</button>
     </a>
     @endforeach
 
-    <a href="{{ route('generate.quote', 'compare-all') }}" class="company-card no-underline" style="cursor:pointer;display:block">
-      <div class="company-logo-box"><img src="{{ $__compareAllLogoUrl }}" alt="Compare All" onerror="this.style.display='none';this.nextElementSibling.style.display='block'"><span style="display:none;font-size:18px">📊</span></div>
-      <div class="company-name">Compare All</div>
-      <div class="company-rate">Compare rates from all insurers</div>
-      <button class="btn btn-primary" style="width:100%;justify-content:center;font-size:11px;padding:5px 10px">Compare All ↗</button>
+    <a href="{{ route('generate.quote', 'compare-all') }}" class="company-card no-underline" style="cursor:pointer;display:block;border:2px solid #D0021B;position:relative;overflow:hidden;transition:all .25s ease;border-radius:16px;box-shadow:0 4px 20px rgba(0,0,0,0.08)">
+      <div style="position:absolute;top:0;left:0;right:0;height:4px;background:#D0021B"></div>
+      <div class="company-logo-box" style="height:48px;margin-bottom:12px">
+        <img src="{{ $__compareAllLogoUrl }}" alt="Compare All" style="max-height:40px" onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
+        <span style="display:none;font-size:18px">📊</span>
+      </div>
+      <div class="company-name" style="font-size:14px;font-weight:700;margin-bottom:4px;color:#1a1a2e">Compare All</div>
+      <div style="display:flex;align-items:center;justify-content:center;gap:16px;margin-bottom:12px">
+        <div style="text-align:center">
+          <div style="font-size:10px;color:#6b7280;font-weight:500">Insurers</div>
+          <div style="font-size:13px;font-weight:800;color:#D0021B">{{ $__companyData->count() }}</div>
+        </div>
+        <div style="width:1px;height:24px;background:#e5e7eb"></div>
+        <div style="text-align:center">
+          <div style="font-size:10px;color:#6b7280;font-weight:500">Total Quotes</div>
+          <div style="font-size:13px;font-weight:800;color:#D0021B" x-text="totalQuotes">{{ $__totalQuotes }}</div>
+        </div>
+      </div>
+      <button class="btn btn-primary" style="width:100%;justify-content:center;font-size:12px;padding:8px 10px;background:#D0021B;border-color:#D0021B;border-radius:10px;font-weight:700">Compare All ↗</button>
     </a>
 
   </div>
+
+  <script>
+  function companyStats() {
+    return {
+      stats: {},
+      totalQuotes: '{{ $__totalQuotes }}',
+      pollTimer: null,
+      init() {
+        this.fetchStats();
+        this.pollTimer = setInterval(() => { this.fetchStats(); }, 30000);
+        document.addEventListener('visibilitychange', () => {
+          if (document.hidden) { if (this.pollTimer) clearInterval(this.pollTimer); }
+          else { this.fetchStats(); this.pollTimer = setInterval(() => { this.fetchStats(); }, 30000); }
+        });
+      },
+      fetchStats() {
+        fetch('{{ route("motor.stats") }}')
+          .then(r => r.json())
+          .then(d => {
+            var map = {};
+            (d.companies || []).forEach(function(c) { map[c.slug] = c.quote_count; });
+            this.stats = map;
+            this.totalQuotes = d.total_quotes;
+          })
+          .catch(() => {});
+      }
+    };
+  }
+  </script>
 </section>
 
 <!-- ── REGENERATE QUOTE ── -->
@@ -476,7 +541,7 @@
   <div class="regen-box">
     <div class="regen-icon">🔍</div>
     <h3>Regenerate Your Quotation</h3>
-    <p>Enter your unique quotation number (e.g. GA-2026/001, BRITAM-2026/003) to retrieve and regenerate your insurance quote.</p>
+    <p>Enter your unique quotation number (e.g. {{ $__companyData->first()['prefix'] ?? 'GA' }}-2026/001) to retrieve and regenerate your insurance quote.</p>
     <form method="POST" action="{{ route('motor.lookup.quotation') }}" style="display:contents">
       @csrf
       <div class="regen-input-row">
@@ -604,7 +669,7 @@ window.MIC_MODE = 'all';
 window.MIC_SELECTED_COMPANY = null;
 window.hardcodedLogos = @json(collect(\App\Models\Company::hardcodedLogoMap())->mapWithKeys(fn($p, $s) => [$s => asset($p)]));
 function guestGuard(callback) {
-  if (window.MIC_GUEST) { openAuthModal(); return; }
+  if (window.MIC_GUEST) { sessionStorage.setItem('auth_redirect', '/quotations?pending_quote=1'); openAuthModal(); return; }
   if (typeof callback === 'function') callback();
 }
 function fallbackLogo(el, slug) {

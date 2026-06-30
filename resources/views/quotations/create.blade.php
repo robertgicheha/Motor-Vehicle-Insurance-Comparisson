@@ -223,45 +223,26 @@
 
             {{-- Quote cards --}}
             <div id="premium-preview" style="display:none" class="space-y-4">
-                <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
-                    {{-- GA Insurance --}}
-                    <div onclick="openQuotePage('GA')" class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-4 text-center cursor-pointer hover:shadow-md hover:-translate-y-0.5 transition flex flex-col items-center gap-1.5">
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-3" id="companyCardsContainer">
+                    @foreach($companies as $company)
+                    @php
+                        $rate = $rates[$company->id]->first() ?? null;
+                        $rateVal = $rate ? (float) $rate->percentage / 100 : 0.035;
+                        $colors = ['#1756c8', '#7c3aed', '#0f7a65', '#d4860e', '#c0392b'];
+                        $colorIdx = $loop->index % count($colors);
+                    @endphp
+                    <div onclick="openQuotePage('{{ $company->slug }}')" class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-4 text-center cursor-pointer hover:shadow-md hover:-translate-y-0.5 transition flex flex-col items-center gap-1.5" data-slug="{{ $company->slug }}" data-rate="{{ $rateVal }}">
                         <div class="h-9 flex items-center justify-center mb-1">
-                            <img src="{{ asset('images/GA Insurance.png') }}" alt="GA Insurance" class="max-h-8 max-w-[90px] object-contain"
+                            <img src="{{ $company->logoUrl() }}" alt="{{ $company->name }}" class="max-h-8 max-w-[90px] object-contain"
                                  onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
-                            <div class="text-xs font-extrabold text-blue-800" style="display:none">GA</div>
+                            <div class="text-xs font-extrabold" style="color:{{ $colors[$colorIdx] }};display:none">{{ $company->getInitials() }}</div>
                         </div>
-                        <div class="text-[10px] font-bold text-blue-700 dark:text-blue-400 uppercase tracking-wider">GA Insurance</div>
-                        <div class="text-[10px] text-gray-400">@ 3.5%</div>
-                        <div class="text-base font-extrabold text-blue-700 dark:text-blue-400" id="prev-ga">—</div>
-                        <div class="w-full text-[10px] font-bold text-white bg-blue-700 rounded-md py-1.5 mt-1">View Quote →</div>
+                        <div class="text-[10px] font-bold uppercase tracking-wider" style="color:{{ $colors[$colorIdx] }}">{{ $company->name }}</div>
+                        <div class="text-[10px] text-gray-400">@ {{ $rateVal * 100 }}%</div>
+                        <div class="text-base font-extrabold premium-amount" style="color:{{ $colors[$colorIdx] }}" id="prev-{{ $company->slug }}">—</div>
+                        <div class="w-full text-[10px] font-bold text-white rounded-md py-1.5 mt-1" style="background:{{ $colors[$colorIdx] }}">View Quote →</div>
                     </div>
-
-                    {{-- Britam --}}
-                    <div onclick="openQuotePage('BRITAM')" class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-4 text-center cursor-pointer hover:shadow-md hover:-translate-y-0.5 transition flex flex-col items-center gap-1.5">
-                        <div class="h-9 flex items-center justify-center mb-1">
-                            <img src="{{ asset('images/britam_logo.png') }}" alt="Britam" class="max-h-8 max-w-[90px] object-contain"
-                                 onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
-                            <div class="text-xs font-extrabold text-red-600" style="display:none">BR</div>
-                        </div>
-                        <div class="text-[10px] font-bold text-red-700 dark:text-red-400 uppercase tracking-wider">Britam</div>
-                        <div class="text-[10px] text-gray-400">@ 4.1%</div>
-                        <div class="text-base font-extrabold text-red-700 dark:text-red-400" id="prev-britam">—</div>
-                        <div class="w-full text-[10px] font-bold text-white bg-red-700 rounded-md py-1.5 mt-1">View Quote →</div>
-                    </div>
-
-                    {{-- Sanlam Allianz --}}
-                    <div onclick="openQuotePage('SANLAM')" class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-4 text-center cursor-pointer hover:shadow-md hover:-translate-y-0.5 transition flex flex-col items-center gap-1.5">
-                        <div class="h-9 flex items-center justify-center mb-1">
-                            <img src="{{ asset('images/Sanlam-Allianz.png') }}" alt="Sanlam Allianz" class="max-h-8 max-w-[90px] object-contain"
-                                 onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
-                            <div class="text-xs font-extrabold text-blue-600" style="display:none">SA</div>
-                        </div>
-                        <div class="text-[10px] font-bold text-emerald-700 dark:text-emerald-400 uppercase tracking-wider">Sanlam Allianz</div>
-                        <div class="text-[10px] text-gray-400">@ 4.5%</div>
-                        <div class="text-base font-extrabold text-emerald-700 dark:text-emerald-400" id="prev-sanlam">—</div>
-                        <div class="w-full text-[10px] font-bold text-white bg-emerald-700 rounded-md py-1.5 mt-1">View Quote →</div>
-                    </div>
+                    @endforeach
 
                     {{-- Compare All --}}
                     <div onclick="openQuotePage('ALL')" class="bg-white dark:bg-gray-800 border-2 border-red-300 dark:border-red-700 rounded-xl p-4 text-center cursor-pointer hover:shadow-md hover:-translate-y-0.5 transition flex flex-col items-center gap-1.5">
@@ -272,7 +253,7 @@
                         </div>
                         <div class="text-[10px] font-bold text-red-700 dark:text-red-400 uppercase tracking-wider">Compare All</div>
                         <div class="text-[10px] text-gray-400">All insurers</div>
-                        <div class="text-base font-extrabold text-red-700 dark:text-red-400">3 Quotes</div>
+                        <div class="text-base font-extrabold text-red-700 dark:text-red-400" id="compare-all-count">{{ $companies->count() }} Quotes</div>
                         <div class="w-full text-[10px] font-bold text-white bg-red-700 rounded-md py-1.5 mt-1">Compare →</div>
                     </div>
                 </div>
@@ -427,20 +408,20 @@ function updatePremiumPreview() {
     empty.style.display = 'none';
     preview.style.display = '';
 
-    var rates = { ga: 0.035, britam: 0.041, sanlam: 0.045 };
-    var tax = 0.005;
-
-    var gaAmt     = val * (rates.ga + tax);
-    var britamAmt = val * (rates.britam + tax);
-    var sanlamAmt = val * (rates.sanlam + tax);
-
-    document.getElementById('prev-ga').textContent     = fmt(gaAmt);
-    document.getElementById('prev-britam').textContent = fmt(britamAmt);
-    document.getElementById('prev-sanlam').textContent = fmt(sanlamAmt);
+    var cards = document.querySelectorAll('#companyCardsContainer > div[data-slug]');
+    cards.forEach(function(card) {
+        var slug = card.dataset.slug;
+        var rate = parseFloat(card.dataset.rate) || 0.035;
+        var amt = val * rate;
+        var el = document.getElementById('prev-' + slug);
+        if (el) el.textContent = fmt(amt);
+        if (amt < lowest) { lowest = amt; lowestEl = el; }
+        if (amt > highest) { highest = amt; highestEl = el; }
+    });
 
     document.getElementById('sum-value').textContent   = fmt(val);
-    document.getElementById('sum-lowest').textContent  = fmt(gaAmt);
-    document.getElementById('sum-highest').textContent = fmt(sanlamAmt);
+    document.getElementById('sum-lowest').textContent  = fmt(lowest !== Infinity ? lowest : 0);
+    document.getElementById('sum-highest').textContent = fmt(highest !== -Infinity ? highest : 0);
     summary.style.display = '';
 }
 

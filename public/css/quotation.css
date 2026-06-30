@@ -17,6 +17,147 @@
   --shadow:      0 4px 24px rgba(0,102,179,.10);
   --shadow-md:   0 8px 32px rgba(0,102,179,.15);
 }
+ .hero-card {
+    background: linear-gradient(135deg, var(--blue-dark) 0%, var(--blue) 60%, #0091d5 100%);
+    border-radius: var(--radius-lg);
+    padding: 32px 36px;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+    margin-bottom: 32px;
+    box-shadow: var(--shadow-md);
+  }
+  .hero-card-left h2 {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .1em;
+    color: rgba(255,255,255,.6);
+    margin-bottom: 6px;
+  }
+  .hero-card-left .quote-number {
+    font-size: 1.6rem;
+    font-weight: 800;
+    letter-spacing: -.01em;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .copy-btn {
+    background: rgba(255,255,255,.15);
+    border: 1px solid rgba(255,255,255,.25);
+    border-radius: 6px;
+    padding: 4px 10px;
+    font-size: 11px;
+    font-weight: 600;
+    color: #fff;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    transition: background .15s;
+  }
+  .copy-btn:hover { background: rgba(255,255,255,.25); }
+  .copy-btn.copied { background: rgba(16,185,129,.6); border-color: rgba(16,185,129,.4); }
+  .hero-card-right {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+  }
+  .hero-card-right img {
+    max-height: 52px;
+    max-width: 160px;
+    object-fit: contain;
+  }
+  .toast-container {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .toast {
+    background: #1f2937;
+    color: #fff;
+    padding: 12px 20px;
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 600;
+    box-shadow: 0 8px 24px rgba(0,0,0,.2);
+    animation: toast-in .3s ease;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .toast.success { background: #065f46; }
+  @keyframes toast-in { from { opacity:0; transform:translateX(40px); } to { opacity:1; transform:translateX(0); } }
+
+  .comparison-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 16px;
+    margin-bottom: 32px;
+  }
+  .comparison-card {
+    background: var(--white);
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 20px;
+    box-shadow: var(--shadow);
+    transition: box-shadow .2s, transform .15s;
+    cursor: pointer;
+  }
+  .comparison-card:hover {
+    box-shadow: var(--shadow-md);
+    transform: translateY(-2px);
+  }
+  .comparison-card.selected {
+    border-color: var(--blue);
+    box-shadow: 0 0 0 2px rgba(0,102,179,.15);
+  }
+  .comparison-card-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 14px;
+    padding-bottom: 10px;
+    border-bottom: 1.5px solid var(--blue-light);
+  }
+  .comparison-card-header img {
+    max-height: 30px;
+    max-width: 80px;
+    object-fit: contain;
+  }
+  .comparison-card-header .initials {
+    font-size: 13px;
+    font-weight: 800;
+    letter-spacing: .06em;
+  }
+  .comparison-card-body {
+    font-size: 12px;
+  }
+  .comparison-card-body .cmp-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 4px 0;
+    gap: 8px;
+  }
+  .comparison-card-body .cmp-row span:first-child { color: var(--text-muted); }
+  .comparison-card-body .cmp-row span:last-child { font-weight: 700; font-variant-numeric: tabular-nums; }
+  .comparison-card-body .cmp-total {
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1.5px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    font-weight: 800;
+    font-size: 14px;
+  }
+  
 body {
   font-family: 'Montserrat', sans-serif;
   background: var(--bg);

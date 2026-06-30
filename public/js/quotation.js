@@ -11,10 +11,13 @@ function getCompanyBySlug(slug) {
 }
 
 function calcPremiums(vehicleValue, company) {
-  var basic = vehicleValue * company.rate;
-  var tax = basic * (company.taxRate || 0.005);
-  var total = basic + tax;
-  return { basic: basic, tax: tax, total: total };
+  var rate = company.rate || 0;
+  var taxRate = company.taxRate || 0;
+  var basicPremium = vehicleValue * rate;
+  var baseAmount = vehicleValue * (rate - taxRate);
+  var iraLevy = vehicleValue * taxRate;
+  var total = basicPremium;
+  return { basic: basicPremium, base: baseAmount, iraLevy: iraLevy, tax: iraLevy, total: total };
 }
 
 function getFormData() {

@@ -1,7 +1,13 @@
+@inject('settingModel', 'App\Models\Setting')
+@php
+    $__footerLogo = $settingModel->getValue('logo_path', 'images/MIC-Global-Risks_logo_no_background.png');
+    $__footerLogoUrl = $__footerLogo ? (str_starts_with($__footerLogo, 'images/') ? asset($__footerLogo) : asset('storage/' . $__footerLogo)) : asset('images/MIC-Global-Risks_logo_no_background.png');
+@endphp
+
 <footer class="bg-[#004f8c] text-white mt-auto">
   <div class="grid grid-cols-[1.5fr_1fr_1fr_1fr] gap-10 px-10 py-[50px] pb-9 max-w-[1200px] mx-auto">
     <div>
-      <img src="{{ asset('images/MIC-Global-Risks_logo_no_background.png') }}" alt="MIC Global Risks" class="h-10 object-contain mb-4 brightness-0 invert">
+      <img src="{{ $__footerLogoUrl }}" alt="MIC Global Risks" class="h-10 object-contain mb-4 brightness-0 invert">
       <p class="text-[12.5px] text-white/60 leading-relaxed">Your trusted insurance intermediary &mdash; connecting you to Kenya&rsquo;s leading insurers with transparency, speed and expertise.</p>
       <div class="flex gap-2 flex-wrap mt-3">
         <span class="bg-white/10 border border-white/20 rounded-full px-3 py-1 text-[11px] font-bold text-white/85">Kenya</span>

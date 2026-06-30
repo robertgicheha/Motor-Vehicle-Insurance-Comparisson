@@ -176,11 +176,6 @@
         </form>
     </div>
 
-    @if(session('success'))
-        <div class="p-4 bg-emerald-50 dark:bg-emerald-900/30 border border-emerald-200 dark:border-emerald-700 rounded-lg text-emerald-700 dark:text-emerald-300 text-xs">
-            {{ session('success') }}
-        </div>
-    @endif
 </div>
 
 @push('scripts')

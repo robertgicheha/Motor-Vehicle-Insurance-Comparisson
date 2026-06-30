@@ -1,12 +1,37 @@
 <x-app-layout>
-<div class="max-w-4xl mx-auto space-y-6 pt-10 fade-in">
+<div class="max-w-4xl mx-auto space-y-5 pt-10 fade-in">
 
+    {{-- ─── HERO ─────────────────────────────────────────────────────────── --}}
     <div class="rounded-2xl bg-micblue px-6 py-7 shadow-sm">
         <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
             <div>
-                <p class="text-[10px] font-semibold uppercase tracking-widest text-blue-400">Quotation / Details</p>
-                <h1 class="mt-0.5 text-xl font-bold text-white">{{ $quotation->company->name }}</h1>
-                <p class="mt-0.5 text-xs text-slate-400">{{ $quotation->quotation_number }}</p>
+                <p class="text-[10px] font-semibold uppercase tracking-widest text-blue-400">Quotation / {{ $quotation->company->name }}</p>
+                <div class="flex items-center gap-3 mt-0.5">
+                    <h1 class="text-2xl font-bold text-white tracking-tight" style="font-size:26px">{{ $quotation->quotation_number }}</h1>
+                    <button onclick="copyToClipboard('{{ $quotation->quotation_number }}')" class="inline-flex items-center gap-1 px-2.5 py-1 text-[10px] font-semibold bg-white/20 text-white rounded-lg hover:bg-white/30 transition" style="border:1px solid rgba(255,255,255,0.25)">
+                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                        Copy
+                    </button>
+                </div>
+                <p class="mt-1 text-xs text-slate-400">
+                    Generated {{ $quotation->created_at->format('d M Y, h:i A') }}
+                    &middot; Status:
+                    @php
+                        $statusColors = [
+                            'processing' => 'bg-blue-500/20 text-blue-300',
+                            'completed' => 'bg-emerald-500/20 text-emerald-300',
+                            'closed' => 'bg-gray-500/20 text-gray-300',
+                            'insuring_sticker' => 'bg-amber-500/20 text-amber-300',
+                            'active' => 'bg-emerald-500/20 text-emerald-300',
+                            'draft' => 'bg-gray-500/20 text-gray-300',
+                            'expired' => 'bg-red-500/20 text-red-300',
+                            'generated' => 'bg-blue-500/20 text-blue-300',
+                            'pending' => 'bg-yellow-500/20 text-yellow-300',
+                        ];
+                        $statusClass = $statusColors[$quotation->status] ?? 'bg-gray-500/20 text-gray-300';
+                    @endphp
+                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold {{ $statusClass }}">{{ ucfirst($quotation->status) }}</span>
+                </p>
             </div>
             <div class="flex items-center gap-2 shrink-0">
                 <a href="{{ route('quotations.download.pdf', $quotation) }}"
@@ -31,130 +56,180 @@
                 <svg class="w-3.5 h-3.5 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
                 {{ $quotation->car_registration ?? 'No reg.' }}
             </span>
+            <span class="flex items-center gap-1.5">
+                <svg class="w-3.5 h-3.5 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+                KES {{ number_format($quotation->car_valuation, 2) }}
+            </span>
+            <span class="flex items-center gap-1.5">
+                <svg class="w-3.5 h-3.5 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+                {{ $quotation->company->name }}
+            </span>
         </div>
     </div>
 
-    {{-- Main Detail Card --}}
+    {{-- ─── PERSONAL DETAILS ────────────────────────────────────────────── --}}
     <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
-        <div class="px-6 py-5 flex items-center justify-between border-b border-gray-100 dark:border-gray-700">
+        <div class="px-6 py-4 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between">
             <div>
-                <p class="text-[10px] font-semibold uppercase tracking-widest text-gray-400">Premium Summary</p>
-                <h2 class="text-xs font-bold text-gray-800 dark:text-white mt-0.5">Total Premium</h2>
+                <p class="text-[10px] font-semibold uppercase tracking-widest text-gray-400">Customer</p>
+                <h2 class="text-xs font-bold text-gray-800 dark:text-white mt-0.5">Personal Details</h2>
             </div>
-            <div class="text-right">
-                <p class="text-2xl font-extrabold text-blue-600 dark:text-blue-400">KES {{ number_format($quotation->total_premium, 2) }}</p>
+            @if($quotation->user_id !== auth()->id())
+                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-semibold bg-amber-500/20 text-amber-600 dark:text-amber-400">
+                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+                    On behalf of {{ $quotation->user->name ?? 'another user' }}
+                </span>
+            @endif
+        </div>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-5 p-6 text-xs">
+            <div>
+                <span class="block text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Name</span>
+                <span class="block font-medium text-gray-800 dark:text-white mt-1">{{ $quotation->user->name ?? 'N/A' }}</span>
+            </div>
+            <div>
+                <span class="block text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Email</span>
+                <span class="block font-medium text-gray-800 dark:text-white mt-1">{{ $quotation->user->email ?? 'N/A' }}</span>
+            </div>
+            <div>
+                <span class="block text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Phone</span>
+                <span class="block font-medium text-gray-800 dark:text-white mt-1">{{ $quotation->user->mobile ?? 'N/A' }}</span>
+            </div>
+            <div>
+                <span class="block text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Insurer</span>
+                <span class="block font-medium text-gray-800 dark:text-white mt-1">{{ $quotation->company->name }}</span>
             </div>
         </div>
-        <div class="p-6 grid grid-cols-2 md:grid-cols-3 gap-5">
-            <div>
-                <p class="text-[10px] font-semibold uppercase tracking-wider text-gray-400">Quotation #</p>
-                <p class="text-xs font-bold text-gray-900 dark:text-white mt-0.5">{{ $quotation->quotation_number }}</p>
-            </div>
-            <div>
-                <p class="text-[10px] font-semibold uppercase tracking-wider text-gray-400">Car Registration</p>
-                <p class="text-xs font-bold text-gray-900 dark:text-white mt-0.5">{{ $quotation->car_registration ?? 'N/A' }}</p>
-            </div>
-            <div>
-                <p class="text-[10px] font-semibold uppercase tracking-wider text-gray-400">Car Valuation</p>
-                <p class="text-xs font-bold text-gray-900 dark:text-white mt-0.5">KES {{ number_format($quotation->car_valuation, 2) }}</p>
-            </div>
-            <div>
-                <p class="text-[10px] font-semibold uppercase tracking-wider text-gray-400">Basic Premium</p>
-                <p class="text-xs font-bold text-gray-900 dark:text-white mt-0.5">KES {{ number_format($quotation->premium, 2) }}</p>
-            </div>
-            <div>
-                <p class="text-[10px] font-semibold uppercase tracking-wider text-gray-400">PVT Premium</p>
-                <p class="text-xs font-bold text-gray-900 dark:text-white mt-0.5">KES {{ number_format($quotation->pvt_premium, 2) }}</p>
-            </div>
-            <div>
-                <p class="text-[10px] font-semibold uppercase tracking-wider text-gray-400">Status</p>
-                @php
-                    $statusColors = [
-                        'processing' => 'bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
-                        'completed' => 'bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400',
-                        'closed' => 'bg-gray-50 text-gray-500 dark:bg-gray-700 dark:text-gray-400',
-                        'insuring_sticker' => 'bg-amber-50 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
-                        'active' => 'bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400',
-                        'draft' => 'bg-gray-50 text-gray-500 dark:bg-gray-700 dark:text-gray-400',
-                        'expired' => 'bg-red-50 text-red-700 dark:bg-red-900/30 dark:text-red-400',
-                        'generated' => 'bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
-                        'pending' => 'bg-yellow-50 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400',
-                    ];
-                    $statusClass = $statusColors[$quotation->status] ?? 'bg-gray-50 text-gray-500 dark:bg-gray-700 dark:text-gray-400';
-                @endphp
-                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium {{ $statusClass }}">{{ ucfirst($quotation->status) }}</span>
-            </div>
-            <div>
-                <p class="text-[10px] font-semibold uppercase tracking-wider text-gray-400">Excess - Own Damage</p>
-                <p class="text-xs font-bold text-gray-900 dark:text-white mt-0.5">KES {{ number_format($quotation->excess_own_damage ?? 0, 2) }}</p>
-            </div>
-            <div>
-                <p class="text-[10px] font-semibold uppercase tracking-wider text-gray-400">Excess - Theft</p>
-                <p class="text-xs font-bold text-gray-900 dark:text-white mt-0.5">KES {{ number_format($quotation->excess_theft ?? 0, 2) }}</p>
-            </div>
-            <div>
-                <p class="text-[10px] font-semibold uppercase tracking-wider text-gray-400">Generated On</p>
-                <p class="text-xs font-bold text-gray-900 dark:text-white mt-0.5">{{ $quotation->created_at->format('d M Y, h:i A') }}</p>
-            </div>
-            <div>
-                <p class="text-[10px] font-semibold uppercase tracking-wider text-gray-400">Insurer</p>
-                <p class="text-xs font-bold text-gray-900 dark:text-white mt-0.5">{{ $quotation->company->name }}</p>
-            </div>
-            <div>
-                <p class="text-[10px] font-semibold uppercase tracking-wider text-gray-400">Requested By</p>
-                <p class="text-xs font-bold text-gray-900 dark:text-white mt-0.5">{{ $quotation->user->name ?? 'N/A' }}</p>
-            </div>
-        </div>
-
-        {{-- Admin: Status Update Form --}}
-        @if(auth()->user()->hasRole('super-admin') || auth()->user()->hasRole('admin'))
-        <div class="px-6 py-4 border-t border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
-            <form action="{{ route('quotations.update-status', $quotation) }}" method="POST" class="flex items-center gap-3">
-                @csrf @method('PATCH')
-                <label class="text-[10px] font-semibold uppercase tracking-wider text-gray-400 shrink-0">Update Status</label>
-                <select name="status" class="px-3 py-1.5 text-xs border border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-1 focus:ring-blue-500">
-                    <option value="processing" {{ $quotation->status === 'processing' ? 'selected' : '' }}>Processing</option>
-                    <option value="completed" {{ $quotation->status === 'completed' ? 'selected' : '' }}>Completed</option>
-                    <option value="closed" {{ $quotation->status === 'closed' ? 'selected' : '' }}>Closed</option>
-                    <option value="insuring_sticker" {{ $quotation->status === 'insuring_sticker' ? 'selected' : '' }}>Insuring Sticker</option>
-                    <option value="active" {{ $quotation->status === 'active' ? 'selected' : '' }}>Active</option>
-                    <option value="expired" {{ $quotation->status === 'expired' ? 'selected' : '' }}>Expired</option>
-                </select>
-                <button type="submit" class="inline-flex items-center px-3 py-1.5 text-xs font-semibold bg-blue-600 hover:bg-blue-500 text-white rounded-lg transition">Apply</button>
-            </form>
-        </div>
-        @endif
     </div>
 
-    {{-- Premium Breakdown --}}
-    @if($quotation->breakdown)
-        <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
-            <div class="px-6 py-4 border-b border-gray-100 dark:border-gray-700">
-                <p class="text-[10px] font-semibold uppercase tracking-widest text-gray-400">Breakdown</p>
-                <h3 class="text-xs font-bold text-gray-800 dark:text-white mt-0.5">Premium Breakdown</h3>
+    {{-- ─── VEHICLE DETAILS ─────────────────────────────────────────────── --}}
+    <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+        <div class="px-6 py-4 border-b border-gray-100 dark:border-gray-700">
+            <p class="text-[10px] font-semibold uppercase tracking-widest text-gray-400">Vehicle</p>
+            <h2 class="text-xs font-bold text-gray-800 dark:text-white mt-0.5">Vehicle Details</h2>
+        </div>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-5 p-6 text-xs">
+            <div>
+                <span class="block text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Make</span>
+                <span class="block font-medium text-gray-800 dark:text-white mt-1">{{ $quotation->car_make }}</span>
             </div>
-            <div class="p-6 space-y-2">
-                @foreach($quotation->breakdown as $key => $value)
-                    <div class="flex justify-between py-2 border-b border-gray-100 dark:border-gray-700 last:border-b-0">
-                        <span class="text-xs text-gray-500 dark:text-gray-400">{{ ucwords(str_replace('_', ' ', $key)) }}</span>
-                        <span class="text-xs font-semibold text-gray-800 dark:text-white">{{ is_numeric($value) ? 'KES ' . number_format($value, 2) : $value }}</span>
-                    </div>
+            <div>
+                <span class="block text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Model</span>
+                <span class="block font-medium text-gray-800 dark:text-white mt-1">{{ $quotation->car_model }}</span>
+            </div>
+            <div>
+                <span class="block text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Year</span>
+                <span class="block font-medium text-gray-800 dark:text-white mt-1">{{ $quotation->car_year }}</span>
+            </div>
+            <div>
+                <span class="block text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Registration</span>
+                <span class="block font-medium text-gray-800 dark:text-white mt-1">{{ $quotation->car_registration ?? '—' }}</span>
+            </div>
+        </div>
+    </div>
+
+    {{-- ─── PREMIUM BREAKDOWN ───────────────────────────────────────────── --}}
+    <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+        <div class="px-6 py-4 border-b border-gray-100 dark:border-gray-700">
+            <p class="text-[10px] font-semibold uppercase tracking-widest text-gray-400">Financials</p>
+            <h2 class="text-xs font-bold text-gray-800 dark:text-white mt-0.5">Premium Breakdown</h2>
+        </div>
+        <div class="p-6">
+            <div class="space-y-2.5 text-xs">
+                <div class="flex justify-between py-1.5">
+                    <span class="text-gray-500">Vehicle Value</span>
+                    <span class="font-semibold text-gray-800 dark:text-white">KES {{ number_format($quotation->car_valuation, 2) }}</span>
+                </div>
+                <div class="flex justify-between py-1.5">
+                    <span class="text-gray-500">Basic Premium ({{ $quotation->breakdown['premium_rate'] ?? 6.5 }}%)</span>
+                    <span class="font-semibold text-gray-800 dark:text-white">KES {{ number_format($quotation->premium, 2) }}</span>
+                </div>
+                @php
+                    $breakdown = $quotation->breakdown ?? [];
+                    $basePremium = $breakdown['base_premium'] ?? null;
+                    $iraLevy = $breakdown['ira_levy'] ?? null;
+                @endphp
+                @if($basePremium !== null && $iraLevy !== null)
+                <div class="flex justify-between py-1.5 pl-4">
+                    <span class="text-gray-400">Base Premium ({{ number_format(($breakdown['premium_rate'] ?? 6.5) - ($breakdown['ira_levy_rate'] ?? 0.5), 1) }}%)</span>
+                    <span class="font-semibold text-gray-800 dark:text-white">KES {{ number_format($basePremium, 2) }}</span>
+                </div>
+                <div class="flex justify-between py-1.5 pl-4">
+                    <span class="text-gray-400">IRA Levy ({{ $breakdown['ira_levy_rate'] ?? 0.5 }}%)</span>
+                    <span class="font-semibold text-gray-800 dark:text-white">KES {{ number_format($iraLevy, 2) }}</span>
+                </div>
+                @endif
+                <div class="flex justify-between py-1.5">
+                    <span class="text-gray-500">PVT Premium</span>
+                    <span class="font-semibold text-gray-800 dark:text-white">KES {{ number_format($quotation->pvt_premium, 2) }}</span>
+                </div>
+
+                @if($quotation->breakdown)
+                    @foreach($quotation->breakdown as $key => $value)
+                        @if(!in_array($key, ['car_valuation', 'premium', 'pvt_premium', 'total_premium', 'base_premium', 'ira_levy', 'premium_rate', 'ira_levy_rate', 'basic_premium']))
+                        <div class="flex justify-between py-1.5">
+                            <span class="text-gray-500">{{ ucwords(str_replace('_', ' ', $key)) }}</span>
+                            <span class="font-semibold text-gray-800 dark:text-white">{{ is_numeric($value) ? 'KES ' . number_format($value, 2) : $value }}</span>
+                        </div>
+                        @endif
+                    @endforeach
+                @endif
+
+                <div class="flex justify-between py-1.5">
+                    <span class="text-gray-500">Excess - Own Damage</span>
+                    <span class="font-semibold text-gray-800 dark:text-white">KES {{ number_format($quotation->excess_own_damage ?? 0, 2) }}</span>
+                </div>
+                <div class="flex justify-between py-1.5">
+                    <span class="text-gray-500">Excess - Theft</span>
+                    <span class="font-semibold text-gray-800 dark:text-white">KES {{ number_format($quotation->excess_theft ?? 0, 2) }}</span>
+                </div>
+
+                <div class="flex justify-between py-3 mt-2 border-t-2 border-gray-200 dark:border-gray-600">
+                    <span class="font-bold text-gray-800 dark:text-white text-sm">Total Premium</span>
+                    <span class="font-extrabold text-lg text-blue-600 dark:text-blue-400">KES {{ number_format($quotation->total_premium, 2) }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {{-- ─── STATUS UPDATE ────────────────────────────────────────────────── --}}
+    @if(auth()->user()->hasRole('super-admin') || auth()->user()->hasRole('admin'))
+    <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+        <div class="px-6 py-4 border-b border-gray-100 dark:border-gray-700">
+            <p class="text-[10px] font-semibold uppercase tracking-widest text-gray-400">Workflow</p>
+            <h2 class="text-xs font-bold text-gray-800 dark:text-white mt-0.5">Update Status</h2>
+        </div>
+        <div class="p-6">
+            <p class="text-xs text-gray-500 dark:text-gray-400 mb-3">Current status: <strong>{{ ucfirst($quotation->status) }}</strong></p>
+            <div class="flex flex-wrap gap-2">
+                @php $allStatuses = ['processing', 'completed', 'closed', 'insuring_sticker', 'active', 'expired']; @endphp
+                @foreach($allStatuses as $st)
+                    <form action="{{ route('quotations.update-status', $quotation) }}" method="POST" onsubmit="this.querySelector('button').disabled=true;this.querySelector('button').innerHTML='...';" style="display:inline">
+                        @csrf @method('PATCH')
+                        <input type="hidden" name="status" value="{{ $st }}">
+                        <button type="submit" {{ $quotation->status === $st ? 'disabled' : '' }}
+                                style="padding:6px 14px;font-size:11px;font-weight:600;border-radius:8px;border:1px solid {{ $quotation->status === $st ? '#005F9E' : 'rgba(0,0,0,0.12)' }};background:{{ $quotation->status === $st ? '#005F9E' : 'transparent' }};color:{{ $quotation->status === $st ? '#fff' : 'inherit' }};cursor:{{ $quotation->status === $st ? 'default' : 'pointer' }};transition:all .15s;font-family:inherit"
+                                onmouseover="this.style.borderColor='#005F9E';this.style.background='{{ $quotation->status === $st ? '#005F9E' : 'rgba(0,95,158,0.08)' }}';this.style.color='{{ $quotation->status === $st ? '#fff' : '#005F9E' }}'"
+                                onmouseout="this.style.borderColor='{{ $quotation->status === $st ? '#005F9E' : 'rgba(0,0,0,0.12)' }}';this.style.background='{{ $quotation->status === $st ? '#005F9E' : 'transparent' }}';this.style.color='{{ $quotation->status === $st ? '#fff' : 'inherit' }}'">
+                            {{ ucfirst(str_replace('_', ' ', $st)) }}
+                        </button>
+                    </form>
                 @endforeach
             </div>
         </div>
+    </div>
     @endif
 
-    {{-- Sticker Section --}}
-    @if($quotation->status === 'insuring_sticker' && auth()->user()->hasRole('super-admin') || auth()->user()->hasRole('admin'))
+    {{-- ─── STICKER GENERATION ──────────────────────────────────────────── --}}
+    @if(in_array($quotation->status, ['insuring_sticker', 'completed', 'active']) && (auth()->user()->hasRole('super-admin') || auth()->user()->hasRole('admin')))
     <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
         <div class="px-6 py-4 border-b border-gray-100 dark:border-gray-700">
             <p class="text-[10px] font-semibold uppercase tracking-widest text-gray-400">Sticker</p>
-            <h3 class="text-xs font-bold text-gray-800 dark:text-white mt-0.5">Insurance Certificate / Sticker</h3>
+            <h2 class="text-xs font-bold text-gray-800 dark:text-white mt-0.5">Insurance Certificate / Sticker</h2>
         </div>
         <div class="p-6 text-center">
             <a href="{{ route('stickers.create', ['quotation_id' => $quotation->id]) }}"
-               class="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold bg-amber-500 hover:bg-amber-400 text-gray-900 rounded-lg transition">
-                <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z"/></svg>
+               class="inline-flex items-center gap-1.5 px-5 py-2.5 text-xs font-semibold bg-amber-500 hover:bg-amber-400 text-gray-900 rounded-lg transition shadow-sm">
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z"/></svg>
                 Generate Certificate / Sticker
             </a>
         </div>
@@ -162,4 +237,28 @@
     @endif
 
 </div>
+
+<script>
+function copyToClipboard(text) {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(function() {
+            var btn = event.currentTarget;
+            var orig = btn.innerHTML;
+            btn.innerHTML = '<svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg> Copied!';
+            btn.classList.add('copied');
+            setTimeout(function() { btn.innerHTML = orig; btn.classList.remove('copied'); }, 2000);
+        });
+    } else {
+        var ta = document.createElement('textarea');
+        ta.value = text;
+        ta.style.position = 'fixed';
+        ta.style.opacity = '0';
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        document.body.removeChild(ta);
+        alert('Copied!');
+    }
+}
+</script>
 </x-app-layout>

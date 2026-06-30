@@ -94,6 +94,12 @@ class DashboardController extends Controller
             ->get()
             ->pluck('total', 'gender');
 
+        $companyColorMap = Company::active()->get()->mapWithKeys(function ($c) {
+            $colors = ['#1756c8', '#7c3aed', '#0f7a65', '#d4860e', '#c0392b', '#1E40AF', '#F59E0B', '#10B981', '#8B5CF6', '#EF4444'];
+            $idx = abs(crc32($c->id)) % count($colors);
+            return [$c->name => $colors[$idx]];
+        });
+
         $data['quotationDates'] = Quotation::with(['user', 'company'])
             ->latest()
             ->get()
@@ -108,8 +114,35 @@ class DashboardController extends Controller
                     'car' => $q->car_make . ' ' . $q->car_model,
                     'premium' => $q->total_premium,
                     'company' => $q->company->name ?? 'Unknown',
+                    'company_color' => $companyColorMap[$q->company->name] ?? '#1756c8',
                 ]),
             ]);
+
+        $data['companyColorMap'] = $companyColorMap;
+
+        // Status distribution
+        $statusDistribution = [
+            'processed' => \App\Models\Quotation::where('status', 'processed')->count(),
+            'completed' => \App\Models\Quotation::where('status', 'completed')->count(),
+            'rejected'  => \App\Models\Quotation::where('status', 'rejected')->count(),
+        ];
+
+        // Monthly average premium trend (last 6 months)
+        $dbDriver = DB::connection()->getDriverName();
+        if ($dbDriver === 'sqlite') {
+            $monthExpr = "strftime('%b %Y', created_at) as month";
+            $sortExpr = "strftime('%Y-%m', created_at) as sort_key";
+        } else {
+            $monthExpr = "DATE_FORMAT(created_at, '%b %Y') as month";
+            $sortExpr = "DATE_FORMAT(created_at, '%Y-%m') as sort_key";
+        }
+        $premiumTrend = \App\Models\Quotation::selectRaw(
+                "$monthExpr, $sortExpr, ROUND(AVG(total_premium), 0) as avg_premium"
+            )
+            ->where('created_at', '>=', now()->subMonths(6)->startOfMonth())
+            ->groupBy('month', 'sort_key')
+            ->orderBy('sort_key')
+            ->get();
 
         $data['allActivities'] = ActivityLog::with('user')->latest()->take(20)->get();
         $data['myActivities'] = ActivityLog::where('user_id', auth()->id())->latest()->take(10)->get();
@@ -148,7 +181,7 @@ class DashboardController extends Controller
             $data['pendingChangeCount'] = ChangeRequest::forUser($user->id)->pending()->count();
         }
 
-        return view('dashboard.admin', $data);
+        return view($isSuperAdmin ? 'dashboard.super-admin' : 'dashboard.admin', $data);
     }
 
     protected function userDashboard(array $data)
@@ -164,12 +197,38 @@ class DashboardController extends Controller
 
         $data['recentActivities'] = ActivityLog::where('user_id', $user->id)->latest()->take(10)->get();
 
+        $companyColorMap = Company::active()->get()->mapWithKeys(function ($c) {
+            $colors = ['#1756c8', '#7c3aed', '#0f7a65', '#d4860e', '#c0392b', '#1E40AF', '#F59E0B', '#10B981', '#8B5CF6', '#EF4444'];
+            $idx = abs(crc32($c->id)) % count($colors);
+            return [$c->name => $colors[$idx]];
+        });
+
         $data['quotationDates'] = $user->quotations()
-            ->select('quotation_number', 'car_make', 'car_model', 'total_premium', 'created_at')
+            ->with('company')
+            ->select('quotation_number', 'car_make', 'car_model', 'total_premium', 'created_at', 'company_id')
             ->latest()
             ->get()
             ->groupBy(fn($q) => $q->created_at->format('Y-m-d'))
-            ->map(fn($items, $date) => ['date' => $date, 'count' => $items->count(), 'items' => $items]);
+            ->map(fn($items, $date) => [
+                'date' => $date,
+                'count' => $items->count(),
+                'items' => $items->map(fn($q) => [
+                    'id' => $q->id,
+                    'quotation_number' => $q->quotation_number,
+                    'user_name' => $q->user->name ?? 'Unknown',
+                    'car' => $q->car_make . ' ' . $q->car_model,
+                    'premium' => $q->total_premium,
+                    'company' => $q->company->name ?? 'Unknown',
+                    'company_color' => $companyColorMap[$q->company->name] ?? '#1756c8',
+                ]),
+            ]);
+
+        $data['companyColorMap'] = $companyColorMap;
+
+        $data['quotationsByCompany'] = Company::active()
+            ->withCount(['quotations' => fn($q) => $q->where('user_id', $user->id)])
+            ->get()
+            ->pluck('quotations_count', 'name');
 
         $data['monthlyQuotations'] = $user->quotations()
             ->select(DB::raw("strftime('%Y-%m', created_at) as month"), DB::raw('count(*) as total'))
@@ -198,5 +257,14 @@ class DashboardController extends Controller
         $data['unreadCount'] = $user->unreadNotifications()->count();
 
         return view('dashboard.user', $data);
+    }
+
+    public function weatherJson()
+    {
+        $weather = $this->weatherService->getWeather(
+            config('app.weather_city', 'Nairobi'),
+            config('app.weather_country', 'KE')
+        );
+        return response()->json($weather);
     }
 }

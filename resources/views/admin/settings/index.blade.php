@@ -89,7 +89,9 @@
                                 $inputType = 'password';
                             } elseif (str_contains($key, 'email')) {
                                 $inputType = 'email';
-                            } elseif (str_contains($key, 'url') || str_contains($key, 'path') || str_contains($key, 'logo') || str_contains($key, 'favicon')) {
+                            } elseif (str_contains($key, 'logo') || str_contains($key, 'favicon')) {
+                                $inputType = 'media';
+                            } elseif (str_contains($key, 'url') || str_contains($key, 'path')) {
                                 $inputType = 'url';
                             } elseif (in_array($key, ['timezone', 'date_format', 'currency', 'currency_symbol', 'default_cover_type', 'mail_mailer', 'mail_encryption', 'primary_color'])) {
                                 $inputType = 'select';
@@ -135,6 +137,24 @@
                                 <input type="password" name="settings[{{ $key }}]" value="{{ $value }}"
                                        class="w-full px-3 py-2 text-xs rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200 focus:ring-2 focus:ring-blue-500 outline-none"
                                        autocomplete="off">
+                            @elseif($inputType === 'media')
+                                <div class="flex items-center gap-2">
+                                    <input type="text" name="settings[{{ $key }}]" value="{{ $value }}"
+                                           class="flex-1 px-3 py-2 text-xs rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200 focus:ring-2 focus:ring-blue-500 outline-none"
+                                           id="setting-{{ $key }}" readonly
+                                           onclick="openMediaLibrary('setting-{{ $key }}')" style="cursor:pointer">
+                                    <button type="button" onclick="openMediaLibrary('setting-{{ $key }}')"
+                                            class="px-3 py-2 text-xs font-semibold bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition whitespace-nowrap">
+                                        Browse Media
+                                    </button>
+                                    @if($value)
+                                        <a href="{{ str_starts_with($value, 'images/') ? asset($value) : (file_exists(public_path('storage/' . $value)) ? asset('storage/' . $value) : '#') }}"
+                                           target="_blank"
+                                           class="px-2 py-2 text-xs text-gray-500 hover:text-blue-600 transition">
+                                            Preview
+                                        </a>
+                                    @endif
+                                </div>
                             @else
                                 <input type="{{ $inputType }}" name="settings[{{ $key }}]" value="{{ $value }}"
                                        class="w-full px-3 py-2 text-xs rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200 focus:ring-2 focus:ring-blue-500 outline-none">
@@ -154,4 +174,71 @@
         </div>
     </form>
 </div>
+{{-- Media Picker Modal --}}
+<div id="mediaPickerModal" class="fixed inset-0 z-50 hidden" role="dialog" aria-modal="true">
+    <div class="absolute inset-0 bg-black/40 backdrop-blur-sm" onclick="closeMediaPicker()"></div>
+    <div class="absolute inset-y-0 right-0 w-full max-w-2xl bg-white dark:bg-gray-900 shadow-2xl flex flex-col">
+        <div class="px-6 py-4 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between shrink-0">
+            <div>
+                <p class="text-[10px] font-semibold uppercase tracking-widest text-gray-400">Media Library</p>
+                <h2 class="text-sm font-bold text-gray-900 dark:text-white mt-0.5">Select an Image</h2>
+            </div>
+            <button onclick="closeMediaPicker()" class="p-1.5 text-gray-400 hover:text-gray-700 dark:hover:text-white rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+        </div>
+        <div class="flex-1 overflow-y-auto p-6">
+            <div id="mediaPickerGrid" class="grid grid-cols-3 sm:grid-cols-4 gap-4">
+                <div class="col-span-full text-center py-12 text-sm text-gray-400">Loading...</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@push('scripts')
+<script>
+let mediaPickerCallback = null;
+
+function openMediaLibrary(inputId) {
+    mediaPickerCallback = function(url) {
+        document.getElementById(inputId).value = url;
+    };
+    document.getElementById('mediaPickerModal').classList.remove('hidden');
+    loadMediaGrid();
+}
+
+function closeMediaPicker() {
+    document.getElementById('mediaPickerModal').classList.add('hidden');
+    mediaPickerCallback = null;
+}
+
+function loadMediaGrid() {
+    var grid = document.getElementById('mediaPickerGrid');
+    grid.innerHTML = '<div class="col-span-full text-center py-12 text-sm text-gray-400">Loading...</div>';
+    fetch('{{ route("admin.media.list") }}')
+        .then(function(r) { return r.json(); })
+        .then(function(items) {
+            if (!items || !items.length) {
+                grid.innerHTML = '<div class="col-span-full text-center py-12 text-sm text-gray-400">No images yet. <a href="{{ route("admin.media.index") }}" class="text-blue-600 underline" target="_blank">Upload images</a>.</div>';
+                return;
+            }
+            grid.innerHTML = '';
+            items.forEach(function(m) {
+                var div = document.createElement('div');
+                div.className = 'relative bg-gray-50 dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden cursor-pointer hover:ring-2 hover:ring-blue-500 transition';
+                div.innerHTML = '<div class="aspect-square flex items-center justify-center p-2"><img src="' + m.url + '" alt="' + m.filename + '" class="max-w-full max-h-full object-contain"></div><div class="p-2"><p class="text-[10px] text-gray-600 dark:text-gray-400 truncate">' + m.filename + '</p></div>';
+                div.onclick = function() {
+                    if (mediaPickerCallback) mediaPickerCallback(m.url);
+                    closeMediaPicker();
+                };
+                grid.appendChild(div);
+            });
+        })
+        .catch(function() {
+            grid.innerHTML = '<div class="col-span-full text-center py-12 text-sm text-red-400">Failed to load media.</div>';
+        });
+}
+</script>
+@endpush
+
 </x-app-layout>

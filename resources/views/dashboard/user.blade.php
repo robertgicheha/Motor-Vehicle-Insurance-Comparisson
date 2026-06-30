@@ -11,16 +11,15 @@
             </div>
             <div class="flex items-center gap-2 shrink-0">
                 @if(isset($weather))
-                    <div class="flex items-center gap-2 px-3 py-1.5 text-xs font-medium border border-white/20 text-white/80 rounded-lg">
-                        <span>
-                            @if(str_contains(strtolower($weather['condition']), 'clear')) ☀️
-                            @elseif(str_contains(strtolower($weather['condition']), 'cloud')) ☁️
-                            @elseif(str_contains(strtolower($weather['condition']), 'rain')) 🌧️
-                            @elseif(str_contains(strtolower($weather['condition']), 'snow')) ❄️
-                            @else 🌤️
-                            @endif
+                    <div class="flex items-center gap-2 px-3 py-1.5 text-xs font-medium border border-white/20 text-white/80 rounded-lg" x-data="userWeather()" x-init="init()">
+                        <span x-html="emoji">
+                            @php
+                                $wc = strtolower($weather['condition']);
+                                $we = str_contains($wc,'clear')?'☀️':(str_contains($wc,'cloud')?'☁️':(str_contains($wc,'rain')?'🌧️':(str_contains($wc,'snow')?'❄️':'🌤️')));
+                            @endphp
+                            {{ $we }}
                         </span>
-                        <span>{{ $weather['temperature'] }}°C</span>
+                        <span><span x-text="temp">{{ $weather['temperature'] }}</span>°C</span>
                     </div>
                 @endif
                 <a href="{{ route('quotations.create') }}"
@@ -196,18 +195,33 @@
                 </div>
             </div>
 
-            {{-- B. ACTIVITY CALENDAR ─────────────────────────────────────── --}}
+            {{-- B. COMPANY BREAKDOWN ───────────────────────────────────────── --}}
+            @if(isset($quotationsByCompany) && $quotationsByCompany->sum() > 0)
+            <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+                <div class="px-5 py-4 border-b border-gray-100 dark:border-gray-700">
+                    <h2 class="text-xs font-semibold text-gray-800 dark:text-white">Company Breakdown</h2>
+                    <p class="text-[10px] text-gray-400 mt-0.5">Quotations by insurer</p>
+                </div>
+                <div class="p-4 flex justify-center">
+                    <canvas id="userCompanyChart" style="max-width:260px;max-height:260px"></canvas>
+                </div>
+            </div>
+            @endif
+
+            {{-- C. ACTIVITY CALENDAR ─────────────────────────────────────── --}}
             <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
                 <div class="px-5 py-4 border-b border-gray-100 dark:border-gray-700">
                     <h2 class="text-xs font-semibold text-gray-800 dark:text-white">Activity Calendar</h2>
                     <p class="text-[10px] text-gray-400 mt-0.5">Quotation submission days</p>
                 </div>
-                <div class="p-4" x-data="{
+                <div class="p-3" x-data="{
                     month: new Date().getMonth(),
                     year: new Date().getFullYear(),
-                    selectedDate: null,
-                    selectedItems: [],
-                    quotationDates: {{ json_encode($quotationDates->map(fn($d, $key) => ['date' => $key, 'count' => $d['count']])->values()) }},
+                    showModal: false,
+                    modalDate: '',
+                    modalQuotes: [],
+                    quotationDates: {{ json_encode($quotationDates->map(fn($d) => ['date' => $d['date'], 'count' => $d['count']])->values()) }},
+                    allQuotationData: {{ json_encode($quotationDates) }},
                     daysInMonth() { return new Date(this.year, this.month + 1, 0).getDate(); },
                     firstDay() { return new Date(this.year, this.month, 1).getDay(); },
                     monthName() { return new Date(this.year, this.month).toLocaleString('default', { month: 'long' }); },
@@ -215,42 +229,51 @@
                         const dateStr = this.year + '-' + String(this.month + 1).padStart(2, '0') + '-' + String(day).padStart(2, '0');
                         return this.quotationDates.some(d => d.date === dateStr);
                     },
+                    getDayColors(day) {
+                        const dateStr = this.year + '-' + String(this.month + 1).padStart(2, '0') + '-' + String(day).padStart(2, '0');
+                        const dayData = this.allQuotationData.filter(d => d.date === dateStr);
+                        if (!dayData.length) return [];
+                        const colors = [];
+                        dayData.forEach(dd => {
+                            (dd.items || []).forEach(item => {
+                                if (item.company_color && !colors.includes(item.company_color)) colors.push(item.company_color);
+                            });
+                        });
+                        return colors.slice(0, 3);
+                    },
                     getQuotations(day) {
                         const dateStr = this.year + '-' + String(this.month + 1).padStart(2, '0') + '-' + String(day).padStart(2, '0');
-                        return this.quotationDates.filter(d => d.date === dateStr);
+                        return this.allQuotationData.filter(d => d.date === dateStr);
                     },
                     prevMonth() {
                         if (this.month === 0) { this.month = 11; this.year--; }
                         else { this.month--; }
-                        this.selectedDate = null;
-                        this.selectedItems = [];
                     },
                     nextMonth() {
                         if (this.month === 11) { this.month = 0; this.year++; }
                         else { this.month++; }
-                        this.selectedDate = null;
-                        this.selectedItems = [];
                     },
-                    selectDay(day) {
-                        if (this.hasQuotations(day)) {
-                            this.selectedDate = day;
-                            this.selectedItems = this.getQuotations(day);
-                        }
-                    }
+                    openModal(day) {
+                        if (!this.hasQuotations(day)) return;
+                        this.modalDate = day + ' ' + this.monthName() + ' ' + this.year;
+                        this.modalQuotes = this.getQuotations(day);
+                        this.showModal = true;
+                    },
+                    closeModal() { this.showModal = false; }
                 }">
-                    <div class="flex items-center justify-between mb-3">
-                        <button @click="prevMonth()" class="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition">
-                            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
+                    <div class="flex items-center justify-between mb-2">
+                        <button @click="prevMonth()" class="p-0.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition">
+                            <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
                         </button>
-                        <span class="text-xs font-semibold text-gray-800 dark:text-white" x-text="monthName() + ' ' + year"></span>
-                        <button @click="nextMonth()" class="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition">
-                            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+                        <span class="text-[11px] font-semibold text-gray-800 dark:text-white" x-text="monthName() + ' ' + year"></span>
+                        <button @click="nextMonth()" class="p-0.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition">
+                            <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
                         </button>
                     </div>
 
-                    <div class="grid grid-cols-7 gap-0.5 text-center mb-1">
+                    <div class="grid grid-cols-7 gap-0.5 text-center mb-0.5">
                         <template x-for="d in ['S','M','T','W','T','F','S']" :key="d">
-                            <div class="text-[10px] font-semibold text-gray-400 py-1" x-text="d"></div>
+                            <div class="text-[9px] font-semibold text-gray-400 py-0.5" x-text="d"></div>
                         </template>
                     </div>
 
@@ -260,35 +283,66 @@
                         </template>
                         <template x-for="day in daysInMonth()" :key="day">
                             <div>
-                                <div @click="selectDay(day)"
+                                <div @click="openModal(day)"
                                      :class="{
-                                         'bg-blue-600 text-white shadow-sm': selectedDate === day,
-                                         'hover:bg-gray-100 dark:hover:bg-gray-700/50': selectedDate !== day,
                                          'cursor-pointer': hasQuotations(day),
                                          'cursor-default': !hasQuotations(day)
                                      }"
-                                     class="relative w-full aspect-square flex items-center justify-center text-[11px] font-medium text-gray-700 dark:text-gray-300 rounded-lg transition">
+                                     class="relative flex items-center justify-center text-[10px] font-medium text-gray-700 dark:text-gray-300 rounded transition"
+                                     :style="'width:24px;height:24px;margin:0 auto;' + (hasQuotations(day) ? 'background:' + getDayColors(day)[0] + '20;color:' + getDayColors(day)[0] + ';font-weight:700' : '')">
                                     <span x-text="day"></span>
-                                    <template x-if="hasQuotations(day)">
-                                        <span class="absolute -top-0.5 -right-0.5 w-2 h-2 bg-emerald-500 rounded-full border border-white dark:border-gray-800"></span>
+                                    <template x-if="hasQuotations(day) && getDayColors(day).length > 0">
+                                        <span class="absolute -bottom-0.5 left-1/2 -translate-x-1/2 flex gap-0.5">
+                                            <template x-for="(color, ci) in getDayColors(day)" :key="ci">
+                                                <span :style="'width:3px;height:3px;border-radius:50%;background:' + color"></span>
+                                            </template>
+                                            <template x-if="getDayColors(day).length > 3">
+                                                <span class="text-[6px] leading-none" style="color:#9ca3af">+</span>
+                                            </template>
+                                        </span>
                                     </template>
                                 </div>
                             </div>
                         </template>
                     </div>
 
-                    <template x-if="selectedDate && selectedItems.length > 0">
-                        <div class="mt-3 pt-3 border-t border-gray-100 dark:border-gray-700">
-                            <p class="text-[10px] font-semibold text-gray-500 dark:text-gray-400 mb-2">
-                                Quotations on <span x-text="selectedDate + ' ' + monthName() + ' ' + year"></span>:
-                            </p>
-                            <ul class="space-y-1">
-                                <template x-for="(item, idx) in selectedItems" :key="idx">
-                                    <li class="text-[11px] text-blue-600 dark:text-blue-400 font-medium">
-                                        <span x-text="item.date + ' (' + item.count + ' quotation' + (item.count > 1 ? 's' : '') + ')'"></span>
-                                    </li>
-                                </template>
-                            </ul>
+                    {{-- Modal --}}
+                    <template x-teleport="body">
+                        <div x-show="showModal" class="fixed inset-0 z-50 flex items-center justify-center" style="background:rgba(0,0,0,0.5);backdrop-filter:blur(2px)">
+                            <div @click.away="closeModal()" class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-lg w-full mx-4 max-h-[80vh] overflow-y-auto">
+                                <div class="px-5 py-4 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between">
+                                    <div>
+                                        <p class="text-[10px] font-semibold uppercase tracking-widest text-gray-400">Quotations</p>
+                                        <h3 class="text-sm font-bold text-gray-800 dark:text-white mt-0.5" x-text="modalDate"></h3>
+                                    </div>
+                                    <button @click="closeModal()" class="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition">
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                                    </button>
+                                </div>
+                                <div class="px-5 py-3 space-y-2">
+                                    <template x-for="(dayData, idx) in modalQuotes" :key="idx">
+                                        <template x-for="(item, iidx) in dayData.items" :key="iidx">
+                                            <a x-bind:href="'{{ url('quotations') }}/' + item.id" class="flex items-center gap-3 p-3 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700/30 transition no-underline">
+                                                <div :style="'width:4px;height:36px;border-radius:2px;background:' + (item.company_color || '#1756c8')" class="shrink-0"></div>
+                                                <div class="flex-1 min-w-0">
+                                                    <div class="flex items-center gap-2">
+                                                        <span class="text-xs font-bold text-gray-800 dark:text-white" x-text="item.quotation_number"></span>
+                                                        <span class="text-[9px] font-semibold px-1.5 py-0.5 rounded" :style="'background:' + (item.company_color || '#1756c8') + '20;color:' + (item.company_color || '#1756c8')" x-text="item.company"></span>
+                                                    </div>
+                                                    <p class="text-[11px] text-gray-500 mt-0.5">
+                                                        <span x-text="item.user_name"></span>
+                                                        <span class="mx-1">&middot;</span>
+                                                        <span x-text="item.car"></span>
+                                                    </p>
+                                                </div>
+                                                <div class="text-right shrink-0">
+                                                    <div class="text-xs font-bold text-gray-800 dark:text-white" x-text="'KES ' + Number(item.premium).toLocaleString()"></div>
+                                                </div>
+                                            </a>
+                                        </template>
+                                    </template>
+                                </div>
+                            </div>
                         </div>
                     </template>
                 </div>
@@ -500,7 +554,7 @@
     $_companyColors = ['#003087', '#0066B3', '#00205B', '#D0021B'];
     $_idx = 0;
     $_companyData = $companies->map(function($c) use ($_companyColors, &$_idx) {
-        $rate = $c->rates->firstWhere('value_type', 'percentage');
+        $rate = $c->rates->firstWhere('item_name', 'Premium Rate');
         return [
             'slug' => $c->slug,
             'name' => $c->name,
@@ -602,7 +656,63 @@ window.MIC_COMPANIES = @json($_companyData);
     sessionStorage.setItem('mic_unread_count', currentCount);
 })();
 
+function userWeather() {
+    return {
+        emoji: '{{ $we ?? "🌤️" }}',
+        temp: '{{ $weather["temperature"] ?? 25 }}',
+        pollTimer: null,
+        init() {
+            this.pollTimer = setInterval(() => {
+                fetch('{{ route("dashboard.weather") }}')
+                    .then(r => r.json())
+                    .then(w => {
+                        this.temp = w.temperature;
+                        var cond = (w.condition || '').toLowerCase();
+                        if (cond.includes('clear')) this.emoji = '☀️';
+                        else if (cond.includes('cloud')) this.emoji = '☁️';
+                        else if (cond.includes('rain')) this.emoji = '🌧️';
+                        else if (cond.includes('snow')) this.emoji = '❄️';
+                        else this.emoji = '🌤️';
+                    })
+                    .catch(() => {});
+            }, 300000);
+        },
+        destroy() { if (this.pollTimer) clearInterval(this.pollTimer); }
+    };
+}
 document.addEventListener('DOMContentLoaded', function () {
+    @if(isset($quotationsByCompany) && $quotationsByCompany->sum() > 0)
+    var ucc = document.getElementById('userCompanyChart');
+    if (ucc) {
+        new Chart(ucc, {
+            type: 'doughnut',
+            data: {
+                labels: {!! json_encode($quotationsByCompany->keys()) !!},
+                datasets: [{
+                    data: {!! json_encode($quotationsByCompany->values()) !!},
+                    backgroundColor: ['#1756c8','#7c3aed','#0f7a65','#d4860e','#c0392b','#0f7a65'],
+                    borderWidth: 2,
+                    borderColor: '#fff',
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                cutout: '60%',
+                plugins: {
+                    legend: { position: 'bottom', labels: { boxWidth: 10, padding: 8, font: { size: 10 }, color: '#9ca3af' } }
+                },
+                onClick: function(e, item) {
+                    if (item.length > 0) {
+                        var label = this.data.labels[item[0].index];
+                        window.location.href = '{{ route("quotations.index") }}?company=' + encodeURIComponent(label);
+                    }
+                }
+            }
+        });
+    }
+    @endif
+
     @if(isset($monthlyQuotations) && count($monthlyQuotations) > 0)
     var ctx = document.getElementById('activityChart');
     if (ctx) {
@@ -639,6 +749,9 @@ document.addEventListener('DOMContentLoaded', function () {
                         grid: { display: false },
                         ticks: { color: '#9ca3af', font: { size: 10 } }
                     }
+                },
+                onClick: function() {
+                    window.location.href = '{{ route("quotations.index") }}';
                 }
             }
         });

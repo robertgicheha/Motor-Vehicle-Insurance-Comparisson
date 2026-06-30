@@ -61,9 +61,12 @@ class QuotationController extends Controller
         $request->validate(['status' => 'required|string']);
 
         $oldStatus = $quotation->status;
+        if ($oldStatus === $request->status) {
+            return back()->with('info', "Quotation status is already {$request->status}.");
+        }
+
         $quotation->update(['status' => $request->status]);
 
-        AuditService::log('update', 'Quotation', $quotation->id, ['status' => $oldStatus], ['status' => $request->status]);
         AuditService::activity('quotation_status_changed', "Quotation {$quotation->quotation_number} changed from {$oldStatus} to {$request->status}");
 
         $admins = User::role(['super-admin', 'admin'])->get();
@@ -97,41 +100,40 @@ class QuotationController extends Controller
                 ->when(! $isAdmin, fn($q) => $q->where('user_id', $user->id));
         
             $analytics = [
-                'total'      => (clone $analyticsBase)->count(),
-                'today'      => (clone $analyticsBase)->whereDate('created_at', today())->count(),
-                'this_week'  => (clone $analyticsBase)->whereBetween('created_at', [
-                                    now()->startOfWeek(), now()->endOfWeek()
-                                ])->count(),
-                'this_month' => (clone $analyticsBase)->whereMonth('created_at', now()->month)
+            'total'      => Quotation::count(),
+            'today'      => Quotation::whereDate('created_at', today())->count(),
+            'this_week'  => Quotation::whereBetween('created_at', [now()->startOfWeek(), now()->endOfWeek()])->count(),
+            'this_month' => Quotation::whereMonth('created_at', now()->month)
                                     ->whereYear('created_at', now()->year)->count(),
-        
-                // Quotations grouped by company (for bar + doughnut charts)
-                'by_company' => (clone $analyticsBase)
-                    ->join('companies', 'quotations.company_id', '=', 'companies.id')
-                    ->selectRaw('companies.name as company, COUNT(*) as count, SUM(total_premium) as total_premium')
-                    ->groupBy('companies.name')
-                    ->orderByDesc('count')
-                    ->get()
-                    ->toArray(),
-        
-                // Daily counts for last 14 days (trend line)
-                'trend' => (clone $analyticsBase)
-                    ->selectRaw("DATE(created_at) as date, COUNT(*) as count")
-                    ->where('created_at', '>=', now()->subDays(13)->startOfDay())
-                    ->groupByRaw("DATE(created_at)")
-                    ->orderBy('date')
-                    ->get()
-                    ->map(fn($r) => [
-                        'date'  => \Carbon\Carbon::parse($r->date)->format('d M'),
-                        'count' => $r->count,
-                    ])
-                    ->toArray(),
-            ];
-        
+
+            // Daily trend — last 14 days
+            'trend' => Quotation::select(
+                            DB::raw("DATE_FORMAT(created_at, '%d %b') as date"),
+                            DB::raw('COUNT(*) as count')
+                        )
+                        ->where('created_at', '>=', now()->subDays(13)->startOfDay())
+                        ->groupBy('date', DB::raw("DATE(created_at)"))
+                        ->orderBy(DB::raw("DATE(created_at)"))
+                        ->get(),
+
+            // Per-company quotation count + total premium — for both charts
+            'by_company' => Company::withCount('quotations')
+                        ->withSum('quotations', 'total_premium')
+                        ->having('quotations_count', '>', 0)
+                        ->get()
+                        ->map(fn($c) => [
+                            'company'       => $c->name,
+                            'count'         => $c->quotations_count,
+                            'total_premium' => (int) $c->quotations_sum_total_premium,
+                        ]),
+        ];
+                
             // ── Users list for admin "Apply for User" modal ──────────
             $users = $isAdmin ? \App\Models\User::orderBy('name')->get(['id', 'name', 'email']) : collect();
         
-            return view('quotations.index', compact('quotations', 'analytics', 'users'));
+            $companies = Company::active()->with('rates')->get();
+            session(['quotations_last_viewed_at' => now()]);
+            return view('quotations.index', compact('quotations', 'analytics', 'users', 'companies'));
         }
 
     public function create()
@@ -190,7 +192,7 @@ class QuotationController extends Controller
             $results[] = $this->premiumCalculator->calculate(
                 $company,
                 $request->car_valuation,
-                $request->boolean('include_pvt', true),
+                $request->boolean('include_pvt', false),
                 $request->boolean('has_anti_theft', true),
                 $request->boolean('is_young_driver', false)
             );
@@ -311,13 +313,30 @@ class QuotationController extends Controller
 
     public function destroy(Quotation $quotation)
     {
-        $this->authorizeView($quotation);
+        $user = auth()->user();
+        if (!$user->hasRole('super-admin') && !$user->hasRole('admin')) {
+            abort(403);
+        }
         $quotation->delete();
 
         AuditService::log('delete', 'Quotation', $quotation->id, $quotation->toArray(), null);
         AuditService::activity('quotation_deleted', "Quotation {$quotation->quotation_number} deleted");
 
-        return redirect()->route('quotations.index')->with('success', 'Quotation deleted.');
+        return redirect()->route('quotations.index')->with('success', 'Quotation hidden successfully.');
+    }
+
+    public function restore($id)
+    {
+        $user = auth()->user();
+        if (!$user->hasRole('super-admin') && !$user->hasRole('admin')) {
+            abort(403);
+        }
+        $quotation = Quotation::withTrashed()->findOrFail($id);
+        $quotation->restore();
+
+        AuditService::activity('quotation_restored', "Quotation {$quotation->quotation_number} restored");
+
+        return redirect()->route('quotations.index')->with('success', 'Quotation restored successfully.');
     }
 
     protected function authorizeView(Quotation $quotation)
@@ -331,16 +350,23 @@ class QuotationController extends Controller
     public function preview(Request $request)
     {
         $companies = Company::active()->with('rates')->get()->map(function ($c) {
-            $rate = $c->rates->firstWhere('value_type', 'percentage');
+            $rate = $c->rates->firstWhere('item_name', 'Premium Rate');
+            $iraLevy = $c->rates->firstWhere('item_name', 'IRA Levy');
             return [
                 'id' => $c->id,
                 'slug' => $c->slug,
                 'name' => $c->name,
                 'rate' => $rate ? (float) $rate->percentage / 100 : 0,
-                'taxRate' => 0.005,
+                'taxRate' => $iraLevy ? (float) $iraLevy->percentage / 100 : 0.005,
             ];
         })->values();
 
-        return view('quotations.preview', compact('companies'));
+        $targetUser = null;
+        $isAdmin = auth()->user()->hasRole('super-admin') || auth()->user()->hasRole('admin');
+        if ($isAdmin && $request->filled('on_behalf_of')) {
+            $targetUser = User::find($request->on_behalf_of);
+        }
+
+        return view('quotations.preview', compact('companies', 'targetUser'));
     }
 }

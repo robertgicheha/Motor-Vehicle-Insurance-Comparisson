@@ -74,7 +74,7 @@ Compare All Insurers
       </div>
       <div class="section-sub" style="text-align:center;">
         @if($mode === 'single' && $selectedCompany)
-          Rate: <strong>{{ $selectedCompany->rates->firstWhere('value_type', 'percentage')?->percentage ?? '—' }}%</strong> of vehicle value
+          Rate: <strong>{{ $selectedCompany->rates->firstWhere('item_name', 'Premium Rate')?->percentage ?? '—' }}%</strong> of vehicle value
         @else
           Complete the form below in three easy steps to receive your personalised quotation.
         @endif
@@ -328,6 +328,19 @@ window.MIC_SELECTED_COMPANY = @json($selectedCompany?->slug);
 
 function guestGuard(callback) {
   if (window.MIC_GUEST) {
+    if (typeof callback === 'function') {
+      var match = callback.toString().match(/openQuotePage\('([^']+)'\)/);
+      if (match) {
+        sessionStorage.setItem('pending_quote_company', match[1]);
+        try {
+          var d = getFormData();
+          sessionStorage.setItem('micQuoteData', JSON.stringify({...d, mode: match[1]}));
+        } catch(e) {}
+      }
+    }
+    sessionStorage.setItem('auth_redirect', '/quotations?pending_quote=1');
+    var alpineEl = document.querySelector('#authModal');
+    if (alpineEl && alpineEl.__x) { alpineEl.__x.$data.redirectTo = '/quotations?pending_quote=1'; }
     openAuthModal();
     return;
   }

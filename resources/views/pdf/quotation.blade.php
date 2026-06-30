@@ -61,11 +61,22 @@
         <tr><td style="font-weight:bold">Cover Type</td><td>Comprehensive</td></tr>
     </table>
 
+    @php
+        $_breakdown = $quotation->breakdown ?? [];
+        $_basePremium = $_breakdown['base_premium'] ?? null;
+        $_iraLevy = $_breakdown['ira_levy'] ?? null;
+        $_premiumRate = $_breakdown['premium_rate'] ?? 6.5;
+        $_iraLevyRate = $_breakdown['ira_levy_rate'] ?? 0.5;
+    @endphp
     <table>
         <thead><tr><th>Description</th><th style="text-align:right">Amount (KES)</th></tr></thead>
         <tbody>
             <tr><td>Estimated Vehicle Value</td><td style="text-align:right;font-weight:bold">{{ number_format($quotation->car_valuation, 2) }}</td></tr>
-            <tr><td>Basic Annual Premium</td><td style="text-align:right">{{ number_format($quotation->premium, 2) }}</td></tr>
+            <tr><td>Basic Annual Premium ({{ $_premiumRate }}%)</td><td style="text-align:right">{{ number_format($quotation->premium, 2) }}</td></tr>
+            @if($_basePremium !== null && $_iraLevy !== null)
+            <tr style="font-size:10px;color:#64748b"><td>&nbsp;&nbsp;&nbsp;Base Premium ({{ number_format($_premiumRate - $_iraLevyRate, 1) }}%)</td><td style="text-align:right">{{ number_format($_basePremium, 2) }}</td></tr>
+            <tr style="font-size:10px;color:#64748b"><td>&nbsp;&nbsp;&nbsp;IRA Levy ({{ $_iraLevyRate }}%)</td><td style="text-align:right">{{ number_format($_iraLevy, 2) }}</td></tr>
+            @endif
             <tr><td>PVT Premium</td><td style="text-align:right">{{ number_format($quotation->pvt_premium, 2) }}</td></tr>
             @if($quotation->excess_own_damage)
                 <tr><td>Excess - Own Damage</td><td style="text-align:right">{{ number_format($quotation->excess_own_damage, 2) }}</td></tr>
@@ -75,7 +86,7 @@
             @endif
             @if($quotation->breakdown)
                 @foreach($quotation->breakdown as $key => $value)
-                    @if(!in_array($key, ['premium', 'pvt_premium', 'total_premium', 'excess_own_damage', 'excess_theft']))
+                    @if(!in_array($key, ['premium', 'pvt_premium', 'total_premium', 'excess_own_damage', 'excess_theft', 'base_premium', 'ira_levy', 'premium_rate', 'ira_levy_rate', 'basic_premium']))
                         <tr><td>{{ ucwords(str_replace('_', ' ', $key)) }}</td><td style="text-align:right">{{ is_numeric($value) ? number_format($value, 2) : $value }}</td></tr>
                     @endif
                 @endforeach

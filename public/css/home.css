@@ -2,8 +2,7 @@
   :root{
     --blue:#0066B3;--blue-dark:#004D8A;--blue-light:#E8F3FB;
     --red:#CC0000;--red-dark:#A30000;
-    --ga-blue:#003087;--britam-blue:#0066B3;--sanlam-blue:#00205B;
-    --sanlam-red:#E2001A;
+
     --text:#1A1A2E;--text-muted:#6B7280;--border:#E5E7EB;--bg:#F8FAFC;
     --white:#FFFFFF;--radius:8px;--radius-lg:12px;--radius-xl:16px;
   }
@@ -294,7 +293,7 @@
 
   /* ── QUOTE FORM ── */
   .form-container{max-width:860px;margin:0 auto;}
-  .form-steps{display:flex;gap:0;margin-bottom:36px;border:1.5px solid var(--border);border-radius:var(--radius-xl);overflow:hidden}
+  .form-steps{display:flex;gap:0;margin-bottom:36px;border:0.3px solid var(--border);border-radius:var(--radius-xl);overflow:hidden}
   .form-step{flex:1;padding:16px 20px;text-align:center;background:var(--white);cursor:pointer;position:relative;transition:all .2s}
   .form-step.active{background:var(--blue);color:var(--white)}
   .form-step.done{background:var(--blue-light);color:var(--blue)}
@@ -309,7 +308,7 @@
   .form-group.full{grid-column:1/-1}
   label{font-size:13px;font-weight:600;color:var(--text)}
   label .req{color:var(--red)}
-  input,select,textarea{width:100%;padding:11px 14px;border:1px solid #D1D5DB;border-radius:6px;font-family:'Inter',sans-serif;font-size:14.5px;color:var(--text);background:var(--white);transition:border-color .2s;outline:none}
+  input,select,textarea{width:100%;padding:11px 14px;border:none;border-radius:6px;font-family:'Inter',sans-serif;font-size:14.5px;color:var(--text);background:var(--white);transition:border-color .2s;outline:none}
   input:focus,select:focus,textarea:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(0,102,179,.08)}
   input::placeholder{color:#9CA3AF}
 
@@ -344,9 +343,6 @@
   .company-card:hover{border-color:var(--blue);box-shadow:0 8px 24px rgba(0,102,179,.12);transform:translateY(-3px)}
   .company-logo-box{height:70px;display:flex;align-items:center;justify-content:center;margin-bottom:16px}
   .company-logo-box img{max-height:56px;max-width:140px;object-fit:contain}
-  .logo-text-ga{font-size:1.8rem;font-weight:800;color:var(--ga-blue);letter-spacing:-1px}
-  .logo-text-sanlam{font-size:1.1rem;font-weight:800;color:var(--sanlam-blue)}
-  .logo-text-sanlam span{color:var(--sanlam-red)}
   .company-name{font-size:15px;font-weight:700;color:var(--text);margin-bottom:4px}
   .company-rate{font-size:13px;color:var(--text-muted);margin-bottom:18px}
   .company-rate strong{color:var(--blue)}

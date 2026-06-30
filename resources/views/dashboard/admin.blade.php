@@ -2,6 +2,8 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
   
     <div class="db-root fade-in">
+      <div class="db-layout">
+      <div class="db-main-content">
       <h2 class="sr-only">MIC Global Risks Motor Insurance Admin Dashboard</h2>
 
       <div class="db-top-bar">
@@ -29,33 +31,27 @@
                 default                                                          => '🌤️',
             };
         @endphp
-        <div class="db-weather">
-          <span style="font-size:36px;line-height:1;display:flex;align-items:center;">{{ $weatherEmoji }}</span>
+        <div class="db-weather" x-data="weatherWidget()" x-init="init()">
+          <span style="font-size:36px;line-height:1;display:flex;align-items:center;" x-html="emoji">@isset($weatherEmoji){{ $weatherEmoji }}@endisset</span>
           <div>
             <p class="temp">
-              {{ $weather['temperature'] }}°C
-              <span style="font-size:11px;font-weight:500;color:#7a8baa">Feels {{ $weather['feels_like'] }}°C</span>
+              <span x-text="temp">@isset($weather['temperature']){{ $weather['temperature'] }}@endisset</span>°C
+              <span style="font-size:11px;font-weight:500;color:#7a8baa">Feels <span x-text="feels">@isset($weather['feels_like']){{ $weather['feels_like'] }}@endisset</span>°C</span>
             </p>
             <p class="cond">
-              {{ $weather['description'] }} &middot; {{ $weather['city'] }}
-              &middot; {{ $weather['humidity'] }}% RH
-              @if(!empty($weather['wind_speed'])) &middot; {{ $weather['wind_speed'] }} m/s wind @endif
+              <span x-text="description">@isset($weather['description']){{ $weather['description'] }}@endisset</span> &middot; <span x-text="city">@isset($weather['city']){{ $weather['city'] }}@endisset</span>
+              &middot; <span x-text="humidity">@isset($weather['humidity']){{ $weather['humidity'] }}@endisset</span>% RH
+              <span x-show="wind" x-text="' · ' + wind + ' m/s wind'"></span>
             </p>
-            @if(!empty($weather['local_time']) || !empty($weather['uvi']))
             <p style="font-size:10px;color:#7a8baa;margin:2px 0 0;font-weight:500;">
-              @if(!empty($weather['local_time'])) {{ $weather['local_time'] }} @endif
-              @if(!empty($weather['sunrise'])) &middot; ☀️ {{ $weather['sunrise'] }} @endif
-              @if(!empty($weather['sunset'])) &nbsp;🌙 {{ $weather['sunset'] }} @endif
-              @if(!empty($weather['uvi'])) &middot; UV {{ $weather['uvi'] }} @endif
+              <span x-text="localTime">@isset($weather['local_time']){{ $weather['local_time'] }}@endisset</span>
+              <span x-show="sunrise" x-text="' · ☀️ ' + sunrise"></span>
+              <span x-show="sunset" x-text="'  🌙 ' + sunset"></span>
+              <span x-show="uvi" x-text="' · UV ' + uvi"></span>
             </p>
-            @endif
-            @if(!empty($weather['alerts']))
-              @foreach($weather['alerts'] as $alert)
-              <p style="font-size:10px;font-weight:700;color:#c0392b;margin:3px 0 0;">
-                ⚠️ {{ $alert['event'] }} · {{ $alert['start'] }} – {{ $alert['end'] }}
-              </p>
-              @endforeach
-            @endif
+            <template x-for="alert in alerts" :key="alert.event">
+              <p style="font-size:10px;font-weight:700;color:#c0392b;margin:3px 0 0;" x-text="'⚠️ ' + alert.event + ' · ' + alert.start + ' – ' + alert.end"></p>
+            </template>
           </div>
         </div>
         @endif
@@ -63,18 +59,6 @@
 
       <div class="db-section-label">Key Metrics</div>
       <div class="db-kpi-grid">
-        <div class="db-kpi" style="--accent:#1756c8;--icon-bg:#e8f0fc">
-          <div class="db-kpi-icon"><i class="ti ti-users" aria-hidden="true"></i></div>
-          <div class="db-kpi-label">Total Users</div>
-          <div class="db-kpi-value">{{ $totalUsers }}</div>
-          <div class="db-kpi-trend trend-up"><i class="ti ti-trending-up" style="font-size:12px"></i> +8% this month</div>
-        </div>
-        <div class="db-kpi" style="--accent:#0f7a65;--icon-bg:#e1f5ee">
-          <div class="db-kpi-icon"><i class="ti ti-wifi" aria-hidden="true"></i></div>
-          <div class="db-kpi-label">Online Now</div>
-          <div class="db-kpi-value">{{ $onlineUsers }}</div>
-          <div class="db-kpi-sub">Active sessions</div>
-        </div>
         <div class="db-kpi" style="--accent:#7c3aed;--icon-bg:#ede9fe">
           <div class="db-kpi-icon"><i class="ti ti-file-description" aria-hidden="true"></i></div>
           <div class="db-kpi-label">Total Quotations</div>
@@ -116,6 +100,8 @@
         </div>
       </div>
 
+      
+
       <div class="db-section-label">Period Breakdown</div>
       <div class="db-period-grid">
         <div class="db-period-card">
@@ -137,20 +123,10 @@
 
       <div class="db-section-label">Quick Actions</div>
       <div class="db-kpi-grid" style="margin-top:0">
-        <a href="{{ route('admin.users.create') }}" class="db-kpi" style="--accent:#1756c8;--icon-bg:#e8f0fc;cursor:pointer;text-decoration:none;display:flex;flex-direction:column;">
-          <div class="db-kpi-icon"><i class="ti ti-user-plus" aria-hidden="true"></i></div>
-          <div class="db-kpi-label" style="margin-bottom:0">Add User</div>
-          <div class="db-kpi-sub">Create a new user account</div>
-        </a>
         <a href="{{ route('admin.reports.index') }}" class="db-kpi" style="--accent:#0f7a65;--icon-bg:#e1f5ee;cursor:pointer;text-decoration:none;display:flex;flex-direction:column;">
           <div class="db-kpi-icon"><i class="ti ti-report" aria-hidden="true"></i></div>
           <div class="db-kpi-label" style="margin-bottom:0">Generate Reports</div>
           <div class="db-kpi-sub">Export quotation data</div>
-        </a>
-        <a href="{{ route('admin.companies.create') }}" class="db-kpi" style="--accent:#d4860e;--icon-bg:#fef3c7;cursor:pointer;text-decoration:none;display:flex;flex-direction:column;">
-          <div class="db-kpi-icon"><i class="ti ti-building-plus" aria-hidden="true"></i></div>
-          <div class="db-kpi-label" style="margin-bottom:0">Add Company</div>
-          <div class="db-kpi-sub">Register a new insurer</div>
         </a>
         <a href="{{ route('quotations.index') }}" class="db-kpi" style="--accent:#7c3aed;--icon-bg:#ede9fe;cursor:pointer;text-decoration:none;display:flex;flex-direction:column;">
           <div class="db-kpi-icon"><i class="ti ti-file-description" aria-hidden="true"></i></div>
@@ -161,13 +137,13 @@
 
       <div class="db-section-label">Analytics</div>
       <div class="db-chart-grid">
-        <div class="db-card">
+        <div class="db-card" style="max-width:360px">
           <div class="db-card-header"><span><span class="dot"></span>Quotations by Company</span></div>
-          <canvas id="companyChart" height="180"></canvas>
+          <canvas id="companyChart" height="200"></canvas>
         </div>
-        <div class="db-card">
+        <div class="db-card" style="max-width:480px">
           <div class="db-card-header"><span><span class="dot"></span>Monthly Trend</span></div>
-          <canvas id="monthlyChart" height="180"></canvas>
+          <canvas id="monthlyChart" height="200"></canvas>
         </div>
       </div>
 
@@ -236,6 +212,9 @@
             year: new Date().getFullYear(),
             selectedDate: null,
             selectedItems: [],
+            showModal: false,
+            modalDate: '',
+            modalQuotes: [],
             quotationDates: {{ json_encode($quotationDates->map(fn($d) => ['date' => $d['date'], 'count' => $d['count']])->values()) }},
             allQuotationData: {{ json_encode($quotationDates) }},
             daysInMonth() { return new Date(this.year, this.month + 1, 0).getDate(); },
@@ -244,6 +223,18 @@
             hasQuotations(day) {
               const dateStr = this.year + '-' + String(this.month + 1).padStart(2, '0') + '-' + String(day).padStart(2, '0');
               return this.quotationDates.some(d => d.date === dateStr);
+            },
+            getDayColors(day) {
+              const dateStr = this.year + '-' + String(this.month + 1).padStart(2, '0') + '-' + String(day).padStart(2, '0');
+              const dayData = this.allQuotationData.filter(d => d.date === dateStr);
+              if (!dayData.length) return [];
+              const colors = [];
+              dayData.forEach(dd => {
+                (dd.items || []).forEach(item => {
+                  if (item.company_color && !colors.includes(item.company_color)) colors.push(item.company_color);
+                });
+              });
+              return colors.slice(0, 3);
             },
             getQuotations(day) {
               const dateStr = this.year + '-' + String(this.month + 1).padStart(2, '0') + '-' + String(day).padStart(2, '0');
@@ -259,25 +250,26 @@
               else { this.month++; }
               this.selectedDate = null; this.selectedItems = [];
             },
-            selectDay(day) {
-              if (this.hasQuotations(day)) {
-                this.selectedDate = day;
-                this.selectedItems = this.getQuotations(day);
-              }
-            }
+            openModal(day) {
+              if (!this.hasQuotations(day)) return;
+              this.modalDate = day + ' ' + this.monthName() + ' ' + this.year;
+              this.modalQuotes = this.getQuotations(day);
+              this.showModal = true;
+            },
+            closeModal() { this.showModal = false; }
           }">
-            <div class="flex items-center justify-between mb-3">
-              <button @click="prevMonth()" class="p-1 text-gray-400 hover:text-gray-600 transition" style="background:none;border:none;cursor:pointer">
-                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
+            <div class="flex items-center justify-between mb-2">
+              <button @click="prevMonth()" class="p-0.5 text-gray-400 hover:text-gray-600 transition" style="background:none;border:none;cursor:pointer">
+                <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
               </button>
-              <span class="text-xs font-semibold text-gray-800" x-text="monthName() + ' ' + year"></span>
-              <button @click="nextMonth()" class="p-1 text-gray-400 hover:text-gray-600 transition" style="background:none;border:none;cursor:pointer">
-                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+              <span class="text-[11px] font-semibold text-gray-800" x-text="monthName() + ' ' + year"></span>
+              <button @click="nextMonth()" class="p-0.5 text-gray-400 hover:text-gray-600 transition" style="background:none;border:none;cursor:pointer">
+                <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
               </button>
             </div>
-            <div class="grid grid-cols-7 gap-0.5 text-center mb-1">
+            <div class="grid grid-cols-7 gap-0.5 text-center mb-0.5">
               <template x-for="d in ['S','M','T','W','T','F','S']" :key="d">
-                <div class="text-[10px] font-semibold text-gray-400 py-1" x-text="d"></div>
+                <div class="text-[9px] font-semibold text-gray-400 py-0.5" x-text="d"></div>
               </template>
             </div>
             <div class="grid grid-cols-7 gap-0.5 text-center">
@@ -286,47 +278,66 @@
               </template>
               <template x-for="day in daysInMonth()" :key="day">
                 <div>
-                  <div @click="selectDay(day)"
+                  <div @click="openModal(day)"
                     :class="{
-                      'bg-blue-600 text-white shadow-sm': selectedDate === day,
-                      'hover:bg-gray-100': selectedDate !== day,
                       'cursor-pointer': hasQuotations(day),
                       'cursor-default': !hasQuotations(day)
                     }"
-                    class="relative w-full aspect-square flex items-center justify-center text-[11px] font-medium text-gray-700 rounded-lg transition">
+                    class="relative flex items-center justify-center text-[10px] font-medium text-gray-700 rounded transition"
+                    :style="'width:24px;height:24px;margin:0 auto;' + (hasQuotations(day) ? 'background:' + getDayColors(day)[0] + '20;color:' + getDayColors(day)[0] + ';font-weight:700' : '')">
                     <span x-text="day"></span>
-                    <template x-if="hasQuotations(day)">
-                      <span class="absolute -top-0.5 -right-0.5 w-2 h-2 bg-emerald-500 rounded-full border border-white"></span>
+                    <template x-if="hasQuotations(day) && getDayColors(day).length > 0">
+                      <span class="absolute -bottom-0.5 left-1/2 -translate-x-1/2 flex gap-0.5">
+                        <template x-for="(color, ci) in getDayColors(day)" :key="ci">
+                          <span :style="'width:3px;height:3px;border-radius:50%;background:' + color"></span>
+                        </template>
+                        <template x-if="getDayColors(day).length > 3">
+                          <span class="text-[6px] leading-none" style="color:#9ca3af">+</span>
+                        </template>
+                      </span>
                     </template>
                   </div>
                 </div>
               </template>
             </div>
-            <template x-if="selectedDate && selectedItems.length > 0">
-              <div class="mt-3 pt-3 border-t border-gray-100">
-                <p class="text-[10px] font-semibold text-gray-500 mb-2">
-                  Quotations on <span x-text="selectedDate + ' ' + monthName() + ' ' + year"></span>:
-                </p>
-                <template x-for="(dayData, idx) in selectedItems" :key="idx">
-                  <div class="space-y-1">
-                    <template x-for="(item, iidx) in dayData.items" :key="iidx">
-                      <template x-if="iidx === 0 || dayData.count <= 1">
-                        <a x-bind:href="'{{ url('quotations') }}/' + item.id" class="flex items-center justify-between py-1 px-2 rounded hover:bg-gray-50 text-[11px] text-gray-700 no-underline">
-                          <span>
-                            <span class="font-semibold text-blue-600" x-text="item.quotation_number"></span>
-                            <span class="text-gray-500" x-text="' — ' + item.user_name"></span>
-                          </span>
-                          <span class="text-gray-400 text-[10px]" x-text="item.company"></span>
+
+            {{-- Modal --}}
+            <template x-teleport="body">
+              <div x-show="showModal" class="fixed inset-0 z-50 flex items-center justify-center" style="background:rgba(0,0,0,0.5);backdrop-filter:blur(2px)">
+                <div @click.away="closeModal()" class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-lg w-full mx-4 max-h-[80vh] overflow-y-auto">
+                  <div class="px-5 py-4 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between">
+                    <div>
+                      <p class="text-[10px] font-semibold uppercase tracking-widest text-gray-400">Quotations</p>
+                      <h3 class="text-sm font-bold text-gray-800 dark:text-white mt-0.5" x-text="modalDate"></h3>
+                    </div>
+                    <button @click="closeModal()" class="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition">
+                      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                    </button>
+                  </div>
+                  <div class="px-5 py-3 space-y-2">
+                    <template x-for="(dayData, idx) in modalQuotes" :key="idx">
+                      <template x-for="(item, iidx) in dayData.items" :key="iidx">
+                        <a x-bind:href="'{{ url('quotations') }}/' + item.id" class="flex items-center gap-3 p-3 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700/30 transition no-underline">
+                          <div :style="'width:4px;height:36px;border-radius:2px;background:' + (item.company_color || '#1756c8')" class="shrink-0"></div>
+                          <div class="flex-1 min-w-0">
+                            <div class="flex items-center gap-2">
+                              <span class="text-xs font-bold text-gray-800 dark:text-white" x-text="item.quotation_number"></span>
+                              <span class="text-[9px] font-semibold px-1.5 py-0.5 rounded" :style="'background:' + (item.company_color || '#1756c8') + '20;color:' + (item.company_color || '#1756c8')" x-text="item.company"></span>
+                            </div>
+                            <p class="text-[11px] text-gray-500 mt-0.5">
+                              <span x-text="item.user_name"></span>
+                              <span class="mx-1">&middot;</span>
+                              <span x-text="item.car"></span>
+                            </p>
+                          </div>
+                          <div class="text-right shrink-0">
+                            <div class="text-xs font-bold text-gray-800 dark:text-white" x-text="'KES ' + Number(item.premium).toLocaleString()"></div>
+                          </div>
                         </a>
                       </template>
                     </template>
-                    <template x-if="dayData.count > 1">
-                      <a x-bind:href="'{{ route('quotations.index') }}' + '?date=' + dayData.date" class="block py-1 text-[10px] font-semibold text-blue-600 hover:underline text-center">
-                        <span x-text="'1 + ' + (dayData.count - 1) + ' more'"></span>
-                      </a>
-                    </template>
                   </div>
-                </template>
+                </div>
               </div>
             </template>
           </div>
@@ -437,37 +448,237 @@
           </tbody>
         </table>
       </div>
+
+      <!-- ── ACTION BAR ── -->
+      <div class="db-section-label">Quotation Tools</div>
+      <div class="action-bar">
+        <span class="action-bar-label">Actions</span>
+        <a href="{{ route('quotations.index') }}?export=pdf" class="action-btn action-btn-download">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Download
+        </a>
+        <button onclick="window.print()" class="action-btn action-btn-print">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+          Print
+        </button>
+        <button @click="$el.closest('.db-root').querySelector('.pdf-preview').classList.toggle('open')" class="action-btn action-btn-preview">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+          Preview
+        </button>
+      </div>
+
+      <!-- ── PDF PREVIEW ── -->
+      <div class="pdf-preview">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+          <div style="font-size:11px;font-weight:700;color:#1a2540">PDF Preview</div>
+          <button @click="$el.closest('.pdf-preview').classList.remove('open')" style="background:none;border:none;font-size:16px;color:#7a8baa;cursor:pointer">&times;</button>
+        </div>
+        <iframe srcdoc="<p style='font-family:system-ui;padding:40px;text-align:center;color:#7a8baa'>Select a quotation to preview</p>"></iframe>
+      </div>
+
+      <!-- ── COMPARISON GRID ── -->
+      <div class="db-section-label">Compare Insurance Companies</div>
+      <div class="comparison-grid">
+        @foreach($companies as $company)
+        <div class="compare-card">
+          <div class="compare-card-logo">
+            @if($company->logo)
+              <img src="{{ asset('storage/' . $company->logo) }}" alt="{{ $company->name }}">
+            @else
+              <span style="font-size:20px;font-weight:700;color:#1756c8">{{ substr($company->name, 0, 2) }}</span>
+            @endif
+          </div>
+          <div class="compare-card-name">{{ $company->name }}</div>
+          <div class="compare-card-rate">{{ $company->rate ?? $defaultRate ?? 6.5 }}% rate</div>
+          <div class="compare-card-premium">KES {{ number_format($totalPremium > 0 ? $totalPremium / max($companies->count(), 1) : 0) }}</div>
+          <a href="{{ route('quotations.index') }}?company={{ urlencode($company->name) }}" class="compare-card-btn">View Quotes</a>
+        </div>
+        @endforeach
+      </div>
+
+      <!-- ── COMPARE TABLE ── -->
+      <div class="compare-table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Company</th>
+              <th>Quotations</th>
+              <th>Avg Premium (KES)</th>
+              <th>Rate</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            @foreach($companies as $company)
+            <tr>
+              <td style="font-weight:700;color:#1a2540">{{ $company->name }}</td>
+              <td>{{ $company->quotations_count }}</td>
+              <td>KES {{ number_format($company->quotations_count > 0 ? $totalPremium / max($totalQuotations, 1) : 0) }}</td>
+              <td>{{ $company->rate ?? $defaultRate ?? 6.5 }}%</td>
+              <td><span class="db-badge badge-active">Active</span></td>
+            </tr>
+            @endforeach
+          </tbody>
+          @if($companies->count() > 1)
+          <tfoot>
+            <tr>
+              <td>Total</td>
+              <td>{{ $totalQuotations }}</td>
+              <td>KES {{ number_format($totalPremium) }}</td>
+              <td>&mdash;</td>
+              <td>&mdash;</td>
+            </tr>
+          </tfoot>
+          @endif
+        </table>
+      </div>
+
     </div>
+    <!-- /db-main-content -->
+
+    <div class="db-right-sidebar">
+      <a href="{{ route('quotations.index') }}" class="cta-card-link">
+        <div class="cta-card">
+          <div class="cta-card-icon" style="background:#e8f0fc;color:#1756c8"><i class="ti ti-file-description"></i></div>
+          <div class="cta-card-title">All Quotations</div>
+          <div class="cta-card-desc">Browse, filter, and manage all quotations</div>
+        </div>
+      </a>
+      <a href="{{ route('admin.reports.index') }}" class="cta-card-link">
+        <div class="cta-card">
+          <div class="cta-card-icon" style="background:#e1f5ee;color:#0f7a65"><i class="ti ti-report"></i></div>
+          <div class="cta-card-title">Reports</div>
+          <div class="cta-card-desc">Export and analyze quotation data</div>
+        </div>
+      </a>
+      <a href="{{ route('admin.audit.index') }}" class="cta-card-link">
+        <div class="cta-card">
+          <div class="cta-card-icon" style="background:#fef3c7;color:#d4860e"><i class="ti ti-shield"></i></div>
+          <div class="cta-card-title">Audit Log</div>
+          <div class="cta-card-desc">Monitor system activity and changes</div>
+        </div>
+      </a>
+      <a href="{{ route('settings.index') }}" class="cta-card-link">
+        <div class="cta-card">
+          <div class="cta-card-icon" style="background:#fdeaea;color:#c0392b"><i class="ti ti-settings"></i></div>
+          <div class="cta-card-title">Settings</div>
+          <div class="cta-card-desc">Configure system preferences</div>
+        </div>
+      </a>
+    </div>
+    </div>
+    <!-- /db-layout -->
+
+    <div class="db-section-label">Platform Health</div>
+      <div class="db-kpi-grid" style="margin-top:0">
+        @php
+            $healthChecks = $healthChecks ?? collect();
+            $healthTypes = ['database' => 'Database', 'site' => 'Website', 'server' => 'Server', 'sticker_api' => 'Sticker API'];
+            $healthIcons = ['database' => 'ti-database', 'site' => 'ti-globe', 'server' => 'ti-server', 'sticker_api' => 'ti-api'];
+        @endphp
+        @foreach(['database', 'site', 'server', 'sticker_api'] as $type)
+          @php
+            $check = $healthChecks->firstWhere('type', $type);
+            $isUp = $check && $check->status === 'up';
+            $isDegraded = $check && $check->status === 'degraded';
+            $accentColor = $isUp ? '#0f7a65' : ($isDegraded ? '#d4860e' : '#c0392b');
+            $iconBg = $isUp ? '#e1f5ee' : ($isDegraded ? '#fef3c7' : '#fdeaea');
+            $label = $healthTypes[$type] ?? ucfirst($type);
+          @endphp
+          <a href="{{ route('admin.health.index') }}" class="db-kpi" style="--accent:{{ $accentColor }};--icon-bg:{{ $iconBg }};cursor:pointer;text-decoration:none;display:flex;flex-direction:column;">
+            <div class="db-kpi-icon"><i class="ti {{ $healthIcons[$type] }}" aria-hidden="true"></i></div>
+            <div class="db-kpi-label">{{ $label }}</div>
+            <div class="db-kpi-value" style="font-size:16px">{{ $check ? ucfirst($check->status) : 'Unknown' }}</div>
+            <div class="db-kpi-sub" style="font-size:9px">{{ $check ? $check->message : 'Not checked' }}</div>
+          </a>
+        @endforeach
+      </div>
 
     @push('scripts')
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
     <script>
+    function weatherWidget() {
+        return {
+            emoji: '{{ $weatherEmoji ?? "🌤️" }}',
+            temp: '{{ $weather["temperature"] ?? 25 }}',
+            feels: '{{ $weather["feels_like"] ?? 24 }}',
+            description: '{{ $weather["description"] ?? "Clear sky" }}',
+            city: '{{ $weather["city"] ?? "Nairobi" }}',
+            humidity: '{{ $weather["humidity"] ?? 60 }}',
+            wind: '{{ $weather["wind_speed"] ?? "" }}',
+            localTime: '{{ $weather["local_time"] ?? "" }}',
+            sunrise: '{{ $weather["sunrise"] ?? "" }}',
+            sunset: '{{ $weather["sunset"] ?? "" }}',
+            uvi: '{{ $weather["uvi"] ?? "" }}',
+            alerts: {!! json_encode($weather["alerts"] ?? []) !!},
+            pollTimer: null,
+            init() {
+                this.pollTimer = setInterval(() => {
+                    fetch('{{ route("dashboard.weather") }}')
+                        .then(r => r.json())
+                        .then(w => {
+                            this.temp = w.temperature;
+                            this.feels = w.feels_like;
+                            this.description = w.description;
+                            this.city = w.city;
+                            this.humidity = w.humidity;
+                            this.wind = w.wind_speed || '';
+                            this.localTime = w.local_time || '';
+                            this.sunrise = w.sunrise || '';
+                            this.sunset = w.sunset || '';
+                            this.uvi = w.uvi || '';
+                            this.alerts = w.alerts || [];
+                            var cond = (w.condition || '').toLowerCase();
+                            if (cond.includes('clear')) this.emoji = '☀️';
+                            else if (cond.includes('cloud')) this.emoji = w.icon && w.icon.startsWith('02') ? '⛅' : '☁️';
+                            else if (cond.includes('rain')) this.emoji = '🌧️';
+                            else if (cond.includes('drizzle')) this.emoji = '🌦️';
+                            else if (cond.includes('thunderstorm')) this.emoji = '⛈️';
+                            else if (cond.includes('snow')) this.emoji = '❄️';
+                            else if (cond.includes('fog')||cond.includes('mist')||cond.includes('haze')) this.emoji = '🌫️';
+                            else if (cond.includes('dust')||cond.includes('sand')||cond.includes('tornado')) this.emoji = '🌪️';
+                            else if (cond.includes('squall')) this.emoji = '💨';
+                            else this.emoji = '🌤️';
+                        })
+                        .catch(() => {});
+                }, 300000);
+            },
+            destroy() { if (this.pollTimer) clearInterval(this.pollTimer); }
+        };
+    }
     Chart.defaults.font.family = "'Montserrat', sans-serif";
     Chart.defaults.font.size = 11;
 
-    new Chart(document.getElementById('companyChart'), {
-      type: 'bar',
+    var companyChart = new Chart(document.getElementById('companyChart'), {
+      type: 'doughnut',
       data: {
         labels: {!! json_encode($quotationsByCompany->keys()) !!},
         datasets: [{
           label: 'Quotations',
           data: {!! json_encode($quotationsByCompany->values()) !!},
-          backgroundColor: ['#1756c8','#7c3aed','#0f7a65'],
-          borderRadius: 8,
-          borderSkipped: false,
+          backgroundColor: ['#1756c8','#7c3aed','#0f7a65','#d4860e','#c0392b','#0f7a65'],
+          borderWidth: 2,
+          borderColor: '#fff',
         }]
       },
       options: {
         responsive: true,
-        plugins: { legend: { display: false } },
-        scales: {
-          y: { beginAtZero: true, grid: { color: 'rgba(0,0,0,0.04)' }, ticks: { color: '#7a8baa' } },
-          x: { grid: { display: false }, ticks: { color: '#7a8baa' } }
+        maintainAspectRatio: true,
+        aspectRatio: 1.2,
+        cutout: '55%',
+        plugins: {
+          legend: { position: 'bottom', labels: { boxWidth: 10, padding: 8, font: { size: 10 }, color: '#7a8baa' } }
+        },
+        onClick: function(e, item) {
+          if (item.length > 0) {
+            var label = this.data.labels[item[0].index];
+            window.location.href = '{{ route("quotations.index") }}?company=' + encodeURIComponent(label);
+          }
         }
       }
     });
 
-    new Chart(document.getElementById('monthlyChart'), {
+    var monthlyChart = new Chart(document.getElementById('monthlyChart'), {
       type: 'line',
       data: {
         labels: {!! json_encode($monthlyQuotations->pluck('month')) !!},
@@ -486,10 +697,15 @@
       },
       options: {
         responsive: true,
+        maintainAspectRatio: true,
+        aspectRatio: 1.8,
         plugins: { legend: { display: false } },
         scales: {
           y: { beginAtZero: true, grid: { color: 'rgba(0,0,0,0.04)' }, ticks: { color: '#7a8baa' } },
           x: { grid: { display: false }, ticks: { color: '#7a8baa' } }
+        },
+        onClick: function() {
+          window.location.href = '{{ route("quotations.index") }}';
         }
       }
     });

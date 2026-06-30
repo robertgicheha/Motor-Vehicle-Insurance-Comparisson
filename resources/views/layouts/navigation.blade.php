@@ -8,10 +8,25 @@
             </svg>
         </button>
         <div class="hidden sm:flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
-            <span>{{ $time ?? now()->format('h:i A') }}</span>
+            <span id="liveTime">{{ $time ?? now()->format('h:i A') }}</span>
             <span class="text-gray-300 dark:text-gray-600">|</span>
-            <span>{{ $date ?? now()->format('l, F j, Y') }}</span>
+            <span id="liveDate">{{ $date ?? now()->format('l, F j, Y') }}</span>
         </div>
+        @push('scripts')
+        <script>
+        function updateClock() {
+            var now = new Date();
+            var timeStr = now.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+            var dateStr = now.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+            var elTime = document.getElementById('liveTime');
+            var elDate = document.getElementById('liveDate');
+            if (elTime) elTime.textContent = timeStr;
+            if (elDate) elDate.textContent = dateStr;
+        }
+        updateClock();
+        setInterval(updateClock, 1000);
+        </script>
+        @endpush
     </div>
 
     <div class="flex items-center gap-2 md:gap-4">

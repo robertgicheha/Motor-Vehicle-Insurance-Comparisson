@@ -5,8 +5,8 @@
         <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
             <div>
                 <p class="text-[10px] font-semibold uppercase tracking-widest text-blue-400">Insurance Documents</p>
-                <h1 class="mt-0.5 text-xl font-bold text-white">Certificates / Stickers</h1>
-                <p class="mt-0.5 text-xs text-slate-400">Track all generated insurance certificates across companies</p>
+                <h1 class="mt-0.5 text-xl font-bold text-white">Stickers</h1>
+                <p class="mt-0.5 text-xs text-slate-400">Track all generated insurance stickers across companies</p>
             </div>
             <div class="flex items-center gap-2 shrink-0">
                 <a href="{{ route('admin.reports.index', ['tab' => 'stickers']) }}"

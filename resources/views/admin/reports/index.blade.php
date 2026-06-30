@@ -94,13 +94,13 @@
         <div class="grid grid-cols-1 md:grid-cols-4 gap-3" id="summaryCards"></div>
 
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
-            <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-5">
+            <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-5" style="max-width:380px">
                 <h3 class="text-xs font-semibold text-gray-800 dark:text-white mb-3" id="chart1-title">Quotations by Company</h3>
-                <canvas id="reportCompanyChart" height="200"></canvas>
+                <canvas id="reportCompanyChart" style="max-height:200px;cursor:pointer"></canvas>
             </div>
             <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-5">
                 <h3 class="text-xs font-semibold text-gray-800 dark:text-white mb-3" id="chart2-title">Daily Trend</h3>
-                <canvas id="reportDailyChart" height="200"></canvas>
+                <canvas id="reportDailyChart" height="200" style="max-height:200px"></canvas>
             </div>
         </div>
 
@@ -117,6 +117,21 @@
 @push('scripts')
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
 <script>
+    // Auto-poll reports every 30 seconds for real-time data
+    var reportPollTimer = setInterval(function() {
+        if (!document.getElementById('reportResults').classList.contains('hidden')) {
+            generateReport();
+        }
+    }, 30000);
+    document.addEventListener('visibilitychange', function() {
+        if (document.hidden) { clearInterval(reportPollTimer); }
+        else { reportPollTimer = setInterval(function() {
+            if (!document.getElementById('reportResults').classList.contains('hidden')) {
+                generateReport();
+            }
+        }, 30000); }
+    });
+
     let charts = { company: null, daily: null };
     let currentTab = 'quotations';
 
@@ -238,33 +253,40 @@
     }
 
     function renderChart(canvasId, labels, data, type, label) {
-        if (charts[type === 'bar' ? 'company' : 'daily']) {
-            charts[type === 'bar' ? 'company' : 'daily'].destroy();
-        }
+        var key = (type === 'doughnut' || type === 'bar') ? 'company' : 'daily';
+        if (charts[key]) { charts[key].destroy(); }
         const ctx = document.getElementById(canvasId).getContext('2d');
+        var options = {
+            responsive: true,
+            maintainAspectRatio: type === 'doughnut',
+            plugins: { legend: { display: type === 'doughnut', position: 'bottom', labels: { font: { size: 10 } } } },
+            scales: (type === 'line') ? { y: { beginAtZero: true, grid: { color: 'rgba(0,0,0,0.05)' } }, x: { grid: { display: false } } } : {}
+        };
+        if (type === 'doughnut') {
+            options.onClick = function(e, item) {
+                if (item.length > 0) {
+                    window.location.href = '{{ route("quotations.index") }}?company=' + encodeURIComponent(this.data.labels[item[0].index]);
+                }
+            };
+        }
         const chart = new Chart(ctx, {
-            type: type,
+            type: type === 'bar' ? 'doughnut' : type,
             data: {
                 labels: labels,
                 datasets: [{
                     label: label,
                     data: data,
-                    backgroundColor: type === 'bar' ? ['rgba(59,130,246,0.7)', 'rgba(139,92,246,0.7)'] : 'rgba(59,130,246,0.1)',
-                    borderColor: type === 'bar' ? ['rgb(59,130,246)', 'rgb(139,92,246)'] : 'rgb(59,130,246)',
-                    borderWidth: 2,
-                    borderRadius: type === 'bar' ? 6 : 0,
+                    backgroundColor: type === 'bar' ? ['#1756c8','#7c3aed','#0f7a65','#d4860e','#c0392b'] : 'rgba(59,130,246,0.1)',
+                    borderColor: type === 'bar' ? ['#1756c8','#7c3aed','#0f7a65','#d4860e','#c0392b'] : 'rgb(59,130,246)',
+                    borderWidth: type === 'bar' ? 0 : 2,
+                    borderRadius: 0,
                     fill: type === 'line',
                     tension: type === 'line' ? 0.4 : 0,
                 }]
             },
-            options: {
-                responsive: true,
-                plugins: { legend: { display: false } },
-                scales: { y: { beginAtZero: true, grid: { color: 'rgba(0,0,0,0.05)' } }, x: { grid: { display: false } } }
-            }
+            options: options
         });
-        if (type === 'bar') charts.company = chart;
-        else charts.daily = chart;
+        charts[key] = chart;
     }
 
     function renderQuotationTable(quotations) {

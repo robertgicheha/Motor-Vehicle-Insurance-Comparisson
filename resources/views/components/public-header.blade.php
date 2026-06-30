@@ -1,3 +1,9 @@
+@inject('settingModel', 'App\Models\Setting')
+@php
+    $__logoPath = $settingModel->getValue('logo_path', 'images/MIC-Global-Risks_logo.png');
+    $__logoUrl = $__logoPath ? (str_starts_with($__logoPath, 'images/') ? asset($__logoPath) : asset('storage/' . $__logoPath)) : asset('images/MIC-Global-Risks_logo.png');
+@endphp
+
 <nav class="bg-white border-b border-gray-200 sticky top-0 z-200 shadow-sm">
   <div class="bg-[#004f8c] flex gap-5 justify-end px-10 py-1.5 text-[11px]">
     <a href="#" class="text-white/75 hover:text-white no-underline">About Us</a>
@@ -7,7 +13,7 @@
   </div>
   <div class="flex items-center justify-between px-10 py-3.5">
     <a href="{{ url('/') }}">
-        <img src="{{ asset('images/MIC-Global-Risks_logo.png') }}" alt="MIC Global Risks" class="h-[42px] object-contain">
+        <img src="{{ $__logoUrl }}" alt="MIC Global Risks" class="h-[42px] object-contain">
     </a>
     <div class="flex gap-7 items-center">
       <a href="{{ url('/') }}" class="text-[13.5px] font-semibold text-[#1a1a2e] no-underline hover:text-[#0066B3]">Home</a>

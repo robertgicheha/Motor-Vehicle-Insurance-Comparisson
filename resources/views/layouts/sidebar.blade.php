@@ -63,7 +63,11 @@
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
                     </span>
                     <span x-show="sidebarOpen" x-cloak style="flex:1;text-align:left;line-height:1.2">Quotations</span>
-                    <span x-show="sidebarOpen" x-cloak style="font-size:10px;background:rgba(255,255,255,0.12);color:rgba(255,255,255,0.7);padding:2px 7px;border-radius:20px;">{{ \App\Models\Quotation::count() }}</span>
+                    @php
+                        $lastViewed = session('quotations_last_viewed_at');
+                        $newQuoteCount = $lastViewed ? \App\Models\Quotation::where('created_at', '>', $lastViewed)->count() : \App\Models\Quotation::count();
+                    @endphp
+                    <span x-show="sidebarOpen" x-cloak style="font-size:10px;background:rgba(255,255,255,0.12);color:rgba(255,255,255,0.7);padding:2px 7px;border-radius:20px;">{{ $newQuoteCount }}</span>
                     <svg x-show="sidebarOpen" x-cloak class="w-3 h-3 transition-transform" :class="open ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
                 </button>
                 <div x-show="open && sidebarOpen" x-cloak class="ml-2 space-y-0.5">
@@ -129,40 +133,42 @@
 
             {{-- Administration Dropdown --}}
             <div x-data="{ open: true }">
-                <p :class="sidebarOpen ? 'block' : 'hidden'" style="font-size:9px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:rgba(255,255,255,0.3);padding:6px 10px 5px;">Administration</p>
-                <button @click="open = !open"
-                        style="display:flex;align-items:center;gap:8px;width:100%;padding:8px 12px;border-radius:9px;border:none;background:transparent;color:rgba(255,255,255,0.72);font-size:11.5px;font-weight:500;cursor:pointer;font-family:'Montserrat',sans-serif;{{ request()->routeIs('admin.users*') || request()->routeIs('admin.roles*') || request()->routeIs('admin.stickers*') ? 'background:rgba(0,95,158,0.18);color:#fff;' : '' }}"
-                        :class="sidebarOpen ? '' : 'justify-center'">
-                    <span style="opacity:0.7">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"/></svg>
-                    </span>
-                    <span x-show="sidebarOpen" x-cloak style="flex:1;text-align:left;line-height:1.2">Administration</span>
-                    <svg x-show="sidebarOpen" x-cloak class="w-3 h-3 transition-transform" :class="open ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
-                </button>
-                <div x-show="open && sidebarOpen" x-cloak class="ml-2 space-y-0.5">
-                    <div x-data="{ subOpen: true }">
-                        <button @click="subOpen = !subOpen"
-                                style="display:flex;align-items:center;gap:8px;width:100%;padding:6px 12px;border-radius:8px;border:none;background:transparent;color:rgba(255,255,255,0.6);font-size:11px;cursor:pointer;font-family:'Montserrat',sans-serif;{{ request()->routeIs('admin.users*') ? 'background:rgba(0,95,158,0.18);color:#fff;' : '' }}">
-                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"/></svg>
-                            <span style="flex:1;text-align:left">Users</span>
-                            <svg class="w-2.5 h-2.5 transition-transform" :class="subOpen ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
-                        </button>
-                        <div x-show="subOpen" x-cloak class="ml-3 space-y-0.5">
-                            <a href="{{ route('admin.users.index') }}" style="display:flex;align-items:center;gap:8px;padding:5px 12px;border-radius:6px;font-size:10.5px;color:rgba(255,255,255,0.5);text-decoration:none;">View All</a>
-                            <a href="{{ route('admin.users.create') }}" style="display:flex;align-items:center;gap:8px;padding:5px 12px;border-radius:6px;font-size:10.5px;color:rgba(255,255,255,0.5);text-decoration:none;">Add User</a>
-                        </div>
+                <p :class="sidebarOpen ? 'block' : 'hidden'" style="font-size:9px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:rgba(255,255,255,0.3);padding:6px 10px 5px;">User Management</p>
+
+                {{-- Users with sub-dropdown --}}
+                <div x-data="{ subOpen: true }">
+                    <button @click="subOpen = !subOpen"
+                            style="display:flex;align-items:center;gap:8px;width:100%;padding:8px 12px;border-radius:9px;border:none;background:transparent;color:rgba(255,255,255,0.72);font-size:11.5px;font-weight:500;cursor:pointer;font-family:'Montserrat',sans-serif;{{ request()->routeIs('admin.users*') ? 'background:rgba(0,95,158,0.18);color:#fff;' : '' }}"
+                            :class="sidebarOpen ? '' : 'justify-center'">
+                        <span style="opacity:0.7">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"/></svg>
+                        </span>
+                        <span x-show="sidebarOpen" x-cloak style="flex:1;text-align:left;line-height:1.2">Users</span>
+                        <svg x-show="sidebarOpen" x-cloak class="w-3 h-3 transition-transform" :class="subOpen ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                    </button>
+                    <div x-show="subOpen && sidebarOpen" x-cloak class="ml-4 space-y-0.5">
+                        <a href="{{ route('admin.users.index') }}" style="display:flex;align-items:center;gap:8px;padding:5px 12px;border-radius:6px;font-size:10.5px;color:rgba(255,255,255,0.5);text-decoration:none;">View All</a>
+                        <a href="{{ route('admin.users.create') }}" style="display:flex;align-items:center;gap:8px;padding:5px 12px;border-radius:6px;font-size:10.5px;color:rgba(255,255,255,0.5);text-decoration:none;">Add User</a>
                     </div>
-                    <a href="{{ route('admin.roles.index') }}"
-                       style="display:flex;align-items:center;gap:8px;padding:6px 12px;border-radius:8px;font-size:11px;color:rgba(255,255,255,0.6);text-decoration:none;{{ request()->routeIs('admin.roles*') ? 'background:rgba(0,95,158,0.18);color:#fff;' : '' }}">
-                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
-                        Roles &amp; Permissions
-                    </a>
-                    <a href="{{ route('admin.stickers.index') }}"
-                       style="display:flex;align-items:center;gap:8px;padding:6px 12px;border-radius:8px;font-size:11px;color:rgba(255,255,255,0.6);text-decoration:none;{{ request()->routeIs('admin.stickers*') ? 'background:rgba(0,95,158,0.18);color:#fff;' : '' }}">
-                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z"/></svg>
-                        Certificates
-                    </a>
                 </div>
+
+                {{-- Roles & Permissions (flat link) --}}
+                <a href="{{ route('admin.roles.index') }}"
+                style="display:flex;align-items:center;gap:8px;padding:8px 12px;border-radius:9px;font-size:11.5px;font-weight:500;color:rgba(255,255,255,0.72);text-decoration:none;{{ request()->routeIs('admin.roles*') ? 'background:rgba(0,95,158,0.18);color:#fff;' : '' }}">
+                    <span style="opacity:0.7">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+                    </span>
+                    <span x-show="sidebarOpen" x-cloak>Roles &amp; Permissions</span>
+                </a>
+
+                {{-- Stickers (flat link) --}}
+                <a href="{{ route('admin.stickers.index') }}"
+                style="display:flex;align-items:center;gap:8px;padding:8px 12px;border-radius:9px;font-size:11.5px;font-weight:500;color:rgba(255,255,255,0.72);text-decoration:none;{{ request()->routeIs('admin.stickers*') ? 'background:rgba(0,95,158,0.18);color:#fff;' : '' }}">
+                    <span style="opacity:0.7">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z"/></svg>
+                    </span>
+                    <span x-show="sidebarOpen" x-cloak>Sickers</span>
+                </a>
             </div>
 
             {{-- Divider --}}
@@ -239,6 +245,16 @@
                        style="display:flex;align-items:center;gap:8px;padding:6px 12px;border-radius:8px;font-size:11px;color:rgba(255,255,255,0.6);text-decoration:none;{{ request()->routeIs('admin.help*') ? 'background:rgba(0,95,158,0.18);color:#fff;' : '' }}">
                         <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                         Help &amp; Support
+                    </a>
+                    <a href="{{ route('admin.media.index') }}"
+                       style="display:flex;align-items:center;gap:8px;padding:6px 12px;border-radius:8px;font-size:11px;color:rgba(255,255,255,0.6);text-decoration:none;{{ request()->routeIs('admin.media*') ? 'background:rgba(0,95,158,0.18);color:#fff;' : '' }}">
+                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                        Media Library
+                    </a>
+                    <a href="{{ route('admin.health.index') }}"
+                       style="display:flex;align-items:center;gap:8px;padding:6px 12px;border-radius:8px;font-size:11px;color:rgba(255,255,255,0.6);text-decoration:none;{{ request()->routeIs('admin.health*') ? 'background:rgba(0,95,158,0.18);color:#fff;' : '' }}">
+                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+                        Platform Health
                     </a>
                 </div>
             </div>

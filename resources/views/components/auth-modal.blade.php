@@ -1,4 +1,4 @@
-<div class="auth-modal-overlay" id="authModal" style="display:none" x-data="{ tab: 'login', name: '', email: '', password: '', password_confirmation: '', loading: false, error: '', redirectTo: sessionStorage.getItem('auth_redirect') || '{{ route('dashboard') }}' }">
+<div class="auth-modal-overlay" id="authModal" style="display:none" x-data="{ tab: 'login', email: '', password: '', password_confirmation: '', loading: false, error: '', redirectTo: sessionStorage.getItem('auth_redirect') || '{{ route('dashboard') }}' }">
   <div class="auth-modal-split" @click.stop>
     <button class="auth-modal-close" onclick="closeAuthModal()">&times;</button>
 
@@ -46,9 +46,19 @@
         <form x-show="tab === 'register'" method="POST" action="{{ route('register') }}" @submit="loading = true">
           @csrf
           <input type="hidden" name="redirect_to" :value="redirectTo">
+          <div class="auth-grid">
+            <div class="auth-field">
+              <label for="auth-first">First Name</label>
+              <input type="text" id="auth-first" name="first_name" required placeholder="John">
+            </div>
+            <div class="auth-field">
+              <label for="auth-last">Last Name</label>
+              <input type="text" id="auth-last" name="last_name" required placeholder="Doe">
+            </div>
+          </div>
           <div class="auth-field">
-            <label for="auth-name">Full Name</label>
-            <input type="text" id="auth-name" name="name" x-model="name" required placeholder="John Doe">
+            <label for="auth-mobile">Phone Number</label>
+            <input type="tel" id="auth-mobile" name="mobile" required placeholder="07 XX XXX XXX">
           </div>
           <div class="auth-field">
             <label for="auth-reg-email">Email</label>

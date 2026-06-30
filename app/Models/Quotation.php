@@ -3,9 +3,12 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Quotation extends Model
 {
+    use SoftDeletes;
+
     protected $fillable = [
         'user_id', 'company_id', 'quotation_number', 'car_make', 'car_model',
         'car_year', 'car_registration', 'car_valuation', 'premium', 'pvt_premium',
@@ -42,11 +45,14 @@ class Quotation extends Model
 
     public static function generateNumber(?Company $company = null): string
     {
-        $prefix = $company ? $company->getInitials() : 'INS';
-        $today = now()->format('Ymd');
+        $prefix = $company ? $company->getInitials() : 'IN';
+        $year = now()->format('Y');
+        $month = now()->format('m');
+        $day = now()->format('d');
         $seq = static::where('company_id', $company?->id)
             ->whereDate('created_at', today())
             ->count() + 1;
-        return $prefix . '-' . $seq;
+        $unique = chr(rand(65, 90)) . chr(rand(65, 90)) . chr(rand(65, 90)) . chr(rand(65, 90)) . str_pad($seq, 3, '0', STR_PAD_LEFT);
+        return $prefix . '-' . $year . '/' . $day . '/' . $month . '-' . $unique;
     }
 }

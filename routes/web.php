@@ -23,6 +23,7 @@ use App\Http\Controllers\Admin\CompareAllController;
 use App\Http\Controllers\Admin\RateSettingController;
 use App\Http\Controllers\Admin\HealthCheckController;
 use App\Http\Controllers\Admin\ChangeRequestController;
+use App\Http\Controllers\Admin\MediaController;
 use App\Http\Controllers\User\HelpController as UserHelpController;
 use Illuminate\Support\Facades\Route;
 
@@ -31,6 +32,7 @@ Route::get('/', function () {
 })->name('home');
 
 Route::get('/motor-quote', [PublicController::class, 'motorQuote'])->name('motor.quote');
+Route::get('/motor-quote/stats', [PublicController::class, 'statsJson'])->name('motor.stats');
 Route::get('/generate-quote/{company?}', [PublicController::class, 'generateQuote'])->name('generate.quote');
 Route::get('/quotation/{company?}', [PublicController::class, 'quotation'])->name('motor.quotation');
 
@@ -80,9 +82,11 @@ Route::middleware(['auth', 'online'])->group(function () {
 
     Route::get('/quotations/tracker', [QuotationController::class, 'tracker'])->name('quotations.tracker');
     Route::patch('/quotations/{quotation}/update-status', [QuotationController::class, 'updateStatus'])->name('quotations.update-status');
+    Route::get('/quotations/preview', [QuotationController::class, 'preview'])->name('quotations.preview');
     Route::resource('quotations', QuotationController::class)->except(['edit', 'update']);
     Route::post('/quotations/calculate', [QuotationController::class, 'calculate'])->name('quotations.calculate');
     Route::get('/quotations/{quotation}/download-pdf', [QuotationController::class, 'downloadPdf'])->name('quotations.download.pdf');
+    Route::post('/quotations/{id}/restore', [QuotationController::class, 'restore'])->name('quotations.restore');
 
     Route::get('/help', [UserHelpController::class, 'index'])->name('user.help.index');
     Route::post('/help', [UserHelpController::class, 'store'])->name('user.help.store');
@@ -102,8 +106,10 @@ Route::middleware(['auth', 'online'])->group(function () {
         Route::delete('trash/empty', [NotificationController::class, 'emptyTrash'])->name('empty-trash');
     });
 
+    Route::get('/dashboard/weather', [DashboardController::class, 'weatherJson'])->name('dashboard.weather');
+
     Route::middleware(['role:super-admin|admin'])->prefix('admin')->name('admin.')->group(function () {
-        Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
         Route::resource('users', UserController::class);
         Route::patch('/users/{user}/toggle-status', [UserController::class, 'toggleStatus'])->name('users.toggle-status');
@@ -165,10 +171,15 @@ Route::middleware(['auth', 'online'])->group(function () {
         });
 
         Route::get('/rate-settings', [RateSettingController::class, 'index'])->name('rate-settings.index');
+
+        Route::prefix('media')->name('media.')->group(function () {
+            Route::get('/', [MediaController::class, 'index'])->name('index');
+            Route::post('/upload', [MediaController::class, 'upload'])->name('upload');
+            Route::delete('/{media}', [MediaController::class, 'destroy'])->name('destroy');
+            Route::get('/list', [MediaController::class, 'list'])->name('list');
+        });
     });
 
-    Route::get('/quotations/preview', [QuotationController::class, 'preview'])
-        ->name('quotations.preview');
 });
 
 require __DIR__ . '/auth.php';

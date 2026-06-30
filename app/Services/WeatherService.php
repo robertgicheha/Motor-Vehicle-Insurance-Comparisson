@@ -17,8 +17,7 @@ class WeatherService
     {
         $cacheKey = "weather_v2_{$city}";
 
-        // 1-min timeline is real-time so cache only 60s; current+alerts cache 10min
-        return Cache::remember($cacheKey, 600, function () use ($city) {
+        return Cache::remember($cacheKey, 300, function () use ($city) {
             $apiKey = config('services.openweather.key');
             if (!$apiKey) {
                 return $this->fallbackWeather($city);

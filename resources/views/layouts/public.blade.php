@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>@yield('title', 'Motor Insurance Quotation') | MIC Global Risks</title>
+    <link rel="icon" type="image/x-icon" href="{{ asset('Favicon.png') }}">
+    <link rel="icon" type="image/png" sizes="32x32" href="{{ asset('Favicon.png') }}">
     <link rel="stylesheet" href="{{ asset('css/home.css') }}">
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     @stack('styles')

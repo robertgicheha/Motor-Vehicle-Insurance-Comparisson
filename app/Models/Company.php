@@ -38,12 +38,12 @@ class Company extends Model
     public function getInitials(): string
     {
         if ($this->slug) {
-            return strtoupper(substr($this->slug, 0, 5));
+            return strtoupper(substr($this->slug, 0, 2));
         }
         $name = strtoupper(preg_replace('/\b(INSURANCE|COMPANY|LTD|LIMITED|PLC|CORP|INC|GROUP|&|\-)\s*/', '', $this->name));
         $parts = array_values(array_filter(explode(' ', $name)));
         if (count($parts) <= 1) {
-            return substr($parts[0] ?? 'INS', 0, 5);
+            return substr($parts[0] ?? 'IN', 0, 2);
         }
         $initials = '';
         foreach ($parts as $part) {
@@ -51,14 +51,13 @@ class Company extends Model
                 $initials .= $part[0];
             }
         }
-        return substr($initials ?: 'INS', 0, 5);
+        return substr($initials ?: 'IN', 0, 2);
     }
 
     public static function hardcodedLogoMap(): array
     {
         return [
             'GA' => 'images/GA Insurance.png',
-            'BRITAM' => 'images/britam_logo.png',
             'SANLAM' => 'images/Sanlam-Allianz.png',
         ];
     }

@@ -1,8 +1,12 @@
 @php
     $flashMessages = [];
-    foreach (['success', 'error', 'warning', 'info'] as $type) {
-        if (session()->has($type)) {
-            $flashMessages[] = ['message' => session($type), 'type' => $type];
+    if (!isset($GLOBALS['_toast_processed'])) {
+        $GLOBALS['_toast_processed'] = true;
+        foreach (['success', 'error', 'warning', 'info'] as $type) {
+            if ($msg = session($type)) {
+                $flashMessages[] = ['message' => $msg, 'type' => $type];
+                session()->forget($type);
+            }
         }
     }
 @endphp

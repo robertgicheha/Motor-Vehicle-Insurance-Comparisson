@@ -17,6 +17,10 @@ class LogActivity
     public function terminate(Request $request, $response): void
     {
         if (auth()->check() && $request->method() !== 'GET') {
+            // Skip routes that already log their own specific activity
+            if (str_contains($request->path(), 'update-status')) {
+                return;
+            }
             AuditService::activity(
                 $request->method() . ' ' . $request->path(),
                 "User performed {$request->method()} on {$request->path()}",

@@ -63,11 +63,15 @@
 
             {{-- Avatar + name --}}
             <div class="flex items-center gap-4 px-5 py-4 border-b border-gray-100 dark:border-gray-700">
-                <div class="w-12 h-12 rounded-full bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center flex-shrink-0 border border-gray-200 dark:border-gray-600">
-                    <svg class="w-6 h-6 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                              d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
-                    </svg>
+                <div class="w-14 h-14 rounded-full bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center flex-shrink-0 border border-gray-200 dark:border-gray-600 overflow-hidden">
+                    @if($user->avatar)
+                        <img src="{{ asset('storage/' . $user->avatar) }}" alt="{{ $user->name }}" class="w-full h-full object-cover" onerror="this.style.display='none';this.parentElement.innerHTML='<svg class=\'w-7 h-7 text-blue-400\' fill=\'none\' stroke=\'currentColor\' viewBox=\'0 0 24 24\'><path stroke-linecap=\'round\' stroke-linejoin=\'round\' stroke-width=\'2\' d=\'M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z\'/></svg>'">
+                    @else
+                        <svg class="w-7 h-7 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                  d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+                        </svg>
+                    @endif
                 </div>
                 <div>
                     <p class="text-sm font-semibold text-gray-900 dark:text-white">
@@ -134,7 +138,7 @@
                 <h2 class="text-sm font-semibold text-gray-900 dark:text-white">Update profile</h2>
                 <p class="text-xs text-gray-400 dark:text-gray-500 mt-0.5">Edit your personal details below</p>
             </div>
-            <form action="{{ route('profile.update') }}" method="POST" class="px-5 py-5 space-y-4">
+            <form action="{{ route('profile.update') }}" method="POST" enctype="multipart/form-data" class="px-5 py-5 space-y-4">
                 @csrf @method('PATCH')
 
                 @if(session('profile_success'))
@@ -143,6 +147,23 @@
                         {{ session('profile_success') }}
                     </div>
                 @endif
+
+                <div>
+                    <label class="block text-[11px] font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500 mb-1.5">Profile Photo</label>
+                    <div class="flex items-center gap-4">
+                        <div class="w-16 h-16 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center overflow-hidden border border-gray-200 dark:border-gray-600">
+                            @if($user->avatar)
+                                <img src="{{ asset('storage/' . $user->avatar) }}" alt="" class="w-full h-full object-cover" id="avatarPreview" onerror="this.style.display='none'">
+                            @else
+                                <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+                            @endif
+                        </div>
+                        <div class="flex-1">
+                            <input type="file" name="avatar" id="avatarInput" accept="image/*" class="block w-full text-xs text-gray-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 dark:file:bg-blue-900/30 dark:file:text-blue-400">
+                            <p class="text-[10px] text-gray-400 mt-1">JPEG, PNG, WebP. Max 2MB.</p>
+                        </div>
+                    </div>
+                </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>

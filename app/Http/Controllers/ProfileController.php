@@ -29,6 +29,7 @@ class ProfileController extends Controller
             'mobile' => 'required|string|max:20',
             'gender' => 'nullable|in:male,female,other',
             'email' => 'nullable|email|max:255|unique:users,email,' . $user->id,
+            'avatar' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
         ]);
 
         if ($validator->fails()) {
@@ -37,14 +38,23 @@ class ProfileController extends Controller
 
         $oldData = $user->toArray();
 
-        $user->update([
+        $data = [
             'first_name' => $request->first_name,
             'last_name' => $request->last_name,
             'name' => $request->first_name . ' ' . $request->last_name,
             'mobile' => $request->mobile,
             'gender' => $request->gender,
             'profile_completed' => true,
-        ]);
+        ];
+
+        if ($request->hasFile('avatar')) {
+            $file = $request->file('avatar');
+            $filename = 'avatar_' . $user->id . '_' . time() . '.' . $file->getClientOriginalExtension();
+            $file->move(public_path('images/avatars'), $filename);
+            $data['avatar'] = 'images/avatars/' . $filename;
+        }
+
+        $user->update($data);
 
         AuditService::log('update', 'User', $user->id, $oldData, $user->toArray());
         AuditService::activity('profile_updated', "User {$user->name} updated profile");

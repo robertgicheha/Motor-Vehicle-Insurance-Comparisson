@@ -24,6 +24,8 @@
   </div>
 </nav>
 
+@php $breakdown = $quotation->breakdown ?? []; @endphp
+
 <section class="page-hero">
   <div class="page-hero-inner">
     <div class="breadcrumb">
@@ -35,7 +37,7 @@
     </div>
     <h1>Quotation Details</h1>
     <p>{{ $quotation->company->name }} &mdash; {{ $quotation->car_make }} {{ $quotation->car_model }} ({{ $quotation->car_year }})</p>
-    <div class="quote-ref-badge"><span>Ref:</span> <span>{{ $quotation->quotation_number }}</span></div>
+    <div class="quote-ref-badge" style="display:inline-flex;align-items:center;gap:10px;padding:8px 20px;background:rgba(255,255,255,0.12);border-radius:10px;font-size:18px;font-weight:700;letter-spacing:-0.3px"><span style="opacity:0.7;font-weight:500;font-size:13px">Ref:</span> <span>{{ $quotation->quotation_number }}</span> <button onclick="copyQuoteNumber()" style="background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.2);color:#fff;padding:3px 10px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:4px;transition:background .15s" onmouseover="this.style.background='rgba(255,255,255,0.25)'" onmouseout="this.style.background='rgba(255,255,255,0.15)'"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg> Copy</button></div>
   </div>
 </section>
 
@@ -66,8 +68,22 @@
     </div>
     <div class="summary-card">
       <h4>Premium Summary</h4>
-      <div class="summary-row"><span>Valuation</span><span>KES {{ number_format($quotation->car_valuation, 2) }}</span></div>
-      <div class="summary-row"><span>Basic Premium</span><span>KES {{ number_format($quotation->premium, 2) }}</span></div>
+      <div class="summary-row"><span>Vehicle Value</span><span>KES {{ number_format($quotation->car_valuation, 2) }}</span></div>
+      <div class="summary-row"><span>Basic Premium ({{ ($breakdown['premium_rate'] ?? 6.5) }}%)</span><span>KES {{ number_format($quotation->premium, 2) }}</span></div>
+      @php
+        $_basePremium = $breakdown['base_premium'] ?? null;
+        $_iraLevy = $breakdown['ira_levy'] ?? null;
+      @endphp
+      @if($_basePremium !== null && $_iraLevy !== null)
+      <div class="summary-row" style="padding-left:1rem;font-size:11px;color:var(--text-muted)">
+        <span>Base Premium ({{ number_format(($breakdown['premium_rate'] ?? 6.5) - ($breakdown['ira_levy_rate'] ?? 0.5), 1) }}%)</span>
+        <span>KES {{ number_format($_basePremium, 2) }}</span>
+      </div>
+      <div class="summary-row" style="padding-left:1rem;font-size:11px;color:var(--text-muted)">
+        <span>IRA Levy ({{ $breakdown['ira_levy_rate'] ?? 0.5 }}%)</span>
+        <span>KES {{ number_format($_iraLevy, 2) }}</span>
+      </div>
+      @endif
       <div class="summary-row"><span>PVT Premium</span><span>KES {{ number_format($quotation->pvt_premium, 2) }}</span></div>
       <div class="summary-row" style="border-top:2px solid var(--blue);margin-top:6px;padding-top:8px">
         <span style="font-weight:800;color:var(--blue)">Total Premium</span>
@@ -81,7 +97,11 @@
       <thead><tr><th>Description</th><th style="text-align:right">Amount (KES)</th></tr></thead>
       <tbody>
         <tr><td>Estimated Vehicle Value</td><td>{{ number_format($quotation->car_valuation, 2) }}</td></tr>
-        <tr><td>Basic Annual Premium</td><td>{{ number_format($quotation->premium, 2) }}</td></tr>
+        <tr><td>Basic Annual Premium ({{ $breakdown['premium_rate'] ?? 6.5 }}%)</td><td>{{ number_format($quotation->premium, 2) }}</td></tr>
+        @if($_basePremium !== null && $_iraLevy !== null)
+        <tr style="color:#6b7280;font-size:11px"><td>&nbsp;&nbsp;&nbsp;Base Premium ({{ number_format(($breakdown['premium_rate'] ?? 6.5) - ($breakdown['ira_levy_rate'] ?? 0.5), 1) }}%)</td><td>{{ number_format($_basePremium, 2) }}</td></tr>
+        <tr style="color:#6b7280;font-size:11px"><td>&nbsp;&nbsp;&nbsp;IRA Levy ({{ $breakdown['ira_levy_rate'] ?? 0.5 }}%)</td><td>{{ number_format($_iraLevy, 2) }}</td></tr>
+        @endif
         <tr><td>PVT Premium</td><td>{{ number_format($quotation->pvt_premium, 2) }}</td></tr>
         @if($quotation->excess_own_damage)
           <tr><td>Excess - Own Damage</td><td>{{ number_format($quotation->excess_own_damage, 2) }}</td></tr>
@@ -147,6 +167,30 @@
   </div>
 </footer>
 
+<script>
+function copyQuoteNumber() {
+    var text = '{{ $quotation->quotation_number }}';
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(function() {
+            var btn = event.currentTarget;
+            var orig = btn.innerHTML;
+            btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="20 6 9 17 4 12"/></svg> Copied!';
+            btn.style.background = 'rgba(16,185,129,0.5)';
+            setTimeout(function() { btn.innerHTML = orig; btn.style.background = 'rgba(255,255,255,0.15)'; }, 2000);
+        });
+    } else {
+        var ta = document.createElement('textarea');
+        ta.value = text;
+        ta.style.position = 'fixed';
+        ta.style.opacity = '0';
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        document.body.removeChild(ta);
+        alert('Copied!');
+    }
+}
+</script>
 <style>
   .alert { padding:14px 20px; border-radius:10px; margin-bottom:20px; font-size:13px; font-weight:600; }
   .alert-success { background:#dcfce7; color:#166534; border:1px solid #bbf7d0; }

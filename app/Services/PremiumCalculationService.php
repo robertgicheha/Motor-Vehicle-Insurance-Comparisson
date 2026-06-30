@@ -7,7 +7,7 @@ use App\Models\Rate;
 
 class PremiumCalculationService
 {
-    public function calculate(Company $company, $valuation, $includePVT = true, $hasAntiTheft = true, $isYoungDriver = false)
+    public function calculate(Company $company, $valuation, $includePVT = false, $hasAntiTheft = true, $isYoungDriver = false)
     {
         $premiumRate = Rate::where('company_id', $company->id)
             ->where('category', 'Premium Rate')
@@ -19,9 +19,9 @@ class PremiumCalculationService
             ->where('item_name', 'PVT Rate')
             ->first();
 
-        $pllRate = Rate::where('company_id', $company->id)
+        $iraLevyRate = Rate::where('company_id', $company->id)
             ->where('category', 'Premium Rate')
-            ->where('item_name', 'PLL Per Person')
+            ->where('item_name', 'IRA Levy')
             ->first();
 
         $excessOD = Rate::where('company_id', $company->id)
@@ -44,11 +44,11 @@ class PremiumCalculationService
             ->where('item_name', 'Novice & Young Drivers')
             ->first();
 
-        $premium = 0;
+        $basicPremium = 0;
         if ($premiumRate && $premiumRate->percentage) {
-            $premium = $valuation * ($premiumRate->percentage / 100);
-            if ($premiumRate->min_premium && $premium < $premiumRate->min_premium) {
-                $premium = $premiumRate->min_premium;
+            $basicPremium = $valuation * ($premiumRate->percentage / 100);
+            if ($premiumRate->min_premium && $basicPremium < $premiumRate->min_premium) {
+                $basicPremium = $premiumRate->min_premium;
             }
         }
 
@@ -58,6 +58,16 @@ class PremiumCalculationService
             if ($pvtRate->min_value && $pvt < $pvtRate->min_value) {
                 $pvt = $pvtRate->min_value;
             }
+        }
+
+        $iraLevy = 0;
+        if ($iraLevyRate && $iraLevyRate->percentage) {
+            $iraLevy = $valuation * ($iraLevyRate->percentage / 100);
+        }
+
+        $basePremium = $basicPremium - $iraLevy;
+        if ($basePremium < 0) {
+            $basePremium = 0;
         }
 
         $excessODAmount = 0;
@@ -92,13 +102,16 @@ class PremiumCalculationService
             $additionalExcess = $youngDriverExcess->value ?? 0;
         }
 
-        $total = $premium + $pvt;
+        $total = $basicPremium;
 
         return [
             'company' => $company->name,
             'valuation' => $valuation,
             'premium_rate' => $premiumRate ? $premiumRate->percentage : 0,
-            'premium' => round($premium, 2),
+            'basic_premium' => round($basicPremium, 2),
+            'base_premium' => round($basePremium, 2),
+            'ira_levy_rate' => $iraLevyRate ? $iraLevyRate->percentage : 0,
+            'ira_levy' => round($iraLevy, 2),
             'pvt_rate' => $pvtRate ? $pvtRate->percentage : 0,
             'pvt_premium' => round($pvt, 2),
             'total_premium' => round($total, 2),

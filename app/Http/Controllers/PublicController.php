@@ -19,7 +19,12 @@ class PublicController extends Controller
     {
         $companies = Company::active()->with('rates')->get();
         $coverage = $this->getCoverageData($companies);
-        return view('home', compact('companies', 'coverage'));
+        $companyStats = Quotation::selectRaw('company_id, COUNT(*) as total, SUM(total_premium) as total_premium')
+            ->whereIn('company_id', $companies->pluck('id'))
+            ->groupBy('company_id')
+            ->get()
+            ->keyBy('company_id');
+        return view('home', compact('companies', 'coverage', 'companyStats'));
     }
 
     public function quotation(?string $company = null)
@@ -31,18 +36,18 @@ class PublicController extends Controller
             $selectedCompany = $companies->firstWhere('slug', $company);
         }
 
-        $taxRate = 0.005;
         $coverage = $this->getCoverageData($companies);
 
         $companyColors = ['#003087', '#0066B3', '#00205B', '#D0021B'];
-        $companyData = $companies->map(function ($c, $i) use ($companyColors, $taxRate) {
-            $rate = $c->rates->firstWhere('value_type', 'percentage');
+        $companyData = $companies->map(function ($c, $i) use ($companyColors) {
+            $rate = $c->rates->firstWhere('item_name', 'Premium Rate');
+            $iraLevy = $c->rates->firstWhere('item_name', 'IRA Levy');
             return [
                 'slug' => $c->slug,
                 'name' => $c->name,
                 'logo' => $c->logoUrl(),
                 'rate' => $rate ? (float) $rate->percentage / 100 : 0,
-                'taxRate' => $taxRate,
+                'taxRate' => $iraLevy ? (float) $iraLevy->percentage / 100 : 0.005,
                 'color' => $companyColors[$i % count($companyColors)],
                 'prefix' => $c->getInitials(),
             ];
@@ -181,11 +186,14 @@ class PublicController extends Controller
         ]);
 
         $company = Company::where('slug', $request->company_slug)->firstOrFail();
-        $rate = $company->rates->firstWhere('value_type', 'percentage');
-        $ratePercent = $rate ? (float) $rate->percentage / 100 : 0;
-        $premium = $request->car_valuation * $ratePercent;
-        $tax = $premium * 0.005;
-        $total = $premium + $tax;
+        $premiumRate = $company->rates->firstWhere('item_name', 'Premium Rate');
+        $iraLevyRate = $company->rates->firstWhere('item_name', 'IRA Levy');
+        $ratePercent = $premiumRate ? (float) $premiumRate->percentage / 100 : 0;
+        $iraLevyPercent = $iraLevyRate ? (float) $iraLevyRate->percentage / 100 : 0;
+        $basicPremium = $request->car_valuation * $ratePercent;
+        $iraLevy = $request->car_valuation * $iraLevyPercent;
+        $basePremium = $basicPremium - $iraLevy;
+        $total = $basicPremium;
 
         $quotation = auth()->user()->quotations()->create([
             'company_id' => $company->id,
@@ -195,16 +203,18 @@ class PublicController extends Controller
             'car_year' => $request->car_year,
             'car_registration' => $request->car_registration,
             'car_valuation' => $request->car_valuation,
-            'premium' => $premium,
+            'premium' => $basicPremium,
             'pvt_premium' => 0,
             'total_premium' => $total,
             'excess_own_damage' => 0,
             'excess_theft' => 0,
-            'status' => 'generated',
+            'status' => 'processing',
             'breakdown' => [
-                'basic_premium' => $premium,
-                'ira_levy' => $tax,
-                'rate' => $ratePercent,
+                'basic_premium' => $basicPremium,
+                'base_premium' => $basePremium,
+                'ira_levy' => $iraLevy,
+                'premium_rate' => $ratePercent * 100,
+                'ira_levy_rate' => $iraLevyPercent * 100,
             ],
         ]);
 
@@ -213,7 +223,7 @@ class PublicController extends Controller
             'quotation' => [
                 'id' => $quotation->id,
                 'quotation_number' => $quotation->quotation_number,
-                'premium' => $premium,
+                'premium' => $basicPremium,
                 'total_premium' => $total,
             ],
         ]);
@@ -264,13 +274,14 @@ class PublicController extends Controller
 
         $companyColors = ['#003087', '#0066B3', '#00205B', '#D0021B'];
         $companyData = $companies->map(function ($c, $i) use ($companyColors) {
-            $rate = $c->rates->firstWhere('value_type', 'percentage');
+            $rate = $c->rates->firstWhere('item_name', 'Premium Rate');
+            $iraLevy = $c->rates->firstWhere('item_name', 'IRA Levy');
             return [
                 'slug' => $c->slug,
                 'name' => $c->name,
                 'logo' => $c->logoUrl(),
                 'rate' => $rate ? (float) $rate->percentage / 100 : 0,
-                'taxRate' => 0.005,
+                'taxRate' => $iraLevy ? (float) $iraLevy->percentage / 100 : 0.005,
                 'color' => $companyColors[$i % count($companyColors)],
                 'prefix' => $c->getInitials(),
             ];
@@ -312,5 +323,29 @@ class PublicController extends Controller
         }
 
         return $result;
+    }
+
+    public function statsJson()
+    {
+        $companies = Company::active()->get();
+        $companyStats = Quotation::selectRaw('company_id, COUNT(*) as total, SUM(total_premium) as total_premium')
+            ->whereIn('company_id', $companies->pluck('id'))
+            ->groupBy('company_id')
+            ->get()
+            ->keyBy('company_id');
+
+        $data = $companies->map(function ($c) use ($companyStats) {
+            $stats = $companyStats->get($c->id);
+            return [
+                'slug' => $c->slug,
+                'quote_count' => $stats ? (int) $stats->total : 0,
+                'total_premium' => $stats ? (float) $stats->total_premium : 0,
+            ];
+        });
+
+        return response()->json([
+            'companies' => $data,
+            'total_quotes' => $data->sum('quote_count'),
+        ]);
     }
 }

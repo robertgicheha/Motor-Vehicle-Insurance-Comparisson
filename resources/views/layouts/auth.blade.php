@@ -5,6 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>{{ $title ?? 'Authentication' }} | Motor Vehicle Insurance Portal</title>
+    <<!-- Standard favicon (browsers + bookmark bar) -->
+    <link rel="icon" type="image/x-icon"       href="{{ asset('Favicon.png') }}">
+    <link rel="icon" type="image/png" sizes="16x16"   href="{{ asset('Favicon.png') }}">
+    <link rel="icon" type="image/png" sizes="32x32"   href="{{ asset('Favicon.png') }}">
+    <link rel="icon" type="image/png" sizes="96x96"   href="{{ asset('Favicon.png') }}">
     <link rel="stylesheet" href="{{ asset('css/dashboard.css') }}">
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
@@ -14,7 +19,7 @@
             <div class="mb-10 text-center">
                 <a href="/" class="flex items-center justify-center gap-2 text-2xl font-bold" style="color:var(--blue)">
                     <svg class="w-8 h-8" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
-                    <span>MotorCover</span>
+                    <span>Motor Vehicle Insurance Portal</span>
                 </a>
             </div>
 

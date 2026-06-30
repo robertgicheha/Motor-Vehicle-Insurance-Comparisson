@@ -23,7 +23,7 @@ return new class extends Migration
             $table->decimal('total_premium', 15, 2);
             $table->decimal('excess_own_damage', 15, 2)->nullable();
             $table->decimal('excess_theft', 15, 2)->nullable();
-            $table->string('status')->default('pending');
+            $table->string('status')->default('processing');
             $table->json('breakdown')->nullable();
             $table->timestamps();
         });

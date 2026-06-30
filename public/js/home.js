@@ -128,7 +128,9 @@ function guestGuard(callback) {
         } catch(e) {}
       }
     }
-    sessionStorage.setItem('auth_redirect', match ? '/quotation/' + match[1] : '/dashboard');
+    sessionStorage.setItem('auth_redirect', '/quotations?pending_quote=1');
+    var alpineEl = document.querySelector('#authModal');
+    if (alpineEl && alpineEl.__x) { alpineEl.__x.$data.redirectTo = '/quotations?pending_quote=1'; }
     openAuthModal();
     return;
   }
@@ -210,7 +212,7 @@ function genQuoteNum(prefix){
 //   // Build company cards on the quote page
 //   const cards = document.getElementById('qcCards');
 //   cards.innerHTML='';
-//   const companies = ['GA','BRITAM','SANLAM'];
+
 //   companies.forEach(key=>{
 //     const co = COMPANIES[key];
 //     const premium = d.value*co.rate;

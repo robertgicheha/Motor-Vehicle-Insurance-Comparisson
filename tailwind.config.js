@@ -27,7 +27,6 @@ export default {
                 },
                 micblue: '#005F9E',
                 ga: '#005baa',
-                britam: '#0071bc',
                 sanlam: '#1d3c6e',
             },
         },

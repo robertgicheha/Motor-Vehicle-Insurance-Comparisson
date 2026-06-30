@@ -17,6 +17,17 @@
         </div>
     </div>
 
+    {{-- ─── ON BEHALF OF BANNER ─────────────────────────────────────────── --}}
+    @if($targetUser)
+    <div class="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700 rounded-2xl px-5 py-3 flex items-center gap-3">
+        <svg class="w-5 h-5 text-amber-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+        <div class="text-xs">
+            <span class="font-semibold text-amber-700 dark:text-amber-400">Creating quotation on behalf of:</span>
+            <span class="text-amber-600 dark:text-amber-300 ml-1">{{ $targetUser->name }} ({{ $targetUser->email }})</span>
+        </div>
+    </div>
+    @endif
+
     {{-- ─── PREVIEW CONTENT ───────────────────────────────────────────────── --}}
     <div x-data="previewApp()">
         <div x-show="loading" class="text-center py-20">
@@ -120,19 +131,27 @@
                                 <span class="font-semibold text-gray-800 dark:text-white" x-text="fmt(vehicleValue)"></span>
                             </div>
                             <div class="flex justify-between py-1.5">
-                                <span class="text-gray-500">Rate</span>
+                                <span class="text-gray-500">Basic Premium Rate</span>
                                 <span class="font-semibold text-gray-800 dark:text-white" x-text="(selectedCompany.rate * 100).toFixed(1) + '%'"></span>
                             </div>
-                            <div class="flex justify-between py-1.5">
-                                <span class="text-gray-500">Base Premium</span>
-                                <span class="font-semibold text-gray-800 dark:text-white" x-text="fmt(basePremium)"></span>
+                            <div class="flex justify-between py-1.5" style="padding-left:1rem">
+                                <span class="text-gray-400" x-text="'Base Premium (' + ((selectedCompany.rate - selectedCompany.taxRate) * 100).toFixed(1) + '%)'"></span>
+                                <span class="font-semibold text-gray-800 dark:text-white" x-text="fmt(baseAmount)"></span>
                             </div>
-                            <div class="flex justify-between py-1.5">
-                                <span class="text-gray-500">IRA Levy (0.5%)</span>
+                            <div class="flex justify-between py-1.5" style="padding-left:1rem">
+                                <span class="text-gray-400" x-text="'IRA Levy (' + (selectedCompany.taxRate * 100).toFixed(1) + '%)'"></span>
                                 <span class="font-semibold text-gray-800 dark:text-white" x-text="fmt(iraLevy)"></span>
                             </div>
-                            <div class="flex justify-between py-2.5 border-t border-gray-100 dark:border-gray-700">
-                                <span class="font-semibold text-gray-800 dark:text-white">Total Premium</span>
+                            <div class="flex justify-between py-1.5 border-t border-dashed border-gray-100 dark:border-gray-700 pt-2">
+                                <span class="font-semibold text-gray-800 dark:text-white">Basic Premium</span>
+                                <span class="font-bold text-gray-800 dark:text-white" x-text="fmt(basePremium)"></span>
+                            </div>
+                            <div class="flex justify-between py-1.5">
+                                <span class="text-gray-500">PVT Premium</span>
+                                <span class="font-semibold text-gray-800 dark:text-white">KES 0.00</span>
+                            </div>
+                            <div class="flex justify-between py-2.5 border-t-2 border-gray-200 dark:border-gray-600">
+                                <span class="font-semibold text-gray-800 dark:text-white text-sm">Total Premium</span>
                                 <span class="font-bold text-lg text-blue-600" x-text="fmt(totalPremium)"></span>
                             </div>
                         </div>
@@ -148,13 +167,14 @@
                     <input type="hidden" name="car_year" :value="data.year">
                     <input type="hidden" name="car_registration" :value="data.reg">
                     <input type="hidden" name="car_valuation" :value="vehicleValue">
-                    <input type="hidden" name="on_behalf_of" :value="data.userId">
+                    <input type="hidden" name="on_behalf_of" :value="onBehalfOf">
                     <input type="hidden" name="company_id" :value="selectedCompany.id">
                     <input type="hidden" name="premium" :value="basePremium">
                     <input type="hidden" name="pvt_premium" value="0">
                     <input type="hidden" name="total_premium" :value="totalPremium">
                     <input type="hidden" name="excess_own_damage" value="0">
                     <input type="hidden" name="excess_theft" value="0">
+                    <input type="hidden" name="breakdown" :value="JSON.stringify({base_premium: baseAmount, ira_levy: iraLevy, basic_premium: basePremium, premium_rate: selectedCompany.rate, ira_levy_rate: selectedCompany.taxRate})">
 
                     <div class="flex items-center justify-between gap-3 bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-5">
                         <a href="{{ route('quotations.create') }}" class="px-5 py-2.5 text-xs font-medium border border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition">
@@ -180,22 +200,28 @@ function previewApp() {
         loading: true,
         data: null,
         companies: window.MIC_COMPANIES_PREVIEW || [],
+        urlOnBehalf: new URLSearchParams(window.location.search).get('on_behalf_of') || '',
         init() {
             try {
                 var raw = sessionStorage.getItem('micQuoteData');
                 if (raw) {
                     this.data = JSON.parse(raw);
+                    if (this.urlOnBehalf && !this.data.userId) {
+                        this.data.userId = this.urlOnBehalf;
+                    }
                 }
             } catch(e) {}
             this.loading = false;
+        },
+        get onBehalfOf() {
+            return this.data?.userId || this.urlOnBehalf || '';
         },
         get vehicleValue() {
             return parseFloat((this.data?.value || '0').replace(/,/g, '')) || 0;
         },
         get selectedCompany() {
             if (!this.data) return { id: 0, rate: 0, taxRate: 0, name: '' };
-            var slugMap = { 'GA': 'GA', 'BRITAM': 'BRITAM', 'SANLAM': 'SANLAM' };
-            var slug = slugMap[this.data.insurer] || '';
+            var slug = this.data.insurer || '';
             return this.companies.find(function(c) { return c.slug === slug; }) || this.companies[0] || { id: 0, rate: 0, taxRate: 0, name: '' };
         },
         get selectedCompanyName() {
@@ -205,6 +231,11 @@ function previewApp() {
             if (!this.data) return '—';
             return [this.data.salutation, this.data.first, this.data.middle, this.data.last].filter(Boolean).join(' ');
         },
+        get baseAmount() {
+            var rate = this.selectedCompany.rate || 0;
+            var taxRate = this.selectedCompany.taxRate || 0;
+            return this.vehicleValue * (rate - taxRate);
+        },
         get basePremium() {
             return this.vehicleValue * (this.selectedCompany.rate || 0);
         },
@@ -212,7 +243,7 @@ function previewApp() {
             return this.vehicleValue * (this.selectedCompany.taxRate || 0);
         },
         get totalPremium() {
-            return this.basePremium + this.iraLevy;
+            return this.basePremium;
         },
         fmt(n) {
             if (isNaN(n)) return '—';

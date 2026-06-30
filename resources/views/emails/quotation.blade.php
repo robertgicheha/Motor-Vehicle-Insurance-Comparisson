@@ -46,13 +46,24 @@
                 <div class="amount">KES {{ number_format($quotation->total_premium, 2) }}</div>
             </div>
 
+            @php
+                $_ebreakdown = $quotation->breakdown ?? [];
+                $_ebaseP = $_ebreakdown['base_premium'] ?? null;
+                $_eiraL = $_ebreakdown['ira_levy'] ?? null;
+                $_epRate = $_ebreakdown['premium_rate'] ?? 6.5;
+                $_eirRate = $_ebreakdown['ira_levy_rate'] ?? 0.5;
+            @endphp
             <table class="details-table">
                 <tr><td>Quotation Number</td><td>{{ $quotation->quotation_number }}</td></tr>
                 <tr><td>Insurance Company</td><td>{{ $quotation->company->name }}</td></tr>
                 <tr><td>Vehicle</td><td>{{ $quotation->car_make }} {{ $quotation->car_model }} ({{ $quotation->car_year }})</td></tr>
                 <tr><td>Registration</td><td>{{ $quotation->car_registration ?? 'N/A' }}</td></tr>
                 <tr><td>Vehicle Valuation</td><td>KES {{ number_format($quotation->car_valuation, 2) }}</td></tr>
-                <tr><td>Basic Premium</td><td>KES {{ number_format($quotation->premium, 2) }}</td></tr>
+                <tr><td>Basic Premium ({{ $_epRate }}%)</td><td>KES {{ number_format($quotation->premium, 2) }}</td></tr>
+                @if($_ebaseP !== null && $_eiraL !== null)
+                <tr style="font-size:11px;color:#64748b"><td>&nbsp;&nbsp;&nbsp;Base Premium ({{ number_format($_epRate - $_eirRate, 1) }}%)</td><td>KES {{ number_format($_ebaseP, 2) }}</td></tr>
+                <tr style="font-size:11px;color:#64748b"><td>&nbsp;&nbsp;&nbsp;IRA Levy ({{ $_eirRate }}%)</td><td>KES {{ number_format($_eiraL, 2) }}</td></tr>
+                @endif
                 <tr><td>Cover Type</td><td>Comprehensive</td></tr>
                 <tr><td>Status</td><td>{{ ucfirst($quotation->status) }}</td></tr>
                 <tr><td>Valid Until</td><td>{{ $quotation->created_at->addDays(15)->format('d M Y') }}</td></tr>

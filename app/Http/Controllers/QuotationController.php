@@ -99,6 +99,11 @@ class QuotationController extends Controller
             $analyticsBase = Quotation::query()
                 ->when(! $isAdmin, fn($q) => $q->where('user_id', $user->id));
         
+            $dbDriver = DB::connection()->getDriverName();
+            $dateExpr = $dbDriver === 'sqlite'
+                ? "strftime('%d %b', created_at) as date"
+                : "DATE_FORMAT(created_at, '%d %b') as date";
+
             $analytics = [
             'total'      => Quotation::count(),
             'today'      => Quotation::whereDate('created_at', today())->count(),
@@ -108,24 +113,25 @@ class QuotationController extends Controller
 
             // Daily trend — last 14 days
             'trend' => Quotation::select(
-                            DB::raw("DATE_FORMAT(created_at, '%d %b') as date"),
+                            DB::raw($dateExpr),
                             DB::raw('COUNT(*) as count')
                         )
                         ->where('created_at', '>=', now()->subDays(13)->startOfDay())
-                        ->groupBy('date', DB::raw("DATE(created_at)"))
-                        ->orderBy(DB::raw("DATE(created_at)"))
+                        ->groupBy('date', DB::raw('DATE(created_at)'))
+                        ->orderBy(DB::raw('DATE(created_at)'))
                         ->get(),
 
             // Per-company quotation count + total premium — for both charts
             'by_company' => Company::withCount('quotations')
                         ->withSum('quotations', 'total_premium')
-                        ->having('quotations_count', '>', 0)
                         ->get()
+                        ->filter(fn($c) => $c->quotations_count > 0)
                         ->map(fn($c) => [
                             'company'       => $c->name,
                             'count'         => $c->quotations_count,
                             'total_premium' => (int) $c->quotations_sum_total_premium,
-                        ]),
+                        ])
+                        ->values(),
         ];
                 
             // ── Users list for admin "Apply for User" modal ──────────
@@ -345,6 +351,14 @@ class QuotationController extends Controller
         if (!$user->hasRole('super-admin') && !$user->hasRole('admin') && $quotation->user_id !== $user->id) {
             abort(403);
         }
+    }
+
+    public function myQuote(Request $request)
+    {
+        $user = auth()->user();
+        $quotation = $user->quotations()->with(['user', 'company', 'items'])->latest()->firstOrFail();
+        $showSuccess = $request->query('generated') === '1';
+        return view('quotations.show', compact('quotation', 'showSuccess'));
     }
 
     public function preview(Request $request)

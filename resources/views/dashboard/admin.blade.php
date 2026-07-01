@@ -536,7 +536,7 @@
     </div>
     <!-- /db-main-content -->
 
-    <div class="db-right-sidebar">
+     {{-- <div class="db-right-sidebar">
       <a href="{{ route('quotations.index') }}" class="cta-card-link">
         <div class="cta-card">
           <div class="cta-card-icon" style="background:#e8f0fc;color:#1756c8"><i class="ti ti-file-description"></i></div>
@@ -565,7 +565,7 @@
           <div class="cta-card-desc">Configure system preferences</div>
         </div>
       </a>
-    </div>
+    </div>  --}}
     </div>
     <!-- /db-layout -->
 

@@ -546,6 +546,9 @@
   box-shadow:0 20px 60px rgba(0,0,0,.25);
   max-height:90vh;
 }
+
+.auth-error { color:#DC2626; font-size:11.5px; margin-top:4px; margin-bottom:0; }
+
 .auth-modal-close {
   position:absolute; top:12px; right:16px; font-size:28px; z-index:10;
   background:none; border:none; cursor:pointer; color:#999; line-height:1;
@@ -576,6 +579,10 @@
   border-radius:6px; font-size:14px; outline:none;
   transition:border-color .2s;
 }
+
+.auth-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:16px; }
+.auth-grid .auth-field { margin-bottom:0; }
+
 .auth-field input:focus { border-color:var(--blue); }
 .auth-submit { width:100%; margin-top:8px; }
 .auth-switch { text-align:center; margin-top:14px; font-size:13px; color:var(--text-muted); }

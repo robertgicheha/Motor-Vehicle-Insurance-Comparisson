@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" x-data="{ darkMode: localStorage.getItem('theme') === 'dark' || (!localStorage.getItem('theme') && window.matchMedia('(prefers-color-scheme: dark)').matches), sidebarOpen: true }" x-init="
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" x-data="{ darkMode: localStorage.getItem('theme') === 'dark', sidebarOpen: true }" x-init="
     darkMode ? document.documentElement.classList.add('dark') : document.documentElement.classList.remove('dark');
     $watch('darkMode', val => {
         document.documentElement.classList.toggle('dark', val);
@@ -54,6 +54,9 @@
     </div>
 
     <x-toast />
+    <script src="{{ asset('js/dashboard-charts.js') }}"></script>
+    <script src="{{ asset('js/user-dashboard-charts.js') }}" defer></script>
+
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     @stack('scripts')
 </body>

@@ -75,6 +75,8 @@ Route::get('auth/google/callback', [SocialiteController::class, 'handleGoogleCal
 Route::middleware(['auth', 'online'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
+    Route::get('/my-quote', [QuotationController::class, 'myQuote'])->name('my.quote');
+
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::patch('/profile/password', [ProfileController::class, 'updatePassword'])->name('profile.password');
@@ -124,6 +126,8 @@ Route::middleware(['auth', 'online'])->group(function () {
         Route::post('/companies/{company}/rates', [CompanyController::class, 'addRate'])->name('companies.rates.add');
         Route::patch('/companies/{company}/rates/{rate}', [CompanyController::class, 'updateRate'])->name('companies.rates.update');
         Route::delete('/companies/{company}/rates/{rate}', [CompanyController::class, 'destroyRate'])->name('companies.rates.destroy');
+        Route::post('/companies/{company}/rates/import', [CompanyController::class, 'importRates'])->name('companies.rates.import');
+        Route::post('/companies/import-rates', [CompanyController::class, 'importBulkCompanies'])->name('companies.import.bulk');
 
         Route::get('/compare-all', [CompareAllController::class, 'index'])->name('compare-all.index');
         Route::post('/compare-all', [CompareAllController::class, 'update'])->name('compare-all.update');

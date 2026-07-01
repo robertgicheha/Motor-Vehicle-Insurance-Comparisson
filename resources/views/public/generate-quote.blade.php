@@ -1,3 +1,35 @@
+@inject('companyModel', 'App\Models\Company')
+@inject('settingModel', 'App\Models\Setting')
+@inject('quoteModel', 'App\Models\Quotation')
+@php
+    $__companies = $companies ?? $companyModel->active()->with('rates')->get();
+    $__compareAllLogo = $settingModel->getValue('compare_all_logo');
+    $__compareAllLogoUrl = $__compareAllLogo ? asset('storage/' . $__compareAllLogo) : asset('images/benchmarking.png');
+    $__companyStats = $companyStats ?? $quoteModel->selectRaw('company_id, COUNT(*) as total, SUM(total_premium) as total_premium')
+        ->whereIn('company_id', $__companies->pluck('id'))
+        ->groupBy('company_id')
+        ->get()
+        ->keyBy('company_id');
+    $__totalQuotes = $__companyStats->sum('total');
+    $companyColors = ['#003087', '#0066B3', '#00205B', '#D0021B', '#7c3aed', '#0f7a65'];
+    $__companyData = $__companies->map(function ($c, $i) use ($companyColors, $__companyStats) {
+        $rate = $c->rates->firstWhere('item_name', 'Premium Rate');
+        $iraLevy = $c->rates->firstWhere('item_name', 'IRA Levy');
+        $stats = $__companyStats->get($c->id);
+        return [
+            'slug' => $c->slug,
+            'name' => $c->name,
+            'logo' => $c->logoUrl(),
+            'rate' => $rate ? (float) $rate->percentage / 100 : 0,
+            'taxRate' => $iraLevy ? (float) $iraLevy->percentage / 100 : 0.005,
+            'color' => $companyColors[$i % count($companyColors)],
+            'prefix' => $c->getInitials(),
+            'logoFallback' => $c->logoUrl(),
+            'quote_count' => $stats ? $stats->total : 0,
+            'total_premium' => $stats ? $stats->total_premium : 0,
+        ];
+    })->values();
+@endphp
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -14,6 +46,8 @@ Compare All Insurers
 <meta name="description" content="Get an instant motor insurance quote from {{ $mode === 'single' && $selectedCompany ? $selectedCompany->name : 'Kenya\'s leading insurers' }}. Compare premiums and download your quotation.">
 <link rel="canonical" href="{{ url('/generate-quote/' . ($mode === 'compare' ? 'compare-all' : ($selectedCompany?->slug ?? ''))) }}">
 <link rel="stylesheet" href="{{ asset('css/home.css') }}">
+ <link rel="icon" type="image/x-icon" href="{{ asset('Favicon.png') }}">
+    <link rel="icon" type="image/png" sizes="32x32" href="{{ asset('Favicon.png') }}">
 @vite(['resources/css/app.css'])
 <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -288,11 +322,22 @@ Compare All Insurers
       <button class="btn btn-primary" style="width:100%;justify-content:center;font-size:11px;padding:5px 10px">Generate Quote ↗</button>
     </a>
     @endforeach
-    <a href="{{ route('generate.quote', 'compare-all') }}" class="company-card no-underline" style="cursor:pointer;display:block">
-      <div class="company-logo-box"><img src="{{ asset('img/benchmarking.png') }}" alt="Compare All"></div>
-      <div class="company-name">Compare All</div>
-      <div class="company-rate">Compare rates from all insurers</div>
-      <button class="btn btn-primary" style="width:100%;justify-content:center;font-size:11px;padding:5px 10px">Compare All ↗</button>
+
+     <a href="{{ route('generate.quote', 'compare-all') }}" class="company-card no-underline" style="cursor:pointer;display:block;border:2px solid #D0021B;position:relative;overflow:hidden;transition:all .25s ease;border-radius:16px;box-shadow:0 4px 20px rgba(0,0,0,0.08)">
+      <div style="position:absolute;top:0;left:0;right:0;height:4px;background:#D0021B"></div>
+      <div class="company-logo-box" style="height:48px;margin-bottom:12px">
+        <img src="{{ $__compareAllLogoUrl }}" alt="Compare All" style="max-height:40px" onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
+        <span style="display:none;font-size:18px">📊</span>
+      </div>
+      <div class="company-name" style="font-size:14px;font-weight:700;margin-bottom:4px;color:#1a1a2e">Compare All</div>
+      <div style="display:flex;align-items:center;justify-content:center;gap:16px;margin-bottom:12px">
+        <div style="text-align:center">
+          <div style="font-size:10px;color:#6b7280;font-weight:500">Insurers</div>
+          <div style="font-size:13px;font-weight:800;color:#D0021B">{{ $__companyData->count() }}</div>
+        </div>
+    
+      </div>
+      <button class="btn btn-primary" style="width:100%;justify-content:center;font-size:12px;padding:8px 10px;background:#D0021B;border-color:#D0021B;border-radius:10px;font-weight:700">Compare All ↗</button>
     </a>
   </div>
 </section>
@@ -338,9 +383,9 @@ function guestGuard(callback) {
         } catch(e) {}
       }
     }
-    sessionStorage.setItem('auth_redirect', '/quotations?pending_quote=1');
+    sessionStorage.setItem('auth_redirect', '/dashboard?pending_quote=1');
     var alpineEl = document.querySelector('#authModal');
-    if (alpineEl && alpineEl.__x) { alpineEl.__x.$data.redirectTo = '/quotations?pending_quote=1'; }
+    if (alpineEl && alpineEl.__x) { alpineEl.__x.$data.redirectTo = '/dashboard?pending_quote=1'; }
     openAuthModal();
     return;
   }

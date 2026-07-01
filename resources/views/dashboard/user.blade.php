@@ -22,6 +22,8 @@
                         <span><span x-text="temp">{{ $weather['temperature'] }}</span>°C</span>
                     </div>
                 @endif
+
+
                 <a href="{{ route('quotations.create') }}"
                    class="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold bg-blue-500 hover:bg-blue-400 text-white rounded-lg transition">
                     <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
@@ -29,6 +31,8 @@
                 </a>
             </div>
         </div>
+
+    
 
         {{-- ─── KPI CARDS (4-COLUMN) ────────────────────────────────────── --}}
         <div class="mt-6 grid grid-cols-2 md:grid-cols-4 gap-3">
@@ -58,20 +62,46 @@
             </a>
         </div>
 
-        {{-- ─── STATUS BAR (LAST QUOTATION) ─────────────────────────────── --}}
-        @if(isset($recentQuotation))
-            <div class="bg-blue-600 rounded-2xl px-5 py-4 flex items-center justify-between shadow-sm">
-                <div>
-                    <p class="text-[10px] font-semibold uppercase tracking-widest text-blue-200">Last Quotation</p>
-                    <p class="text-sm font-bold text-white mt-0.5">{{ $recentQuotation->quotation_number }}</p>
-                    <p class="text-xs text-blue-200">{{ $recentQuotation->car_make }} {{ $recentQuotation->car_model }} - {{ number_format($recentQuotation->total_premium, 2) }} KES</p>
+       {{-- ─── STATUS BAR (LAST QUOTATION) ─────────────────────────────── --}}
+            @if(isset($recentQuotation))
+                <div x-data="{ show: true }" x-show="show" x-transition
+                    class="bg-green-600 rounded-2xl mt-5 px-5 py-4 flex items-center justify-between shadow-sm">
+
+                    <div>
+                        <p class="text-[10px] font-semibold uppercase tracking-widest text-white">
+                            Last Quotation
+                        </p>
+                        <p class="text-sm font-bold text-white mt-0.5">
+                            {{ $recentQuotation->quotation_number }}
+                        </p>
+                        <p class="text-xs text-white">
+                            {{ $recentQuotation->car_make }} {{ $recentQuotation->car_model }}
+                            - {{ number_format($recentQuotation->total_premium, 2) }} KES
+                        </p>
+                    </div>
+
+                    <div class="flex items-center gap-3">
+                        <a href="{{ route('quotations.show', $recentQuotation) }}"
+                        class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-white/20 text-white rounded-lg hover:bg-white/30 transition">
+                            View Details
+                        </a>
+
+                        <button
+                            @click="show = false"
+                            type="button"
+                            class="flex items-center justify-center w-8 h-8 rounded-full hover:bg-white/20 text-white transition"
+                            aria-label="Close">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    stroke-width="2"
+                                    d="M6 18L18 6M6 6l12 12"/>
+                            </svg>
+                        </button>
+                    </div>
+
                 </div>
-                <a href="{{ route('quotations.show', $recentQuotation) }}"
-                   class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-white/20 text-white rounded-lg hover:bg-white/30 transition">
-                    View Details
-                </a>
-            </div>
-        @endif
+            @endif
     </div>
 
     {{-- ─── TWO-COLUMN GRID ─────────────────────────────────────────────── --}}
@@ -80,20 +110,7 @@
         {{-- ─── LEFT COLUMN (2/3) ───────────────────────────────────────── --}}
         <div class="lg:col-span-2 space-y-6">
 
-            {{-- A. QUOTATION TREND CHART ─────────────────────────────────── --}}
-            @if(isset($monthlyQuotations) && count($monthlyQuotations) > 0)
-            <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
-                <div class="px-5 py-4 border-b border-gray-100 dark:border-gray-700">
-                    <h2 class="text-xs font-semibold text-gray-800 dark:text-white">Quotation Activity</h2>
-                    <p class="text-[10px] text-gray-400 mt-0.5">Monthly trend</p>
-                </div>
-                <div class="p-5">
-                    <canvas id="activityChart" height="200"></canvas>
-                </div>
-            </div>
-            @endif
-
-            {{-- B. RECENT QUOTATIONS TABLE ────────────────────────────────── --}}
+             {{-- A. RECENT QUOTATIONS TABLE ────────────────────────────────── --}}
             <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
                 <div class="px-5 py-4 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between">
                     <div>
@@ -144,6 +161,136 @@
                     </table>
                 </div>
             </div>
+
+                {{-- C. QUOTATION INSIGHTS CHARTS ──────────────────────────────── --}}
+                <div
+                    id="mic-quote-charts"
+                    class="space-y-6"
+                    data-chart-data="{{ json_encode([
+                        'status' => $quotationStatusBreakdown ?? [],
+                        'byCompany' => $companyQuotationCounts ?? [],
+                        'monthly' => $quotationsByMonth ?? [],
+                        'premiumByCompany' => $companyPremiumTotals ?? [],
+                        'companyColors' => $companyColorMap ?? [],
+                    ]) }}"
+                >
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                
+                        {{-- C1. STATUS BREAKDOWN (PIE) ───────────────────────── --}}
+                        <div class="chart-card bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+                            <div class="px-5 py-4 border-b border-gray-100 dark:border-gray-700">
+                                <h2 class="text-xs font-semibold text-gray-800 dark:text-white">Quotation Status</h2>
+                                <p class="text-[10px] text-gray-400 mt-0.5">Breakdown by status</p>
+                            </div>
+                            <div class="p-4">
+                                @if(isset($quotationStatusBreakdown) && count($quotationStatusBreakdown) > 0)
+                                    <div class="chart-wrap chart-wrap-sm">
+                                        <canvas id="statusPieChart"></canvas>
+                                    </div>
+                                    <ul id="statusPieLegend" class="chart-legend mt-3"></ul>
+                                @else
+                                    <p class="chart-empty">No status data yet.</p>
+                                @endif
+                            </div>
+                        </div>
+                
+                        {{-- C2. QUOTATIONS BY COMPANY (BAR) ──────────────────── --}}
+                        <div class="chart-card bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+                            <div class="px-5 py-4 border-b border-gray-100 dark:border-gray-700">
+                                <h2 class="text-xs font-semibold text-gray-800 dark:text-white">Quotations by Company</h2>
+                                <p class="text-[10px] text-gray-400 mt-0.5">Volume per insurer</p>
+                            </div>
+                            <div class="p-4">
+                                @if(isset($companyQuotationCounts) && count($companyQuotationCounts) > 0)
+                                    <div class="chart-wrap chart-wrap-sm">
+                                        <canvas id="companyBarChart"></canvas>
+                                    </div>
+                                @else
+                                    <p class="chart-empty">No company data yet.</p>
+                                @endif
+                            </div>
+                        </div>
+                
+                        {{-- C3. MONTHLY QUOTATIONS (LINE) ────────────────────── --}}
+                        <div class="chart-card bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+                            <div class="px-5 py-4 border-b border-gray-100 dark:border-gray-700">
+                                <h2 class="text-xs font-semibold text-gray-800 dark:text-white">Quotations Monthly</h2>
+                                <p class="text-[10px] text-gray-400 mt-0.5">Volume over time</p>
+                            </div>
+                            <div class="p-4">
+                                @if(isset($quotationsByMonth) && count($quotationsByMonth) > 0)
+                                    <div class="chart-wrap chart-wrap-sm">
+                                        <canvas id="monthlyLineChart"></canvas>
+                                    </div>
+                                @else
+                                    <p class="chart-empty">No monthly data yet.</p>
+                                @endif
+                            </div>
+                        </div>
+                
+                        {{-- C4. PREMIUM COMPARISON BY COMPANY (BAR, WIDE) ────── --}}
+                        <div class="chart-card bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden sm:col-span-2 lg:col-span-3">
+                            <div class="px-5 py-4 border-b border-gray-100 dark:border-gray-700">
+                                <h2 class="text-xs font-semibold text-gray-800 dark:text-white">Premium Comparison</h2>
+                                <p class="text-[10px] text-gray-400 mt-0.5">Total premium generated per company</p>
+                            </div>
+                            <div class="p-4">
+                                @if(isset($companyPremiumTotals) && count($companyPremiumTotals) > 0)
+                                    <div class="chart-wrap chart-wrap-wide">
+                                        <canvas id="premiumBarChart"></canvas>
+                                    </div>
+                                @else
+                                    <p class="chart-empty">No premium data yet.</p>
+                                @endif
+                            </div>
+                        </div>
+                
+                    </div>
+                </div>
+                
+                {{-- D. COMPANY COMPARISON TABLE ───────────────────────────────── --}}
+                <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+                    <div class="px-5 py-4 border-b border-gray-100 dark:border-gray-700">
+                        <h2 class="text-xs font-semibold text-gray-800 dark:text-white">Company Comparison</h2>
+                        <p class="text-[10px] text-gray-400 mt-0.5">Your totals per insurer</p>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-xs">
+                            <thead>
+                                <tr class="bg-gray-50 dark:bg-gray-700/40">
+                                    <th class="px-5 py-2.5 text-left font-semibold text-gray-400 uppercase tracking-wider text-[10px]">Company</th>
+                                    <th class="px-5 py-2.5 text-right font-semibold text-gray-400 uppercase tracking-wider text-[10px]">Quotations</th>
+                                    <th class="px-5 py-2.5 text-right font-semibold text-gray-400 uppercase tracking-wider text-[10px]">Total Premium</th>
+                                    <th class="px-5 py-2.5 text-right font-semibold text-gray-400 uppercase tracking-wider text-[10px]">Avg Premium</th>
+                                    <th class="px-5 py-2.5 text-right font-semibold text-gray-400 uppercase tracking-wider text-[10px]">Share</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
+                                @forelse($companyComparison ?? [] as $row)
+                                    <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/30">
+                                        <td class="px-5 py-2.5 font-medium text-gray-800 dark:text-white">{{ $row['company'] }}</td>
+                                        <td class="px-5 py-2.5 text-right text-gray-500 dark:text-gray-400">{{ number_format($row['total_quotations']) }}</td>
+                                        <td class="px-5 py-2.5 text-right text-gray-500 dark:text-gray-400">{{ number_format($row['total_premium'], 0) }}</td>
+                                        <td class="px-5 py-2.5 text-right text-gray-500 dark:text-gray-400">{{ number_format($row['avg_premium'], 0) }}</td>
+                                        <td class="px-5 py-2.5 text-right">
+                                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">
+                                                {{ number_format($row['market_share'], 1) }}%
+                                            </span>
+                                        </td>
+                                    </tr>
+                                @empty
+                                    <tr>
+                                        <td colspan="5" class="px-5 py-10 text-center text-xs text-gray-400">
+                                            No company data yet.
+                                        </td>
+                                    </tr>
+                                @endforelse
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+
         </div>
 
         {{-- ─── RIGHT COLUMN (1/3) ───────────────────────────────────────── --}}
@@ -519,9 +666,14 @@
     {{-- ─── PENDING QUOTE SECTION ──────────────────────────────── --}}
     <div id="pending-quote-section" class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden" style="display:none;">
         <div class="px-5 py-4 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between">
-            <div>
-                <h2 class="text-xs font-semibold text-gray-800 dark:text-white">Pending Quote</h2>
-                <p class="text-[10px] text-gray-400 mt-0.5">Quote generated from your session</p>
+            <div class="flex items-center gap-3">
+                <div>
+                    <h2 class="text-xs font-semibold text-gray-800 dark:text-white">Quote Generated</h2>
+                    <p class="text-[10px] text-gray-400 mt-0.5">Your quotation has been saved successfully</p>
+                </div>
+                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">
+                    Generated
+                </span>
             </div>
             <a id="pq-view-link" href="#" class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-blue-500 text-white rounded-lg hover:bg-blue-400 transition">
                 View Full Quote
@@ -570,36 +722,107 @@ window.MIC_COMPANIES = @json($_companyData);
 </script>
 <script>
 (function(){
+  var urlParams = new URLSearchParams(window.location.search);
+  var hasPending = urlParams.has('pending_quote');
   var pendingCompany = sessionStorage.getItem('pending_quote_company');
   var pendingData = sessionStorage.getItem('micQuoteData');
-  if (pendingCompany && pendingData) {
-    sessionStorage.removeItem('pending_quote_company');
+
+  if ((hasPending || pendingCompany) && pendingData) {
     try {
       var data = JSON.parse(pendingData);
       var company = (window.MIC_COMPANIES || []).find(function(c) { return c.slug === pendingCompany; });
-      if (company) {
-        var premium = (data.value || 0) * company.rate;
-        var tax = premium * company.taxRate;
-        var total = premium + tax;
-        var fmt = function(n) { return 'KES ' + Number(n).toLocaleString('en-KE', {minimumFractionDigits:0, maximumFractionDigits:0}); };
-        var quoteNum = company.prefix + '-' + new Date().getFullYear() + '/' + String(Math.floor(Math.random()*9000)+1000);
-        var name = [data.salutation, data.firstName, data.lastName].filter(Boolean).join(' ');
-        document.getElementById('pending-quote-section').style.display = 'block';
-        document.getElementById('pq-company').textContent = company.name;
-        document.getElementById('pq-company-color').style.background = company.color;
-        document.getElementById('pq-name').textContent = name || '—';
-        document.getElementById('pq-vehicle').textContent = ((data.make || '') + ' ' + (data.model || '')).trim() || '—';
-        document.getElementById('pq-reg').textContent = data.reg || '—';
-        document.getElementById('pq-value').textContent = fmt(data.value);
-        document.getElementById('pq-premium').textContent = fmt(premium);
-        document.getElementById('pq-tax').textContent = fmt(tax);
-        document.getElementById('pq-total').textContent = fmt(total);
-        document.getElementById('pq-rate').textContent = (company.rate * 100).toFixed(1) + '%';
-        document.getElementById('pq-quote-num').textContent = quoteNum;
-        document.getElementById('pq-view-link').href = '/quotation/' + pendingCompany;
-        sessionStorage.setItem('micQuoteData', JSON.stringify(data));
-      }
-    } catch(e) { console.warn('Could not render pending quote:', e); }
+      if (!company) { console.warn('Company not found:', pendingCompany); return; }
+
+      var premium = (data.value || 0) * company.rate;
+      var tax = premium * company.taxRate;
+      var total = premium + tax;
+      var fmtNum = function(n) { return 'KES ' + Number(n).toLocaleString('en-KE', {minimumFractionDigits:0, maximumFractionDigits:0}); };
+      var name = [data.salutation, data.firstName, data.lastName].filter(Boolean).join(' ');
+
+      document.getElementById('pending-quote-section').style.display = 'block';
+      document.getElementById('pq-company').textContent = company.name;
+      document.getElementById('pq-company-color').style.background = company.color;
+      document.getElementById('pq-name').textContent = name || '—';
+      document.getElementById('pq-vehicle').textContent = ((data.make || '') + ' ' + (data.model || '')).trim() || '—';
+      document.getElementById('pq-reg').textContent = data.reg || '—';
+      document.getElementById('pq-value').textContent = fmtNum(data.value);
+      document.getElementById('pq-premium').textContent = fmtNum(premium);
+      document.getElementById('pq-tax').textContent = fmtNum(tax);
+      document.getElementById('pq-total').textContent = fmtNum(total);
+      document.getElementById('pq-rate').textContent = (company.rate * 100).toFixed(1) + '%';
+
+      fetch('/api/quotation/from-session', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || ''
+        },
+        body: JSON.stringify({
+          company_slug: pendingCompany,
+          car_make: data.make || '',
+          car_model: data.model || '',
+          car_year: data.year || '',
+          car_registration: data.reg || '',
+          car_valuation: Number(data.value) || 0,
+        }),
+      })
+      .then(function(r) { return r.json(); })
+      .then(function(res) {
+        if (res.success) {
+          showDashboardToast('Your Quotation has been successfully generated. <a href=\'/my-quote\' style=\'color:#fff;font-weight:700;text-decoration:underline\'>Click here to view it</a>', 'success');
+          document.getElementById('pq-quote-num').textContent = res.quotation.quotation_number;
+          document.getElementById('pq-view-link').href = '/my-quote';
+
+          sessionStorage.removeItem('pending_quote_company');
+          sessionStorage.removeItem('micQuoteData');
+          sessionStorage.removeItem('auth_redirect');
+
+          setTimeout(function() {
+            window.location.href = '/dashboard';
+          }, 4000);
+        }
+      })
+      .catch(function(e) {
+        console.warn('Failed to save quotation:', e);
+        renderPendingQuoteFromSession(pendingCompany, data, company);
+      });
+
+    } catch(e) { console.warn('Pending quote error:', e); }
+  }
+
+  function showDashboardToast(message, type) {
+    type = type || 'success';
+    var container = document.createElement('div');
+    container.id = 'pending-toast-container';
+    container.style.cssText = 'position:fixed;top:20px;right:20px;z-index:9999;display:flex;flex-direction:column;gap:8px';
+    document.body.appendChild(container);
+
+    var toast = document.createElement('div');
+    toast.style.cssText = 'padding:12px 20px;border-radius:8px;font-size:13px;font-weight:600;box-shadow:0 4px 20px rgba(0,0,0,0.15);display:flex;align-items:center;gap:8px';
+    if (type === 'success') {
+      toast.style.background = '#059669';
+      toast.style.color = 'white';
+      toast.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> ' + message;
+    } else {
+      toast.style.background = '#DC2626';
+      toast.style.color = 'white';
+      toast.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg> ' + message;
+    }
+    container.appendChild(toast);
+
+    setTimeout(function() {
+      toast.style.opacity = '0';
+      toast.style.transition = 'opacity 0.3s';
+      setTimeout(function() { container.remove(); }, 300);
+    }, 4000);
+  }
+
+  function renderPendingQuoteFromSession(pendingCompany, data, company) {
+    if (!company) return;
+    var quoteNum = company.prefix + '-' + new Date().getFullYear() + '/' + String(Math.floor(Math.random()*9000)+1000);
+    document.getElementById('pq-quote-num').textContent = quoteNum;
+    document.getElementById('pq-view-link').href = '/my-quote';
+    showDashboardToast('Quote preview ready. Sign in to save.', 'info');
   }
 })();
 </script>

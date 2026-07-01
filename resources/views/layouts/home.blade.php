@@ -449,7 +449,7 @@
 <section class="section section-alt" style="background-color: #005F9E;">
   <div style="text-align:center;margin-bottom:24px">
     <div class="section-title" style="color:#F9F9FF;font-size:20px">Choose Your Insurer</div>
-    <div class="section-sub" style="color:#F9F9FF;font-size:15px;margin-top:4px" x-data="{tq: '{{ $__totalQuotes }}'}" x-init="setInterval(() => { fetch('{{ route("motor.stats") }}').then(r=>r.json()).then(d => { tq = d.total_quotes; }).catch(()=>{}); }, 30000);">Select an insurer to generate a tailored quote. <strong style="color:#fff"><span x-text="tq">{{ $__totalQuotes }}</span></strong> quotes generated across all insurers.</div>
+    <div class="section-sub" style="color:#F9F9FF;font-size:15px;margin-top:4px" x-data="{tq: '{{ $__totalQuotes }}'}" x-init="setInterval(() => { fetch('{{ route("motor.stats") }}').then(r=>r.json()).then(d => { tq = d.total_quotes; }).catch(()=>{}); }, 30000);">Select an insurer to generate a tailored quote. <strong style="color:#fff"><span x-text="tq">{{ $__totalQuotes }}</span></strong> quote(s) generated across all insurers.</div>
   </div>
   <div class="company-cards" style="gap:20px" x-data="companyStats()" x-init="init()">
 
@@ -469,11 +469,8 @@
           <div style="font-size:10px;color:#6b7280;font-weight:500">Rate</div>
           <div style="font-size:13px;font-weight:800;color:{{ $cd['color'] }}">{{ $cd['rate'] * 100 }}%</div>
         </div>
-        <div style="width:1px;height:24px;background:#e5e7eb"></div>
-        <div style="text-align:center">
-          <div style="font-size:10px;color:#6b7280;font-weight:500">Quotes</div>
-          <div style="font-size:13px;font-weight:800;color:{{ $cd['color'] }}" x-text="stats['{{ $cd['slug'] }}'] ?? '{{ $cd['quote_count'] }}'">0</div>
-        </div>
+        
+     
       </div>
       <button class="btn btn-primary" style="width:100%;justify-content:center;font-size:12px;padding:8px 10px;background:{{ $cd['color'] }};border-color:{{ $cd['color'] }};border-radius:10px;font-weight:700">Get Quote ↗</button>
     </a>
@@ -491,11 +488,7 @@
           <div style="font-size:10px;color:#6b7280;font-weight:500">Insurers</div>
           <div style="font-size:13px;font-weight:800;color:#D0021B">{{ $__companyData->count() }}</div>
         </div>
-        <div style="width:1px;height:24px;background:#e5e7eb"></div>
-        <div style="text-align:center">
-          <div style="font-size:10px;color:#6b7280;font-weight:500">Total Quotes</div>
-          <div style="font-size:13px;font-weight:800;color:#D0021B" x-text="totalQuotes">{{ $__totalQuotes }}</div>
-        </div>
+    
       </div>
       <button class="btn btn-primary" style="width:100%;justify-content:center;font-size:12px;padding:8px 10px;background:#D0021B;border-color:#D0021B;border-radius:10px;font-weight:700">Compare All ↗</button>
     </a>
@@ -669,7 +662,7 @@ window.MIC_MODE = 'all';
 window.MIC_SELECTED_COMPANY = null;
 window.hardcodedLogos = @json(collect(\App\Models\Company::hardcodedLogoMap())->mapWithKeys(fn($p, $s) => [$s => asset($p)]));
 function guestGuard(callback) {
-  if (window.MIC_GUEST) { sessionStorage.setItem('auth_redirect', '/quotations?pending_quote=1'); openAuthModal(); return; }
+  if (window.MIC_GUEST) { sessionStorage.setItem('auth_redirect', '/dashboard?pending_quote=1'); openAuthModal(); return; }
   if (typeof callback === 'function') callback();
 }
 function fallbackLogo(el, slug) {

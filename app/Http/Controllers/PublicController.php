@@ -58,6 +58,10 @@ class PublicController extends Controller
             $hardcodedLogos[$slug] = asset($path);
         }
 
+        // Logo shown in the "Compare All" box on generate-quote.blade.php (line 299).
+        // Uses the same asset() pattern as $hardcodedLogos above.
+        $__compareAllLogoUrl = asset('images/compare-all-logo.png');
+
         $userQuotation = null;
         if (auth()->check() && $selectedCompany) {
             $userQuotation = auth()->user()->quotations()
@@ -66,7 +70,10 @@ class PublicController extends Controller
                 ->first();
         }
 
-        return view('quotation', compact('companies', 'selectedCompany', 'taxRate', 'coverage', 'companyData', 'userQuotation', 'hardcodedLogos'));
+        $iraLevyRate = $selectedCompany?->rates->firstWhere('item_name', 'IRA Levy');
+        $taxRate = $iraLevyRate ? (float) $iraLevyRate->percentage / 100 : 0.005;
+
+        return view('quotation', compact('companies', 'selectedCompany', 'taxRate', 'coverage', 'companyData', 'userQuotation', 'hardcodedLogos', '__compareAllLogoUrl'));
     }
 
     public function lookupQuotation(Request $request)
@@ -208,7 +215,7 @@ class PublicController extends Controller
             'total_premium' => $total,
             'excess_own_damage' => 0,
             'excess_theft' => 0,
-            'status' => 'processing',
+            'status' => 'generated',
             'breakdown' => [
                 'basic_premium' => $basicPremium,
                 'base_premium' => $basePremium,

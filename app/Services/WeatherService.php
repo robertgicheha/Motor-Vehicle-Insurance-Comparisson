@@ -53,78 +53,47 @@ class WeatherService
                     }
                 }
 
-            try {
-                // ── 1. Current weather ─────────────────────────────────────
-                $currentRes = Http::timeout(5)->get(
-                    'https://api.openweathermap.org/data/4.0/onecall/current',
-                    ['lat' => $lat, 'lon' => $lon, 'appid' => $apiKey, 'units' => 'metric']
+          try {
+                // ── One Call 3.0: current + minutely + alerts in a single request ──
+                $res = Http::timeout(5)->get(
+                    'https://api.openweathermap.org/data/3.0/onecall',
+                    [
+                        'lat'     => $lat,
+                        'lon'     => $lon,
+                        'appid'   => $apiKey,
+                        'units'   => 'metric',
+                        'exclude' => 'hourly,daily',
+                    ]
                 );
 
-                if (!$currentRes->successful()) {
+                if (!$res->successful()) {
                     return $this->fallbackWeather($city);
                 }
 
-                $c       = $currentRes->json()['current'];
-                // $now     = \Carbon\Carbon::now(new \DateTimeZone($tz));  
+                $body    = $res->json();
+                $c       = $body['current'];
                 $now     = \Carbon\Carbon::now('Africa/Nairobi');
                 $sunrise = \Carbon\Carbon::createFromTimestamp($c['sunrise'])->setTimezone($tz);
                 $sunset  = \Carbon\Carbon::createFromTimestamp($c['sunset'])->setTimezone($tz);
 
-                // ── 2. 1-minute timeline (next 5 minutes precipitation) ────
-                $minuteTrend = [];
-                try {
-                    $minRes = Http::timeout(5)->get(
-                        'https://api.openweathermap.org/data/4.0/onecall/timeline/1min',
-                        ['lat' => $lat, 'lon' => $lon, 'appid' => $apiKey, 'units' => 'metric']
-                    );
-                    if ($minRes->successful()) {
-                        $minuteTrend = collect($minRes->json()['minutely'] ?? [])
-                            ->take(5)
-                            ->map(fn($m) => [
-                                'time'          => \Carbon\Carbon::createFromTimestamp($m['dt'])->setTimezone($tz)->format('H:i'),
-                                'precipitation' => round($m['precipitation'] ?? 0, 2),
-                            ])
-                            ->values()
-                            ->toArray();
-                    }
-                } catch (\Exception $e) {
-                    \Log::warning('Weather 1min timeline failed: ' . $e->getMessage());
-                }
+                $minuteTrend = collect($body['minutely'] ?? [])
+                    ->take(5)
+                    ->map(fn($m) => [
+                        'time'          => \Carbon\Carbon::createFromTimestamp($m['dt'])->setTimezone($tz)->format('H:i'),
+                        'precipitation' => round($m['precipitation'] ?? 0, 2),
+                    ])
+                    ->values()
+                    ->toArray();
 
-                // ── 3. Active weather alerts ───────────────────────────────
-                $alerts = [];
-                $alertIds = $currentRes->json()['alerts'] ?? [];
-                foreach ($alertIds as $alert) {
-                    try {
-                        if (!empty($alert['id'])) {
-                            $alertRes = Http::timeout(5)->get(
-                                "https://api.openweathermap.org/data/4.0/onecall/alert/{$alert['id']}",
-                                ['appid' => $apiKey]
-                            );
-                            if ($alertRes->successful()) {
-                                $a = $alertRes->json();
-                                $alerts[] = [
-                                    'event'       => $a['event'] ?? $alert['event'] ?? 'Weather Alert',
-                                    'source'      => $a['sender_name'] ?? $alert['sender_name'] ?? '',
-                                    'description' => $a['description'] ?? $alert['description'] ?? '',
-                                    'start'       => \Carbon\Carbon::createFromTimestamp($a['start'] ?? $alert['start'])->setTimezone($tz)->format('d M H:i'),
-                                    'end'         => \Carbon\Carbon::createFromTimestamp($a['end'] ?? $alert['end'])->setTimezone($tz)->format('d M H:i'),
-                                ];
-                            }
-                        } else {
-                            // Alert has no separate ID endpoint — use inline data
-                            $alerts[] = [
-                                'event'       => $alert['event'] ?? 'Weather Alert',
-                                'source'      => $alert['sender_name'] ?? '',
-                                'description' => $alert['description'] ?? '',
-                                'start'       => \Carbon\Carbon::createFromTimestamp($alert['start'])->setTimezone($tz)->format('d M H:i'),
-                                'end'         => \Carbon\Carbon::createFromTimestamp($alert['end'])->setTimezone($tz)->format('d M H:i'),
-                            ];
-                        }
-                    } catch (\Exception $e) {
-                        \Log::warning('Weather alert fetch failed: ' . $e->getMessage());
-                    }
-                }
+                $alerts = collect($body['alerts'] ?? [])
+                    ->map(fn($a) => [
+                        'event'       => $a['event'] ?? 'Weather Alert',
+                        'source'      => $a['sender_name'] ?? '',
+                        'description' => $a['description'] ?? '',
+                        'start'       => \Carbon\Carbon::createFromTimestamp($a['start'])->setTimezone($tz)->format('d M H:i'),
+                        'end'         => \Carbon\Carbon::createFromTimestamp($a['end'])->setTimezone($tz)->format('d M H:i'),
+                    ])
+                    ->toArray();
 
                 return [
                     // Core

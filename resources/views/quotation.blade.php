@@ -152,5 +152,79 @@ window.selectedCompanySlug = {{ $selectedCompany ? json_encode($selectedCompany-
 @endphp
 window.quotationDbData = @json($_quotationDbData);
 window.MIC_AUTH = @json(auth()->check());
+window.MIC_GUEST = @json(auth()->guest());
+window.MIC_QUOTATION_SLUG = {{ $selectedCompany ? json_encode($selectedCompany->slug) : 'null' }};
 </script>
+
+@if(auth()->guest())
+<script>
+function openAuthModal(tab) {
+  if (!sessionStorage.getItem('auth_redirect')) {
+    sessionStorage.setItem('auth_redirect', window.location.href);
+  }
+  document.getElementById('authModal').style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+  if (tab && window.Alpine) {
+    var el = document.querySelector('[x-data]');
+    if (el && el.__x) el.__x.$data.tab = tab;
+  }
+}
+
+function closeAuthModal() {
+  document.getElementById('authModal').style.display = 'none';
+  document.body.style.overflow = '';
+}
+
+(function(){
+  if (window.MIC_GUEST) {
+    var banner = document.createElement('div');
+    banner.id = 'guest-save-banner';
+    banner.style.cssText = 'position:fixed;bottom:0;left:0;right:0;background:linear-gradient(135deg,#003D7A,#0066B3);color:white;padding:14px 24px;z-index:999;display:flex;align-items:center;justify-content:center;gap:16px;flex-wrap:wrap;font-size:14px;box-shadow:0 -4px 20px rgba(0,0,0,0.15)';
+    banner.innerHTML = 'You are viewing a guest quotation. <strong>Sign in</strong> to save and manage your quotes. ' +
+      '<button onclick="guestSaveQuote()" style="background:white;color:#003D7A;border:none;padding:8px 20px;border-radius:6px;font-weight:700;font-size:13px;cursor:pointer">Sign in to Save</button>' +
+      '<button onclick="this.parentElement.remove()" style="background:transparent;color:rgba(255,255,255,.7);border:1px solid rgba(255,255,255,.3);padding:8px 16px;border-radius:6px;font-size:12px;cursor:pointer">Continue as Guest</button>';
+    document.body.appendChild(banner);
+  }
+
+  window.guestSaveQuote = function() {
+    var banner = document.getElementById('guest-save-banner');
+    if (banner) banner.remove();
+
+    var slug = window.MIC_QUOTATION_SLUG;
+    if (!slug) {
+      var companies = window.quotationData || [];
+      slug = companies.length > 0 ? companies[0].slug : null;
+    }
+    if (slug) {
+      sessionStorage.setItem('pending_quote_company', slug);
+      try {
+        var raw = sessionStorage.getItem('micQuoteData');
+        if (!raw) {
+          var fd = getFormData();
+          sessionStorage.setItem('micQuoteData', JSON.stringify({
+            firstName: fd.firstName || '',
+            lastName: fd.lastName || '',
+            salutation: fd.salutation || '',
+            phone: fd.phone || '',
+            email: fd.email || '',
+            reg: fd.reg || '',
+            chassis: fd.chassis || '',
+            make: fd.make || '',
+            model: fd.model || '',
+            body: fd.body || '',
+            year: fd.year || '',
+            color: fd.color || '',
+            value: Number(fd.value) || 0,
+            mode: slug,
+          }));
+        }
+      } catch(e) {}
+    }
+    sessionStorage.setItem('auth_redirect', '/dashboard?pending_quote=1');
+    openAuthModal();
+  };
+})();
+</script>
+@endif
+
 @endsection

@@ -15,6 +15,11 @@
                     <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
                     Add Company
                 </a>
+                <button onclick="document.getElementById('bulkImportModal').classList.remove('hidden')"
+                        class="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold bg-violet-500 hover:bg-violet-400 text-white rounded-lg transition">
+                    <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
+                    Bulk Import
+                </button>
             </div>
         </div>
 
@@ -163,4 +168,47 @@
 
     @endif
 </div>
+
+{{-- ─── BULK IMPORT MODAL ─────────────────────────────────────────────── --}}
+<div id="bulkImportModal" class="fixed inset-0 z-50 flex items-center justify-center hidden bg-black/50" x-cloak>
+    <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 w-full max-w-2xl mx-4 max-h-[90vh] overflow-y-auto">
+        <div class="px-6 py-4 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between">
+            <div class="flex items-center gap-2">
+                <svg class="w-4 h-4 text-violet-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
+                <h2 class="text-xs font-semibold text-gray-900 dark:text-white">Bulk Import Companies with Rates</h2>
+            </div>
+            <button onclick="document.getElementById('bulkImportModal').classList.add('hidden')" class="text-gray-400 hover:text-gray-600">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+        </div>
+        <div class="p-6">
+            <form action="{{ route('admin.companies.import.bulk') }}" method="POST" enctype="multipart/form-data" class="space-y-4">
+                @csrf
+                <div>
+                    <label class="block text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Upload Excel File (XLSX or CSV)</label>
+                    <input type="file" name="file" accept=".xlsx,.csv" required
+                           class="block w-full text-xs text-gray-500 dark:text-gray-400 file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-micblue file:text-white hover:file:bg-blue-600 transition cursor-pointer">
+                    <p class="mt-1 text-[10px] text-gray-400">Max 10MB.</p>
+                </div>
+
+                <div class="bg-gray-50 dark:bg-gray-700/30 rounded-xl p-4">
+                    <h4 class="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">Expected Format</h4>
+                    <p class="text-[10px] text-gray-500 dark:text-gray-400 mb-2">First row: company names. First column: rate item labels. Cells: rate values.</p>
+                    <p class="text-[10px] text-gray-500 dark:text-gray-400">Companies are auto-created. Categories are auto-detected from item names.</p>
+                </div>
+
+                <div class="flex items-center gap-2 justify-end">
+                    <button type="button" onclick="document.getElementById('bulkImportModal').classList.add('hidden')"
+                            class="px-4 py-2 text-xs font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition">Cancel</button>
+                    <button type="submit"
+                            class="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold bg-violet-500 hover:bg-violet-400 text-white rounded-lg transition">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+                        Import
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
 </x-app-layout>

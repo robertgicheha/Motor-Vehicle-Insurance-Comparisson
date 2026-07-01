@@ -144,6 +144,8 @@ class DashboardController extends Controller
             ->orderBy('sort_key')
             ->get();
 
+        $data['premiumTrend'] = $premiumTrend;
+
         $data['allActivities'] = ActivityLog::with('user')->latest()->take(20)->get();
         $data['myActivities'] = ActivityLog::where('user_id', auth()->id())->latest()->take(10)->get();
         $data['unreadNotifications'] = auth()->user()->unreadNotifications()->latest()->take(5)->get();
@@ -255,6 +257,48 @@ class DashboardController extends Controller
         $data['recentQuotation'] = $user->quotations()->latest()->first();
         $data['recentNotifications'] = $user->unreadNotifications()->latest()->take(5)->get();
         $data['unreadCount'] = $user->unreadNotifications()->count();
+
+        // ── APPEND BELOW YOUR EXISTING LINES, RIGHT BEFORE `return view(...)` ──
+        // Nothing above this needs to change. These reuse $user, $companyColorMap,
+        // and $data['totalQuotations'] that you already compute.
+        // C1. Status breakdown (pie chart)
+        $data['quotationStatusBreakdown'] = $user->quotations()
+            ->select('status', DB::raw('count(*) as total'))
+            ->groupBy('status')
+            ->pluck('total', 'status');
+        // C2. Quotations by company (bar chart) — alias of what you already build
+        $data['companyQuotationCounts'] = $data['quotationsByCompany'];
+        // C3. Quotations monthly (line chart) — reshape monthlyQuotations into
+        // a "label => count" map the chart can consume directly (e.g. "Jul 2026" => 4)
+        $data['quotationsByMonth'] = $data['monthlyQuotations']
+            ->mapWithKeys(fn($m) => [
+                \Carbon\Carbon::createFromFormat('Y-m', $m->month)->format('M Y') => $m->total,
+            ]);
+        // C4 + Table. One query (withCount + withSum) covering premium comparison
+        // and the company comparison table — same pattern as $data['quotationsByCompany']
+        $companyStats = Company::active()
+            ->withCount(['quotations as user_quotations_count' => fn($q) => $q->where('user_id', $user->id)])
+            ->withSum(['quotations as user_premium_sum' => fn($q) => $q->where('user_id', $user->id)], 'total_premium')
+            ->get()
+            ->filter(fn($c) => $c->user_quotations_count > 0);
+        $data['companyPremiumTotals'] = $companyStats
+            ->mapWithKeys(fn($c) => [$c->name => (float) ($c->user_premium_sum ?? 0)]);
+        $totalUserQuotations = $data['totalQuotations'];
+        $data['companyComparison'] = $companyStats
+            ->map(fn($c) => [
+                'company' => $c->name,
+                'total_quotations' => $c->user_quotations_count,
+                'total_premium' => (float) ($c->user_premium_sum ?? 0),
+                'avg_premium' => $c->user_quotations_count > 0
+                    ? ($c->user_premium_sum ?? 0) / $c->user_quotations_count
+                    : 0,
+                'market_share' => $totalUserQuotations > 0
+                    ? ($c->user_quotations_count / $totalUserQuotations) * 100
+                    : 0,
+            ])
+            ->sortByDesc('total_quotations')
+            ->values()
+            ->all();
 
         return view('dashboard.user', $data);
     }

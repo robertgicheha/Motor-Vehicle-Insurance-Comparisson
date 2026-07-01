@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Imports\CompanyRatesImport;
+use App\Imports\RatesImport;
 use App\Models\ChangeRequest;
 use App\Models\Company;
 use App\Models\Rate;
@@ -270,5 +272,51 @@ class CompanyController extends Controller
         $rate->delete();
         AuditService::activity('rate_deleted', "Rate {$rate->item_name} deleted for {$company->name}");
         return back()->with('success', 'Rate deleted.');
+    }
+
+    public function importRates(Request $request, Company $company)
+    {
+        $request->validate([
+            'file' => 'required|file|mimes:xlsx,csv,json|max:5120',
+        ]);
+
+        $file = $request->file('file');
+        $extension = $file->getClientOriginalExtension();
+
+        $import = new RatesImport;
+        $result = $import->import($file->getPathname(), $company->id, $extension);
+
+        $message = "Imported {$result['imported']} rates.";
+        if (!empty($result['errors'])) {
+            return back()->with('import_errors', $result['errors'])->with('success', $message);
+        }
+
+        AuditService::activity('rates_imported', "{$result['imported']} rates imported for {$company->name}");
+        return back()->with('success', $message);
+    }
+
+    public function importBulkCompanies(Request $request)
+    {
+        $request->validate([
+            'file' => 'required|file|mimes:xlsx,csv|max:10240',
+        ]);
+
+        $file = $request->file('file');
+        $extension = $file->getClientOriginalExtension();
+
+        $import = new CompanyRatesImport;
+        $result = $import->import($file->getPathname(), $extension);
+
+        $message = "Imported {$result['imported']} rates across companies.";
+        if (!empty($result['companies_created'])) {
+            $message .= ' New companies: ' . implode(', ', $result['companies_created']) . '.';
+        }
+
+        if (!empty($result['errors'])) {
+            return back()->with('import_errors', $result['errors'])->with('success', $message);
+        }
+
+        AuditService::activity('bulk_companies_imported', "Bulk companies import: {$result['imported']} rates");
+        return back()->with('success', $message);
     }
 }

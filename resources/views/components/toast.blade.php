@@ -14,16 +14,16 @@
 <div
     x-data="toastManager({{ json_encode($flashMessages) }})"
     x-init="init()"
-    class="fixed top-4 right-4 z-[100] flex flex-col gap-2 max-w-sm w-full pointer-events-none">
+    class="fixed bottom-6 left-1/2 -translate-x-1/2 z-[100] flex flex-col gap-2 max-w-sm w-full pointer-events-none">
     <template x-for="(toast, index) in toasts" :key="index">
         <div
             x-show="toast.show"
             x-transition:enter="transition ease-out duration-300"
-            x-transition:enter-start="translate-x-8 opacity-0"
-            x-transition:enter-end="translate-x-0 opacity-100"
+            x-transition:enter-start="translate-y-4 opacity-0"
+            x-transition:enter-end="translate-y-0 opacity-100"
             x-transition:leave="transition ease-in duration-200"
-            x-transition:leave-start="translate-x-0 opacity-100"
-            x-transition:leave-end="translate-x-8 opacity-0"
+            x-transition:leave-start="translate-y-0 opacity-100"
+            x-transition:leave-end="translate-y-4 opacity-0"
             class="pointer-events-auto w-full rounded-lg shadow-lg px-4 py-3 flex items-start gap-3"
             :class="{
                 'bg-emerald-800 text-white': toast.type === 'success',

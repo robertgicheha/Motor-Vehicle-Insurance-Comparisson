@@ -1,6 +1,7 @@
 <x-app-layout>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
-  
+    <script src="{{ asset('js/dashboard-charts.js') }}"></script>
+
     <div class="db-root fade-in">
       <div class="db-layout">
       <div class="db-main-content">
@@ -158,24 +159,77 @@
       </div>
 
       <div class="db-section-label">Analytics</div>
-      <div class="db-chart-grid">
-        <div class="db-card" style="max-width:360px">
-          <div class="db-card-header"><span><span class="dot"></span>Quotations by Company</span></div>
-          <canvas id="companyChart" height="200"></canvas>
+<div class="db-chart-grid-3col">
+  <div class="db-card">
+    <div class="db-card-header"><span><span class="dot"></span>Quotations by Company</span></div>
+    <canvas id="companyChart" height="200"></canvas>
+  </div>
+  <div class="db-card">
+    <div class="db-card-header"><span><span class="dot"></span>Monthly Trend</span></div>
+    <canvas id="monthlyChart" height="200"></canvas>
+  </div>
+  <div class="db-card">
+    <div class="db-card-header"><span><span class="dot"></span>Total Distribution of Quotations</span></div>
+    <canvas id="distributionChart" height="200"></canvas>
+  </div>
+  <div class="db-card">
+    <div class="db-card-header"><span><span class="dot"></span>Most Subscribed Premium</span></div>
+    <canvas id="premiumChart" height="200"></canvas>
+  </div>
+  <div class="db-card">
+    <div class="db-card-header"><span><span class="dot"></span>Recent Quotations</span></div>
+    <div class="db-table-wrap">
+      <table class="db-table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>User</th>
+            <th>Company</th>
+            <th>Vehicle</th>
+            <th>Premium (KES)</th>
+            <th>Status</th>
+            <th>Date</th>
+          </tr>
+        </thead>
+        <tbody>
+          @forelse($recentQuotations as $q)
+          <tr>
+            <td><a href="{{ route('quotations.show', $q) }}" style="color:#1756c8;font-weight:700">{{ $q->quotation_number }}</a></td>
+            <td>{{ $q->user->name }}</td>
+            <td>{{ $q->company->name }}</td>
+            <td>{{ $q->car_make }} {{ $q->car_model }}</td>
+            <td>{{ number_format($q->total_premium) }}</td>
+            <td>
+              <span class="db-badge badge-active">{{ ucfirst($q->status) }}</span>
+            </td>
+            <td>{{ $q->created_at->format('d M Y') }}</td>
+          </tr>
+          @empty
+          <tr>
+            <td colspan="7" style="padding:32px;text-align:center;color:#7a8baa;font-size:12px">No quotations yet.</td>
+          </tr>
+          @endforelse
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <div class="db-card">
+    <div class="db-card-header"><span><span class="dot"></span>Companies Breakdown</span></div>
+    <div class="db-company-grid">
+      @foreach($companies as $company)
+      <div class="db-company-card">
+        <div class="db-company-name">{{ $company->name }}</div>
+        <div class="db-company-label">Total Quotations</div>
+        <div class="db-company-count">{{ $company->quotations_count }}</div>
+        <div class="db-progress">
+          @php $maxCount = $companies->max('quotations_count') ?: 1; @endphp
+          <div class="db-progress-fill" style="width:{{ ($company->quotations_count / $maxCount) * 100 }}%"></div>
         </div>
-        <div class="db-card" style="max-width:480px">
-          <div class="db-card-header"><span><span class="dot"></span>Monthly Trend</span></div>
-          <canvas id="monthlyChart" height="200"></canvas>
-        </div>
-         <div class="db-card" style="max-width:480px">
-        <div class="db-card-header"><span><span class="dot"></span>Total Distribution of Quotations</span></div>
-        <canvas id="distributionChart" height="200"></canvas>
       </div>
-      <div class="db-card" style="max-width:480px">
-        <div class="db-card-header"><span><span class="dot"></span>Most Subscribed Premium</span></div>
-        <canvas id="premiumChart" height="200"></canvas>
-      </div>
-      </div>
+      @endforeach
+    </div>
+  </div>
+</div>
 
       <div class="db-section-label">Activity &amp; Alerts</div>
       <div class="db-chart-grid">
@@ -566,7 +620,7 @@
     </div>
     <!-- /db-main-content -->
 
-    <div class="db-right-sidebar">
+    {{-- <div class="db-right-sidebar">
       <a href="{{ route('quotations.index') }}" class="cta-card-link">
         <div class="cta-card">
           <div class="cta-card-icon" style="background:#e8f0fc;color:#1756c8"><i class="ti ti-file-description"></i></div>
@@ -588,14 +642,14 @@
           <div class="cta-card-desc">Monitor system activity and changes</div>
         </div>
       </a>
-      <a href="{{ route('settings.index') }}" class="cta-card-link">
+      <a href="{{ route('admin.settings.index') }}" class="cta-card-link">
         <div class="cta-card">
           <div class="cta-card-icon" style="background:#fdeaea;color:#c0392b"><i class="ti ti-settings"></i></div>
           <div class="cta-card-title">Settings</div>
           <div class="cta-card-desc">Configure system preferences</div>
         </div>
       </a>
-    </div>
+    </div> --}}
     </div>
     <!-- /db-layout -->
 

@@ -128,9 +128,9 @@ function guestGuard(callback) {
         } catch(e) {}
       }
     }
-    sessionStorage.setItem('auth_redirect', '/quotations?pending_quote=1');
+    sessionStorage.setItem('auth_redirect', '/dashboard?pending_quote=1');
     var alpineEl = document.querySelector('#authModal');
-    if (alpineEl && alpineEl.__x) { alpineEl.__x.$data.redirectTo = '/quotations?pending_quote=1'; }
+    if (alpineEl && alpineEl.__x) { alpineEl.__x.$data.redirectTo = '/dashboard?pending_quote=1'; }
     openAuthModal();
     return;
   }

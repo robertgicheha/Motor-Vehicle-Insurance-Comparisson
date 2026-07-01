@@ -64,8 +64,8 @@
             {{-- Avatar + name --}}
             <div class="flex items-center gap-4 px-5 py-4 border-b border-gray-100 dark:border-gray-700">
                 <div class="w-14 h-14 rounded-full bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center flex-shrink-0 border border-gray-200 dark:border-gray-600 overflow-hidden">
-                    @if($user->avatar)
-                        <img src="{{ asset('storage/' . $user->avatar) }}" alt="{{ $user->name }}" class="w-full h-full object-cover" onerror="this.style.display='none';this.parentElement.innerHTML='<svg class=\'w-7 h-7 text-blue-400\' fill=\'none\' stroke=\'currentColor\' viewBox=\'0 0 24 24\'><path stroke-linecap=\'round\' stroke-linejoin=\'round\' stroke-width=\'2\' d=\'M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z\'/></svg>'">
+                    @if($user->avatar && file_exists(public_path($user->avatar)))
+                        <img src="{{ asset($user->avatar) }}" alt="{{ $user->name }}" class="w-full h-full object-cover">
                     @else
                         <svg class="w-7 h-7 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -151,16 +151,21 @@
                 <div>
                     <label class="block text-[11px] font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500 mb-1.5">Profile Photo</label>
                     <div class="flex items-center gap-4">
-                        <div class="w-16 h-16 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center overflow-hidden border border-gray-200 dark:border-gray-600">
-                            @if($user->avatar)
-                                <img src="{{ asset('storage/' . $user->avatar) }}" alt="" class="w-full h-full object-cover" id="avatarPreview" onerror="this.style.display='none'">
+                        <div class="w-16 h-16 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center overflow-hidden border border-gray-200 dark:border-gray-600 relative">
+                            @if($user->avatar && file_exists(public_path($user->avatar)))
+                                <img src="{{ asset($user->avatar) }}" alt="" class="w-full h-full object-cover" id="avatarPreview">
                             @else
-                                <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+                                <svg class="w-8 h-8 text-gray-400" id="avatarPreviewIcon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+                                <img src="" alt="" class="w-full h-full object-cover hidden" id="avatarPreview">
                             @endif
+                            <div id="avatarCropOverlay" class="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 transition-opacity cursor-pointer rounded-full hidden">
+                                <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                            </div>
                         </div>
                         <div class="flex-1">
                             <input type="file" name="avatar" id="avatarInput" accept="image/*" class="block w-full text-xs text-gray-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 dark:file:bg-blue-900/30 dark:file:text-blue-400">
                             <p class="text-[10px] text-gray-400 mt-1">JPEG, PNG, WebP. Max 2MB.</p>
+                            <input type="hidden" name="avatar_cropped" id="avatarCropped">
                         </div>
                     </div>
                 </div>
@@ -319,4 +324,80 @@
         </div>
 
     </div>
+
+{{-- ─── CROP MODAL ────────────────────────────────────────────────────── --}}
+<div id="cropModal" class="fixed inset-0 z-50 flex items-center justify-center hidden bg-black/60" x-cloak>
+    <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-xl w-full max-w-lg mx-4 overflow-hidden">
+        <div class="px-5 py-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
+            <h3 class="text-sm font-semibold text-gray-900 dark:text-white">Crop Image</h3>
+            <button onclick="closeCropModal()" class="text-gray-400 hover:text-gray-600">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+        </div>
+        <div class="p-5">
+            <div class="w-full max-h-80 overflow-hidden">
+                <img id="cropImage" src="" alt="Crop" class="max-w-full">
+            </div>
+        </div>
+        <div class="px-5 py-4 border-t border-gray-200 dark:border-gray-700 flex items-center justify-end gap-2">
+            <button onclick="closeCropModal()" class="px-4 py-2 text-xs font-medium text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition">Cancel</button>
+            <button onclick="applyCrop()" class="px-4 py-2 text-xs font-semibold bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition">Apply Crop</button>
+        </div>
+    </div>
+</div>
+
+<link href="https://cdn.jsdelivr.net/npm/cropperjs@1.6.1/dist/cropper.min.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/cropperjs@1.6.1/dist/cropper.min.js"></script>
+<script>
+let cropper = null;
+const avatarInput = document.getElementById('avatarInput');
+const cropModal = document.getElementById('cropModal');
+const cropImage = document.getElementById('cropImage');
+const avatarPreview = document.getElementById('avatarPreview');
+const avatarCropped = document.getElementById('avatarCropped');
+
+avatarInput?.addEventListener('change', function() {
+    const file = this.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        cropImage.src = e.target.result;
+        cropModal.classList.remove('hidden');
+        if (cropper) cropper.destroy();
+        cropper = new Cropper(cropImage, {
+            aspectRatio: 1,
+            viewMode: 1,
+            dragMode: 'move',
+            autoCropArea: 1,
+            cropBoxResizable: true,
+            cropBoxMovable: true,
+        });
+    };
+    reader.readAsDataURL(file);
+});
+
+function closeCropModal() {
+    cropModal.classList.add('hidden');
+    if (cropper) { cropper.destroy(); cropper = null; }
+    avatarInput.value = '';
+}
+
+function applyCrop() {
+    if (!cropper) return;
+    const canvas = cropper.getCroppedCanvas({ width: 400, height: 400 });
+    canvas.toBlob(function(blob) {
+        const file = new File([blob], 'avatar.jpg', { type: 'image/jpeg' });
+        const container = new DataTransfer();
+        container.items.add(file);
+        avatarInput.files = container.files;
+        avatarCropped.value = '1';
+        avatarPreview.src = URL.createObjectURL(blob);
+        avatarPreview.classList.remove('hidden');
+        const icon = document.getElementById('avatarPreviewIcon');
+        if (icon) icon.classList.add('hidden');
+        closeCropModal();
+    }, 'image/jpeg', 0.9);
+}
+</script>
+
 </x-app-layout>

@@ -60,6 +60,7 @@
                         </div>
                         <span class="text-xs font-medium text-blue-600 dark:text-blue-400 group-hover:underline">Upload logo</span>
                         <input id="logo-input" type="file" name="logo" accept="image/png,image/jpeg,image/svg+xml" class="hidden">
+                        <input type="hidden" name="logo_cropped" id="logoCropped">
                     </label>
                     @error('logo')<p class="text-xs text-rose-500">{{ $message }}</p>@enderror
                 </div>
@@ -111,7 +112,78 @@
     </div>
 </div>
 
+{{-- ─── CROP MODAL ────────────────────────────────────────────────────── --}}
+<div id="logoCropModal" class="fixed inset-0 z-50 flex items-center justify-center hidden bg-black/60" x-cloak>
+    <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-xl w-full max-w-lg mx-4 overflow-hidden">
+        <div class="px-5 py-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
+            <h3 class="text-sm font-semibold text-gray-900 dark:text-white">Crop Logo</h3>
+            <button onclick="closeLogoCrop()" class="text-gray-400 hover:text-gray-600">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+        </div>
+        <div class="p-5">
+            <div class="w-full max-h-80 overflow-hidden">
+                <img id="logoCropImage" src="" alt="Crop" class="max-w-full">
+            </div>
+        </div>
+        <div class="px-5 py-4 border-t border-gray-200 dark:border-gray-700 flex items-center justify-end gap-2">
+            <button onclick="closeLogoCrop()" class="px-4 py-2 text-xs font-medium text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition">Cancel</button>
+            <button onclick="applyLogoCrop()" class="px-4 py-2 text-xs font-semibold bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition">Apply Crop</button>
+        </div>
+    </div>
+</div>
+
+<link href="https://cdn.jsdelivr.net/npm/cropperjs@1.6.1/dist/cropper.min.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/cropperjs@1.6.1/dist/cropper.min.js"></script>
 <script>
+let logCropper = null;
+const logoInput = document.getElementById('logo-input');
+const logoCropModal = document.getElementById('logoCropModal');
+const logoCropImage = document.getElementById('logoCropImage');
+const logoCropped = document.getElementById('logoCropped');
+
+logoInput?.addEventListener('change', function() {
+    const file = this.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        logoCropImage.src = e.target.result;
+        logoCropModal.classList.remove('hidden');
+        if (logCropper) logCropper.destroy();
+        logCropper = new Cropper(logoCropImage, {
+            aspectRatio: 1,
+            viewMode: 1,
+            dragMode: 'move',
+            autoCropArea: 1,
+            cropBoxResizable: true,
+            cropBoxMovable: true,
+        });
+    };
+    reader.readAsDataURL(file);
+});
+
+function closeLogoCrop() {
+    logoCropModal.classList.add('hidden');
+    if (logCropper) { logCropper.destroy(); logCropper = null; }
+    logoInput.value = '';
+}
+
+function applyLogoCrop() {
+    if (!logCropper) return;
+    const canvas = logCropper.getCroppedCanvas({ width: 400, height: 400 });
+    canvas.toBlob(function(blob) {
+        const file = new File([blob], 'logo.png', { type: 'image/png' });
+        const container = new DataTransfer();
+        container.items.add(file);
+        logoInput.files = container.files;
+        logoCropped.value = '1';
+        const url = URL.createObjectURL(blob);
+        document.getElementById('logo-drop').innerHTML = `<img src="${url}" class="h-full w-full object-cover">`;
+        document.getElementById('preview-avatar').innerHTML = `<img src="${url}" class="h-full w-full object-cover">`;
+        closeLogoCrop();
+    }, 'image/png', 0.9);
+}
+
     const nameInput = document.getElementById('company-name');
     const previewName = document.getElementById('preview-name');
     const previewInitials = document.getElementById('preview-initials');
@@ -122,19 +194,6 @@
         previewName.textContent = value || 'Company name';
         const initials = value ? value.split(/\s+/).map(w => w[0]).slice(0, 2).join('').toUpperCase() : '—';
         if (!previewAvatar.querySelector('img')) previewInitials.textContent = initials;
-    });
-
-    const logoInput = document.getElementById('logo-input');
-    logoInput?.addEventListener('change', () => {
-        const file = logoInput.files[0];
-        if (!file) return;
-        const drop = document.getElementById('logo-drop');
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            drop.innerHTML = `<img src="${e.target.result}" class="h-full w-full object-cover">`;
-            previewAvatar.innerHTML = `<img src="${e.target.result}" class="h-full w-full object-cover">`;
-        };
-        reader.readAsDataURL(file);
     });
 </script>
 </x-app-layout>

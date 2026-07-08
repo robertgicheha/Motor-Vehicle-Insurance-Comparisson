@@ -34,6 +34,7 @@ class CompanyController extends Controller
             'name' => 'required|string|unique:companies,name',
             'description' => 'nullable|string',
             'is_active' => 'boolean',
+            'company_type' => 'required|in:private,psv,both',
             'logo' => 'nullable|image|mimes:png,jpg,jpeg,svg,webp|max:2048',
         ]);
 
@@ -46,6 +47,7 @@ class CompanyController extends Controller
             'slug' => Str::slug($request->name),
             'description' => $request->description,
             'is_active' => $request->boolean('is_active', true),
+            'company_type' => $request->company_type,
         ];
 
         if (auth()->user()->hasRole('admin')) {
@@ -90,6 +92,7 @@ class CompanyController extends Controller
             'name' => 'required|string|unique:companies,name,' . $company->id,
             'description' => 'nullable|string',
             'is_active' => 'boolean',
+            'company_type' => 'required|in:private,psv,both',
             'logo' => 'nullable|image|mimes:png,jpg,jpeg,svg,webp|max:2048',
         ]);
 
@@ -102,6 +105,7 @@ class CompanyController extends Controller
             'slug' => Str::slug($request->name),
             'description' => $request->description,
             'is_active' => $request->boolean('is_active', true),
+            'company_type' => $request->company_type,
         ];
 
         if (auth()->user()->hasRole('admin')) {
@@ -164,8 +168,10 @@ class CompanyController extends Controller
 
     public function rates(Company $company)
     {
-        $rates = $company->rates()->orderBy('category')->orderBy('item_name')->get()->groupBy('category');
-        return view('admin.companies.rates', compact('company', 'rates'));
+        $rates = $company->rates()->orderBy('category')->orderBy('item_name')->get();
+        $privateRates = $rates->where('vehicle_type', 'private')->groupBy('category');
+        $psvRates = $rates->where('vehicle_type', 'psv')->groupBy('category');
+        return view('admin.companies.rates', compact('company', 'rates', 'privateRates', 'psvRates'));
     }
 
     public function updateRate(Request $request, Company $company, Rate $rate)

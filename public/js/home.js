@@ -2,14 +2,17 @@
 const COMPANIES = {};
 let quoteCounters = {};
 
-if (window.MIC_COMPANIES && Array.isArray(window.MIC_COMPANIES)) {
-  window.MIC_COMPANIES.forEach(function(c) {
-    COMPANIES[c.slug] = c;
-    COMPANIES[c.slug.toUpperCase()] = c;
-    quoteCounters[c.slug.toUpperCase()] = 0;
-    quoteCounters[c.slug] = 0;
-  });
+function refreshCompanies() {
+  var companies = window.MIC_COMPANIES || [];
+  Object.keys(COMPANIES).forEach(function(k) { delete COMPANIES[k]; });
+  if (Array.isArray(companies)) {
+    companies.forEach(function(c) {
+      COMPANIES[c.slug] = c;
+      COMPANIES[c.slug.toUpperCase()] = c;
+    });
+  }
 }
+refreshCompanies();
 
 // ── QUOTE STORE (in-memory, session) ──
 const quoteStore = {};
@@ -26,11 +29,148 @@ let currentIndQuoteNum = null;
 })();
 
 // ── SEARCH ──
+var currentSearchMode = 'registration'; // 'registration' | 'quotation' | 'vehicle'
+var suggestTimer = null;
+var activeSuggestIndex = -1;
+
+// Kenyan reg format helper: KDX 291H (3 letters, space, 3 digits, 1 letter)
+function formatRegistrationInput(raw){
+  var clean = raw.toUpperCase().replace(/[^A-Z0-9]/g,'');
+  if (clean.length <= 3) return clean;
+  return clean.slice(0,3) + ' ' + clean.slice(3,7);
+}
+
+function setChip(el,mode){
+  document.querySelectorAll('.chip').forEach(c=>c.classList.remove('active'));
+  el.classList.add('active');
+  currentSearchMode = mode;
+
+  var input = document.getElementById('searchInput');
+  input.value = '';        // ← clears the field, nothing gets appended
+  hideSuggestions();
+
+  if (mode === 'registration') {
+    input.placeholder = 'e.g. KDX 291H';
+  } else if (mode === 'quotation') {
+    input.placeholder = 'Enter quotation number...';
+  } else {
+    input.placeholder = 'Enter vehicle number...';
+  }
+  input.focus();
+}
+
+function handleSearchInput(){
+  var input = document.getElementById('searchInput');
+  var val = input.value;
+
+  // auto-format registration number as the user types
+  if (currentSearchMode === 'registration') {
+    var formatted = formatRegistrationInput(val);
+    if (formatted !== val) {
+      input.value = formatted;
+      val = formatted;
+    }
+  }
+
+  clearTimeout(suggestTimer);
+  var q = val.trim();
+  if (q.length < 2) { hideSuggestions(); return; }
+
+  suggestTimer = setTimeout(function(){ fetchSuggestions(q); }, 250);
+}
+
+function fetchSuggestions(q){
+  var xhr = new XMLHttpRequest();
+  xhr.open('GET', '/motor-quote/suggestions?q=' + encodeURIComponent(q) + '&type=' + encodeURIComponent(currentSearchMode), true);
+  xhr.onload = function(){
+    if (xhr.status === 200) {
+      try {
+        var data = JSON.parse(xhr.responseText);
+        renderSuggestions(data.suggestions || []);
+      } catch(e) { hideSuggestions(); }
+    } else {
+      hideSuggestions();
+    }
+  };
+  xhr.onerror = function(){ hideSuggestions(); };
+  xhr.send();
+}
+
+function renderSuggestions(list){
+  var box = document.getElementById('searchSuggestions');
+  activeSuggestIndex = -1;
+
+  if (!list || list.length === 0) {
+    box.innerHTML = '<div class="sg-empty">No matches found.</div>';
+    box.style.display = 'block';
+    return;
+  }
+
+  box.innerHTML = list.map(function(item){
+    var label = item.label || item.value || '';
+    var meta = item.meta || '';
+    return '<div class="sg-item" onclick="selectSuggestion(\'' + label.replace(/'/g,"\\'") + '\')">'
+         + '<span>' + label + '</span>'
+         + (meta ? '<span class="sg-meta">' + meta + '</span>' : '')
+         + '</div>';
+  }).join('');
+
+  box.style.display = 'block';
+}
+
+function selectSuggestion(value){
+  document.getElementById('searchInput').value = value;
+  hideSuggestions();
+}
+
+function hideSuggestions(){
+  var box = document.getElementById('searchSuggestions');
+  if (box) { box.style.display = 'none'; box.innerHTML = ''; }
+}
+
+// close dropdown when clicking outside the search bar
+document.addEventListener('click', function(e){
+  var bar = document.querySelector('.search-bar');
+  if (bar && !bar.contains(e.target)) hideSuggestions();
+});
+
+// keyboard navigation (optional but expected UX for suggestion lists)
+document.addEventListener('keydown', function(e){
+  var box = document.getElementById('searchSuggestions');
+  if (!box || box.style.display === 'none') return;
+  var items = box.querySelectorAll('.sg-item');
+  if (!items.length) return;
+
+  if (e.key === 'ArrowDown') {
+    e.preventDefault();
+    activeSuggestIndex = Math.min(activeSuggestIndex + 1, items.length - 1);
+    updateActiveSuggestion(items);
+  } else if (e.key === 'ArrowUp') {
+    e.preventDefault();
+    activeSuggestIndex = Math.max(activeSuggestIndex - 1, 0);
+    updateActiveSuggestion(items);
+  } else if (e.key === 'Enter') {
+    if (activeSuggestIndex > -1 && items[activeSuggestIndex]) {
+      e.preventDefault();
+      items[activeSuggestIndex].click();
+    }
+  } else if (e.key === 'Escape') {
+    hideSuggestions();
+  }
+});
+
+function updateActiveSuggestion(items){
+  items.forEach(function(it,i){
+    it.classList.toggle('sg-active', i === activeSuggestIndex);
+  });
+}
+
 function doSearch(){
   var q = (document.getElementById('searchInput').value||'').trim();
   if (!q) { showToast('Please enter a search term.'); return; }
+  hideSuggestions();
   var xhr = new XMLHttpRequest();
-  xhr.open('GET', '/motor-quote/search?q=' + encodeURIComponent(q), true);
+  xhr.open('GET', '/motor-quote/search?q=' + encodeURIComponent(q) + '&type=' + encodeURIComponent(currentSearchMode), true);
   xhr.onload = function(){
     if (xhr.status === 200) {
       var data = JSON.parse(xhr.responseText);
@@ -103,15 +243,22 @@ function handleSearchSticker(num){
   window.location.href = '/stickers/user-lookup?quotation=' + encodeURIComponent(num);
 }
 
-function setChip(el,val){ document.querySelectorAll('.chip').forEach(c=>c.classList.remove('active'));el.classList.add('active');document.getElementById('searchInput').value=val; doSearch(); }
-
 // ── FORM STEPS ──
-function goStep(n){
-  document.querySelectorAll('.form-panel').forEach(p=>p.classList.remove('active'));
-  document.querySelectorAll('.form-step').forEach(t=>t.classList.remove('active','done'));
-  document.getElementById('panel-'+n).classList.add('active');
-  document.getElementById('step-tab-'+n).classList.add('active');
-  for(let i=1;i<n;i++) document.getElementById('step-tab-'+i).classList.add('done');
+// function goStep(n){
+//   document.querySelectorAll('.form-panel').forEach(p=>p.classList.remove('active'));
+//   document.querySelectorAll('.form-step').forEach(t=>t.classList.remove('active','done'));
+//   document.getElementById('panel-'+n).classList.add('active');
+//   document.getElementById('step-tab-'+n).classList.add('active');
+//   for(let i=1;i<n;i++) document.getElementById('step-tab-'+i).classList.add('done');
+// }
+
+function goStep(type, stepNum){
+  for (var i = 1; i <= 3; i++){
+    var tab = document.getElementById('step-tab-' + i + '-' + type);
+    var panel = document.getElementById('panel-' + i + '-' + type);
+    if (tab) tab.classList.toggle('active', i === stepNum);
+    if (panel) panel.classList.toggle('active', i === stepNum);
+  }
 }
 
 function guestGuard(callback) {
@@ -142,13 +289,50 @@ function updatePremiumPreview(){
   var raw = (document.getElementById('f-value').value || '').replace(/,/g, '');
   var v = parseFloat(raw) || 0;
   var prev = document.getElementById('premium-preview');
-  if (!v) { prev.style.display = 'none'; return; }
+  var prevEmpty = document.getElementById('premium-preview-empty');
+  var grid = document.getElementById('premium-cards-grid');
+  if (!v) { prev.style.display = 'none'; prevEmpty.style.display = 'block'; return; }
+  prevEmpty.style.display = 'none';
   prev.style.display = 'block';
-  var fmt = function(n) { return n.toLocaleString('en-KE', {minimumFractionDigits:0, maximumFractionDigits:0}); };
-  Object.values(COMPANIES).forEach(function(c){
-    var el = document.getElementById('prev-' + c.slug);
-    if (el) el.textContent = 'KES ' + fmt(v * c.rate);
+  
+  var companies = window.MIC_COMPANIES || [];
+  if (!companies.length) return;
+  
+  var vt = window.MIC_VEHICLE_TYPE || 'psv';
+  var make = (document.getElementById('f-make-value') || {}).value || (document.getElementById('f-make') || {}).value || '';
+  var model = (document.getElementById('f-model-value') || {}).value || (document.getElementById('f-model') || {}).value || '';
+  var year = (document.getElementById('f-year') || {}).value || '';
+  var reg = (document.getElementById('f-reg') || {}).value || '';
+
+  // Build cards dynamically
+  var html = '';
+  companies.forEach(function(cd){
+    html += '<div class="preview-card" onclick="guestGuard(function(){ openQuotePage(\'' + cd.slug + '\'); })" style="background:white;border:1.5px solid var(--border);border-radius:var(--radius);padding:16px 14px;text-align:center;cursor:pointer;transition:box-shadow .2s,transform .15s">';
+    html += '<div style="height:36px;display:flex;align-items:center;justify-content:center;margin-bottom:8px">';
+    if (cd.logo) {
+      html += '<img src="' + cd.logo + '" alt="' + cd.name + '" style="max-height:32px;max-width:90px;object-fit:contain" onerror="fallbackLogo(this,\'' + cd.slug + '\')">';
+    }
+    html += '<span style="' + (cd.logo ? 'display:none' : '') + ';font-size:11px;font-weight:800;color:' + cd.color + '">' + cd.name.toUpperCase() + '</span>';
+    html += '</div>';
+    html += '<div style="font-size:11px;color:' + cd.color + ';font-weight:700;margin-bottom:6px">' + cd.name.toUpperCase() + '</div>';
+    html += '<div style="font-size:1.1rem;font-weight:700;color:' + cd.color + '" id="prev-' + cd.slug + '">KES ' + Number(v * cd.rate).toLocaleString('en-KE', {minimumFractionDigits:0, maximumFractionDigits:0}) + '</div>';
+    html += '<div style="font-size:11px;color:var(--text-muted);margin-bottom:10px">@ ' + (cd.rate * 100) + '%</div>';
+    html += '<div style="font-size:11px;font-weight:700;color:white;background:' + cd.color + ';border-radius:5px;padding:5px 0">View Quote ↗</div>';
+    html += '</div>';
   });
+
+  // Compare All card
+  var compareColor = '#D0021B';
+  html += '<div class="preview-card" onclick="guestGuard(function(){ openQuotePage(\'ALL\'); })" style="background:white;border:1.5px solid ' + compareColor + ';border-radius:var(--radius);padding:16px 14px;text-align:center;cursor:pointer;transition:box-shadow .2s,transform .15s">';
+  html += '<div style="height:36px;display:flex;align-items:center;justify-content:center;margin-bottom:8px">';
+  html += '<span style="font-size:18px">📊</span></div>';
+  html += '<div style="font-size:11px;color:' + compareColor + ';font-weight:700;margin-bottom:6px">COMPARE ALL</div>';
+  html += '<div style="font-size:1.1rem;font-weight:700;color:' + compareColor + '">' + companies.length + ' Quotes</div>';
+  html += '<div style="font-size:11px;color:var(--text-muted);margin-bottom:10px">All insurers</div>';
+  html += '<div style="font-size:11px;font-weight:700;color:white;background:' + compareColor + ';border-radius:5px;padding:5px 0">Compare ↗</div>';
+  html += '</div>';
+
+  grid.innerHTML = html;
 }
 
 // ── COLLECT FORM DATA ──
@@ -176,6 +360,8 @@ function getFormData(){
     year: (document.getElementById('f-year') || {}).value || '',
     color: (document.getElementById('f-color') || {}).value || '',
     value: parseFloat(rawValue) || 0,
+    vehicleType: (document.getElementById('f-vehicle-type') || {}).value || 'psv',
+    numPassengers: parseInt((document.getElementById('f-pax') || {}).value) || 1,
     cover: (document.getElementById('f-cover') || {}).value || ''
   };
 }
@@ -270,20 +456,26 @@ function openQuotePage(company) {
   var color      = colorRaw === 'Other' ? colorOther : colorRaw;
   var valueEl    = document.getElementById('f-value');
   var value      = parseFloat((valueEl ? valueEl.value : '').replace(/,/g, '')) || 0;
+  var paxEl      = document.getElementById('f-pax');
+  var numPassengers = paxEl ? parseInt(paxEl.value) || 1 : 1;
 
   var prefix = company === 'ALL' ? 'MIC' : company;
   var qNum   = prefix + '-' + new Date().getFullYear() + '/' + String(Math.floor(Math.random()*9000)+1000);
+
+  var vt = window.MIC_VEHICLE_TYPE || 'psv';
 
   var data = {
     salutation: salutation, firstName: firstName, lastName: lastName,
     phone: phone, email: email, reg: reg, chassis: chassis,
     make: make, model: model, body: body, year: year, color: color,
-    value: value, quoteNum: qNum, mode: company
+    value: value, quoteNum: qNum, mode: company, vehicleType: vt,
+    numPassengers: numPassengers
   };
 
   try { sessionStorage.setItem('micQuoteData', JSON.stringify(data)); } catch(e) {}
 
-  window.location.href = '/quotation/' + company;
+  var url = '/quotation/' + company + '?vehicle_type=' + vt + '&num_passengers=' + numPassengers;
+  window.location.href = url;
 }
 
 function closeQuotePage(){
@@ -335,8 +527,12 @@ function closeIndividual(){
 function renderIndividualQuote(key,d,co,qn){
   const fmt=n=>n.toLocaleString('en-KE',{minimumFractionDigits:0,maximumFractionDigits:0});
   const premium=d.value*co.rate;
-  const tax=premium*co.taxRate;
-  const total=premium+tax;
+  const pvt=d.value*(co.pvtRate||0);
+  const pllPerPerson = co.pllPerPerson || 0;
+  const pll = pllPerPerson * (d.numPassengers || 1);
+  const levis=(pvt + pll)*0.0045;
+  const stampDuty=40;
+  const total=premium+pvt+pll+levis+stampDuty;
   const today=new Date().toLocaleDateString('en-GB',{day:'2-digit',month:'long',year:'numeric'});
   document.getElementById('indQuoteContent').innerHTML=`
     <div class="quotation-doc">
@@ -380,7 +576,10 @@ function renderIndividualQuote(key,d,co,qn){
         <div class="doc-section">
           <h3>Premium Schedule</h3>
           <div class="doc-row"><span>Basic Annual Premium (${(co.rate*100).toFixed(1)}% of KES ${fmt(d.value)})</span><span>KES ${fmt(premium)}</span></div>
-          <div class="doc-row"><span>Stamp Duty / Taxes (0.5%)</span><span>KES ${fmt(tax)}</span></div>
+          <div class="doc-row"><span>PVT Premium (${((co.pvtRate||0)*100).toFixed(2)}%)</span><span>KES ${fmt(pvt)}</span></div>
+          <div class="doc-row"><span>PLL Premium (KES ${pllPerPerson} × ${d.numPassengers || 1} pax)</span><span>KES ${fmt(pll)}</span></div>
+          <div class="doc-row"><span>Levis (0.45% of PVT + PLL)</span><span>KES ${fmt(levis)}</span></div>
+          <div class="doc-row"><span>Stamp Duty</span><span>KES ${fmt(stampDuty)}</span></div>
           <div class="doc-row" style="font-weight:600"><span>TOTAL ANNUAL PREMIUM</span><span style="color:${co.color}">KES ${fmt(total)}</span></div>
         </div>
         <div class="doc-section">
@@ -426,8 +625,12 @@ function renderCompareAll(d){
     const qn=genQuoteNum(co.prefix);
     quoteStore[qn]={data:d,company:key,quoteNum:qn};
     const premium=d.value*co.rate;
-    const tax=premium*co.taxRate;
-    const total=premium+tax;
+    const pvt=d.value*(co.pvtRate||0);
+    const pllPerPerson = co.pllPerPerson || 0;
+    const pll = pllPerPerson * (d.numPassengers || 1);
+    const levis=(pvt + pll)*0.0045;
+    const stampDuty=40;
+    const total=premium+pvt+pll+levis+stampDuty;
     html+=`
       <div class="quotation-doc" style="margin-bottom:24px">
         <div class="doc-header">
@@ -444,7 +647,7 @@ function renderCompareAll(d){
           <div class="doc-meta">
             <div class="doc-meta-item"><label>Premium Rate</label><span>${(co.rate*100).toFixed(1)}%</span></div>
             <div class="doc-meta-item"><label>Basic Premium</label><span>KES ${fmt(premium)}</span></div>
-            <div class="doc-meta-item"><label>Taxes</label><span>KES ${fmt(tax)}</span></div>
+            <div class="doc-meta-item"><label>PVT Premium</label><span>KES ${fmt(pvt)}</span></div>
             <div class="doc-meta-item"><label>TOTAL</label><span>KES ${fmt(total)}</span></div>
           </div>
         </div>
@@ -465,19 +668,29 @@ function renderCompareAll(d){
   // Basic rows
   let rateRow = ['Premium Rate'];
   let basicRow = ['Basic Premium'];
-  let taxRow = ['Taxes (0.5%)'];
+  let pvtRow = ['PVT Premium'];
+  let pllRow = ['PLL Premium'];
+  let levisRow = ['Levis (0.45%)'];
+  let stampRow = ['Stamp Duty'];
   let totalRow = ['TOTAL'];
   let coverRow = ['Cover Type'];
   let regionRow = ['Region'];
   companies.forEach(function(co){
     rateRow.push((co.rate*100).toFixed(1)+'%');
     basicRow.push('KES '+fmt(d.value*co.rate));
-    taxRow.push('KES '+fmt(d.value*co.rate*0.005));
-    totalRow.push('KES '+fmt(d.value*co.rate*1.005));
+    const pvt=d.value*(co.pvtRate||0);
+    const pllPerPerson = co.pllPerPerson || 0;
+    const pll = pllPerPerson * (d.numPassengers || 1);
+    pvtRow.push('KES '+fmt(pvt));
+    pllRow.push('KES '+fmt(pll));
+    levisRow.push('KES '+fmt((pvt + pll)*0.0045));
+    stampRow.push('KES 40');
+    const total=d.value*co.rate+pvt+pll+(pvt + pll)*0.0045+40;
+    totalRow.push('KES '+fmt(total));
     coverRow.push(d.cover);
     regionRow.push('Kenya/Uganda/TZ');
   });
-  rows.push(rateRow, basicRow, taxRow, totalRow, coverRow, regionRow);
+  rows.push(rateRow, basicRow, pvtRow, pllRow, levisRow, stampRow, totalRow, coverRow, regionRow);
   rows.forEach(function(r, i){
     const hi=i===3?' highlight':'';
     let rowHtml = '<div class="compare-row'+hi+'">';
@@ -497,8 +710,12 @@ function confirmAndDownload(){
     var co=currentIndCompany==='ALL'||currentIndCompany==='COMPARE'?(companiesArr[0]||{}):COMPANIES[currentIndCompany];
     if(!co||!co.rate){ showToast('No company selected.'); return; }
     var premium=d.value*co.rate;
-  const tax=premium*co.taxRate;
-  const total=premium+tax;
+  const pvt=d.value*(co.pvtRate||0);
+  const pllPerPerson = co.pllPerPerson || 0;
+  const pll = pllPerPerson * (d.numPassengers || 1);
+  const levis=(pvt + pll)*0.0045;
+  const stampDuty=40;
+  const total=premium+pvt+pll+levis+stampDuty;
   const fmt=n=>n.toLocaleString('en-KE',{minimumFractionDigits:0,maximumFractionDigits:0});
   document.getElementById('m-name').textContent=fullName(d);
   document.getElementById('m-phone').textContent=d.phone||'—';
@@ -512,7 +729,10 @@ function confirmAndDownload(){
   document.getElementById('m-insurer').textContent=co.name;
   document.getElementById('m-rate').textContent=(co.rate*100).toFixed(1)+'%';
   document.getElementById('m-premium').textContent='KES '+fmt(premium);
-  document.getElementById('m-tax').textContent='KES '+fmt(tax);
+  document.getElementById('m-pvt').textContent='KES '+fmt(pvt);
+  document.getElementById('m-pll').textContent='KES '+fmt(pll);
+  document.getElementById('m-levis').textContent='KES '+fmt(levis);
+  document.getElementById('m-stamp').textContent='KES '+fmt(stampDuty);
   document.getElementById('m-total').textContent='KES '+fmt(total);
   document.getElementById('confirmModal').classList.add('open');
   });
@@ -660,8 +880,9 @@ window.toggleOtherMake = function (sel) {
 
 
 // ── "OTHER" COLOR ──────────────────────────────────────────
-window.toggleOtherColor = function (sel) {
-  const box = document.getElementById('f-color-other');
+window.toggleOtherColor = function (type, sel) {
+  const box = document.getElementById('f-color-other-' + type);
+  if (!box) return;
   if (sel.value === 'Other') {
     box.style.display = 'block';
     box.focus();
@@ -670,7 +891,6 @@ window.toggleOtherColor = function (sel) {
     box.value = '';
   }
 };
-
 
 // ── PATCH getFormData() to read the "other" inputs ─────────
 const _origGetFormData = window.getFormData || (function(){
@@ -914,3 +1134,281 @@ window.getFormData = function () {
     }
   };
 })();
+
+// ── AUTO SEARCH (fires as user types; instant on complete reg/vehicle/quotation no.) ──
+(function() {
+  var input = document.getElementById('searchInput');
+  if (!input) return;
+
+  // Kenyan number plate shape: 3 letters, optional space, 3 digits, 1 letter — e.g. "KDU 291H"
+  // Covers Registration No and Vehicle No (same format, per your note).
+  var PLATE_REGEX = /^[A-Za-z]{3}\s?\d{3}[A-Za-z]$/;
+
+  // ASSUMPTION: quotation numbers look like "GA-2026/001" (prefix-year/seq),
+  // matching the placeholder already in your lookup form. Adjust if the real format differs.
+  var QUOTATION_REGEX = /^[A-Za-z]{1,4}-\d{4}\/\d+$/;
+
+  var debounceTimer = null;
+  var lastAutoSearched = '';
+
+  function isCompletePattern(val) {
+    return PLATE_REGEX.test(val) || QUOTATION_REGEX.test(val);
+  }
+
+  input.addEventListener('input', function() {
+    var val = this.value.trim();
+    clearTimeout(debounceTimer);
+
+    if (!val) return;
+
+    // Complete plate or quotation number → search immediately, no debounce.
+    if (isCompletePattern(val)) {
+      if (val !== lastAutoSearched) {
+        lastAutoSearched = val;
+        doSearch();
+      }
+      return;
+    }
+
+    // Anything else (partial plate, first/last name, chassis no, etc.) → debounce
+    // so we're not firing a request on every single keystroke.
+    if (val.length >= 3) {
+      debounceTimer = setTimeout(function() {
+        if (input.value.trim() === val) {
+          lastAutoSearched = val;
+          doSearch();
+        }
+      }, 450);
+    }
+  });
+})();
+
+// ── RETRIEVE QUOTE ──
+// ASSUMPTION: current logged-in state, passed from blade once, near top of page:
+// const IS_GUEST = @json(auth()->guest());
+// If IS_GUEST isn't already defined globally, add that line in a <script> block in the blade.
+
+let __lastLookupResult = null;
+
+function lookupQuotation(event) {
+  event.preventDefault();
+  const val = document.getElementById('regenInput').value.trim();
+  const resultEl = document.getElementById('regen-result');
+  const wrap = document.getElementById('regen-results-wrap');
+  const body = document.getElementById('regen-results-body');
+  const loginCta = document.getElementById('regen-login-cta');
+
+  if (!val) { showToast('Please enter a quotation number.'); return; }
+
+  resultEl.textContent = 'Searching…';
+  resultEl.style.color = 'var(--text-muted)';
+  wrap.style.display = 'none';
+
+  // ASSUMPTION: motor.lookup.quotation now returns JSON instead of a redirect/view.
+  // Expected shape:
+  // { found: true, quotation_number, make, model, year, chassis_no, valuation, premium, is_owner }
+  // is_owner = true only if the authenticated user actually owns this quotation.
+  fetch(document.getElementById('regenForm').action || '{{ route("motor.lookup.quotation") }}', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+      'X-CSRF-TOKEN': document.querySelector('input[name="_token"]').value,
+    },
+    body: JSON.stringify({ number: val }),
+  })
+    .then(r => r.json())
+    .then(data => {
+      if (!data.found) {
+        resultEl.textContent = 'Quote number not found. Please check and try again.';
+        resultEl.style.color = 'var(--red)';
+        return;
+      }
+
+      __lastLookupResult = data;
+      resultEl.textContent = '';
+
+      const showFull = typeof IS_GUEST !== 'undefined' ? (!IS_GUEST && data.is_owner) : !!data.is_owner;
+      const cls = showFull ? '' : ' class="ql-blurred"';
+
+      body.innerHTML = `
+        <tr>
+          <td>${data.quotation_number}</td>
+          <td${cls}>${data.make ?? ''}</td>
+          <td${cls}>${data.model ?? ''}</td>
+          <td${cls}>${data.year ?? ''}</td>
+          <td${cls}>${data.chassis_no ?? ''}</td>
+          <td${cls}>${data.valuation ?? ''}</td>
+          <td${cls}>${data.premium ?? ''}</td>
+        </tr>`;
+
+      wrap.style.display = '';
+      loginCta.style.display = showFull ? 'none' : 'flex';
+
+      if (showFull) {
+        // Logged-in owner — keep existing pre-fill/regenerate behaviour.
+        prefillFromLookup(data);
+      }
+    })
+    .catch(() => {
+      resultEl.textContent = 'Something went wrong. Please try again.';
+      resultEl.style.color = 'var(--red)';
+    });
+}
+
+function prefillFromLookup(d) {
+  const setVal = (id, val) => { const el = document.getElementById(id); if (el && val != null) el.value = val; };
+  setVal('f-salutation', d.salutation);
+  setVal('f-first', d.first_name);
+  setVal('f-middle', d.middle_name);
+  setVal('f-last', d.last_name);
+  setVal('f-phone', d.phone);
+  setVal('f-email', d.email);
+  setVal('f-reg', d.registration_number);
+  setVal('f-chassis', d.chassis_no);
+  setVal('f-make', d.make);
+  setVal('f-model', d.model);
+  setVal('f-body', d.body_type);
+  setVal('f-year', d.year);
+  setVal('f-color', d.color);
+  setVal('f-value', d.valuation);
+
+  document.getElementById('regen-result').textContent = '✓ Quote found! Form has been pre-filled. Scroll up to review and re-generate.';
+  document.getElementById('regen-result').style.color = 'green';
+}
+
+function loginToViewQuote() {
+  if (!__lastLookupResult) return;
+  // ASSUMPTION: replace with your real auth modal trigger + its actual options shape.
+  // ASSUMPTION: after login, user should land on the dashboard with the sidebar's
+  // "View All" (nested under Quotations) nav item auto-opened. I don't have that
+  // sidebar's markup, so this passes a redirect target with query params for you
+  // to read on the dashboard and trigger the right nav click / active state.
+  const redirectUrl = `{{ route('dashboard') }}?tab=quotations&view=all&quotation=${encodeURIComponent(__lastLookupResult.quotation_number)}#view-all`;
+  window.openAuthModal({ redirect: redirectUrl });
+}
+
+// ── VALIDATION ──
+function validateReg(type, input) {
+  var errorEl = document.getElementById('f-reg-error-' + type);
+  if (!errorEl) return;
+  var val = input.value.trim().toUpperCase();
+  input.value = val;
+  var pattern = /^[A-Z]{3}\s?\d{3}[A-Z]$/;
+  if (val && !pattern.test(val)) {
+    errorEl.style.display = 'block';
+  } else {
+    errorEl.style.display = 'none';
+  }
+}
+
+function validateStep2AndProceed(type) {
+  var reg = (document.getElementById('f-reg-' + type) || {}).value || '';
+  var year = (document.getElementById('f-year-' + type) || {}).value || '';
+  var make = (document.getElementById('f-make-value-' + type) || {}).value || (document.getElementById('f-make-' + type) || {}).value || '';
+  var model = (document.getElementById('f-model-value-' + type) || {}).value || (document.getElementById('f-model-' + type) || {}).value || '';
+  var valueRaw = (document.getElementById('f-value-' + type) || {}).value || '';
+  var value = parseFloat(valueRaw.replace(/,/g, '')) || 0;
+  var yearError = document.getElementById('f-year-error-' + type);
+
+  // Validate registration
+  var regPattern = /^[A-Z]{3}\s?\d{3}[A-Z]$/;
+  if (!regPattern.test(reg)) {
+    var regError = document.getElementById('f-reg-error-' + type);
+    if (regError) regError.style.display = 'block';
+    showToast('Please enter a valid Kenyan registration number (e.g. KDH 291H)');
+    return;
+  }
+
+  // Validate year
+  if (!year) {
+    if (yearError) yearError.textContent = 'Please select the year of manufacture.';
+    if (yearError) yearError.style.display = 'block';
+    showToast('Please select the year of manufacture.');
+    return;
+  }
+  if (yearError) yearError.style.display = 'none';
+
+  // Validate make/model
+  if (!make || !model) {
+    showToast('Please enter the vehicle make and model.');
+    return;
+  }
+
+  // Validate value
+  if (!value || value <= 0) {
+    showToast('Please enter a valid vehicle value.');
+    return;
+  }
+
+  goStep(type, 3);
+}
+// ── Quotation Flip Functionality ──
+function openQuoteFlow(type){
+  var source = document.getElementById(type === 'psv' ? 'psv-motor-section' : 'private-motor-section');
+  var formSection = document.getElementById(type === 'psv' ? 'quote-form-section-psv' : 'quote-form-section-private');
+
+  // reset that specific form back to step 1 each time it's opened
+  if(typeof goStep === 'function') goStep(type, 1);
+
+  source.classList.add('section-flip-out');
+
+  setTimeout(function(){
+    source.style.display = 'none';
+    source.classList.remove('section-flip-out');
+
+    formSection.style.display = 'block';
+    formSection.classList.add('section-flip-in');
+    formSection.scrollIntoView({behavior:'smooth', block:'start'});
+
+    setTimeout(function(){
+      formSection.classList.remove('section-flip-in');
+    }, 500);
+  }, 500);
+}
+
+function closeQuoteFlow(type){
+  var source = document.getElementById(type === 'psv' ? 'psv-motor-section' : 'private-motor-section');
+  var formSection = document.getElementById(type === 'psv' ? 'quote-form-section-psv' : 'quote-form-section-private');
+
+  formSection.classList.add('section-flip-out');
+
+  setTimeout(function(){
+    formSection.style.display = 'none';
+    formSection.classList.remove('section-flip-out');
+
+    source.style.display = 'block';
+    source.classList.add('section-flip-in');
+    source.scrollIntoView({behavior:'smooth', block:'start'});
+
+    setTimeout(function(){
+      source.classList.remove('section-flip-in');
+    }, 500);
+  }, 500);
+}
+
+function setVehicleType(type) {
+    document.getElementById('f-vehicle-type').value = type;
+
+    document.getElementById('toggle-private').classList.toggle('active', type === 'private');
+    document.getElementById('toggle-private').setAttribute('aria-selected', type === 'private');
+    document.getElementById('toggle-psv').classList.toggle('active', type === 'psv');
+    document.getElementById('toggle-psv').setAttribute('aria-selected', type === 'psv');
+
+    const paxGroup = document.getElementById('f-pax-group');
+    if (paxGroup) paxGroup.style.display = (type === 'psv') ? '' : 'none';
+
+    const title = document.getElementById('form-title');
+    const subtitle = document.getElementById('form-subtitle');
+    const desc = document.getElementById('form-desc');
+
+    if (type === 'psv') {
+      title.textContent = 'Get Your PSV Motor Vehicle Quote';
+      subtitle.textContent = 'Complete the form below in three easy steps to receive your PSV quotation.';
+      desc.textContent = 'Cover your public service vehicle with a policy that includes Passenger Legal Liability, then compare premiums from leading insurers.';
+    } else {
+      title.textContent = 'Get Your Motor Insurance Quote';
+      subtitle.textContent = 'Complete the form below in three easy steps to receive your personalised quotation.';
+      desc.textContent = 'Choose the cover type that matches your vehicle, then fill in your details to compare premiums from leading insurers.';
+    }
+  }

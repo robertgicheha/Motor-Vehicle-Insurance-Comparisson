@@ -58,6 +58,27 @@
         @endif
       </div>
 
+      {{-- ─── PROFILE COMPLETION ALERT ─────────────────────────────────────── --}}
+      @if(!auth()->user()->profile_completed)
+      <div class="flex items-center justify-between gap-4 px-5 py-4 mb-4 rounded-2xl bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700 fade-in">
+          <div class="flex items-center gap-3">
+              <div class="w-10 h-10 rounded-full bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center shrink-0">
+                  <svg class="w-5 h-5 text-amber-600 dark:text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                  </svg>
+              </div>
+              <div>
+                  <p class="text-sm font-semibold text-amber-800 dark:text-amber-300">Complete Your Profile</p>
+                  <p class="text-xs text-amber-700 dark:text-amber-400 mt-0.5">Please add your phone number and other details to finish setting up your account.</p>
+              </div>
+          </div>
+          <a href="{{ route('profile.edit') }}" class="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold bg-amber-500 hover:bg-amber-600 text-white rounded-lg transition shrink-0">
+              Complete Profile
+              <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+          </a>
+      </div>
+      @endif
+
       <div class="db-section-label">Key Metrics</div>
       <div class="db-kpi-grid">
         <div class="db-kpi" style="--accent:#1756c8;--icon-bg:#e8f0fc">
@@ -66,12 +87,14 @@
           <div class="db-kpi-value">{{ $totalUsers }}</div>
           <div class="db-kpi-trend trend-up"><i class="ti ti-trending-up" style="font-size:12px"></i> +8% this month</div>
         </div>
-        <div class="db-kpi" style="--accent:#0f7a65;--icon-bg:#e1f5ee">
-          <div class="db-kpi-icon"><i class="ti ti-wifi" aria-hidden="true"></i></div>
-          <div class="db-kpi-label">Online Now</div>
-          <div class="db-kpi-value">{{ $onlineUsers }}</div>
-          <div class="db-kpi-sub">Active sessions</div>
-        </div>
+
+        <div class="db-kpi" style="--accent:#7c3aed;--icon-bg:#ede9fe">
+        <div class="db-kpi-icon"><i class="ti ti-building" aria-hidden="true"></i></div>
+        <div class="db-kpi-label">Total Companies</div>
+        <div class="db-kpi-value">{{ $totalCompanies }}</div>
+        <div class="db-kpi-trend trend-up"><i class="ti ti-trending-up" style="font-size:12px"></i> +3% this week</div>
+      </div>
+      
         <div class="db-kpi" style="--accent:#7c3aed;--icon-bg:#ede9fe">
           <div class="db-kpi-icon"><i class="ti ti-file-description" aria-hidden="true"></i></div>
           <div class="db-kpi-label">Total Quotations</div>
@@ -105,11 +128,11 @@
           <div class="db-kpi-value">{{ $totalQuotations }}</div>
           <div class="db-kpi-sub">PDFs attached</div>
         </div>
-        <div class="db-kpi" style="--accent:#7c3aed;--icon-bg:#ede9fe">
-          <div class="db-kpi-icon"><i class="ti ti-shield-check" aria-hidden="true"></i></div>
-          <div class="db-kpi-label">Conversion Rate</div>
-          <div class="db-kpi-value">68%</div>
-          <div class="db-kpi-trend trend-up"><i class="ti ti-trending-up" style="font-size:12px"></i> +3% this week</div>
+        <div class="db-kpi" style="--accent:#0f7a65;--icon-bg:#e1f5ee">
+          <div class="db-kpi-icon"><i class="ti ti-wifi" aria-hidden="true"></i></div>
+          <div class="db-kpi-label">Online Now</div>
+          <div class="db-kpi-value">{{ $onlineUsers }}</div>
+          <div class="db-kpi-sub">Active sessions</div>
         </div>
       </div>
 
@@ -264,15 +287,15 @@
           </div>
           <a href="{{ route('admin.audit.activity') }}" style="display:inline-block;margin-top:10px;font-size:10px;font-weight:600;color:#1756c8;text-decoration:none;">View all activity →</a>
         </div>
-        <div class="db-card" style="background-color: #4a4b4b;">
-          <div class="db-card-header text-white"><span><span class="dot"></span>My Activity</span></div>
+        <div class="db-card" style="background-color: #d0d0d0;">
+          <div class="db-card-header text-micblue"><span><span class="dot"></span>My Activity</span></div>
           <div class="db-activity-list">
             @forelse($myActivities as $a)
             <div class="db-activity-item">
-              <div class="db-activity-dot" style="background:#ffff"></div>
+              <div class="db-activity-dot" text style="background:gray"></div>
               <div>
-                <div class="db-activity-text text-white">{{ $a->description ?? $a->action }}</div>
-                <div class="db-activity-time text-white">{{ $a->created_at->diffForHumans() }}</div>
+                <div class="db-activity-text ">{{ $a->description ?? $a->action }}</div>
+                <div class="db-activity-time ">{{ $a->created_at->diffForHumans() }}</div>
               </div>
             </div>
             @empty
@@ -566,8 +589,9 @@
         @foreach($companies as $company)
         <div class="compare-card">
           <div class="compare-card-logo">
-            @if($company->logo)
-              <img src="{{ asset('storage/' . $company->logo) }}" alt="{{ $company->name }}">
+            @php $__cl = $company->logoUrl(); @endphp
+            @if($__cl)
+              <img src="{{ $__cl }}" alt="{{ $company->name }}">
             @else
               <span style="font-size:20px;font-weight:700;color:#1756c8">{{ substr($company->name, 0, 2) }}</span>
             @endif
@@ -696,36 +720,54 @@
             uvi: '{{ $weather["uvi"] ?? "" }}',
             alerts: {!! json_encode($weather["alerts"] ?? []) !!},
             pollTimer: null,
+            coords: null,
             init() {
-                this.pollTimer = setInterval(() => {
-                    fetch('{{ route("dashboard.weather") }}')
-                        .then(r => r.json())
-                        .then(w => {
-                            this.temp = w.temperature;
-                            this.feels = w.feels_like;
-                            this.description = w.description;
-                            this.city = w.city;
-                            this.humidity = w.humidity;
-                            this.wind = w.wind_speed || '';
-                            this.localTime = w.local_time || '';
-                            this.sunrise = w.sunrise || '';
-                            this.sunset = w.sunset || '';
-                            this.uvi = w.uvi || '';
-                            this.alerts = w.alerts || [];
-                            var cond = (w.condition || '').toLowerCase();
-                            if (cond.includes('clear')) this.emoji = '☀️';
-                            else if (cond.includes('cloud')) this.emoji = w.icon && w.icon.startsWith('02') ? '⛅' : '☁️';
-                            else if (cond.includes('rain')) this.emoji = '🌧️';
-                            else if (cond.includes('drizzle')) this.emoji = '🌦️';
-                            else if (cond.includes('thunderstorm')) this.emoji = '⛈️';
-                            else if (cond.includes('snow')) this.emoji = '❄️';
-                            else if (cond.includes('fog')||cond.includes('mist')||cond.includes('haze')) this.emoji = '🌫️';
-                            else if (cond.includes('dust')||cond.includes('sand')||cond.includes('tornado')) this.emoji = '🌪️';
-                            else if (cond.includes('squall')) this.emoji = '💨';
-                            else this.emoji = '🌤️';
-                        })
-                        .catch(() => {});
-                }, 300000);
+                this.detectLocation();
+                this.pollTimer = setInterval(() => this.fetchWeather(), 300000);
+            },
+            detectLocation() {
+                if (navigator.geolocation) {
+                    navigator.geolocation.getCurrentPosition(
+                        (pos) => { this.coords = { lat: pos.coords.latitude, lon: pos.coords.longitude }; this.fetchWeather(); },
+                        () => { this.coords = null; this.fetchWeather(); },
+                        { timeout: 5000, enableHighAccuracy: false }
+                    );
+                } else {
+                    this.fetchWeather();
+                }
+            },
+            fetchWeather() {
+                var url = '{{ route("dashboard.weather") }}';
+                if (this.coords) {
+                    url += '?lat=' + this.coords.lat + '&lon=' + this.coords.lon;
+                }
+                fetch(url)
+                    .then(r => r.json())
+                    .then(w => {
+                        this.temp = w.temperature;
+                        this.feels = w.feels_like;
+                        this.description = w.description;
+                        this.city = w.city;
+                        this.humidity = w.humidity;
+                        this.wind = w.wind_speed || '';
+                        this.localTime = w.local_time || '';
+                        this.sunrise = w.sunrise || '';
+                        this.sunset = w.sunset || '';
+                        this.uvi = w.uvi || '';
+                        this.alerts = w.alerts || [];
+                        var cond = (w.condition || '').toLowerCase();
+                        if (cond.includes('clear')) this.emoji = '☀️';
+                        else if (cond.includes('cloud')) this.emoji = w.icon && w.icon.startsWith('02') ? '⛅' : '☁️';
+                        else if (cond.includes('rain')) this.emoji = '🌧️';
+                        else if (cond.includes('drizzle')) this.emoji = '🌦️';
+                        else if (cond.includes('thunderstorm')) this.emoji = '⛈️';
+                        else if (cond.includes('snow')) this.emoji = '❄️';
+                        else if (cond.includes('fog')||cond.includes('mist')||cond.includes('haze')) this.emoji = '🌫️';
+                        else if (cond.includes('dust')||cond.includes('sand')||cond.includes('tornado')) this.emoji = '🌪️';
+                        else if (cond.includes('squall')) this.emoji = '💨';
+                        else this.emoji = '🌤️';
+                    })
+                    .catch(() => {});
             },
             destroy() { if (this.pollTimer) clearInterval(this.pollTimer); }
         };

@@ -26,8 +26,9 @@
     <div class="header">
         <div style="display:flex;justify-content:space-between;align-items:center">
             <div style="display:flex;align-items:center;gap:12px">
-                @if($quotation->company->logo)
-                    <img src="{{ public_path('storage/' . $quotation->company->logo) }}" class="company-logo" alt="{{ $quotation->company->name }}">
+                @php $__logoPath = $quotation->company->logo ? public_path('storage/' . $quotation->company->logo) : (isset(\App\Models\Company::hardcodedLogoMap()[$quotation->company->slug]) ? public_path(\App\Models\Company::hardcodedLogoMap()[$quotation->company->slug]) : ''); @endphp
+                @if($__logoPath && file_exists($__logoPath))
+                    <img src="{{ $__logoPath }}" class="company-logo" alt="{{ $quotation->company->name }}">
                 @else
                     <span style="font-size:16px;font-weight:800;color:#fff">{{ $quotation->company->getInitials() }}</span>
                 @endif
@@ -61,48 +62,166 @@
         <tr><td style="font-weight:bold">Cover Type</td><td>Comprehensive</td></tr>
     </table>
 
-    @php
-        $_breakdown = $quotation->breakdown ?? [];
-        $_basePremium = $_breakdown['base_premium'] ?? null;
-        $_iraLevy = $_breakdown['ira_levy'] ?? null;
-        $_premiumRate = $_breakdown['premium_rate'] ?? 6.5;
-        $_iraLevyRate = $_breakdown['ira_levy_rate'] ?? 0.5;
-    @endphp
-    <table>
-        <thead><tr><th>Description</th><th style="text-align:right">Amount (KES)</th></tr></thead>
-        <tbody>
-            <tr><td>Estimated Vehicle Value</td><td style="text-align:right;font-weight:bold">{{ number_format($quotation->car_valuation, 2) }}</td></tr>
-            <tr><td>Basic Annual Premium ({{ $_premiumRate }}%)</td><td style="text-align:right">{{ number_format($quotation->premium, 2) }}</td></tr>
-            @if($_basePremium !== null && $_iraLevy !== null)
-            <tr style="font-size:10px;color:#64748b"><td>&nbsp;&nbsp;&nbsp;Base Premium ({{ number_format($_premiumRate - $_iraLevyRate, 1) }}%)</td><td style="text-align:right">{{ number_format($_basePremium, 2) }}</td></tr>
-            <tr style="font-size:10px;color:#64748b"><td>&nbsp;&nbsp;&nbsp;IRA Levy ({{ $_iraLevyRate }}%)</td><td style="text-align:right">{{ number_format($_iraLevy, 2) }}</td></tr>
-            @endif
-            <tr><td>PVT Premium</td><td style="text-align:right">{{ number_format($quotation->pvt_premium, 2) }}</td></tr>
-            @if($quotation->excess_own_damage)
-                <tr><td>Excess - Own Damage</td><td style="text-align:right">{{ number_format($quotation->excess_own_damage, 2) }}</td></tr>
-            @endif
-            @if($quotation->excess_theft)
-                <tr><td>Excess - Theft</td><td style="text-align:right">{{ number_format($quotation->excess_theft, 2) }}</td></tr>
-            @endif
-            @if($quotation->breakdown)
-                @foreach($quotation->breakdown as $key => $value)
-                    @if(!in_array($key, ['premium', 'pvt_premium', 'total_premium', 'excess_own_damage', 'excess_theft', 'base_premium', 'ira_levy', 'premium_rate', 'ira_levy_rate', 'basic_premium']))
-                        <tr><td>{{ ucwords(str_replace('_', ' ', $key)) }}</td><td style="text-align:right">{{ is_numeric($value) ? number_format($value, 2) : $value }}</td></tr>
-                    @endif
-                @endforeach
-            @endif
-        </tbody>
-        <tfoot>
-            <tr class="total-row"><td>Total Premium</td><td style="text-align:right">{{ number_format($quotation->total_premium, 2) }}</td></tr>
-        </tfoot>
-    </table>
+    $__companyRates = $quotation->company->rates()
+        ->where('vehicle_type', $quotation->vehicle_type ?? 'private')
+        ->get()
+        ->groupBy('category');
 
-    <p style="font-size:10px;color:#64748b;margin-top:15px">
-        This quotation is valid for 15 days from the date of issue. Comprehensive cover is subject to a satisfactory valuation report conducted within the first month of cover. Subject to sanction limitation and exclusion clause and standard policy terms and conditions.
-    </p>
-    <p style="font-size:10px;color:#64748b">
-        Geographical limit: Kenya / Uganda / Tanzania.
-    </p>
+    $_breakdown = $quotation->breakdown ?? [];
+    $_premiumRate = $_breakdown['premium_rate'] ?? 6.5;
+    $_pvtRate = $_breakdown['pvt_rate'] ?? 0;
+    $_levisRate = $_breakdown['levis_rate'] ?? 0.0045;
+    $_stampDuty = $_breakdown['stamp_duty'] ?? 40;
+    $_pvtPremium = $quotation->pvt_premium ?? 0;
+    $_pllPerPerson = $_breakdown['pll_per_person'] ?? 0;
+    $_numPassengers = $quotation->num_passengers ?? 1;
+    $_pllTotal = $_pllPerPerson * $_numPassengers;
+    $_levisAmount = ($_pvtPremium + $_pllTotal) * $_levisRate;
+
+    function fmtRateValue($r) {
+        $parts = [];
+        if ($r->percentage && $r->percentage > 0) $parts[] = $r->percentage . '%';
+        if ($r->value && $r->value > 0) $parts[] = 'Kes ' . number_format($r->value, 0);
+        if ($r->min_value && $r->min_value > 0) $parts[] = 'Min Kes ' . number_format($r->min_value, 0);
+        if ($r->max_value && $r->max_value > 0) $parts[] = 'Max Kes ' . number_format($r->max_value, 0);
+        if ($r->min_premium && $r->min_premium > 0) $parts[] = 'Min prem Kes ' . number_format($r->min_premium, 0);
+        return implode(', ', $parts) ?: ($r->notes ? substr($r->notes, 0, 60) : '');
+    }
+@endphp
+
+<table>
+    <tr><td style="width:40%;font-weight:bold">Customer</td><td>{{ $quotation->user?->full_name ?? 'N/A' }}</td></tr>
+    <tr><td style="font-weight:bold">Vehicle</td><td>{{ $quotation->car_make }} {{ $quotation->car_model }} ({{ $quotation->car_year }})</td></tr>
+    <tr><td style="font-weight:bold">Registration</td><td>{{ $quotation->car_registration ?? 'N/A' }}</td></tr>
+    <tr><td style="font-weight:bold">Cover Type</td><td>Comprehensive {{ ucfirst($quotation->vehicle_type ?? 'private') }}</td></tr>
+</table>
+
+<h3 style="margin:20px 0 0;font-size:12px;color:#004f8c">PREMIUM BREAKDOWN</h3>
+<table>
+    <thead><tr><th>Description</th><th style="text-align:right">Amount (KES)</th></tr></thead>
+    <tbody>
+        <tr><td>Estimated Vehicle Value</td><td style="text-align:right;font-weight:bold">{{ number_format($quotation->car_valuation, 2) }}</td></tr>
+        <tr><td>Basic Annual Premium ({{ $_premiumRate }}%)</td><td style="text-align:right">{{ number_format($quotation->premium, 2) }}</td></tr>
+        @if($_pvtPremium > 0 || $_pvtRate > 0)
+        <tr><td>PVT Premium ({{ number_format($_pvtRate, 2) }}%)</td><td style="text-align:right">{{ number_format($_pvtPremium, 2) }}</td></tr>
+        @endif
+        @if($_pllPerPerson > 0)
+        <tr><td>PLL Premium (KES {{ number_format($_pllPerPerson, 0) }} × {{ $_numPassengers }} pax)</td><td style="text-align:right">{{ number_format($_pllTotal, 2) }}</td></tr>
+        @endif
+        <tr><td>Levis ({{ number_format($_levisRate * 100, 2) }}%)</td><td style="text-align:right">{{ number_format($_levisAmount, 2) }}</td></tr>
+        <tr><td>Stamp Duty</td><td style="text-align:right">{{ number_format($_stampDuty, 2) }}</td></tr>
+        @if($quotation->excess_own_damage)
+            <tr><td>Excess - Own Damage</td><td style="text-align:right">{{ number_format($quotation->excess_own_damage, 2) }}</td></tr>
+        @endif
+        @if($quotation->excess_theft)
+            <tr><td>Excess - Theft</td><td style="text-align:right">{{ number_format($quotation->excess_theft, 2) }}</td></tr>
+        @endif
+    </tbody>
+    <tfoot>
+        <tr class="total-row"><td>Total Premium</td><td style="text-align:right">{{ number_format($quotation->total_premium, 2) }}</td></tr>
+    </tfoot>
+</table>
+
+@if($__companyRates->has('Cover Limits'))
+<h3 style="margin:20px 0 0;font-size:12px;color:#004f8c">BENEFITS / COVER LIMITS</h3>
+<table>
+    <thead><tr><th>Benefit</th><th style="text-align:right">Limit (KES)</th><th>Notes</th></tr></thead>
+    <tbody>
+    @foreach($__companyRates->get('Cover Limits') as $r)
+        <tr>
+            <td>{{ $r->item_name }}</td>
+            <td style="text-align:right">{{ $r->value > 0 ? number_format($r->value, 0) : ($r->notes ? substr($r->notes, 0, 30) : '—') }}</td>
+            <td style="font-size:9px;color:#64748b">{{ $r->notes ?? '' }}</td>
+        </tr>
+    @endforeach
+    </tbody>
+</table>
+@endif
+
+@if($__companyRates->has('Extras'))
+<h3 style="margin:20px 0 0;font-size:12px;color:#004f8c">EXTRAS</h3>
+<table>
+    <thead><tr><th>Extra</th><th style="text-align:right">Limit (KES)</th><th>Notes</th></tr></thead>
+    <tbody>
+    @foreach($__companyRates->get('Extras') as $r)
+        <tr>
+            <td>{{ $r->item_name }}</td>
+            <td style="text-align:right">{{ $r->value > 0 ? number_format($r->value, 0) : '—' }}</td>
+            <td style="font-size:9px;color:#64748b">{{ $r->notes ?? '' }}</td>
+        </tr>
+    @endforeach
+    </tbody>
+</table>
+@endif
+
+@if($__companyRates->has('Third Party Limits'))
+<h3 style="margin:20px 0 0;font-size:12px;color:#004f8c">THIRD PARTY LIMITS OF LIABILITY</h3>
+<table>
+    <thead><tr><th>Cover</th><th style="text-align:right">Limit (KES)</th></tr></thead>
+    <tbody>
+    @foreach($__companyRates->get('Third Party Limits') as $r)
+        <tr>
+            <td>{{ $r->item_name }}</td>
+            <td style="text-align:right">{{ $r->value > 0 ? number_format($r->value, 0) : ($r->notes ?? '—') }}</td>
+        </tr>
+    @endforeach
+    </tbody>
+</table>
+@endif
+
+@if($__companyRates->has('Excess'))
+<h3 style="margin:20px 0 0;font-size:12px;color:#004f8c">POLICY EXCESSES</h3>
+<table>
+    <thead><tr><th>Excess Type</th><th style="text-align:right">Excess Amount</th><th>Notes</th></tr></thead>
+    <tbody>
+    @foreach($__companyRates->get('Excess') as $r)
+        <tr>
+            <td>{{ $r->item_name }}</td>
+            <td style="text-align:right">{{ fmtRateValue($r) ?: '—' }}</td>
+            <td style="font-size:9px;color:#64748b">{{ $r->notes ?? '' }}</td>
+        </tr>
+    @endforeach
+    </tbody>
+</table>
+@endif
+
+@if($__companyRates->has('Additional Cover'))
+<h3 style="margin:20px 0 0;font-size:12px;color:#004f8c">SPECIAL CONDITIONS / ADDITIONAL COVER</h3>
+<table>
+    <thead><tr><th>Condition</th><th>Status / Details</th></tr></thead>
+    <tbody>
+    @foreach($__companyRates->get('Additional Cover') as $r)
+        <tr>
+            <td>{{ $r->item_name }}</td>
+            <td style="font-size:10px">{{ $r->notes ?? '—' }}</td>
+        </tr>
+    @endforeach
+    </tbody>
+</table>
+@endif
+
+@if($__companyRates->has('Optional Benefits'))
+<h3 style="margin:20px 0 0;font-size:12px;color:#004f8c">OPTIONAL BENEFITS</h3>
+<table>
+    <thead><tr><th>Benefit</th><th style="text-align:right">Premium (KES)</th><th>Notes</th></tr></thead>
+    <tbody>
+    @foreach($__companyRates->get('Optional Benefits') as $r)
+        <tr>
+            <td>{{ $r->item_name }}</td>
+            <td style="text-align:right">{{ $r->value > 0 ? number_format($r->value, 0) : '—' }}</td>
+            <td style="font-size:9px;color:#64748b">{{ $r->notes ?? '' }}</td>
+        </tr>
+    @endforeach
+    </tbody>
+</table>
+@endif
+
+<p style="font-size:10px;color:#64748b;margin-top:15px">
+    This quotation is valid for 15 days from the date of issue. Comprehensive cover is subject to a satisfactory valuation report conducted within the first month of cover. Subject to sanction limitation and exclusion clause and standard policy terms and conditions.
+</p>
+<p style="font-size:10px;color:#64748b">
+    Geographical limit: The geographical area is specified in the Special Conditions above.
+</p>
 
     <div class="footer">
         Generated by MIC Global Risks Insurance (Kenya) Limited | www.micglobalrisks.com<br>

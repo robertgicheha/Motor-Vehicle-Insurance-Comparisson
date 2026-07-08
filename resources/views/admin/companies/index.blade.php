@@ -100,6 +100,9 @@
                             <div class="min-w-0">
                                 <h3 class="text-xs font-semibold text-gray-900 dark:text-white truncate">{{ $company->name }}</h3>
                                 <p class="text-[10px] text-gray-500">{{ $company->quotations_count }} quotations</p>
+                                <span class="inline-block mt-0.5 px-1.5 py-0.5 rounded text-[9px] font-medium uppercase tracking-wider {{ $company->company_type === 'private' ? 'bg-sky-50 text-sky-700 dark:bg-sky-900/30 dark:text-sky-400' : ($company->company_type === 'psv' ? 'bg-amber-50 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400' : 'bg-violet-50 text-violet-700 dark:bg-violet-900/30 dark:text-violet-400') }}">
+                                    {{ $company->company_type ?? 'both' }}
+                                </span>
                             </div>
                         </div>
                         <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium shrink-0 {{ $company->is_active ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400' : 'bg-rose-50 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400' }}">
@@ -111,9 +114,12 @@
                     <div class="mt-auto grid grid-cols-3 divide-x divide-gray-100 dark:divide-gray-700 border-t border-gray-100 dark:border-gray-700">
                         <a href="{{ route('admin.companies.rates', $company) }}" class="px-3 py-2.5 text-center text-[10px] font-medium text-blue-700 dark:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20">Rates</a>
                         <a href="{{ route('admin.companies.edit', $company) }}" class="px-3 py-2.5 text-center text-[10px] font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/50">Edit</a>
-                        <a href="{{ route('admin.companies.toggle-status', $company) }}" class="px-3 py-2.5 text-center text-[10px] font-medium {{ $company->is_active ? 'text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/10' : 'text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/10' }}">
-                            {{ $company->is_active ? 'Deactivate' : 'Activate' }}
-                        </a>
+                        <form action="{{ route('admin.companies.toggle-status', $company) }}" method="POST" style="display:contents">
+                            @csrf @method('PATCH')
+                            <button type="submit" class="px-3 py-2.5 text-center text-[10px] font-medium w-full {{ $company->is_active ? 'text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/10' : 'text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/10' }}">
+                                {{ $company->is_active ? 'Deactivate' : 'Activate' }}
+                            </button>
+                        </form>
                     </div>
                 </div>
             @endforeach

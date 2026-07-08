@@ -20,6 +20,7 @@
                             {{ $we }}
                         </span>
                         <span><span x-text="temp">{{ $weather['temperature'] }}</span>°C</span>
+                        <span class="text-white/60 hidden sm:inline" id="weather-city">{{ $weather['city'] ?? '' }}</span>
                     </div>
                 @endif
 
@@ -62,47 +63,79 @@
             </a>
         </div>
 
-       {{-- ─── STATUS BAR (LAST QUOTATION) ─────────────────────────────── --}}
-            @if(isset($recentQuotation))
-                <div x-data="{ show: true }" x-show="show" x-transition
-                    class="bg-green-600 rounded-2xl mt-5 px-5 py-4 flex items-center justify-between shadow-sm">
+      {{-- ─── LATEST QUOTATION NOTIFICATION ───────────────────────────── --}}
+        @if(isset($recentQuotation))
+            <div
+                x-data="{ show: true }"
+                x-init="setTimeout(() => show = false, 10000)"
+                x-show="show"
+                x-transition:enter="transition ease-out duration-300"
+                x-transition:enter-start="opacity-0 -translate-y-2"
+                x-transition:enter-end="opacity-100 translate-y-0"
+                x-transition:leave="transition ease-in duration-300"
+                x-transition:leave-start="opacity-100 translate-y-0"
+                x-transition:leave-end="opacity-0 -translate-y-2"
+                class="bg-green-600 rounded-2xl mt-5 px-5 py-4 flex items-center justify-between shadow-sm">
 
-                    <div>
-                        <p class="text-[10px] font-semibold uppercase tracking-widest text-white">
-                            Last Quotation
-                        </p>
-                        <p class="text-sm font-bold text-white mt-0.5">
-                            {{ $recentQuotation->quotation_number }}
-                        </p>
-                        <p class="text-xs text-white">
-                            {{ $recentQuotation->car_make }} {{ $recentQuotation->car_model }}
-                            - {{ number_format($recentQuotation->total_premium, 2) }} KES
-                        </p>
-                    </div>
+                <div>
+                    <p class="text-[10px] font-semibold uppercase tracking-widest text-white">
+                        Latest Quotation Added
+                    </p>
 
-                    <div class="flex items-center gap-3">
-                        <a href="{{ route('quotations.show', $recentQuotation) }}"
-                        class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-white/20 text-white rounded-lg hover:bg-white/30 transition">
-                            View Details
-                        </a>
+                    <p class="text-sm font-bold text-white mt-0.5">
+                        {{ $recentQuotation->quotation_number }}
+                    </p>
 
-                        <button
-                            @click="show = false"
-                            type="button"
-                            class="flex items-center justify-center w-8 h-8 rounded-full hover:bg-white/20 text-white transition"
-                            aria-label="Close">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round"
-                                    stroke-linejoin="round"
-                                    stroke-width="2"
-                                    d="M6 18L18 6M6 6l12 12"/>
-                            </svg>
-                        </button>
-                    </div>
-
+                    <p class="text-xs text-white">
+                        {{ $recentQuotation->car_make }}
+                        {{ $recentQuotation->car_model }}
+                        — KES {{ number_format($recentQuotation->total_premium, 2) }}
+                    </p>
                 </div>
-            @endif
+
+                <div class="flex items-center gap-3">
+                    <a href="{{ route('quotations.show', $recentQuotation) }}"
+                    class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-white/20 text-white rounded-lg hover:bg-white/30 transition">
+                        View Details
+                    </a>
+
+                    <button
+                        @click="show = false"
+                        type="button"
+                        class="flex items-center justify-center w-8 h-8 rounded-full hover:bg-white/20 text-white transition"
+                        aria-label="Close">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M6 18L18 6M6 6l12 12"/>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        @endif
     </div>
+
+    {{-- ─── PROFILE COMPLETION ALERT ─────────────────────────────────────── --}}
+    @if(!auth()->user()->profile_completed)
+    <div class="rounded-2xl bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700 px-5 py-4 flex items-center justify-between gap-4 fade-in">
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-full bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center shrink-0">
+                <svg class="w-5 h-5 text-amber-600 dark:text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+            </div>
+            <div>
+                <p class="text-sm font-semibold text-amber-800 dark:text-amber-300">Complete Your Profile</p>
+                <p class="text-xs text-amber-700 dark:text-amber-400 mt-0.5">Your profile is incomplete. Please add your phone number and other details to finish setting up your account.</p>
+            </div>
+        </div>
+        <a href="{{ route('profile.edit') }}" class="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold bg-amber-500 hover:bg-amber-600 text-white rounded-lg transition shrink-0">
+            Complete Profile
+            <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+        </a>
+    </div>
+    @endif
 
     {{-- ─── TWO-COLUMN GRID ─────────────────────────────────────────────── --}}
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -691,7 +724,6 @@
                 <div><span class="text-gray-400">Value</span><p id="pq-value" class="font-medium text-gray-800 dark:text-white">—</p></div>
                 <div><span class="text-gray-400">Rate</span><p id="pq-rate" class="font-medium text-gray-800 dark:text-white">—</p></div>
                 <div><span class="text-gray-400">Premium</span><p id="pq-premium" class="font-medium text-gray-800 dark:text-white">—</p></div>
-                <div><span class="text-gray-400">Tax</span><p id="pq-tax" class="font-medium text-gray-800 dark:text-white">—</p></div>
                 <div><span class="text-gray-400">Total</span><p id="pq-total" class="font-medium text-gray-800 dark:text-white">—</p></div>
             </div>
             <div class="mt-3 pt-3 border-t border-gray-100 dark:border-gray-700 flex items-center justify-between">
@@ -707,11 +739,12 @@
     $_idx = 0;
     $_companyData = $companies->map(function($c) use ($_companyColors, &$_idx) {
         $rate = $c->rates->firstWhere('item_name', 'Premium Rate');
+        $pvtRate = $c->rates->firstWhere('item_name', 'PVT Rate');
         return [
             'slug' => $c->slug,
             'name' => $c->name,
             'rate' => $rate ? (float) $rate->percentage / 100 : 0,
-            'taxRate' => 0.005,
+            'pvtRate' => $pvtRate ? (float) $pvtRate->percentage / 100 : 0,
             'color' => $_companyColors[$_idx++ % 4],
             'prefix' => $c->getInitials(),
         ];
@@ -734,8 +767,10 @@ window.MIC_COMPANIES = @json($_companyData);
       if (!company) { console.warn('Company not found:', pendingCompany); return; }
 
       var premium = (data.value || 0) * company.rate;
-      var tax = premium * company.taxRate;
-      var total = premium + tax;
+      var pvt = (data.value || 0) * (company.pvtRate || 0);
+      var levis = pvt * 0.0045;
+      var stampDuty = 40;
+      var total = premium + pvt + levis + stampDuty;
       var fmtNum = function(n) { return 'KES ' + Number(n).toLocaleString('en-KE', {minimumFractionDigits:0, maximumFractionDigits:0}); };
       var name = [data.salutation, data.firstName, data.lastName].filter(Boolean).join(' ');
 
@@ -747,7 +782,6 @@ window.MIC_COMPANIES = @json($_companyData);
       document.getElementById('pq-reg').textContent = data.reg || '—';
       document.getElementById('pq-value').textContent = fmtNum(data.value);
       document.getElementById('pq-premium').textContent = fmtNum(premium);
-      document.getElementById('pq-tax').textContent = fmtNum(tax);
       document.getElementById('pq-total').textContent = fmtNum(total);
       document.getElementById('pq-rate').textContent = (company.rate * 100).toFixed(1) + '%';
 
@@ -884,21 +918,47 @@ function userWeather() {
         emoji: '{{ $we ?? "🌤️" }}',
         temp: '{{ $weather["temperature"] ?? 25 }}',
         pollTimer: null,
+        coords: null,
         init() {
-            this.pollTimer = setInterval(() => {
-                fetch('{{ route("dashboard.weather") }}')
-                    .then(r => r.json())
-                    .then(w => {
-                        this.temp = w.temperature;
-                        var cond = (w.condition || '').toLowerCase();
-                        if (cond.includes('clear')) this.emoji = '☀️';
-                        else if (cond.includes('cloud')) this.emoji = '☁️';
-                        else if (cond.includes('rain')) this.emoji = '🌧️';
-                        else if (cond.includes('snow')) this.emoji = '❄️';
-                        else this.emoji = '🌤️';
-                    })
-                    .catch(() => {});
-            }, 300000);
+            this.detectLocation();
+            this.pollTimer = setInterval(() => this.fetchWeather(), 300000);
+        },
+        detectLocation() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    (pos) => {
+                        this.coords = { lat: pos.coords.latitude, lon: pos.coords.longitude };
+                        this.fetchWeather();
+                    },
+                    () => { this.coords = null; this.fetchWeather(); },
+                    { timeout: 5000, enableHighAccuracy: false }
+                );
+            } else {
+                this.fetchWeather();
+            }
+        },
+        fetchWeather() {
+            var url = '{{ route("dashboard.weather") }}';
+            if (this.coords) {
+                url += '?lat=' + this.coords.lat + '&lon=' + this.coords.lon;
+            }
+            fetch(url)
+                .then(r => r.json())
+                .then(w => {
+                    this.temp = w.temperature;
+                    var cond = (w.condition || '').toLowerCase();
+                    if (cond.includes('clear')) this.emoji = '☀️';
+                    else if (cond.includes('cloud')) this.emoji = '☁️';
+                    else if (cond.includes('rain')) this.emoji = '🌧️';
+                    else if (cond.includes('snow')) this.emoji = '❄️';
+                    else if (cond.includes('thunderstorm')) this.emoji = '⛈️';
+                    else if (cond.includes('fog')||cond.includes('mist')||cond.includes('haze')) this.emoji = '🌫️';
+                    else this.emoji = '🌤️';
+                    if (w.city && document.getElementById('weather-city')) {
+                        document.getElementById('weather-city').textContent = w.city;
+                    }
+                })
+                .catch(() => {});
         },
         destroy() { if (this.pollTimer) clearInterval(this.pollTimer); }
     };

@@ -11,7 +11,7 @@ class Quotation extends Model
 
     protected $fillable = [
         'user_id', 'company_id', 'quotation_number', 'car_make', 'car_model',
-        'car_year', 'car_registration', 'car_valuation', 'premium', 'pvt_premium',
+        'car_year', 'car_registration', 'car_valuation', 'vehicle_type', 'num_passengers', 'premium', 'pvt_premium',
         'total_premium', 'excess_own_damage', 'excess_theft', 'status', 'breakdown'
     ];
 

@@ -24,11 +24,61 @@ class PublicController extends Controller
             ->groupBy('company_id')
             ->get()
             ->keyBy('company_id');
-        return view('home', compact('companies', 'coverage', 'companyStats'));
+        return view('motor-quote', compact('companies', 'coverage', 'companyStats'));
+    }
+
+    public function motorPrivate()
+    {
+        $companies = Company::active()->with('rates')->get();
+        $vehicleType = 'private';
+        $companyColors = ['#003087', '#0066B3', '#00205B', '#D0021B'];
+        $companyData = $companies->filter(fn($c) => in_array($c->company_type, ['private', 'both']))->map(function ($c, $i) use ($companyColors, $vehicleType) {
+            $rate = $c->rates->where('vehicle_type', $vehicleType)->firstWhere('item_name', 'Premium Rate');
+            return [
+                'slug' => $c->slug,
+                'name' => $c->name,
+                'logo' => $c->logoUrl(),
+                'rate' => $rate ? (float) $rate->percentage / 100 : 0,
+                'rate_display' => $rate ? ((float)$rate->percentage) . '%' : '—',
+                'color' => $companyColors[$i % count($companyColors)],
+            ];
+        })->values();
+        $companyStats = Quotation::selectRaw('company_id, COUNT(*) as total, SUM(total_premium) as total_premium')
+            ->whereIn('company_id', $companies->pluck('id'))
+            ->groupBy('company_id')
+            ->get()
+            ->keyBy('company_id');
+        return view('motor-private', compact('companies', 'companyData', 'companyStats'));
+    }
+
+    public function motorPsv()
+    {
+        $companies = Company::active()->with('rates')->get();
+        $vehicleType = 'psv';
+        $companyColors = ['#003087', '#0066B3', '#00205B', '#D0021B'];
+        $companyData = $companies->filter(fn($c) => in_array($c->company_type, ['psv', 'both']))->map(function ($c, $i) use ($companyColors, $vehicleType) {
+            $rate = $c->rates->where('vehicle_type', $vehicleType)->firstWhere('item_name', 'Premium Rate');
+            return [
+                'slug' => $c->slug,
+                'name' => $c->name,
+                'logo' => $c->logoUrl(),
+                'rate' => $rate ? (float) $rate->percentage / 100 : 0,
+                'rate_display' => $rate ? ((float)$rate->percentage) . '%' : '—',
+                'color' => $companyColors[$i % count($companyColors)],
+            ];
+        })->values();
+        $companyStats = Quotation::selectRaw('company_id, COUNT(*) as total, SUM(total_premium) as total_premium')
+            ->whereIn('company_id', $companies->pluck('id'))
+            ->groupBy('company_id')
+            ->get()
+            ->keyBy('company_id');
+        return view('motor-psv', compact('companies', 'companyData', 'companyStats'));
     }
 
     public function quotation(?string $company = null)
     {
+        $vehicleType = request()->query('vehicle_type', 'psv');
+        $numPassengers = request()->query('num_passengers', 1);
         $companies = Company::active()->with('rates')->get();
         $selectedCompany = null;
 
@@ -39,15 +89,18 @@ class PublicController extends Controller
         $coverage = $this->getCoverageData($companies);
 
         $companyColors = ['#003087', '#0066B3', '#00205B', '#D0021B'];
-        $companyData = $companies->map(function ($c, $i) use ($companyColors) {
-            $rate = $c->rates->firstWhere('item_name', 'Premium Rate');
-            $iraLevy = $c->rates->firstWhere('item_name', 'IRA Levy');
+        $companyData = $companies->map(function ($c, $i) use ($companyColors, $vehicleType) {
+            $rate = $c->rates->where('vehicle_type', $vehicleType)->firstWhere('item_name', 'Premium Rate');
+            $pvtRate = $c->rates->where('vehicle_type', $vehicleType)->firstWhere('item_name', 'PVT Rate');
+            $pllRate = $c->rates->where('vehicle_type', $vehicleType)->firstWhere('item_name', 'PLL Per Person');
             return [
                 'slug' => $c->slug,
                 'name' => $c->name,
                 'logo' => $c->logoUrl(),
                 'rate' => $rate ? (float) $rate->percentage / 100 : 0,
-                'taxRate' => $iraLevy ? (float) $iraLevy->percentage / 100 : 0.005,
+                'taxRate' => 0,
+                'pvtRate' => $pvtRate ? (float) $pvtRate->percentage / 100 : 0,
+                'pllPerPerson' => $pllRate ? (float) $pllRate->value : 0,
                 'color' => $companyColors[$i % count($companyColors)],
                 'prefix' => $c->getInitials(),
             ];
@@ -73,7 +126,7 @@ class PublicController extends Controller
         $iraLevyRate = $selectedCompany?->rates->firstWhere('item_name', 'IRA Levy');
         $taxRate = $iraLevyRate ? (float) $iraLevyRate->percentage / 100 : 0.005;
 
-        return view('quotation', compact('companies', 'selectedCompany', 'taxRate', 'coverage', 'companyData', 'userQuotation', 'hardcodedLogos', '__compareAllLogoUrl'));
+        return view('quotation', compact('companies', 'selectedCompany', 'taxRate', 'coverage', 'companyData', 'userQuotation', 'hardcodedLogos', '__compareAllLogoUrl', 'vehicleType', 'numPassengers'));
     }
 
     public function lookupQuotation(Request $request)
@@ -190,17 +243,24 @@ class PublicController extends Controller
             'car_year' => 'required|integer',
             'car_registration' => 'nullable|string|max:50',
             'car_valuation' => 'required|numeric|min:0',
+            'vehicle_type' => 'sometimes|string|in:psv,private',
+            'num_passengers' => 'sometimes|integer|min:1',
         ]);
 
         $company = Company::where('slug', $request->company_slug)->firstOrFail();
-        $premiumRate = $company->rates->firstWhere('item_name', 'Premium Rate');
-        $iraLevyRate = $company->rates->firstWhere('item_name', 'IRA Levy');
-        $ratePercent = $premiumRate ? (float) $premiumRate->percentage / 100 : 0;
-        $iraLevyPercent = $iraLevyRate ? (float) $iraLevyRate->percentage / 100 : 0;
-        $basicPremium = $request->car_valuation * $ratePercent;
-        $iraLevy = $request->car_valuation * $iraLevyPercent;
-        $basePremium = $basicPremium - $iraLevy;
-        $total = $basicPremium;
+        $vehicleType = $request->input('vehicle_type', 'psv');
+        $numPassengers = $request->input('num_passengers', 1);
+
+        $calculator = app(\App\Services\PremiumCalculationService::class);
+        $result = $calculator->calculate(
+            $company,
+            $request->car_valuation,
+            $vehicleType,
+            true,
+            $numPassengers,
+            true,
+            false
+        );
 
         $quotation = auth()->user()->quotations()->create([
             'company_id' => $company->id,
@@ -210,19 +270,15 @@ class PublicController extends Controller
             'car_year' => $request->car_year,
             'car_registration' => $request->car_registration,
             'car_valuation' => $request->car_valuation,
-            'premium' => $basicPremium,
-            'pvt_premium' => 0,
-            'total_premium' => $total,
-            'excess_own_damage' => 0,
-            'excess_theft' => 0,
+            'vehicle_type' => $vehicleType,
+            'num_passengers' => $numPassengers,
+            'premium' => $result['basic_premium'],
+            'pvt_premium' => $result['pvt_premium'],
+            'total_premium' => $result['total_premium'],
+            'excess_own_damage' => $result['excess_own_damage'],
+            'excess_theft' => $result['excess_theft'],
             'status' => 'generated',
-            'breakdown' => [
-                'basic_premium' => $basicPremium,
-                'base_premium' => $basePremium,
-                'ira_levy' => $iraLevy,
-                'premium_rate' => $ratePercent * 100,
-                'ira_levy_rate' => $iraLevyPercent * 100,
-            ],
+            'breakdown' => $result,
         ]);
 
         return response()->json([
@@ -266,6 +322,8 @@ class PublicController extends Controller
 
     public function generateQuote(?string $company = null)
     {
+        $vehicleType = request()->query('vehicle_type', 'psv');
+        $numPassengers = request()->query('num_passengers', 1);
         $companies = Company::active()->with('rates')->get();
         $selectedCompany = null;
         $mode = 'all';
@@ -279,24 +337,47 @@ class PublicController extends Controller
             $mode = 'compare';
         }
 
-        $companyColors = ['#003087', '#0066B3', '#00205B', '#D0021B'];
-        $companyData = $companies->map(function ($c, $i) use ($companyColors) {
-            $rate = $c->rates->firstWhere('item_name', 'Premium Rate');
-            $iraLevy = $c->rates->firstWhere('item_name', 'IRA Levy');
-            return [
-                'slug' => $c->slug,
-                'name' => $c->name,
-                'logo' => $c->logoUrl(),
-                'rate' => $rate ? (float) $rate->percentage / 100 : 0,
-                'taxRate' => $iraLevy ? (float) $iraLevy->percentage / 100 : 0.005,
-                'color' => $companyColors[$i % count($companyColors)],
-                'prefix' => $c->getInitials(),
-            ];
-        })->values();
+        $companyColors = ['#003087', '#0066B3', '#00205B', '#D0021B', '#7c3aed', '#0f7a65'];
+
+        $buildData = function($companies, $vehicleType) use ($companyColors) {
+            return $companies->filter(function($c) use ($vehicleType) {
+                return in_array($c->company_type, ['both', $vehicleType]);
+            })->values()->map(function ($c, $i) use ($companyColors, $vehicleType) {
+                $rate = $c->rates->where('vehicle_type', $vehicleType)->firstWhere('item_name', 'Premium Rate');
+                $pvtRate = $c->rates->where('vehicle_type', $vehicleType)->firstWhere('item_name', 'PVT Rate');
+                $pllRate = $c->rates->where('vehicle_type', $vehicleType)->firstWhere('item_name', 'PLL Per Person');
+                return [
+                    'slug' => $c->slug,
+                    'name' => $c->name,
+                    'logo' => $c->logoUrl(),
+                    'rate' => $rate ? (float) $rate->percentage / 100 : 0,
+                    'taxRate' => 0,
+                    'pvtRate' => $pvtRate ? (float) $pvtRate->percentage / 100 : 0,
+                    'pllPerPerson' => $pllRate ? (float) $pllRate->value : 0,
+                    'color' => $companyColors[$i % count($companyColors)],
+                    'prefix' => $c->getInitials(),
+                ];
+            });
+        };
+
+        $companyData = $buildData($companies, $vehicleType);
+        $privateCompanyData = $buildData($companies, 'private');
+        $psvCompanyData = $buildData($companies, 'psv');
+
+        $minSumInsured = 0;
+        $maxSumInsured = 10000000;
+        if ($selectedCompany) {
+            $minSumInsured = $vehicleType === 'private'
+                ? (float)($selectedCompany->min_sum_insured_private ?? 500000)
+                : (float)($selectedCompany->min_sum_insured_psv ?? 800000);
+        }
 
         $coverage = $this->getCoverageData($companies);
 
-        return view('public.generate-quote', compact('companies', 'selectedCompany', 'mode', 'companyData', 'coverage'));
+        return view('public.generate-quote', compact(
+            'companies', 'selectedCompany', 'mode', 'companyData', 'privateCompanyData', 'psvCompanyData',
+            'coverage', 'vehicleType', 'minSumInsured', 'maxSumInsured'
+        ));
     }
 
     private function getCoverageData(Collection $companies): array

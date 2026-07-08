@@ -9,7 +9,7 @@ use App\Http\Controllers\PublicController;
 use App\Http\Controllers\VehicleDataController;
 use App\Http\Controllers\QuotationController;
 use App\Http\Controllers\StickerController;
-use App\Http\Controllers\Auth\SocialiteController;
+use App\Http\Controllers\Auth\GoogleAuthController;
 use App\Http\Controllers\Admin\StickerAdminController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\RoleController;
@@ -32,9 +32,13 @@ Route::get('/', function () {
 })->name('home');
 
 Route::get('/motor-quote', [PublicController::class, 'motorQuote'])->name('motor.quote');
+Route::get('/motor-private', [PublicController::class, 'motorPrivate'])->name('motor.private');
+Route::get('/motor-psv', [PublicController::class, 'motorPsv'])->name('motor.psv');
 Route::get('/motor-quote/stats', [PublicController::class, 'statsJson'])->name('motor.stats');
 Route::get('/generate-quote/{company?}', [PublicController::class, 'generateQuote'])->name('generate.quote');
 Route::get('/quotation/{company?}', [PublicController::class, 'quotation'])->name('motor.quotation');
+Route::get('/psv-quote', [PublicController::class, 'motorQuote'])->name('psv.quote');
+Route::get('/private-quote', [PublicController::class, 'motorQuote'])->name('private.quote');
 
 Route::get('/api/vehicle-makes', [VehicleDataController::class, 'makes']);
 Route::get('/api/vehicle-models/{make}', [VehicleDataController::class, 'models']);
@@ -69,8 +73,8 @@ Route::prefix('stickers')->name('stickers.')->group(function () {
 Route::post('/api/sticker/generate', [StickerApiController::class, 'generate']);
 Route::post('/api/quotation/from-session', [PublicController::class, 'storeQuotationFromSession'])->middleware('auth')->name('api.quotation.from-session');
 
-Route::get('auth/google', [SocialiteController::class, 'redirectToGoogle'])->name('auth.google');
-Route::get('auth/google/callback', [SocialiteController::class, 'handleGoogleCallback']);
+Route::get('auth/google', [GoogleAuthController::class, 'redirect'])->name('auth.google');
+Route::get('auth/google/callback', [GoogleAuthController::class, 'callback']);
 
 Route::middleware(['auth', 'online'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
@@ -179,7 +183,9 @@ Route::middleware(['auth', 'online'])->group(function () {
         Route::prefix('media')->name('media.')->group(function () {
             Route::get('/', [MediaController::class, 'index'])->name('index');
             Route::post('/upload', [MediaController::class, 'upload'])->name('upload');
+            Route::post('/rename', [MediaController::class, 'rename'])->name('rename');
             Route::delete('/{media}', [MediaController::class, 'destroy'])->name('destroy');
+            Route::delete('/file/{path}', [MediaController::class, 'destroy'])->name('destroy-file');
             Route::get('/list', [MediaController::class, 'list'])->name('list');
         });
     });

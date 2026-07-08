@@ -24,7 +24,13 @@
   </div>
 </nav>
 
-@php $breakdown = $quotation->breakdown ?? []; @endphp
+@php
+    $breakdown = $quotation->breakdown ?? [];
+    $companyRates = $quotation->company->rates()
+        ->where('vehicle_type', $quotation->vehicle_type ?? 'private')
+        ->get()
+        ->groupBy('category');
+@endphp
 
 <section class="page-hero">
   <div class="page-hero-inner">
@@ -71,20 +77,21 @@
       <div class="summary-row"><span>Vehicle Value</span><span>KES {{ number_format($quotation->car_valuation, 2) }}</span></div>
       <div class="summary-row"><span>Basic Premium ({{ ($breakdown['premium_rate'] ?? 6.5) }}%)</span><span>KES {{ number_format($quotation->premium, 2) }}</span></div>
       @php
-        $_basePremium = $breakdown['base_premium'] ?? null;
-        $_iraLevy = $breakdown['ira_levy'] ?? null;
+        $_pvtRate = $breakdown['pvt_rate'] ?? 0;
+        $_levisRate = $breakdown['levis_rate'] ?? 0.0045;
+        $_stampDuty = $breakdown['stamp_duty'] ?? 40;
+        $_pvtPremium = $quotation->pvt_premium ?? 0;
+        $_pllPerPerson = $breakdown['pll_per_person'] ?? 0;
+        $_numPassengers = $quotation->num_passengers ?? 1;
+        $_pllTotal = $_pllPerPerson * $_numPassengers;
+        $_levisAmount = ($_pvtPremium + $_pllTotal) * $_levisRate;
       @endphp
-      @if($_basePremium !== null && $_iraLevy !== null)
-      <div class="summary-row" style="padding-left:1rem;font-size:11px;color:var(--text-muted)">
-        <span>Base Premium ({{ number_format(($breakdown['premium_rate'] ?? 6.5) - ($breakdown['ira_levy_rate'] ?? 0.5), 1) }}%)</span>
-        <span>KES {{ number_format($_basePremium, 2) }}</span>
-      </div>
-      <div class="summary-row" style="padding-left:1rem;font-size:11px;color:var(--text-muted)">
-        <span>IRA Levy ({{ $breakdown['ira_levy_rate'] ?? 0.5 }}%)</span>
-        <span>KES {{ number_format($_iraLevy, 2) }}</span>
-      </div>
+      <div class="summary-row"><span>PVT Premium ({{ number_format($_pvtRate * 100, 2) }}%)</span><span>KES {{ number_format($_pvtPremium, 2) }}</span></div>
+      @if($_pllPerPerson > 0)
+      <div class="summary-row"><span>PLL Premium (KES {{ number_format($_pllPerPerson, 0) }} × {{ $_numPassengers }} pax)</span><span>KES {{ number_format($_pllTotal, 2) }}</span></div>
       @endif
-      <div class="summary-row"><span>PVT Premium</span><span>KES {{ number_format($quotation->pvt_premium, 2) }}</span></div>
+      <div class="summary-row"><span>Levis ({{ number_format($_levisRate * 100, 2) }}%)</span><span>KES {{ number_format($_levisAmount, 2) }}</span></div>
+      <div class="summary-row"><span>Stamp Duty</span><span>KES {{ number_format($_stampDuty, 2) }}</span></div>
       <div class="summary-row" style="border-top:2px solid var(--blue);margin-top:6px;padding-top:8px">
         <span style="font-weight:800;color:var(--blue)">Total Premium</span>
         <span style="font-weight:800;color:var(--blue);font-size:16px">KES {{ number_format($quotation->total_premium, 2) }}</span>
@@ -98,11 +105,12 @@
       <tbody>
         <tr><td>Estimated Vehicle Value</td><td>{{ number_format($quotation->car_valuation, 2) }}</td></tr>
         <tr><td>Basic Annual Premium ({{ $breakdown['premium_rate'] ?? 6.5 }}%)</td><td>{{ number_format($quotation->premium, 2) }}</td></tr>
-        @if($_basePremium !== null && $_iraLevy !== null)
-        <tr style="color:#6b7280;font-size:11px"><td>&nbsp;&nbsp;&nbsp;Base Premium ({{ number_format(($breakdown['premium_rate'] ?? 6.5) - ($breakdown['ira_levy_rate'] ?? 0.5), 1) }}%)</td><td>{{ number_format($_basePremium, 2) }}</td></tr>
-        <tr style="color:#6b7280;font-size:11px"><td>&nbsp;&nbsp;&nbsp;IRA Levy ({{ $breakdown['ira_levy_rate'] ?? 0.5 }}%)</td><td>{{ number_format($_iraLevy, 2) }}</td></tr>
+        <tr><td>PVT Premium ({{ number_format($_pvtRate * 100, 2) }}%)</td><td>{{ number_format($_pvtPremium, 2) }}</td></tr>
+        @if($_pllPerPerson > 0)
+        <tr><td>PLL Premium (KES {{ number_format($_pllPerPerson, 0) }} × {{ $_numPassengers }} pax)</td><td>{{ number_format($_pllTotal, 2) }}</td></tr>
         @endif
-        <tr><td>PVT Premium</td><td>{{ number_format($quotation->pvt_premium, 2) }}</td></tr>
+        <tr><td>Levis ({{ number_format($_levisRate * 100, 2) }}%)</td><td>{{ number_format($_levisAmount, 2) }}</td></tr>
+        <tr><td>Stamp Duty</td><td>{{ number_format($_stampDuty, 2) }}</td></tr>
         @if($quotation->excess_own_damage)
           <tr><td>Excess - Own Damage</td><td>{{ number_format($quotation->excess_own_damage, 2) }}</td></tr>
         @endif
@@ -115,6 +123,90 @@
       </tfoot>
     </table>
   </div>
+
+  @if($companyRates->has('Cover Limits'))
+  <div class="summary-card" style="margin-top:20px">
+    <h4 style="margin-bottom:12px">Benefits / Cover Limits</h4>
+    <table style="width:100%;border-collapse:collapse;font-size:13px">
+      <thead><tr style="background:#f8fafc"><th style="padding:8px 12px;text-align:left;border-bottom:2px solid var(--border);font-size:11px">Benefit</th><th style="padding:8px 12px;text-align:right;border-bottom:2px solid var(--border);font-size:11px">Limit (KES)</th></tr></thead>
+      <tbody>
+      @foreach($companyRates->get('Cover Limits') as $r)
+        <tr><td style="padding:6px 12px;border-bottom:1px solid #eee">{{ $r->item_name }}</td><td style="padding:6px 12px;text-align:right;border-bottom:1px solid #eee">{{ $r->value > 0 ? 'KES ' . number_format($r->value, 0) : ($r->notes ?? '—') }}</td></tr>
+      @endforeach
+      </tbody>
+    </table>
+  </div>
+  @endif
+
+  @if($companyRates->has('Extras'))
+  <div class="summary-card" style="margin-top:20px">
+    <h4 style="margin-bottom:12px">Extras</h4>
+    <table style="width:100%;border-collapse:collapse;font-size:13px">
+      <thead><tr style="background:#f8fafc"><th style="padding:8px 12px;text-align:left;border-bottom:2px solid var(--border);font-size:11px">Extra</th><th style="padding:8px 12px;text-align:right;border-bottom:2px solid var(--border);font-size:11px">Limit (KES)</th><th style="padding:8px 12px;text-align:left;border-bottom:2px solid var(--border);font-size:11px">Notes</th></tr></thead>
+      <tbody>
+      @foreach($companyRates->get('Extras') as $r)
+        <tr><td style="padding:6px 12px;border-bottom:1px solid #eee">{{ $r->item_name }}</td><td style="padding:6px 12px;text-align:right;border-bottom:1px solid #eee">{{ $r->value > 0 ? 'KES ' . number_format($r->value, 0) : '—' }}</td><td style="padding:6px 12px;border-bottom:1px solid #eee;font-size:11px;color:#64748b">{{ $r->notes ?? '' }}</td></tr>
+      @endforeach
+      </tbody>
+    </table>
+  </div>
+  @endif
+
+  @if($companyRates->has('Third Party Limits'))
+  <div class="summary-card" style="margin-top:20px">
+    <h4 style="margin-bottom:12px">Third Party Limits of Liability</h4>
+    <table style="width:100%;border-collapse:collapse;font-size:13px">
+      <thead><tr style="background:#f8fafc"><th style="padding:8px 12px;text-align:left;border-bottom:2px solid var(--border);font-size:11px">Cover</th><th style="padding:8px 12px;text-align:right;border-bottom:2px solid var(--border);font-size:11px">Limit (KES)</th></tr></thead>
+      <tbody>
+      @foreach($companyRates->get('Third Party Limits') as $r)
+        <tr><td style="padding:6px 12px;border-bottom:1px solid #eee">{{ $r->item_name }}</td><td style="padding:6px 12px;text-align:right;border-bottom:1px solid #eee">{{ $r->value > 0 ? 'KES ' . number_format($r->value, 0) : ($r->notes ?? '—') }}</td></tr>
+      @endforeach
+      </tbody>
+    </table>
+  </div>
+  @endif
+
+  @if($companyRates->has('Excess'))
+  <div class="summary-card" style="margin-top:20px">
+    <h4 style="margin-bottom:12px">Policy Excesses</h4>
+    <table style="width:100%;border-collapse:collapse;font-size:13px">
+      <thead><tr style="background:#f8fafc"><th style="padding:8px 12px;text-align:left;border-bottom:2px solid var(--border);font-size:11px">Excess Type</th><th style="padding:8px 12px;text-align:right;border-bottom:2px solid var(--border);font-size:11px">Excess Amount</th></tr></thead>
+      <tbody>
+      @foreach($companyRates->get('Excess') as $r)
+        <tr><td style="padding:6px 12px;border-bottom:1px solid #eee">{{ $r->item_name }}</td><td style="padding:6px 12px;text-align:right;border-bottom:1px solid #eee">{{ $r->notes ? substr($r->notes, 0, 60) : '—' }}</td></tr>
+      @endforeach
+      </tbody>
+    </table>
+  </div>
+  @endif
+
+  @if($companyRates->has('Additional Cover'))
+  <div class="summary-card" style="margin-top:20px">
+    <h4 style="margin-bottom:12px">Special Conditions / Additional Cover</h4>
+    <table style="width:100%;border-collapse:collapse;font-size:13px">
+      <thead><tr style="background:#f8fafc"><th style="padding:8px 12px;text-align:left;border-bottom:2px solid var(--border);font-size:11px">Condition</th><th style="padding:8px 12px;text-align:left;border-bottom:2px solid var(--border);font-size:11px">Status / Details</th></tr></thead>
+      <tbody>
+      @foreach($companyRates->get('Additional Cover') as $r)
+        <tr><td style="padding:6px 12px;border-bottom:1px solid #eee">{{ $r->item_name }}</td><td style="padding:6px 12px;border-bottom:1px solid #eee;font-size:12px">{{ $r->notes ?? '—' }}</td></tr>
+      @endforeach
+      </tbody>
+    </table>
+  </div>
+  @endif
+
+  @if($companyRates->has('Optional Benefits'))
+  <div class="summary-card" style="margin-top:20px">
+    <h4 style="margin-bottom:12px">Optional Benefits</h4>
+    <table style="width:100%;border-collapse:collapse;font-size:13px">
+      <thead><tr style="background:#f8fafc"><th style="padding:8px 12px;text-align:left;border-bottom:2px solid var(--border);font-size:11px">Benefit</th><th style="padding:8px 12px;text-align:right;border-bottom:2px solid var(--border);font-size:11px">Premium (KES)</th></tr></thead>
+      <tbody>
+      @foreach($companyRates->get('Optional Benefits') as $r)
+        <tr><td style="padding:6px 12px;border-bottom:1px solid #eee">{{ $r->item_name }}</td><td style="padding:6px 12px;text-align:right;border-bottom:1px solid #eee">{{ $r->value > 0 ? 'KES ' . number_format($r->value, 0) : '—' }}</td></tr>
+      @endforeach
+      </tbody>
+    </table>
+  </div>
+  @endif
 
   <div class="action-bar" style="display:flex">
     <span class="action-bar-label">Actions</span>

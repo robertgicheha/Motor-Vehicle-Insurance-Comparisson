@@ -18,8 +18,9 @@
     <div class="flex gap-7 items-center">
       <a href="{{ url('/') }}" class="text-[13.5px] font-semibold text-[#1a1a2e] no-underline hover:text-[#0066B3]">Home</a>
       <a href="{{ url('/motor-quote') }}" class="text-[13.5px] font-semibold text-[#1a1a2e] no-underline hover:text-[#0066B3]">Get a Quote</a>
+      <a href="{{ url('/motor-private') }}" class="text-[13.5px] font-semibold text-[#1a1a2e] no-underline hover:text-[#0066B3]">Motor Vehicle Private</a>
+      <a href="{{ url('/motor-psv') }}" class="text-[13.5px] font-semibold text-[#1a1a2e] no-underline hover:text-[#0066B3]">Motor Vehicle PSV</a>
       <a href="{{ route('stickers.lookup') }}" class="text-[13.5px] font-semibold text-[#1a1a2e] no-underline hover:text-[#0066B3]">Get a Sticker</a>
-      <a href="{{ route('stickers.lookup') }}" class="text-[13.5px] font-semibold text-[#1a1a2e] no-underline hover:text-[#0066B3]">Look Up</a>
       @auth
         <a href="{{ route('dashboard') }}" class="bg-[#0066B3] text-white text-[13.5px] font-semibold px-5 py-2 rounded-md no-underline hover:bg-[#004f8c]">Dashboard</a>
         <form method="POST" action="{{ route('logout') }}" class="inline">

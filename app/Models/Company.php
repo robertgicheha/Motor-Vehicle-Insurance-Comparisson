@@ -6,12 +6,14 @@ use Illuminate\Database\Eloquent\Model;
 
 class Company extends Model
 {
-    protected $fillable = ['name', 'slug', 'description', 'logo', 'is_active'];
+    protected $fillable = ['name', 'slug', 'description', 'logo', 'is_active', 'company_type', 'min_sum_insured_psv', 'min_sum_insured_private'];
 
     protected function casts(): array
     {
         return [
             'is_active' => 'boolean',
+            'min_sum_insured_psv' => 'decimal:2',
+            'min_sum_insured_private' => 'decimal:2',
         ];
     }
 
@@ -59,6 +61,8 @@ class Company extends Model
         return [
             'GA' => 'images/GA Insurance.png',
             'SANLAM' => 'images/Sanlam-Allianz.png',
+            'DEFINITE' => 'images/definite.png',
+            'BRITAM' => 'images/britam.png',
         ];
     }
 

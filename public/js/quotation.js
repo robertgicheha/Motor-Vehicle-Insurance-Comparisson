@@ -10,14 +10,17 @@ function getCompanyBySlug(slug) {
   return getCompanyData().find(function(c) { return c.slug === slug; }) || null;
 }
 
-function calcPremiums(vehicleValue, company) {
+function calcPremiums(vehicleValue, company, numPassengers) {
   var rate = company.rate || 0;
-  var taxRate = company.taxRate || 0;
   var basicPremium = vehicleValue * rate;
-  var baseAmount = vehicleValue * (rate - taxRate);
-  var iraLevy = vehicleValue * taxRate;
-  var total = basicPremium;
-  return { basic: basicPremium, base: baseAmount, iraLevy: iraLevy, tax: iraLevy, total: total };
+  var pvtRate = company.pvtRate || 0;
+  var pvt = vehicleValue * pvtRate;
+  var pllPerPerson = company.pllPerPerson || 0;
+  var pll = pllPerPerson * (numPassengers || 1);
+  var levis = (pvt + pll) * 0.0045;
+  var stampDuty = 40;
+  var total = basicPremium + pvt + pll + levis + stampDuty;
+  return { basic: basicPremium, pvt: pvt, pll: pll, levis: levis, stampDuty: stampDuty, total: total };
 }
 
 function getFormData() {
@@ -132,7 +135,7 @@ function renderComparisonGrid(companies, value, selectedSlug) {
   var container = document.getElementById('comparison-grid');
   if (!container) return;
   var html = companies.map(function(c) {
-    var p = calcPremiums(value, c);
+    var p = calcPremiums(value, c, window.quotationNumPassengers);
     var isSelected = c.slug === selectedSlug;
     var logo = c.logo || '';
     return '<div class="comparison-card' + (isSelected ? ' selected' : '') + '" onclick="downloadQuote(\'' + c.slug + '\')">' +
@@ -143,7 +146,7 @@ function renderComparisonGrid(companies, value, selectedSlug) {
       '<div class="comparison-card-body">' +
         '<div class="cmp-row"><span>Rate</span><span>' + (c.rate * 100).toFixed(1) + '%</span></div>' +
         '<div class="cmp-row"><span>Basic Premium</span><span>' + fmt(p.basic) + '</span></div>' +
-        '<div class="cmp-row"><span>IRA Levy</span><span>' + fmt(p.tax) + '</span></div>' +
+        '<div class="cmp-row"><span>PVT</span><span>' + fmt(p.pvt) + '</span></div>' +
         '<div class="cmp-total"><span>Total</span><span>' + fmt(p.total) + '</span></div>' +
       '</div>' +
     '</div>';
@@ -159,7 +162,7 @@ function renderCompareTable(companies, value) {
     var td = document.getElementById('cmp-total-' + i);
     if (companies[i]) {
       if (th) th.textContent = companies[i].name;
-      var p = calcPremiums(value, companies[i]);
+      var p = calcPremiums(value, companies[i], window.quotationNumPassengers);
       if (td) td.textContent = fmt(p.total);
     } else {
       if (th) { th.textContent = '—'; th.style.display = 'none'; }
@@ -170,8 +173,10 @@ function renderCompareTable(companies, value) {
   var rows = [
     { label: 'Estimated Vehicle Value', vals: companies.map(function() { return fmt(value); }) },
     { label: 'Premium Rate', vals: companies.map(function(c) { return (c.rate * 100).toFixed(1) + '%'; }) },
-    { label: 'Basic Annual Premium', vals: companies.map(function(c) { return fmt(calcPremiums(value, c).basic); }) },
-    { label: 'IRA Levy (0.5%)', vals: companies.map(function(c) { return fmt(calcPremiums(value, c).tax); }) },
+    { label: 'Basic Annual Premium', vals: companies.map(function(c) { return fmt(calcPremiums(value, c, window.quotationNumPassengers).basic); }) },
+    { label: 'PVT Premium', vals: companies.map(function(c) { return fmt(calcPremiums(value, c, window.quotationNumPassengers).pvt); }) },
+    { label: 'PLL Premium', vals: companies.map(function(c) { return fmt(calcPremiums(value, c, window.quotationNumPassengers).pll); }) },
+    { label: 'Levis & Stamp Duty', vals: companies.map(function(c) { return fmt(calcPremiums(value, c, window.quotationNumPassengers).levis + calcPremiums(value, c, window.quotationNumPassengers).stampDuty); }) },
   ];
   var tbody = document.getElementById('compare-rows');
   if (!tbody) return;
@@ -189,7 +194,7 @@ function renderDownloadCards(activeCompany, value, prems, fd, qNum) {
   var companies = getCompanyData();
 
   var html = companies.map(function(c) {
-    var p = calcPremiums(value, c);
+    var p = calcPremiums(value, c, window.quotationNumPassengers);
     var selected = (c.slug === activeCompany.slug) ? 'border-color:var(--blue);box-shadow:0 0 0 2px rgba(0,102,179,.15)' : '';
     var logo = c.logo || '';
     return '<div class="dl-card" style="' + selected + '" onclick="downloadQuote(\'' + c.slug + '\')">' +
@@ -261,6 +266,7 @@ function saveSessionQuotation(fd, slug) {
         car_year: data.year || '',
         car_registration: data.reg || '',
         car_valuation: Number(data.value) || 0,
+        vehicle_type: data.vehicleType || window.quotationVehicleType || 'psv',
       }),
     }).then(function(r) { return r.json(); }).then(function(res) {
       if (res.success) {
@@ -289,7 +295,8 @@ function init() {
 
   saveSessionQuotation(fd, slug);
 
-  var prems = calcPremiums(value, company);
+  var np = fd.numPassengers || window.quotationNumPassengers || 1;
+  var prems = calcPremiums(value, company, np);
   var qNum = fd.quoteNum || genQuoteNum(company);
 
   renderCompanyLogo(slug);
@@ -315,7 +322,10 @@ function init() {
     ['Basic Annual Premium', '@ ' + (company.rate * 100).toFixed(1) + '% of vehicle value', fmt(prems.basic)],
     ['Windscreen Premium', 'Included', 'KES 0'],
     ['Radio / Cassette Premium', 'Included', 'KES 0'],
-    ['IRA Levy (Training Levy)', '@ 0.5% of basic premium', fmt(prems.tax)],
+    ['PVT Premium', '@ ' + (company.pvtRate * 100).toFixed(2) + '%', fmt(prems.pvt)],
+    ['PLL Premium', '@ KES ' + (company.pllPerPerson || 0) + ' per person × ' + (window.quotationNumPassengers || 1) + ' pax', fmt(prems.pll)],
+    ['Levis (0.45%)', 'On PVT + PLL', fmt(prems.levis)],
+    ['Stamp Duty', 'Fixed', fmt(prems.stampDuty)],
   ];
   var tbody = document.getElementById('breakdown-rows');
   tbody.innerHTML = rows.map(function(r) {
@@ -375,7 +385,8 @@ function downloadQuote(slug) {
   if (!company) return;
   var fd = getFormData();
   var value = Number(fd.value) || 800000;
-  var prems = calcPremiums(value, company);
+  var np = fd.numPassengers || window.quotationNumPassengers || 1;
+  var prems = calcPremiums(value, company, np);
   var qNum = fd.quoteNum || genQuoteNum(company);
   buildPDFPreview(company, value, prems, fd, qNum);
   document.getElementById('btn-preview').classList.remove('active');

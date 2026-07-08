@@ -60,162 +60,121 @@
 
         {{-- ─── TAB: RATES ─────────────────────────────────────────────── --}}
         <div x-show="tab === 'rates'">
-            @forelse($rates as $category => $categoryRates)
-                <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden mb-5">
-                    <div class="px-5 py-3 bg-gray-50 dark:bg-gray-700/50 border-b border-gray-200 dark:border-gray-700 flex items-center gap-2">
-                        <svg class="w-4 h-4 text-gray-500 dark:text-gray-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="{{ $categoryIcons[$category] ?? 'M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z' }}"/>
-                        </svg>
-                        <h3 class="text-xs font-semibold text-gray-900 dark:text-white">{{ $category }}</h3>
-                        <span class="ml-auto text-[10px] text-gray-400">{{ $categoryRates->count() }} items</span>
-                    </div>
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-xs">
-                            <thead>
-                                <tr class="bg-gray-50 dark:bg-gray-700/40">
-                                    <th class="px-4 py-2.5 text-left font-semibold text-gray-400 uppercase tracking-wider text-[10px]">Item</th>
-                                    <th class="px-4 py-2.5 text-center font-semibold text-gray-400 uppercase tracking-wider text-[10px]">Type</th>
-                                    <th class="px-4 py-2.5 text-right font-semibold text-gray-400 uppercase tracking-wider text-[10px]">Value (KES)</th>
-                                    <th class="px-4 py-2.5 text-right font-semibold text-gray-400 uppercase tracking-wider text-[10px]">%</th>
-                                    <th class="px-4 py-2.5 text-right font-semibold text-gray-400 uppercase tracking-wider text-[10px]">Min Value</th>
-                                    <th class="px-4 py-2.5 text-right font-semibold text-gray-400 uppercase tracking-wider text-[10px]">Min Premium</th>
-                                    <th class="px-4 py-2.5 font-semibold text-gray-400 uppercase tracking-wider text-[10px]">Notes</th>
-                                    <th class="px-4 py-2.5 text-right font-semibold text-gray-400 uppercase tracking-wider text-[10px]">Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
-                                @foreach($categoryRates as $rate)
-                                    <tr>
-                                        <form action="{{ route('admin.companies.rates.update', [$company, $rate]) }}" method="POST">
-                                            @csrf @method('PATCH')
-                                            <td class="px-4 py-2.5 font-medium text-gray-800 dark:text-white text-xs">{{ $rate->item_name }}</td>
-                                            <td class="px-4 py-2.5 text-center">
-                                                <select name="value_type" class="px-1.5 py-1 text-[10px] rounded border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none">
-                                                    <option value="fixed" {{ $rate->value_type === 'fixed' ? 'selected' : '' }}>Fixed</option>
-                                                    <option value="percentage" {{ $rate->value_type === 'percentage' ? 'selected' : '' }}>%</option>
-                                                    <option value="percentage_min" {{ $rate->value_type === 'percentage_min' ? 'selected' : '' }}>%+Min</option>
-                                                    <option value="text" {{ $rate->value_type === 'text' ? 'selected' : '' }}>Text</option>
-                                                </select>
-                                            </td>
-                                            <td class="px-4 py-2.5">
-                                                <input type="number" name="value" value="{{ $rate->value }}" step="0.01"
-                                                       class="w-24 px-2 py-1 text-xs rounded border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none text-right"
-                                                       placeholder="KES">
-                                            </td>
-                                            <td class="px-4 py-2.5">
-                                                <input type="number" name="percentage" value="{{ $rate->percentage }}" step="0.01" max="100"
-                                                       class="w-16 px-2 py-1 text-xs rounded border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none text-right"
-                                                       placeholder="%">
-                                            </td>
-                                            <td class="px-4 py-2.5">
-                                                <input type="number" name="min_value" value="{{ $rate->min_value }}" step="0.01"
-                                                       class="w-24 px-2 py-1 text-xs rounded border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none text-right"
-                                                       placeholder="KES">
-                                            </td>
-                                            <td class="px-4 py-2.5">
-                                                <input type="number" name="min_premium" value="{{ $rate->min_premium }}" step="0.01"
-                                                       class="w-24 px-2 py-1 text-xs rounded border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none text-right"
-                                                       placeholder="KES">
-                                            </td>
-                                            <td class="px-4 py-2.5">
-                                                <input type="text" name="notes" value="{{ $rate->notes }}"
-                                                       class="w-28 px-2 py-1 text-xs rounded border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none"
-                                                       placeholder="Optional">
-                                            </td>
-                                            <td class="px-4 py-2.5 text-right whitespace-nowrap">
-                                                <button type="submit" class="text-[10px] font-medium text-blue-600 hover:text-blue-800 mr-2">Save</button>
-                                                <form action="{{ route('admin.companies.rates.destroy', [$company, $rate]) }}" method="POST" class="inline"
-                                                      onsubmit="return confirm('Delete this rate?')">
-                                                    @csrf @method('DELETE')
-                                                    <button type="submit" class="text-[10px] font-medium text-rose-600 hover:text-rose-800">Delete</button>
-                                                </form>
-                                            </td>
-                                        </form>
-                                    </tr>
-                                @endforeach
-                            </tbody>
-                        </table>
-                    </div>
+            <div x-data="{ vtype: '{{ request('type', 'private') }}' }">
+                <div class="flex gap-2 mb-4">
+                    <button @click="vtype = 'private'" :class="vtype === 'private' ? 'bg-blue-500 text-white shadow-sm' : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-700'" class="px-4 py-2 text-xs font-semibold rounded-lg transition flex items-center gap-1.5">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10"/></svg>
+                        Private Comprehensive
+                    </button>
+                    <button @click="vtype = 'psv'" :class="vtype === 'psv' ? 'bg-amber-500 text-white shadow-sm' : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-700'" class="px-4 py-2 text-xs font-semibold rounded-lg transition flex items-center gap-1.5">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/></svg>
+                        PSV Comprehensive
+                    </button>
                 </div>
-            @empty
-                <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-10 text-center">
-                    <svg class="w-12 h-12 mx-auto text-gray-300 dark:text-gray-600 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"/></svg>
-                    <p class="text-sm text-gray-500 dark:text-gray-400">No rates defined yet. Add rates below or import from Excel/JSON.</p>
-                </div>
-            @endforelse
 
-            {{-- ─── ADD RATE CARD ───────────────────────────────────────── --}}
-            <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
-                <div class="px-5 py-4 border-b border-gray-100 dark:border-gray-700 flex items-center gap-2">
-                    <svg class="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>
-                    <h2 class="text-xs font-semibold text-gray-800 dark:text-white">Add New Rate</h2>
+                <div x-show="vtype === 'private'">
+                    @forelse($privateRates as $category => $categoryRates)
+                        @include('admin.companies._rate_category_card', ['categoryRates' => $categoryRates, 'category' => $category, 'categoryIcons' => $categoryIcons, 'company' => $company])
+                    @empty
+                        <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-10 text-center mb-5">
+                            <svg class="w-12 h-12 mx-auto text-gray-300 dark:text-gray-600 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"/></svg>
+                            <p class="text-sm text-gray-500 dark:text-gray-400">No private rates defined yet. Add rates below or import from Excel/JSON.</p>
+                        </div>
+                    @endforelse
                 </div>
-                <form action="{{ route('admin.companies.rates.add', $company) }}" method="POST" class="p-5">
-                    @csrf
-                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-                        <div>
-                            <label class="block text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Category</label>
-                            <select name="category" required
-                                    class="w-full px-3 py-2 text-xs rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none">
-                                <option value="">Select category</option>
-                                <option value="Premium Rate">Premium Rate</option>
-                                <option value="Cover Limits">Cover Limits</option>
-                                <option value="Third Party Limits">Third Party Limits</option>
-                                <option value="Excess">Excess</option>
-                                <option value="Additional Cover">Additional Cover</option>
-                            </select>
+
+                <div x-show="vtype === 'psv'">
+                    @forelse($psvRates as $category => $categoryRates)
+                        @include('admin.companies._rate_category_card', ['categoryRates' => $categoryRates, 'category' => $category, 'categoryIcons' => $categoryIcons, 'company' => $company])
+                    @empty
+                        <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-10 text-center mb-5">
+                            <svg class="w-12 h-12 mx-auto text-gray-300 dark:text-gray-600 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"/></svg>
+                            <p class="text-sm text-gray-500 dark:text-gray-400">No PSV rates defined yet. Add rates below or import from Excel/JSON.</p>
                         </div>
-                        <div>
-                            <label class="block text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Other Category</label>
-                            <input type="text" name="category_other" placeholder="Or type custom"
-                                   class="w-full px-3 py-2 text-xs rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none">
-                        </div>
-                        <div>
-                            <label class="block text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Item Name</label>
-                            <input type="text" name="item_name" placeholder="e.g. Windscreen / Glass" required
-                                   class="w-full px-3 py-2 text-xs rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none">
-                        </div>
-                        <div>
-                            <label class="block text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Value Type</label>
-                            <select name="value_type" required
-                                    class="w-full px-3 py-2 text-xs rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none">
-                                <option value="fixed">Fixed Amount</option>
-                                <option value="percentage">Percentage</option>
-                                <option value="percentage_min">Percentage with Minimum</option>
-                                <option value="text">Text</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Value (KES)</label>
-                            <input type="number" name="value" step="0.01"
-                                   class="w-full px-3 py-2 text-xs rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none">
-                        </div>
-                        <div>
-                            <label class="block text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Percentage (%)</label>
-                            <input type="number" name="percentage" step="0.01" max="100"
-                                   class="w-full px-3 py-2 text-xs rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none">
-                        </div>
-                        <div>
-                            <label class="block text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Min Value</label>
-                            <input type="number" name="min_value" step="0.01"
-                                   class="w-full px-3 py-2 text-xs rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none">
-                        </div>
-                        <div>
-                            <label class="block text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Min Premium</label>
-                            <input type="number" name="min_premium" step="0.01"
-                                   class="w-full px-3 py-2 text-xs rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none">
-                        </div>
-                        <div class="md:col-span-4">
-                            <label class="block text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Notes / Description</label>
-                            <input type="text" name="notes" placeholder="e.g. Kes. 50,000/- min, Covered, etc."
-                                   class="w-full px-3 py-2 text-xs rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none">
-                        </div>
-                        <div class="md:col-span-4 flex items-center gap-2">
-                            <button type="submit"
-                                    class="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold bg-blue-500 hover:bg-blue-400 text-white rounded-lg transition">Add Rate</button>
-                        </div>
+                    @endforelse
+                </div>
+
+                {{-- ─── ADD RATE CARD ───────────────────────────────────────── --}}
+                <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+                    <div class="px-5 py-4 border-b border-gray-100 dark:border-gray-700 flex items-center gap-2">
+                        <svg class="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>
+                        <h2 class="text-xs font-semibold text-gray-800 dark:text-white">Add New Rate</h2>
                     </div>
-                </form>
+                    <form action="{{ route('admin.companies.rates.add', $company) }}" method="POST" class="p-5">
+                        @csrf
+                        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                            <div>
+                                <label class="block text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Vehicle Type</label>
+                                <select name="vehicle_type" required
+                                        class="w-full px-3 py-2 text-xs rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none">
+                                    <option value="private">Private</option>
+                                    <option value="psv">PSV</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Category</label>
+                                <select name="category" required
+                                        class="w-full px-3 py-2 text-xs rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none">
+                                    <option value="">Select category</option>
+                                    <option value="Premium Rate">Premium Rate</option>
+                                    <option value="Cover Limits">Cover Limits</option>
+                                    <option value="Third Party Limits">Third Party Limits</option>
+                                    <option value="Excess">Excess</option>
+                                    <option value="Additional Cover">Additional Cover</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Other Category</label>
+                                <input type="text" name="category_other" placeholder="Or type custom"
+                                       class="w-full px-3 py-2 text-xs rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none">
+                            </div>
+                            <div>
+                                <label class="block text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Item Name</label>
+                                <input type="text" name="item_name" placeholder="e.g. Windscreen / Glass" required
+                                       class="w-full px-3 py-2 text-xs rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none">
+                            </div>
+                            <div>
+                                <label class="block text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Value Type</label>
+                                <select name="value_type" required
+                                        class="w-full px-3 py-2 text-xs rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none">
+                                    <option value="fixed">Fixed Amount</option>
+                                    <option value="percentage">Percentage</option>
+                                    <option value="percentage_min">Percentage with Minimum</option>
+                                    <option value="text">Text</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Value (KES)</label>
+                                <input type="number" name="value" step="0.01"
+                                       class="w-full px-3 py-2 text-xs rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none">
+                            </div>
+                            <div>
+                                <label class="block text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Percentage (%)</label>
+                                <input type="number" name="percentage" step="0.01" max="100"
+                                       class="w-full px-3 py-2 text-xs rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none">
+                            </div>
+                            <div>
+                                <label class="block text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Min Value</label>
+                                <input type="number" name="min_value" step="0.01"
+                                       class="w-full px-3 py-2 text-xs rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none">
+                            </div>
+                            <div>
+                                <label class="block text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Min Premium</label>
+                                <input type="number" name="min_premium" step="0.01"
+                                       class="w-full px-3 py-2 text-xs rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none">
+                            </div>
+                            <div class="md:col-span-4">
+                                <label class="block text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Notes / Description</label>
+                                <input type="text" name="notes" placeholder="e.g. Kes. 50,000/- min, Covered, etc."
+                                       class="w-full px-3 py-2 text-xs rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none">
+                            </div>
+                            <div class="md:col-span-4 flex items-center gap-2">
+                                <button type="submit"
+                                        class="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold bg-blue-500 hover:bg-blue-400 text-white rounded-lg transition">Add Rate</button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
             </div>
         </div>
 

@@ -26,13 +26,7 @@ class DashboardController extends Controller
 
     public function index()
     {
-        // $weather = $this->weatherService->getWeather(
-        //     config('app.weather_city', 'Nairobi'),
-        //     config('app.weather_country', 'KE')
-        // );
-        $weather = app(\App\Services\WeatherService::class)->getWeather(
-            session('weather_city', 'Nairobi')
-        );
+        $weather = app(\App\Services\WeatherService::class)->getWeatherByIp();
 
         $time = now();
         $hour = $time->hour;
@@ -67,6 +61,7 @@ class DashboardController extends Controller
         $data['activeUsers'] = User::where('is_active', true)->count();
         $data['onlineUsers'] = User::where('last_online_at', '>=', now()->subMinutes(5))->count();
         $data['totalQuotations'] = Quotation::count();
+        $data['totalCompanies'] = Company::active()->count();
         $data['todayQuotations'] = Quotation::whereDate('created_at', today())->count();
         $data['weekQuotations'] = Quotation::whereBetween('created_at', [now()->startOfWeek(), now()->endOfWeek()])->count();
         $data['monthQuotations'] = Quotation::whereMonth('created_at', now()->month)->count();
@@ -303,12 +298,21 @@ class DashboardController extends Controller
         return view('dashboard.user', $data);
     }
 
-    public function weatherJson()
+    public function weatherJson(Request $request)
     {
-        $weather = $this->weatherService->getWeather(
-            config('app.weather_city', 'Nairobi'),
-            config('app.weather_country', 'KE')
-        );
+        $lat = $request->query('lat');
+        $lon = $request->query('lon');
+
+        if ($lat && $lon) {
+            $weather = $this->weatherService->getWeatherByCoords($lat, $lon);
+
+            if ($weather && !empty($weather['city'])) {
+                session(['weather_city' => $weather['city']]);
+            }
+        } else {
+            $weather = $this->weatherService->getWeatherByIp();
+        }
+
         return response()->json($weather);
     }
 }

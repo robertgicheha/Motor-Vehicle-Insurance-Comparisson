@@ -134,21 +134,21 @@
                                 <span class="text-gray-500">Basic Premium Rate</span>
                                 <span class="font-semibold text-gray-800 dark:text-white" x-text="(selectedCompany.rate * 100).toFixed(1) + '%'"></span>
                             </div>
-                            <div class="flex justify-between py-1.5" style="padding-left:1rem">
-                                <span class="text-gray-400" x-text="'Base Premium (' + ((selectedCompany.rate - selectedCompany.taxRate) * 100).toFixed(1) + '%)'"></span>
-                                <span class="font-semibold text-gray-800 dark:text-white" x-text="fmt(baseAmount)"></span>
-                            </div>
-                            <div class="flex justify-between py-1.5" style="padding-left:1rem">
-                                <span class="text-gray-400" x-text="'IRA Levy (' + (selectedCompany.taxRate * 100).toFixed(1) + '%)'"></span>
-                                <span class="font-semibold text-gray-800 dark:text-white" x-text="fmt(iraLevy)"></span>
-                            </div>
                             <div class="flex justify-between py-1.5 border-t border-dashed border-gray-100 dark:border-gray-700 pt-2">
                                 <span class="font-semibold text-gray-800 dark:text-white">Basic Premium</span>
                                 <span class="font-bold text-gray-800 dark:text-white" x-text="fmt(basePremium)"></span>
                             </div>
                             <div class="flex justify-between py-1.5">
                                 <span class="text-gray-500">PVT Premium</span>
-                                <span class="font-semibold text-gray-800 dark:text-white">KES 0.00</span>
+                                <span class="font-semibold text-gray-800 dark:text-white" x-text="fmt(pvtPremium)"></span>
+                            </div>
+                            <div class="flex justify-between py-1.5">
+                                <span class="text-gray-500">Levis (0.45%)</span>
+                                <span class="font-semibold text-gray-800 dark:text-white" x-text="fmt(levis)"></span>
+                            </div>
+                            <div class="flex justify-between py-1.5">
+                                <span class="text-gray-500">Stamp Duty</span>
+                                <span class="font-semibold text-gray-800 dark:text-white" x-text="fmt(stampDuty)"></span>
                             </div>
                             <div class="flex justify-between py-2.5 border-t-2 border-gray-200 dark:border-gray-600">
                                 <span class="font-semibold text-gray-800 dark:text-white text-sm">Total Premium</span>
@@ -174,7 +174,7 @@
                     <input type="hidden" name="total_premium" :value="totalPremium">
                     <input type="hidden" name="excess_own_damage" value="0">
                     <input type="hidden" name="excess_theft" value="0">
-                    <input type="hidden" name="breakdown" :value="JSON.stringify({base_premium: baseAmount, ira_levy: iraLevy, basic_premium: basePremium, premium_rate: selectedCompany.rate, ira_levy_rate: selectedCompany.taxRate})">
+                    <input type="hidden" name="breakdown" :value="JSON.stringify({basic_premium: basePremium, premium_rate: selectedCompany.rate, pvt_rate: selectedCompany.pvtRate, levis_rate: 0.0045, stamp_duty: 40})">
 
                     <div class="flex items-center justify-between gap-3 bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-5">
                         <a href="{{ route('quotations.create') }}" class="px-5 py-2.5 text-xs font-medium border border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition">
@@ -220,9 +220,9 @@ function previewApp() {
             return parseFloat((this.data?.value || '0').replace(/,/g, '')) || 0;
         },
         get selectedCompany() {
-            if (!this.data) return { id: 0, rate: 0, taxRate: 0, name: '' };
+            if (!this.data) return { id: 0, rate: 0, pvtRate: 0, name: '' };
             var slug = this.data.insurer || '';
-            return this.companies.find(function(c) { return c.slug === slug; }) || this.companies[0] || { id: 0, rate: 0, taxRate: 0, name: '' };
+            return this.companies.find(function(c) { return c.slug === slug; }) || this.companies[0] || { id: 0, rate: 0, pvtRate: 0, name: '' };
         },
         get selectedCompanyName() {
             return this.selectedCompany.name || this.data?.insurer || '—';
@@ -231,19 +231,20 @@ function previewApp() {
             if (!this.data) return '—';
             return [this.data.salutation, this.data.first, this.data.middle, this.data.last].filter(Boolean).join(' ');
         },
-        get baseAmount() {
-            var rate = this.selectedCompany.rate || 0;
-            var taxRate = this.selectedCompany.taxRate || 0;
-            return this.vehicleValue * (rate - taxRate);
-        },
         get basePremium() {
             return this.vehicleValue * (this.selectedCompany.rate || 0);
         },
-        get iraLevy() {
-            return this.vehicleValue * (this.selectedCompany.taxRate || 0);
+        get pvtPremium() {
+            return this.vehicleValue * (this.selectedCompany.pvtRate || 0);
+        },
+        get levis() {
+            return this.pvtPremium * 0.0045;
+        },
+        get stampDuty() {
+            return 40;
         },
         get totalPremium() {
-            return this.basePremium;
+            return this.basePremium + this.pvtPremium + this.levis + this.stampDuty;
         },
         fmt(n) {
             if (isNaN(n)) return '—';

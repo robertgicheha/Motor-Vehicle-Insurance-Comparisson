@@ -16,12 +16,12 @@
 <body class="font-montserrat antialiased text-gray-900 bg-white">
     <div class="flex min-h-screen">
         <div class="flex flex-col justify-center w-full lg:w-[40%] px-8 sm:px-16 xl:px-24">
-            <div class="mb-10 text-center">
-                <a href="/" class="flex items-center justify-center gap-2 text-2xl font-bold" style="color:var(--blue)">
-                    <svg class="w-8 h-8" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
-                    <span>Motor Vehicle Insurance Portal</span>
-                </a>
-            </div>
+            blade<div class="mb-10 text-center">
+            <a href="{{ route('home') }}" class="flex items-center justify-center gap-3">
+                <img src="{{ asset('images/Auth logo.png') }}" alt="MIC Global Risks" class="mx-auto mb-3" style="height:56px;width:auto">
+                <span>Motor Vehicle Insurance Portal</span>
+            </a>
+        </div>
 
             <div class="w-full max-w-md mx-auto">
                 {{ $slot }}

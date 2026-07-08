@@ -21,8 +21,8 @@ class SettingsSeeder extends Seeder
         Setting::setValue('date_format', 'd M Y', 'general');
         Setting::setValue('weather_city', 'Nairobi', 'general');
         Setting::setValue('weather_country', 'KE', 'general');
-        Setting::setValue('report_email', 'admin@insurance.com', 'general');
-        Setting::setValue('admin_email', 'admin@insurance.com', 'general');
+        Setting::setValue('report_email', 'robertgicheha3@gmail.com', 'general');
+        Setting::setValue('admin_email', 'robertgicheha3@gmail.com', 'general');
         Setting::setValue('company_name', 'MIC Global Risks', 'general');
         Setting::setValue('company_address', 'Nairobi, Kenya', 'general');
         Setting::setValue('company_phone', '+254 700 000 000', 'general');
@@ -35,7 +35,7 @@ class SettingsSeeder extends Seeder
         Setting::setValue('mail_username', '', 'email');
         Setting::setValue('mail_password', '', 'email');
         Setting::setValue('mail_encryption', 'tls', 'email');
-        Setting::setValue('mail_from_address', 'noreply@insurance.com', 'email');
+        Setting::setValue('mail_from_address', 'robertgicheha3@gmail.com', 'email');
         Setting::setValue('mail_from_name', 'MIC Insurance Portal', 'email');
 
         // Quotation defaults
@@ -56,7 +56,7 @@ class SettingsSeeder extends Seeder
         Setting::setValue('notify_on_new_quotation', 'true', 'notifications');
         Setting::setValue('notify_on_new_user', 'true', 'notifications');
         Setting::setValue('notify_on_new_enquiry', 'true', 'notifications');
-        Setting::setValue('notify_admin_email', 'admin@insurance.com', 'notifications');
+        Setting::setValue('notify_admin_email', 'robertgicheha3@gmail.com', 'notifications');
 
         // Appearance
         Setting::setValue('primary_color', '#1756c8', 'appearance');

@@ -13,8 +13,53 @@ class MediaController extends Controller
 {
     public function index()
     {
-        $media = Media::latest()->paginate(30);
-        return view('admin.media.index', compact('media'));
+        $dbMedia = Media::latest()->get()->keyBy('filename');
+        $fsMedia = $this->scanFilesystem();
+
+        $media = $fsMedia->map(function ($item) use ($dbMedia) {
+            if ($dbMedia->has($item['filename'])) {
+                $m = $dbMedia[$item['filename']];
+                $item['id'] = $m->id;
+                $item['original_filename'] = $m->original_filename;
+                $item['file_size'] = $m->file_size;
+                $item['created_at'] = $m->created_at;
+                $item['in_db'] = true;
+            } else {
+                $item['id'] = null;
+                $item['original_filename'] = $item['filename'];
+                $item['file_size'] = $item['size'];
+                $item['created_at'] = null;
+                $item['in_db'] = false;
+            }
+            return $item;
+        })->sortByDesc('created_at');
+
+        return view('admin.media.index', ['media' => $media]);
+    }
+
+    protected function scanFilesystem()
+    {
+        $dir = public_path('images');
+        $items = collect();
+        if (!is_dir($dir)) {
+            return $items;
+        }
+        $extensions = ['jpg', 'jpeg', 'png', 'gif', 'svg', 'webp', 'ico'];
+        $iterator = new \RecursiveDirectoryIterator($dir, \RecursiveDirectoryIterator::SKIP_DOTS);
+        $files = new \RecursiveIteratorIterator($iterator);
+        foreach ($files as $file) {
+            if ($file->isFile() && in_array(strtolower($file->getExtension()), $extensions)) {
+                $relativePath = 'images/' . $file->getFilename();
+                $items->push([
+                    'filename' => $file->getFilename(),
+                    'path' => $relativePath,
+                    'url' => asset($relativePath),
+                    'size' => $file->getSize(),
+                    'last_modified' => $file->getMTime(),
+                ]);
+            }
+        }
+        return $items;
     }
 
     public function upload(Request $request)
@@ -72,6 +117,41 @@ class MediaController extends Controller
         }
     }
 
+    public function rename(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'old_path' => 'required|string',
+            'new_name' => 'required|string|regex:/^[a-zA-Z0-9._-]+$/',
+        ]);
+
+        if ($validator->fails()) {
+            return back()->withErrors($validator)->withInput();
+        }
+
+        $oldPath = public_path($request->old_path);
+        $dir = dirname($oldPath);
+        $newPath = $dir . DIRECTORY_SEPARATOR . $request->new_name;
+
+        if (!file_exists($oldPath)) {
+            return back()->withErrors(['file' => 'File not found.']);
+        }
+
+        if (file_exists($newPath)) {
+            return back()->withErrors(['file' => 'A file with that name already exists.']);
+        }
+
+        rename($oldPath, $newPath);
+
+        $relativeOld = ltrim($request->old_path, '/');
+        $relativeNew = dirname($relativeOld) . '/' . $request->new_name;
+
+        Media::where('path', $relativeOld)->update(['path' => $relativeNew, 'filename' => $request->new_name]);
+
+        AuditService::activity('media_renamed', "Media file renamed: " . basename($oldPath) . " → {$request->new_name}");
+
+        return back()->with('success', 'File renamed successfully.');
+    }
+
     public function destroy(Media $media)
     {
         $filePath = public_path($media->path);
@@ -86,15 +166,40 @@ class MediaController extends Controller
         return back()->with('success', 'File deleted successfully.');
     }
 
+    public function destroyFile($path)
+    {
+        $decodedPath = base64_decode($path);
+        $filePath = public_path($decodedPath);
+
+        if (file_exists($filePath)) {
+            unlink($filePath);
+        }
+
+        Media::where('path', $decodedPath)->delete();
+
+        AuditService::activity('media_deleted', "Media file deleted: " . basename($decodedPath));
+
+        return back()->with('success', 'File deleted successfully.');
+    }
+
     public function list()
     {
-        $media = Media::latest()->get()->map(fn($m) => [
-            'id' => $m->id,
-            'url' => $m->url(),
-            'filename' => $m->original_filename,
-            'size' => $m->file_size,
-            'date' => $m->created_at->format('d M Y'),
-        ]);
+        $dbMedia = Media::latest()->get()->keyBy('filename');
+        $fsMedia = $this->scanFilesystem();
+
+        $media = $fsMedia->map(function ($item) use ($dbMedia) {
+            return [
+                'id' => $dbMedia->has($item['filename']) ? $dbMedia[$item['filename']]->id : null,
+                'url' => $item['url'],
+                'filename' => $dbMedia->has($item['filename'])
+                    ? $dbMedia[$item['filename']]->original_filename
+                    : $item['filename'],
+                'size' => $item['size'],
+                'date' => $dbMedia->has($item['filename'])
+                    ? $dbMedia[$item['filename']]->created_at->format('d M Y')
+                    : date('d M Y', $item['last_modified']),
+            ];
+        })->sortByDesc('date')->values();
 
         return response()->json($media);
     }

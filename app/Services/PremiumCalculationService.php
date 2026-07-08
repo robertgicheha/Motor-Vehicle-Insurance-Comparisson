@@ -7,67 +7,76 @@ use App\Models\Rate;
 
 class PremiumCalculationService
 {
-    public function calculate(Company $company, $valuation, $includePVT = false, $hasAntiTheft = true, $isYoungDriver = false)
-    {
-        $premiumRate = Rate::where('company_id', $company->id)
-            ->where('category', 'Premium Rate')
-            ->where('item_name', 'Premium Rate')
-            ->first();
+    public function calculate(
+        Company $company,
+        $valuation,
+        $vehicleType = 'psv',
+        $includePVT = true,
+        $numPassengers = 1,
+        $hasAntiTheft = true,
+        $isYoungDriver = false
+    ) {
+        $rates = Rate::where('company_id', $company->id)
+            ->where('vehicle_type', $vehicleType)
+            ->get()
+            ->keyBy(function ($r) {
+                return $r->category . '::' . $r->item_name;
+            });
 
-        $pvtRate = Rate::where('company_id', $company->id)
-            ->where('category', 'Premium Rate')
-            ->where('item_name', 'PVT Rate')
-            ->first();
+        $premiumRate = $rates->get('Premium Rate::Premium Rate');
+        $pvtRate = $rates->get('Premium Rate::PVT Rate');
+        $pllRate = $rates->get('Premium Rate::PLL Per Person');
+        $levisRate = $rates->get('Premium Rate::Levis Rate');
+        $stampDuty = $rates->get('Premium Rate::Stamp Duty');
+        $premiumRateAbove = $rates->get('Premium Rate::Premium Rate Above 2.5M');
 
-        $iraLevyRate = Rate::where('company_id', $company->id)
-            ->where('category', 'Premium Rate')
-            ->where('item_name', 'IRA Levy')
-            ->first();
+        $excessOD = $rates->get('Excess::Own Damage');
+        $excessTheft = $rates->get('Excess::Theft With Anti-Theft Device');
+        $excessTheftNoDevice = $rates->get('Excess::Theft Without Anti-Theft Device');
+        $youngDriverExcess = $rates->get('Excess::Novice & Young Drivers');
 
-        $excessOD = Rate::where('company_id', $company->id)
-            ->where('category', 'Excess')
-            ->where('item_name', 'Own Damage')
-            ->first();
+        $isPvtInclusive = $premiumRate && $premiumRate->is_pvt_inclusive;
 
-        $excessTheft = Rate::where('company_id', $company->id)
-            ->where('category', 'Excess')
-            ->where('item_name', 'Theft With Anti-Theft Device')
-            ->first();
+        $ratePercent = $premiumRate ? (float) $premiumRate->percentage : 0;
+        $minPremium = $premiumRate ? (float) $premiumRate->min_premium : 0;
 
-        $excessTheftNoDevice = Rate::where('company_id', $company->id)
-            ->where('category', 'Excess')
-            ->where('item_name', 'Theft Without Anti-Theft Device')
-            ->first();
-
-        $youngDriverExcess = Rate::where('company_id', $company->id)
-            ->where('category', 'Excess')
-            ->where('item_name', 'Novice & Young Drivers')
-            ->first();
-
-        $basicPremium = 0;
-        if ($premiumRate && $premiumRate->percentage) {
-            $basicPremium = $valuation * ($premiumRate->percentage / 100);
-            if ($premiumRate->min_premium && $basicPremium < $premiumRate->min_premium) {
-                $basicPremium = $premiumRate->min_premium;
+        if ($premiumRateAbove && $valuation > 2500000) {
+            $ratePercent = (float) $premiumRateAbove->percentage;
+            if ($premiumRateAbove->min_premium) {
+                $minPremium = (float) $premiumRateAbove->min_premium;
             }
+        }
+
+        $basicPremium = $valuation * ($ratePercent / 100);
+        if ($basicPremium < $minPremium) {
+            $basicPremium = $minPremium;
         }
 
         $pvt = 0;
-        if ($includePVT && $pvtRate && $pvtRate->percentage) {
-            $pvt = $valuation * ($pvtRate->percentage / 100);
-            if ($pvtRate->min_value && $pvt < $pvtRate->min_value) {
-                $pvt = $pvtRate->min_value;
+        if ($includePVT) {
+            if ($isPvtInclusive) {
+                $pvt = 0;
+            } elseif ($pvtRate && $pvtRate->percentage) {
+                $pvt = $valuation * ($pvtRate->percentage / 100);
+                if ($pvtRate->min_value && $pvt < $pvtRate->min_value) {
+                    $pvt = (float) $pvtRate->min_value;
+                }
             }
         }
 
-        $iraLevy = 0;
-        if ($iraLevyRate && $iraLevyRate->percentage) {
-            $iraLevy = $valuation * ($iraLevyRate->percentage / 100);
+        $pll = 0;
+        if ($pllRate && $pllRate->value) {
+            $pll = (float) $pllRate->value * $numPassengers;
         }
 
-        $basePremium = $basicPremium - $iraLevy;
-        if ($basePremium < 0) {
-            $basePremium = 0;
+        $levis = 0;
+        if ($levisRate && $levisRate->percentage) {
+            $levis = ($pvt + $pll) * ($levisRate->percentage / 100);
+        }
+
+        $stampDutyAmount = 0;
+        if ($stampDuty && $stampDuty->value) {
+            $stampDutyAmount = (float) $stampDuty->value;
         }
 
         $excessODAmount = 0;
@@ -75,7 +84,10 @@ class PremiumCalculationService
             if ($excessOD->percentage) {
                 $excessODAmount = $valuation * ($excessOD->percentage / 100);
                 if ($excessOD->min_value && $excessODAmount < $excessOD->min_value) {
-                    $excessODAmount = $excessOD->min_value;
+                    $excessODAmount = (float) $excessOD->min_value;
+                }
+                if ($excessOD->max_value && $excessODAmount > $excessOD->max_value) {
+                    $excessODAmount = (float) $excessOD->max_value;
                 }
             }
         }
@@ -85,36 +97,41 @@ class PremiumCalculationService
             if ($excessTheft->percentage) {
                 $excessTheftAmount = $valuation * ($excessTheft->percentage / 100);
                 if ($excessTheft->min_value && $excessTheftAmount < $excessTheft->min_value) {
-                    $excessTheftAmount = $excessTheft->min_value;
+                    $excessTheftAmount = (float) $excessTheft->min_value;
                 }
             }
         } elseif (!$hasAntiTheft && $excessTheftNoDevice) {
             if ($excessTheftNoDevice->percentage) {
                 $excessTheftAmount = $valuation * ($excessTheftNoDevice->percentage / 100);
                 if ($excessTheftNoDevice->min_value && $excessTheftAmount < $excessTheftNoDevice->min_value) {
-                    $excessTheftAmount = $excessTheftNoDevice->min_value;
+                    $excessTheftAmount = (float) $excessTheftNoDevice->min_value;
                 }
             }
         }
 
         $additionalExcess = 0;
         if ($isYoungDriver && $youngDriverExcess) {
-            $additionalExcess = $youngDriverExcess->value ?? 0;
+            $additionalExcess = (float) ($youngDriverExcess->value ?? 0);
         }
 
-        $total = $basicPremium;
+        $totalPremium = $basicPremium + $pll + $pvt + $levis + $stampDutyAmount;
 
         return [
             'company' => $company->name,
+            'company_slug' => $company->slug,
             'valuation' => $valuation,
-            'premium_rate' => $premiumRate ? $premiumRate->percentage : 0,
+            'vehicle_type' => $vehicleType,
+            'premium_rate' => $ratePercent,
             'basic_premium' => round($basicPremium, 2),
-            'base_premium' => round($basePremium, 2),
-            'ira_levy_rate' => $iraLevyRate ? $iraLevyRate->percentage : 0,
-            'ira_levy' => round($iraLevy, 2),
-            'pvt_rate' => $pvtRate ? $pvtRate->percentage : 0,
+            'is_pvt_inclusive' => $isPvtInclusive,
+            'pvt_rate' => $pvtRate ? (float) $pvtRate->percentage : 0,
             'pvt_premium' => round($pvt, 2),
-            'total_premium' => round($total, 2),
+            'pll_per_person' => $pllRate ? (float) $pllRate->value : 0,
+            'pll_total' => round($pll, 2),
+            'levis_rate' => $levisRate ? (float) $levisRate->percentage : 0,
+            'levis' => round($levis, 2),
+            'stamp_duty' => $stampDutyAmount,
+            'total_premium' => round($totalPremium, 2),
             'excess_own_damage' => round($excessODAmount, 2),
             'excess_theft' => round($excessTheftAmount, 2),
             'excess_young_driver' => round($additionalExcess, 2),

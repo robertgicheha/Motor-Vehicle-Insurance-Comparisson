@@ -181,15 +181,20 @@ class QuotationController extends Controller
             'car_model' => 'required|string|max:255',
             'car_year' => 'required|integer|min:2000|max:2030',
             'car_registration' => 'nullable|string|max:50',
-            'car_valuation' => 'required|numeric|min:800000|max:1300000',
+            'car_valuation' => 'required|numeric|min:500000|max:10000000',
             'has_anti_theft' => 'boolean',
             'is_young_driver' => 'boolean',
             'include_pvt' => 'boolean',
+            'vehicle_type' => 'sometimes|string|in:psv,private',
+            'num_passengers' => 'sometimes|integer|min:1',
         ]);
 
         if ($validator->fails()) {
             return response()->json(['errors' => $validator->errors()], 422);
         }
+
+        $vehicleType = $request->input('vehicle_type', 'psv');
+        $numPassengers = $request->input('num_passengers', 1);
 
         $companies = Company::active()->get();
         $results = [];
@@ -198,7 +203,9 @@ class QuotationController extends Controller
             $results[] = $this->premiumCalculator->calculate(
                 $company,
                 $request->car_valuation,
-                $request->boolean('include_pvt', false),
+                $vehicleType,
+                $request->boolean('include_pvt', true),
+                $numPassengers,
                 $request->boolean('has_anti_theft', true),
                 $request->boolean('is_young_driver', false)
             );
@@ -227,7 +234,7 @@ class QuotationController extends Controller
             'car_model' => 'required|string|max:255',
             'car_year' => 'required|integer|min:2000|max:2030',
             'car_registration' => 'nullable|string|max:50',
-            'car_valuation' => 'required|numeric|min:800000|max:1300000',
+            'car_valuation' => 'required|numeric|min:500000|max:10000000',
             'company_id' => 'required|exists:companies,id',
             'premium' => 'required|numeric',
             'pvt_premium' => 'nullable|numeric',
@@ -235,6 +242,8 @@ class QuotationController extends Controller
             'excess_own_damage' => 'nullable|numeric',
             'excess_theft' => 'nullable|numeric',
             'on_behalf_of' => 'nullable|exists:users,id',
+            'vehicle_type' => 'sometimes|string|in:psv,private',
+            'num_passengers' => 'sometimes|integer|min:1',
         ]);
 
         if ($validator->fails()) {
@@ -257,6 +266,8 @@ class QuotationController extends Controller
                 'car_year' => $request->car_year,
                 'car_registration' => $request->car_registration,
                 'car_valuation' => $request->car_valuation,
+                'vehicle_type' => $request->input('vehicle_type', 'psv'),
+                'num_passengers' => $request->input('num_passengers', 1),
                 'premium' => $request->premium,
                 'pvt_premium' => $request->pvt_premium ?? 0,
                 'total_premium' => $request->total_premium,

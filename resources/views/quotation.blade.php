@@ -129,6 +129,8 @@
 <script>
 window.quotationData = @json($companyData);
 window.quotationTaxRate = {{ $taxRate }};
+window.quotationVehicleType = '{{ $vehicleType ?? 'psv' }}';
+window.quotationNumPassengers = {{ $numPassengers ?? 1 }};
 window.quotationCompanies = @json($companies->map(fn($c) => ['slug' => $c->slug, 'name' => $c->name, 'logo' => $c->logoUrl()]));
 window.hardcodedLogos = @json($hardcodedLogos ?? []);
 window.selectedCompanySlug = {{ $selectedCompany ? json_encode($selectedCompany->slug) : 'null' }};

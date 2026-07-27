@@ -315,11 +315,12 @@ $__psvCompanyData = $__companyData->filter(fn($cd) => in_array($cd['slug'], $__c
 @endauth
 
 
+
 <!-- ── QUOTE FORM (modern / New-Features style) ── -->
-<section class="modern-section quote-form" style="display:none" id="quote-form-section">
+<section class="modern-section quote-form" id="quote-form-section">
   <div class="form-container">
 
-    <button type="button" class="quote-form-back" onclick="closeQuoteFlow()">← Back</button>
+    <button type="button" class="quote-form-back" onclick="document.getElementById('vehicle-type-section').scrollIntoView({behavior:'smooth', block:'start'})">↑ Back to Vehicle Selection</button>
 
     <div class="modern-head" style="text-align:center">
       <div class="eyebrow">Motor Insurance Quotation</div>
@@ -342,15 +343,15 @@ $__psvCompanyData = $__companyData->filter(fn($cd) => in_array($cd['slug'], $__c
 
     <!-- Step indicators -->
     <div class="form-steps">
-      <div class="form-step active" id="step-tab-1" onclick="goStep(1)">
+      <div class="form-step active" id="step-tab-1" onclick="goStepMain(1)">
         <div class="step-num">Step 1</div>
         <div class="step-name">Personal Details</div>
       </div>
-      <div class="form-step" id="step-tab-2" onclick="goStep(2)">
+      <div class="form-step" id="step-tab-2" onclick="goStepMain(2)">
         <div class="step-num">Step 2</div>
         <div class="step-name">Vehicle Details</div>
       </div>
-      <div class="form-step" id="step-tab-3" onclick="goStep(3)">
+      <div class="form-step" id="step-tab-3" onclick="goStepMain(3)">
         <div class="step-num">Step 3</div>
         <div class="step-name">Quote Generation</div>
       </div>
@@ -388,7 +389,7 @@ $__psvCompanyData = $__companyData->filter(fn($cd) => in_array($cd['slug'], $__c
         </div>
       </div>
       <div class="btn-group">
-        <button class="btn btn-primary" onclick="goStep(2)">Continue to Vehicle Details →</button>
+        <button class="btn btn-primary" onclick="goStepMain(2)">Continue to Vehicle Details →</button>
       </div>
     </div>
 
@@ -397,7 +398,7 @@ $__psvCompanyData = $__companyData->filter(fn($cd) => in_array($cd['slug'], $__c
       <div class="form-grid">
         <div class="form-group">
           <label>Registration Number <span class="req">*</span></label>
-          <input type="text" id="f-reg" placeholder="e.g. KDH 724V" oninput="validateReg(this)">
+          <input type="text" id="f-reg" placeholder="e.g. KDH 724V" oninput="validateRegMain(this)">
           <div class="reg-error" id="f-reg-error" style="color:var(--red);font-size:11px;display:none;margin-top:2px">Invalid Kenyan registration format (e.g. KDH 291H)</div>
         </div>
         <div class="form-group" id="f-pax-group" style="display:none">
@@ -469,8 +470,8 @@ $__psvCompanyData = $__companyData->filter(fn($cd) => in_array($cd['slug'], $__c
         </div>
       </div>
       <div class="btn-group">
-        <button class="btn btn-secondary" onclick="goStep(1)">← Back</button>
-        <button class="btn btn-primary" onclick="validateStep2AndProceed()">Continue to Quote Generation →</button>
+        <button class="btn btn-secondary" onclick="goStepMain(1)">← Back</button>
+        <button class="btn btn-primary" onclick="validateStep2AndProceedMain()">Continue to Quote Generation →</button>
       </div>
     </div>
 
@@ -490,7 +491,7 @@ $__psvCompanyData = $__companyData->filter(fn($cd) => in_array($cd['slug'], $__c
         </div>
       </div>
       <div class="btn-group">
-        <button class="btn btn-secondary" onclick="goStep(2)">← Back to Vehicle Details</button>
+        <button class="btn btn-secondary" onclick="goStepMain(2)">← Back to Vehicle Details</button>
       </div>
     </div>
 
@@ -540,8 +541,7 @@ $__psvCompanyData = $__companyData->filter(fn($cd) => in_array($cd['slug'], $__c
         </div>
       </div>
       <div class="modern-cta">
-  <a class="btn-section-cta" href="#quote-form-section" onclick="openQuoteFlow('private'); return false;">Get a Private Vehicle Quote</a>
-    </div>
+<a class="btn-section-cta" href="#quote-form-section-private" onclick="openQuoteFlow('private'); return false;">Get a Private Vehicle Quote</a>    </div>
     </div>
     <div class="modern-image">
       <img src="{{ asset('images/hero/vehicle.jpg') }}" alt="Private motor vehicle insurance"/>
@@ -550,13 +550,17 @@ $__psvCompanyData = $__companyData->filter(fn($cd) => in_array($cd['slug'], $__c
 </section>
 
 <!-- ── PRIVATE QUOTE FORM ── -->
-<section class="section" style="background:#F9F9FF;display:none" id="quote-form-section-private">
+<section class="modern-section quote-form" style="display:none" id="quote-form-section-private">
   <div class="form-container">
-   <div class="section-head">
-    <button type="button" class="quote-form-back" onclick="closeQuoteFlow('private')">← Back</button>
-     <div class="section-title" style="text-align: center;">Get Your Motor Insurance Quote</div>
-      <div class="section-sub" style="text-align: center;">Complete the form below in three easy steps to receive your personalised quotation.</div>
-  </div>
+
+    <button type="button" class="quote-form-back" onclick="closeQuoteFlow('private')">↑ Back to Private Section</button>
+
+    <div class="modern-head" style="text-align:center">
+      <div class="eyebrow">Motor Insurance Quotation</div>
+      <h2 class="modern-title">Get Your Private Motor Insurance Quote</h2>
+      <h3 class="modern-subtitle">Complete the form below in three easy steps to receive your personalised quotation.</h3>
+      <p class="modern-desc">Choose the cover type that matches your vehicle, then fill in your details to compare premiums from leading insurers.</p>
+    </div>
 
     <input type="hidden" id="f-vehicle-type-private" value="private">
 
@@ -713,7 +717,7 @@ $__psvCompanyData = $__companyData->filter(fn($cd) => in_array($cd['slug'], $__c
 </section>
  
 <!-- ============================================================ PRIVATE MOTOR STEPS (Effortless-Integration style) ============================================================ -->
-<section class="steps-section private-steps">
+<section class="steps-section private-steps" id="private-steps-section">
   <div class="steps-head">
     <h2>How to Get a Private Motor Vehicle Quote</h2>
     <p>Five simple steps to your comprehensive quote — <a href="https://www.micglobalrisks.com/motor-quote/">start your quote here</a>.</p>
@@ -801,7 +805,7 @@ $__psvCompanyData = $__companyData->filter(fn($cd) => in_array($cd['slug'], $__c
         </div>
       </div>
       <div class="modern-cta">
-      <a class="btn-section-cta" href="#quote-form-section" onclick="openQuoteFlow('psv'); return false;">Get a PSV Quote</a>
+      <a class="btn-section-cta" href="#quote-form-section-psv" onclick="openQuoteFlow('psv'); return false;">Get a PSV Quote</a>
     </div>
     </div>
     <div class="modern-image">
@@ -811,13 +815,17 @@ $__psvCompanyData = $__companyData->filter(fn($cd) => in_array($cd['slug'], $__c
 </section>
 
 <!-- ── PSV QUOTE FORM ── -->
-<section class="section" style="background:#F9F9FF;display:none" id="quote-form-section-psv">
+<section class="modern-section quote-form" style="display:none" id="quote-form-section-psv">
   <div class="form-container">
-   <div class="section-head">
-    <button type="button" class="quote-form-back" onclick="closeQuoteFlow('psv')">← Back</button>
-     <div class="section-title" style="text-align: center;">Get Your PSV Insurance Quote</div>
-      <div class="section-sub" style="text-align: center;">Complete the form below in three easy steps to receive your personalised PSV quotation.</div>
-  </div>
+
+    <button type="button" class="quote-form-back" onclick="closeQuoteFlow('psv')">↑ Back to PSV Section</button>
+
+    <div class="modern-head" style="text-align:center">
+      <div class="eyebrow">Motor Insurance Quotation</div>
+      <h2 class="modern-title">Get Your PSV Motor Insurance Quote</h2>
+      <h3 class="modern-subtitle">Complete the form below in three easy steps to receive your personalised quotation.</h3>
+      <p class="modern-desc">Choose the cover type that matches your vehicle, then fill in your details to compare premiums from leading insurers.</p>
+    </div>
 
     <input type="hidden" id="f-vehicle-type-psv" value="psv">
 
@@ -979,7 +987,7 @@ $__psvCompanyData = $__companyData->filter(fn($cd) => in_array($cd['slug'], $__c
 </section>
  
 <!-- ============================================================ PSV MOTOR STEPS ============================================================ -->
-<section class="steps-section psv-steps">
+<section class="steps-section psv-steps" id="psv-steps-section">
   <div class="steps-head">
     <h2 style="color:#fff;">How to Get a PSV Motor Vehicle Quote</h2>
     <p>Five simple steps to your comprehensive quote — <a href="https://www.micglobalrisks.com/motor-quote/">start your quote here</a>.</p>
@@ -1118,107 +1126,111 @@ $__psvCompanyData = $__companyData->filter(fn($cd) => in_array($cd['slug'], $__c
   </div>
 </section>
 
-<!-- ── QUOTE FORM ── -->
-<section class="section" style="background:#F9F9FF;display:none" id="quote-form-section">
+<!-- ── QUOTE FORM (vehicle-type selector) ── -->
+<section class="modern-section quote-form" style="display:none" id="quote-form-section-vt">
   <div class="form-container">
-   <div class="section-head">
-    <button type="button" class="quote-form-back" onclick="closeQuoteFlow()">← Back</button>
-     <div class="section-title" style="text-align: center;" id="form-title">Get Your Motor Insurance Quote</div>
-      <div class="section-sub" style="text-align: center;" id="form-subtitle">Complete the form below in three easy steps to receive your personalised quotation.</div>
-  </div>
+
+    <button type="button" class="quote-form-back" onclick="closeQuoteFlowVT()">↑ Back to Vehicle Selection</button>
+
+    <div class="modern-head" style="text-align:center">
+      <div class="eyebrow">Motor Insurance Quotation</div>
+      <h2 class="modern-title" id="form-title-vt">Get Your Motor Insurance Quote</h2>
+      <h3 class="modern-subtitle" id="form-subtitle-vt">Complete the form below in three easy steps to receive your personalised quotation.</h3>
+      <p class="modern-desc">Choose the cover type that matches your vehicle, then fill in your details to compare premiums from leading insurers.</p>
+    </div>
   
-    <input type="hidden" id="f-vehicle-type" value="">
+    <input type="hidden" id="f-vehicle-type-vt" value="">
 
     <!-- Step indicators -->
     <div class="form-steps">
-      <div class="form-step active" id="step-tab-1" onclick="goStep(1)">
+      <div class="form-step active" id="step-tab-1-vt" onclick="goStepVT(1)">
         <div class="step-num">Step 1</div>
         <div class="step-name">Personal Details</div>
       </div>
-      <div class="form-step" id="step-tab-2" onclick="goStep(2)">
+      <div class="form-step" id="step-tab-2-vt" onclick="goStepVT(2)">
         <div class="step-num">Step 2</div>
         <div class="step-name">Vehicle Details</div>
       </div>
-      <div class="form-step" id="step-tab-3" onclick="goStep(3)">
+      <div class="form-step" id="step-tab-3-vt" onclick="goStepVT(3)">
         <div class="step-num">Step 3</div>
         <div class="step-name">Quote Generation</div>
       </div>
     </div>
   
     <!-- Step 1: Personal Details -->
-    <div class="form-panel active" id="panel-1">
+    <div class="form-panel active" id="panel-1-vt">
       <div class="form-grid three">
         <div class="form-group">
           <label>Salutation <span class="req">*</span></label>
-          <select id="f-salutation">
+          <select id="f-salutation-vt">
             <option value="">Select...</option>
             <option>Mr.</option><option>Mrs.</option><option>Miss</option><option>Dr.</option><option>Prof.</option>
           </select>
         </div>
         <div class="form-group">
           <label>First Name <span class="req">*</span></label>
-          <input type="text" id="f-first" placeholder="e.g. John">
+          <input type="text" id="f-first-vt" placeholder="e.g. John">
         </div>
         <div class="form-group">
           <label>Middle Name</label>
-          <input type="text" id="f-middle" placeholder="Optional">
+          <input type="text" id="f-middle-vt" placeholder="Optional">
         </div>
         <div class="form-group">
           <label>Last Name <span class="req">*</span></label>
-          <input type="text" id="f-last" placeholder="e.g. Doe">
+          <input type="text" id="f-last-vt" placeholder="e.g. Doe">
         </div>
         <div class="form-group">
           <label>Phone Number <span class="req">*</span></label>
-          <input type="tel" id="f-phone" placeholder="07 XX XXX XXX">
+          <input type="tel" id="f-phone-vt" placeholder="07 XX XXX XXX">
         </div>
         <div class="form-group">
           <label>Email Address <span class="req">*</span></label>
-          <input type="email" id="f-email" placeholder="email@example.com">
+          <input type="email" id="f-email-vt" placeholder="email@example.com">
         </div>
       </div>
       <div class="btn-group">
-        <button class="btn btn-primary" onclick="goStep(2)">Continue to Vehicle Details →</button>
+        <button class="btn btn-primary" onclick="goStepVT(2)">Continue to Vehicle Details →</button>
       </div>
     </div>
   
     <!-- Step 2: Vehicle Details -->
-    <div class="form-panel" id="panel-2">
+    <div class="form-panel" id="panel-2-vt">
       <div class="form-grid">
         <div class="form-group">
           <label>Registration Number <span class="req">*</span></label>
-          <input type="text" id="f-reg" placeholder="e.g. KDH 724V" oninput="validateReg(this)">
-          <div class="reg-error" id="f-reg-error" style="color:var(--red);font-size:11px;display:none;margin-top:2px">Invalid Kenyan registration format (e.g. KDH 291H)</div>
+          <input type="text" id="f-reg-vt" placeholder="e.g. KDH 724V" oninput="validateRegVT(this)">
+          <div class="reg-error" id="f-reg-error-vt" style="color:var(--red);font-size:11px;display:none;margin-top:2px">Invalid Kenyan registration format (e.g. KDH 291H)</div>
         </div>
-        <div class="form-group" id="f-pax-group" style="display:none">
+        <div class="form-group" id="f-pax-group-vt" style="display:none">
           <label>Number of Passengers (Pax) <span class="req">*</span></label>
-          <input type="number" id="f-pax" placeholder="e.g. 14" min="1" value="1">
+          <input type="number" id="f-pax-vt" placeholder="e.g. 14" min="1" value="1">
           <div style="font-size:11px;color:var(--text-muted);margin-top:2px">Used to calculate Passenger Legal Liability (PLL)</div>
         </div>
         <div class="form-group">
           <label>Chassis / Frame Number</label>
-          <input type="text" id="f-chassis" placeholder="e.g. WVWZZZ1KZ9W123456">
+          <input type="text" id="f-chassis-vt" placeholder="e.g. WVWZZZ1KZ9W123456">
         </div>
         <div class="form-group">
           <label>Make of Vehicle <span class="req">*</span></label>
           <div class="vehicle-search-wrap">
-            <input type="text" id="f-make" placeholder="Search vehicle make..." autocomplete="off">
-            <div class="vehicle-dropdown" id="f-make-dropdown"></div>
+            <input type="text" id="f-make-vt" placeholder="Search vehicle make..." autocomplete="off">
+            <div class="vehicle-dropdown" id="f-make-dropdown-vt"></div>
           </div>
-          <input type="hidden" id="f-make-value" value="">
-          <input type="text" id="f-make-other" placeholder="Type your vehicle make..." style="display:none;margin-top:8px">
+          <input type="hidden" id="f-make-value-vt" value="">
+          <input type="text" id="f-make-other-vt" placeholder="Type your vehicle make..." style="display:none;margin-top:8px">
         </div>
         <div class="form-group">
           <label>Model Name <span class="req">*</span></label>
           <div class="vehicle-search-wrap">
-            <input type="text" id="f-model" placeholder="Select a make first..." autocomplete="off" disabled>
-            <div class="vehicle-dropdown" id="f-model-dropdown"></div>
+            <input type="text" id="f-model-vt" placeholder="Select a make first..." autocomplete="off" disabled>
+            <div class="vehicle-dropdown" id="f-model-dropdown-vt"></div>
           </div>
-          <input type="hidden" id="f-model-value" value="">
-          <input type="text" id="f-model-other" placeholder="Type your vehicle model..." style="display:none;margin-top:8px">
+          <input type="hidden" id="f-model-value-vt" value="">
+          <input type="text" id="f-model-other-vt" placeholder="Type your vehicle model..." style="display:none;margin-top:8px">
         </div>
         <div class="form-group">
           <label>Body Type</label>
-          <select id="f-body">
+          <select id="f-body-vt">
             <option value="">Select body type...</option>
             <option>Saloon</option><option>Station Wagon (S. Wagon)</option><option>SUV/4x4</option>
             <option>Hatchback</option><option>Pick-Up</option><option>Van/Minivan</option><option>Convertible</option><option>Coupe</option>
@@ -1226,14 +1238,14 @@ $__psvCompanyData = $__companyData->filter(fn($cd) => in_array($cd['slug'], $__c
         </div>
         <div class="form-group">
           <label>Year of Manufacture <span class="req">*</span></label>
-          <select id="f-year">
+          <select id="f-year-vt">
             <option value="">Select year...</option>
           </select>
-          <div class="value-error" id="f-year-error" style="display:none;color:var(--red);font-size:11px;margin-top:4px"></div>
+          <div class="value-error" id="f-year-error-vt" style="display:none;color:var(--red);font-size:11px;margin-top:4px"></div>
         </div>
         <div class="form-group">
           <label>Color</label>
-          <select id="f-color" onchange="toggleOtherColor(this)">
+          <select id="f-color-vt">
             <option value="">Select color...</option>
             <option>White</option>
             <option>Black</option>
@@ -1247,39 +1259,39 @@ $__psvCompanyData = $__companyData->filter(fn($cd) => in_array($cd['slug'], $__c
             <option>Purple</option>
             <option>Other</option>
           </select>
-          <input type="text" id="f-color-other" placeholder="Type your vehicle color..." style="display:none;margin-top:8px">
+          <input type="text" id="f-color-other-vt" placeholder="Type your vehicle color..." style="display:none;margin-top:8px">
         </div>
         <div class="form-group">
           <label>Value of Vehicle (KES) <span class="req">*</span></label>
-          <input type="text" id="f-value" placeholder="e.g. 800,000" autocomplete="off">
-          <div class="value-range-hint" id="f-value-hint">Enter the value of your vehicle</div>
-          <div class="value-error" id="f-value-error" style="display:none"></div>
-          <div class="min-sum-hint" id="f-min-sum-hint" style="font-size:11px;color:var(--text-muted);margin-top:4px"></div>
+          <input type="text" id="f-value-vt" placeholder="e.g. 800,000" autocomplete="off">
+          <div class="value-range-hint" id="f-value-hint-vt">Enter the value of your vehicle</div>
+          <div class="value-error" id="f-value-error-vt" style="display:none"></div>
+          <div class="min-sum-hint" id="f-min-sum-hint-vt" style="font-size:11px;color:var(--text-muted);margin-top:4px"></div>
         </div>
       </div>
       <div class="btn-group">
-        <button class="btn btn-secondary" onclick="goStep(1)">← Back</button>
-        <button class="btn btn-primary" onclick="validateStep2AndProceed()">Continue to Quote Generation →</button>
+        <button class="btn btn-secondary" onclick="goStepVT(1)">← Back</button>
+        <button class="btn btn-primary" onclick="validateStep2AndProceedVT()">Continue to Quote Generation →</button>
       </div>
     </div>
   
     <!-- Step 3: Quote Generation -->
-    <div class="form-panel" id="panel-3">
+    <div class="form-panel" id="panel-3-vt">
       <div class="valuation-box">
         <h3 style="font-size:15px;font-weight:700;margin-bottom:4px;color:var(--text)">Premium Estimate</h3>
         <p style="font-size:13px;color:var(--text-muted);margin-bottom:16px">Select an insurer card below to open its full quotation, or compare all side by side.</p>
   
-        <div id="premium-preview-empty" style="padding:20px;text-align:center;color:var(--text-muted);font-size:13px;border:1.5px dashed var(--border);border-radius:var(--radius)">
+        <div id="premium-preview-empty-vt" style="padding:20px;text-align:center;color:var(--text-muted);font-size:13px;border:1.5px dashed var(--border);border-radius:var(--radius)">
           ← Go back to Step 2 and enter the vehicle value to see premium estimates.
         </div>
   
-        <div id="premium-preview" style="display:none">
+        <div id="premium-preview-vt" style="display:none">
           <div style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:14px">Click a card to open the full quotation</div>
-          <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px" id="premium-cards-grid"></div>
+          <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px" id="premium-cards-grid-vt"></div>
         </div>
       </div>
       <div class="btn-group">
-        <button class="btn btn-secondary" onclick="goStep(2)">← Back to Vehicle Details</button>
+        <button class="btn btn-secondary" onclick="goStepVT(2)">← Back to Vehicle Details</button>
       </div>
     </div>
   
@@ -1843,21 +1855,22 @@ window.MIC_MIN_SUM_PRIVATE = @json($__companies->pluck('min_sum_insured_private'
 window.hardcodedLogos = @json($__hardcodedLogos);
 function selectVehicleType(type) {
   window.MIC_VEHICLE_TYPE = type;
-  document.getElementById('f-vehicle-type').value = type;
+  document.getElementById('f-vehicle-type-vt').value = type;
   var companies = type === 'psv' ? window.MIC_COMPANIES_PSV : window.MIC_COMPANIES_PRIVATE;
   window.MIC_COMPANIES = companies;
-  document.getElementById('quote-form-section').style.display = 'block';
-  document.getElementById('vehicle-type-section').scrollIntoView({behavior: 'smooth'});
 
-  var paxGroup = document.getElementById('f-pax-group');
+  var vtForm = document.getElementById('quote-form-section-vt');
+  vtForm.style.display = 'block';
+
+  var paxGroup = document.getElementById('f-pax-group-vt');
   if (type === 'psv') {
     paxGroup.style.display = 'block';
   } else {
     paxGroup.style.display = 'none';
   }
 
-  var title = document.getElementById('form-title');
-  var subtitle = document.getElementById('form-subtitle');
+  var title = document.getElementById('form-title-vt');
+  var subtitle = document.getElementById('form-subtitle-vt');
   if (type === 'psv') {
     title.textContent = 'Get Your PSV Insurance Quote';
     subtitle.textContent = 'Complete the form below for your Public Service Vehicle insurance quotation.';
@@ -1886,15 +1899,134 @@ function selectVehicleType(type) {
       }
     });
   }
-  var hintEl = document.getElementById('f-min-sum-hint');
+  var hintEl = document.getElementById('f-min-sum-hint-vt');
   if (minHints.length) {
     hintEl.innerHTML = '<strong>Minimum Sum Insured:</strong> ' + minHints.join(' | ');
   } else {
     hintEl.innerHTML = '';
   }
 
-  goStep(1);
+  goStepVT(1);
+  vtForm.scrollIntoView({behavior: 'smooth', block: 'start'});
 }
+
+function goStepVT(n) {
+  var panels = document.querySelectorAll('#quote-form-section-vt .form-panel');
+  var steps = document.querySelectorAll('#quote-form-section-vt .form-step');
+  panels.forEach(function(p) { p.classList.remove('active'); });
+  steps.forEach(function(s) { s.classList.remove('active'); s.classList.remove('done'); });
+  for (var i = 0; i < n; i++) { if (steps[i]) steps[i].classList.add('done'); }
+  if (steps[n - 1]) steps[n - 1].classList.add('done');
+  var panel = document.getElementById('panel-' + n + '-vt');
+  if (panel) panel.classList.add('active');
+  if (steps[n - 1]) steps[n - 1].classList.add('active');
+  document.getElementById('quote-form-section-vt').scrollIntoView({behavior: 'smooth', block: 'start'});
+}
+
+function closeQuoteFlowVT() {
+  document.getElementById('quote-form-section-vt').style.display = 'none';
+  document.getElementById('vehicle-type-section').scrollIntoView({behavior: 'smooth', block: 'start'});
+}
+
+function validateRegVT(input) {
+  var val = input.value.trim().toUpperCase();
+  var err = document.getElementById('f-reg-error-vt');
+  var regex = /^[A-Z]{3}\s?\d{3}[A-Z]$/;
+  if (val.length > 0 && !regex.test(val)) {
+    err.style.display = 'block';
+  } else {
+    err.style.display = 'none';
+  }
+}
+
+function validateStep2AndProceedVT() {
+  var required = [
+    {id: 'f-reg-vt', label: 'Registration Number'},
+    {id: 'f-make-value-vt', label: 'Make of Vehicle'},
+    {id: 'f-model-value-vt', label: 'Model Name'},
+    {id: 'f-year-vt', label: 'Year of Manufacture'},
+    {id: 'f-value-vt', label: 'Value of Vehicle'}
+  ];
+  var missing = [];
+  required.forEach(function(r) {
+    var el = document.getElementById(r.id);
+    if (!el || !el.value.trim()) missing.push(r.label);
+  });
+  if (missing.length) {
+    alert('Please fill in the following required fields:\n• ' + missing.join('\n• '));
+    return;
+  }
+  var type = window.MIC_VEHICLE_TYPE;
+  var companies = window.MIC_COMPANIES || [];
+  var vehicleValue = parseFloat(document.getElementById('f-value-vt').value.replace(/[^0-9.]/g, ''));
+  var minHints = [];
+  if (type === 'psv') {
+    var slugs = ['sanlam-allianz', 'ga-insurance-ltd', 'definite-insurance'];
+    slugs.forEach(function(s) {
+      var val = window.MIC_MIN_SUM_PSV[s];
+      if (val) {
+        var name = companies.find(function(c) { return c.slug === s; });
+        minHints.push((name ? name.name : s) + ': KES ' + Number(val).toLocaleString('en-KE'));
+      }
+    });
+  } else {
+    var slugs = ['sanlam-allianz', 'ga-insurance-ltd', 'britam'];
+    slugs.forEach(function(s) {
+      var val = window.MIC_MIN_SUM_PRIVATE[s];
+      if (val) {
+        var name = companies.find(function(c) { return c.slug === s; });
+        minHints.push((name ? name.name : s) + ': KES ' + Number(val).toLocaleString('en-KE'));
+      }
+    });
+  }
+  var hintEl = document.getElementById('f-min-sum-hint-vt');
+  if (minHints.length) {
+    hintEl.innerHTML = '<strong>Minimum Sum Insured:</strong> ' + minHints.join(' | ');
+  } else {
+    hintEl.innerHTML = '';
+  }
+  generatePremiumCardsVT(companies, vehicleValue, type);
+  goStepVT(3);
+}
+
+function generatePremiumCardsVT(companies, vehicleValue, type) {
+  var prev = document.getElementById('premium-preview-vt');
+  var prevEmpty = document.getElementById('premium-preview-empty-vt');
+  var grid = document.getElementById('premium-cards-grid-vt');
+  if (!vehicleValue) { prev.style.display = 'none'; prevEmpty.style.display = 'block'; return; }
+  prevEmpty.style.display = 'none';
+  prev.style.display = 'block';
+
+  var v = vehicleValue;
+  var html = '';
+  companies.forEach(function(cd) {
+    html += '<div class="preview-card" onclick="guestGuard(function(){ openQuotePage(\'' + cd.slug + '\'); })" style="background:white;border:1.5px solid var(--border);border-radius:var(--radius);padding:16px 14px;text-align:center;cursor:pointer;transition:box-shadow .2s,transform .15s">';
+    html += '<div style="height:36px;display:flex;align-items:center;justify-content:center;margin-bottom:8px">';
+    if (cd.logo) {
+      html += '<img src="' + cd.logo + '" alt="' + cd.name + '" style="max-height:32px;max-width:90px;object-fit:contain" onerror="fallbackLogo(this,\'' + cd.slug + '\')">';
+    }
+    html += '<span style="' + (cd.logo ? 'display:none' : '') + ';font-size:11px;font-weight:800;color:' + cd.color + '">' + cd.name.toUpperCase() + '</span>';
+    html += '</div>';
+    html += '<div style="font-size:11px;color:' + cd.color + ';font-weight:700;margin-bottom:6px">' + cd.name.toUpperCase() + '</div>';
+    html += '<div style="font-size:1.1rem;font-weight:700;color:' + cd.color + '">KES ' + Number(v * cd.rate).toLocaleString('en-KE', {minimumFractionDigits:0, maximumFractionDigits:0}) + '</div>';
+    html += '<div style="font-size:11px;color:var(--text-muted);margin-bottom:10px">@ ' + (cd.rate * 100) + '%</div>';
+    html += '<div style="font-size:11px;font-weight:700;color:white;background:' + cd.color + ';border-radius:5px;padding:5px 0">View Quote &#8599;</div>';
+    html += '</div>';
+  });
+
+  var compareColor = '#D0021B';
+  html += '<div class="preview-card" onclick="guestGuard(function(){ openQuotePage(\'ALL\'); })" style="background:white;border:1.5px solid ' + compareColor + ';border-radius:var(--radius);padding:16px 14px;text-align:center;cursor:pointer;transition:box-shadow .2s,transform .15s">';
+  html += '<div style="height:36px;display:flex;align-items:center;justify-content:center;margin-bottom:8px">';
+  html += '<span style="font-size:18px">&#128202;</span></div>';
+  html += '<div style="font-size:11px;color:' + compareColor + ';font-weight:700;margin-bottom:6px">COMPARE ALL</div>';
+  html += '<div style="font-size:1.1rem;font-weight:700;color:' + compareColor + '">' + companies.length + ' Quotes</div>';
+  html += '<div style="font-size:11px;color:var(--text-muted);margin-bottom:10px">All insurers</div>';
+  html += '<div style="font-size:11px;font-weight:700;color:white;background:' + compareColor + ';border-radius:5px;padding:5px 0">Compare &#8599;</div>';
+  html += '</div>';
+
+  grid.innerHTML = html;
+}
+
 function guestGuard(callback) {
   if (window.MIC_GUEST) { sessionStorage.setItem('auth_redirect', '/dashboard?pending_quote=1'); openAuthModal(); return; }
   if (typeof callback === 'function') callback();

@@ -353,7 +353,7 @@
   .btn-secondary:hover{background:var(--blue-light)}
   .btn-red{background:var(--red);color:var(--white)}
   .btn-red:hover{background:var(--red-dark)}
-  .btn-group{display:flex;gap:12px;margin-top:28px;justify-content:flex-end}
+  .btn-group{display:flex;gap:12px;margin-top:40px;justify-content:flex-end}
 
   /* ── COMPANY CARDS ── */
   .company-cards{display:grid;grid-template-columns:repeat(4,1fr);gap:24px;max-width:900px;margin:0 auto}
@@ -784,6 +784,32 @@
   }
   .quote-type-toggle-wrap{ text-align:center; }
 
+  /* ── QUOTE FORM (main, visible on load) ── */
+  .modern-section.quote-form{
+    background:var(--bg);
+    padding:64px 40px 72px;
+  }
+  .modern-section.quote-form .form-container{max-width:900px;margin:0 auto}
+  .modern-section.quote-form .eyebrow{
+    display:inline-flex;align-items:center;gap:8px;
+    font-size:.72rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;
+    color:var(--blue);margin-bottom:10px;justify-content:center;
+  }
+  .modern-section.quote-form .modern-head{margin-bottom:28px}
+  .modern-section.quote-form .modern-title{
+    font-size:1.6rem;font-weight:800;color:var(--text);margin-bottom:8px;letter-spacing:-.3px;
+  }
+  .modern-section.quote-form .modern-subtitle{
+    font-size:1rem;font-weight:600;color:var(--text);margin-bottom:6px;
+  }
+  .modern-section.quote-form .modern-desc{
+    font-size:.88rem;color:var(--text-muted);max-width:560px;margin:0 auto;
+  }
+  .modern-section.quote-form .form-container{text-align:left}
+  .modern-section.quote-form .quote-type-toggle{
+    display:flex;width:fit-content;margin:0 auto 28px;
+  }
+
   .mic-motor{
   --mic-blue:#004F8C;
   --mic-blue-dark:#00205B;
@@ -1042,4 +1068,76 @@
 @keyframes sectionFlipIn{
   0%   { opacity:0; transform:translateY(30px); }
   100% { opacity:1; transform:translateY(0); }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   Override .mic-motor rules for Private/PSV quote forms
+   Placed AFTER .mic-motor so source order wins at equal specificity
+   ═══════════════════════════════════════════════════════════════════════ */
+.mic-motor .modern-section.quote-form{
+  padding:64px 40px 72px;
+  background:var(--bg);
+  min-height:720px;
+}
+.mic-motor .modern-section.quote-form .form-container{max-width:900px;margin:0 auto;text-align:left}
+.mic-motor .modern-section.quote-form .modern-head{margin-bottom:28px;max-width:none;text-align:center}
+.mic-motor .modern-section.quote-form .eyebrow{
+  display:inline-flex;align-items:center;gap:8px;
+  font-size:.72rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--blue);margin-bottom:10px;justify-content:center;
+}
+.mic-motor .modern-section.quote-form .eyebrow::before{display:none}
+.mic-motor .modern-section.quote-form .modern-title{
+  font-size:1.6rem;font-weight:800;color:var(--text);margin-bottom:8px;letter-spacing:-.3px;
+}
+.mic-motor .modern-section.quote-form .modern-subtitle{
+  font-size:1rem;font-weight:600;color:var(--text);margin-bottom:6px;
+}
+.mic-motor .modern-section.quote-form .modern-desc{
+  font-size:.88rem;color:var(--text-muted);max-width:560px;margin:0 auto;
+}
+.mic-motor .modern-section.quote-form .quote-form-back{
+  display:inline-block;margin-bottom:14px;background:none;border:none;
+  color:#1756c8;font-weight:700;font-size:13px;cursor:pointer;padding:0;
+}
+.mic-motor .modern-section.quote-form .btn-group{
+  display:flex;gap:12px;margin-top:40px;justify-content:flex-end;
+}
+.mic-motor .modern-section.quote-form .btn{
+  display:inline-flex;align-items:center;gap:8px;padding:12px 28px;border-radius:8px;
+  font-family:'Inter',sans-serif;font-size:14.5px;font-weight:600;cursor:pointer;
+  border:none;transition:all .2s;text-decoration:none;
+}
+.mic-motor .modern-section.quote-form .btn-primary{background:var(--blue);color:var(--white)}
+.mic-motor .modern-section.quote-form .btn-primary:hover{background:var(--blue-dark);transform:translateY(-1px)}
+.mic-motor .modern-section.quote-form .btn-secondary{background:var(--white);color:var(--blue);border:2px solid var(--blue)}
+.mic-motor .modern-section.quote-form .btn-secondary:hover{background:var(--blue-light)}
+.mic-motor .modern-section.quote-form .form-steps{
+  display:flex;gap:0;margin-bottom:36px;border:0.3px solid var(--border);border-radius:var(--radius-xl);overflow:hidden;
+}
+.mic-motor .modern-section.quote-form .form-step{
+  flex:1;padding:16px 20px;text-align:center;background:var(--white);cursor:pointer;position:relative;transition:all .2s;
+}
+.mic-motor .modern-section.quote-form .form-step.active{background:var(--blue);color:var(--white)}
+.mic-motor .modern-section.quote-form .form-step .step-num{
+  font-size:11px;font-weight:700;letter-spacing:.06em;opacity:.7;text-transform:uppercase;
+}
+.mic-motor .modern-section.quote-form .form-step .step-name{font-size:14px;font-weight:600;margin-top:2px}
+.mic-motor .modern-section.quote-form .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.mic-motor .modern-section.quote-form .form-grid.three{grid-template-columns:1fr 1fr 1fr}
+.mic-motor .modern-section.quote-form .form-group{display:flex;flex-direction:column;gap:6px}
+.mic-motor .modern-section.quote-form label{font-size:13px;font-weight:600;color:var(--text)}
+.mic-motor .modern-section.quote-form label .req{color:var(--red)}
+.mic-motor .modern-section.quote-form input,.mic-motor .modern-section.quote-form select{
+  width:100%;padding:11px 14px;border:none;border-radius:6px;
+  font-family:'Inter',sans-serif;font-size:14.5px;color:var(--text);background:var(--white);
+  transition:border-color .2s;outline:none;
+}
+.mic-motor .modern-section.quote-form input:focus,.mic-motor .modern-section.quote-form select:focus{
+  border-color:var(--blue);box-shadow:0 0 0 3px rgba(0,102,179,.08);
+}
+.mic-motor .modern-section.quote-form input::placeholder{color:#9CA3AF}
+.mic-motor .modern-section.quote-form .valuation-box{
+  background:linear-gradient(135deg,var(--blue-light),#F0F9FF);
+  border:1.5px solid var(--blue);border-radius:var(--radius-lg);padding:28px;margin-top:8px;
 }

@@ -21,11 +21,18 @@ let currentIndQuoteNum = null;
 
 // ── POPULATE YEAR SELECT ──
 (function(){
-  const sel = document.getElementById('f-year');
-  for(let y=2026;y>=1990;y--) {
-    const o=document.createElement('option');
-    o.value=y;o.textContent=y;sel.appendChild(o);
+  function populateYear(id) {
+    var sel = document.getElementById(id);
+    if (!sel) return;
+    for(var y=2026;y>=1990;y--) {
+      var o=document.createElement('option');
+      o.value=y;o.textContent=y;sel.appendChild(o);
+    }
   }
+  populateYear('f-year');
+  populateYear('f-year-private');
+  populateYear('f-year-psv');
+  populateYear('f-year-vt');
 })();
 
 // ── SEARCH ──
@@ -1080,6 +1087,59 @@ window.getFormData = function () {
     initModelSearch();
   }
 
+  // ── Initialize make/model search for suffixed forms (-private, -psv, -vt) ──
+  var suffixedTypes = ['private', 'psv', 'vt'];
+  suffixedTypes.forEach(function(type) {
+    var makeInput = document.getElementById('f-make-' + type);
+    if (!makeInput) return;
+
+    var ms = setupSearch('f-make-' + type, 'f-make-dropdown-' + type, 'f-make-value-' + type, 'f-make-other-' + type, {
+      items: makesCache,
+      onSelect: function(val) {
+        var modelInput = document.getElementById('f-model-' + type);
+        var modelOther = document.getElementById('f-model-other-' + type);
+        if (modelInput) {
+          modelInput.disabled = false;
+          modelInput.placeholder = 'Search model...';
+          modelInput.value = '';
+        }
+        if (modelOther) { modelOther.style.display = 'none'; modelOther.value = ''; }
+        var modelHidden = document.getElementById('f-model-value-' + type);
+        if (modelHidden) modelHidden.value = '';
+        fetchModels(val, function(models) {
+          if (msModel) msModel.setItems(models);
+        });
+      },
+      onOther: function() {
+        var modelInput = document.getElementById('f-model-' + type);
+        if (modelInput) {
+          modelInput.disabled = false;
+          modelInput.placeholder = 'Type your vehicle model...';
+          modelInput.value = '';
+        }
+        var modelHidden = document.getElementById('f-model-value-' + type);
+        if (modelHidden) modelHidden.value = '';
+        var modelDropdown = document.getElementById('f-model-dropdown-' + type);
+        if (modelDropdown) { modelDropdown.innerHTML = ''; modelDropdown.classList.remove('open'); }
+        if (msModel) msModel.setItems([]);
+      }
+    });
+
+    var msModel = setupSearch('f-model-' + type, 'f-model-dropdown-' + type, 'f-model-value-' + type, 'f-model-other-' + type, {
+      items: [],
+      onSelect: function() {},
+      onOther: function() {}
+    });
+
+    var checkMakes = setInterval(function() {
+      if (makesCache.length > 0 && ms) {
+        ms.setItems(makesCache);
+        clearInterval(checkMakes);
+      }
+    }, 100);
+    setTimeout(function() { clearInterval(checkMakes); }, 5000);
+  });
+
 
   // ═══════════════════════════════════════════════════════════
   //  VEHICLE VALUE FORMATTING & VALIDATION
@@ -1343,15 +1403,89 @@ function validateStep2AndProceed(type) {
 
   goStep(type, 3);
 }
+// ── MAIN QUOTE FORM (un-suffixed IDs) ──
+function goStepMain(n){
+  for (var i = 1; i <= 3; i++){
+    var tab = document.getElementById('step-tab-' + i);
+    var panel = document.getElementById('panel-' + i);
+    if (tab) tab.classList.toggle('active', i === n);
+    if (panel) panel.classList.toggle('active', i === n);
+  }
+}
+
+function validateRegMain(input){
+  var errorEl = document.getElementById('f-reg-error');
+  if (!errorEl) return;
+  var val = input.value.trim().toUpperCase();
+  input.value = val;
+  var pattern = /^[A-Z]{3}\s?\d{3}[A-Z]$/;
+  if (val && !pattern.test(val)) {
+    errorEl.style.display = 'block';
+  } else {
+    errorEl.style.display = 'none';
+  }
+}
+
+function validateStep2AndProceedMain(){
+  var reg = (document.getElementById('f-reg') || {}).value || '';
+  var year = (document.getElementById('f-year') || {}).value || '';
+  var make = (document.getElementById('f-make-value') || {}).value || (document.getElementById('f-make') || {}).value || '';
+  var model = (document.getElementById('f-model-value') || {}).value || (document.getElementById('f-model') || {}).value || '';
+  var valueRaw = (document.getElementById('f-value') || {}).value || '';
+  var value = parseFloat(valueRaw.replace(/,/g, '')) || 0;
+
+  var regPattern = /^[A-Z]{3}\s?\d{3}[A-Z]$/;
+  if (!regPattern.test(reg)) {
+    var regError = document.getElementById('f-reg-error');
+    if (regError) regError.style.display = 'block';
+    showToast('Please enter a valid Kenyan registration number (e.g. KDH 291H)');
+    return;
+  }
+
+  var yearError = document.getElementById('f-year-error');
+  if (!year) {
+    if (yearError) yearError.textContent = 'Please select the year of manufacture.';
+    if (yearError) yearError.style.display = 'block';
+    showToast('Please select the year of manufacture.');
+    return;
+  }
+  if (yearError) yearError.style.display = 'none';
+
+  if (!make || !model) {
+    showToast('Please enter the vehicle make and model.');
+    return;
+  }
+
+  if (!value || value <= 0) {
+    showToast('Please enter a valid vehicle value.');
+    return;
+  }
+
+  goStepMain(3);
+}
+
 // ── Quotation Flip Functionality ──
 function openQuoteFlow(type){
   var source = document.getElementById(type === 'psv' ? 'psv-motor-section' : 'private-motor-section');
   var formSection = document.getElementById(type === 'psv' ? 'quote-form-section-psv' : 'quote-form-section-private');
+  var stepsSection = document.getElementById(type === 'psv' ? 'psv-steps-section' : 'private-steps-section');
+
+  // If the OTHER form is currently open, close it and restore its section first
+  var otherType = type === 'psv' ? 'private' : 'psv';
+  var otherSource = document.getElementById(otherType === 'psv' ? 'psv-motor-section' : 'private-motor-section');
+  var otherForm = document.getElementById(otherType === 'psv' ? 'quote-form-section-psv' : 'quote-form-section-private');
+  var otherSteps = document.getElementById(otherType === 'psv' ? 'psv-steps-section' : 'private-steps-section');
+  if (otherForm && otherForm.style.display === 'block') {
+    otherForm.style.display = 'none';
+    if (otherSource) otherSource.style.display = 'block';
+    if (otherSteps) otherSteps.style.display = 'block';
+  }
 
   // reset that specific form back to step 1 each time it's opened
   if(typeof goStep === 'function') goStep(type, 1);
 
   source.classList.add('section-flip-out');
+  if(stepsSection) stepsSection.style.display = 'none';
 
   setTimeout(function(){
     source.style.display = 'none';
@@ -1370,6 +1504,7 @@ function openQuoteFlow(type){
 function closeQuoteFlow(type){
   var source = document.getElementById(type === 'psv' ? 'psv-motor-section' : 'private-motor-section');
   var formSection = document.getElementById(type === 'psv' ? 'quote-form-section-psv' : 'quote-form-section-private');
+  var stepsSection = document.getElementById(type === 'psv' ? 'psv-steps-section' : 'private-steps-section');
 
   formSection.classList.add('section-flip-out');
 
@@ -1378,6 +1513,7 @@ function closeQuoteFlow(type){
     formSection.classList.remove('section-flip-out');
 
     source.style.display = 'block';
+    if(stepsSection) stepsSection.style.display = 'block';
     source.classList.add('section-flip-in');
     source.scrollIntoView({behavior:'smooth', block:'start'});
 

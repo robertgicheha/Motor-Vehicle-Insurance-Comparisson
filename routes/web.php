@@ -31,6 +31,8 @@ Route::get('/', function () {
     return view('home');
 })->name('home');
 
+Route::get('/compare-all', fn () => redirect()->route('generate.quote', 'compare-all'))->name('compare-all');
+
 Route::get('/motor-quote', [PublicController::class, 'motorQuote'])->name('motor.quote');
 Route::get('/motor-private', [PublicController::class, 'motorPrivate'])->name('motor.private');
 Route::get('/motor-psv', [PublicController::class, 'motorPsv'])->name('motor.psv');

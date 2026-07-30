@@ -84,7 +84,12 @@
         $_pllPerPerson = $breakdown['pll_per_person'] ?? 0;
         $_numPassengers = $quotation->num_passengers ?? 1;
         $_pllTotal = $_pllPerPerson * $_numPassengers;
-        $_levisAmount = ($_pvtPremium + $_pllTotal) * $_levisRate;
+        $_levisAmount = ($quotation->premium + $_pvtPremium + $_pllTotal) * $_levisRate;
+        $_maxAgeRate = $companyRates->get('Premium Rate')->firstWhere('item_name', 'Max Age New Business');
+        $_excessProtector = $companyRates->get('Additional Cover') ? $companyRates->get('Additional Cover')->firstWhere('item_name', 'Excess Protector') : null;
+        $_minSumInsured = $quotation->vehicle_type === 'private' ? $quotation->company->min_sum_insured_private : $quotation->company->min_sum_insured_psv;
+        $_minSumInsuredRate = $companyRates->get('Premium Rate')->firstWhere('item_name', 'Minimum Sum Insured');
+        $_geoArea = $companyRates->get('Cover Limits') ? $companyRates->get('Cover Limits')->firstWhere('item_name', 'Geographical Area') : null;
       @endphp
       <div class="summary-row"><span>PVT Premium ({{ number_format($_pvtRate * 100, 2) }}%)</span><span>KES {{ number_format($_pvtPremium, 2) }}</span></div>
       @if($_pllPerPerson > 0)
@@ -207,6 +212,22 @@
     </table>
   </div>
   @endif
+
+  <div class="summary-card" style="margin-top:20px">
+    <h4>Additional Info</h4>
+    <table style="width:100%;border-collapse:collapse;font-size:13px">
+      <tbody>
+        <tr><td style="padding:6px 12px;border-bottom:1px solid #eee;font-weight:500">Minimum Sum Insured</td><td style="padding:6px 12px;border-bottom:1px solid #eee">{{ $_minSumInsured ? 'KES ' . number_format($_minSumInsured, 0) : ($_minSumInsuredRate?->notes ?? '—') }}</td></tr>
+        <tr><td style="padding:6px 12px;border-bottom:1px solid #eee;font-weight:500">Max Age New Business</td><td style="padding:6px 12px;border-bottom:1px solid #eee">{{ $_maxAgeRate ? $_maxAgeRate->value . ' years' : '—' }}</td></tr>
+        @if($_excessProtector)
+        <tr><td style="padding:6px 12px;border-bottom:1px solid #eee;font-weight:500">Excess Protector</td><td style="padding:6px 12px;border-bottom:1px solid #eee;font-size:12px">{{ $_excessProtector->notes ?? '—' }}</td></tr>
+        @endif
+        @if($_geoArea)
+        <tr><td style="padding:6px 12px;border-bottom:1px solid #eee;font-weight:500">Geographical Area</td><td style="padding:6px 12px;border-bottom:1px solid #eee;font-size:12px">{{ $_geoArea->notes ?? ($_geoArea->value > 0 ? 'KES ' . number_format($_geoArea->value, 0) : '—') }}</td></tr>
+        @endif
+      </tbody>
+    </table>
+  </div>
 
   <div class="action-bar" style="display:flex">
     <span class="action-bar-label">Actions</span>

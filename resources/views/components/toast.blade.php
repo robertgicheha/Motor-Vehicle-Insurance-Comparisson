@@ -14,7 +14,7 @@
 <div
     x-data="toastManager({{ json_encode($flashMessages) }})"
     x-init="init()"
-    class="fixed bottom-6 left-1/2 -translate-x-1/2 z-[100] flex flex-col gap-2 max-w-sm w-full pointer-events-none">
+    class="fixed top-6 right-6 z-[100] flex flex-col gap-2 max-w-sm w-full pointer-events-none">
     <template x-for="(toast, index) in toasts" :key="index">
         <div
             x-show="toast.show"
@@ -52,6 +52,7 @@ function toastManager(messages = []) {
             messages.forEach(function(msg) {
                 self.addToast(msg.message, msg.type);
             });
+            window._toastManager = self;
         },
         addToast(message, type) {
             if (!message) return;
@@ -71,6 +72,16 @@ function toastManager(messages = []) {
                 }, 200);
             }
         }
+    }
+}
+function showToastError(message) {
+    if (window._toastManager) {
+        window._toastManager.addToast(message, 'error');
+    }
+}
+function showToastSuccess(message) {
+    if (window._toastManager) {
+        window._toastManager.addToast(message, 'success');
     }
 }
 </script>

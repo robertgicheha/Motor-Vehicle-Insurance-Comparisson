@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>{{ $title ?? 'Authentication' }} | Motor Vehicle Insurance Portal</title>
-    <<!-- Standard favicon (browsers + bookmark bar) -->
+    <!-- Standard favicon (browsers + bookmark bar) -->
     <link rel="icon" type="image/x-icon"       href="{{ asset('Favicon.png') }}">
     <link rel="icon" type="image/png" sizes="16x16"   href="{{ asset('Favicon.png') }}">
     <link rel="icon" type="image/png" sizes="32x32"   href="{{ asset('Favicon.png') }}">
@@ -16,12 +16,12 @@
 <body class="font-montserrat antialiased text-gray-900 bg-white">
     <div class="flex min-h-screen">
         <div class="flex flex-col justify-center w-full lg:w-[40%] px-8 sm:px-16 xl:px-24">
-            blade<div class="mb-10 text-center">
-            <a href="{{ route('home') }}" class="flex items-center justify-center gap-3">
-                <img src="{{ asset('images/Auth logo.png') }}" alt="MIC Global Risks" class="mx-auto mb-3" style="height:56px;width:auto">
-                <span>Motor Vehicle Insurance Portal</span>
-            </a>
-        </div>
+            <div class="mb-10 text-center">
+                <a href="{{ route('home') }}" class="flex flex-col items-center justify-center gap-3">
+                    <img src="{{ asset('images/MarshMIC.png') }}" alt="MIC Global Risks" class="mx-auto mb-3" style="height:56px;width:auto">
+                    <span>Motor Vehicle Insurance Portal</span>
+                </a>
+            </div>
 
             <div class="w-full max-w-md mx-auto">
                 {{ $slot }}

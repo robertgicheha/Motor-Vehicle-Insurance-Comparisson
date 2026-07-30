@@ -22,6 +22,7 @@
             $iraLevy = $c->rates->where('vehicle_type', $vehicleType)->firstWhere('item_name', 'IRA Levy');
             $pvtRate = $c->rates->where('vehicle_type', $vehicleType)->firstWhere('item_name', 'PVT Rate');
             $pllRate = $c->rates->where('vehicle_type', $vehicleType)->firstWhere('item_name', 'PLL Per Person');
+            $maxAgeRate = $c->rates->where('vehicle_type', $vehicleType)->firstWhere('item_name', 'Max Age New Business');
             $stats = $__companyStats->get($c->id);
             return [
                 'slug' => $c->slug,
@@ -29,8 +30,13 @@
                 'logo' => $c->logoUrl(),
                 'rate' => $rate ? (float) $rate->percentage / 100 : 0,
                 'taxRate' => $iraLevy ? (float) $iraLevy->percentage / 100 : 0.005,
+                'minPremium' => $rate ? (float) $rate->min_premium : 0,
+                'isPvtInclusive' => $rate ? (bool) $rate->is_pvt_inclusive : false,
                 'pvtRate' => $pvtRate ? (float) $pvtRate->percentage / 100 : 0,
+                'pvtMinValue' => $pvtRate ? (float) $pvtRate->min_value : 0,
                 'pllPerPerson' => $pllRate ? (float) $pllRate->value : 0,
+                'maxAge' => $maxAgeRate ? (int) $maxAgeRate->value : 99,
+                'minSumInsured' => $vehicleType === 'psv' ? (float) $c->min_sum_insured_psv : (float) $c->min_sum_insured_private,
                 'color' => $companyColors[$i % count($companyColors)],
                 'prefix' => $c->getInitials(),
                 'logoFallback' => $c->logoUrl(),

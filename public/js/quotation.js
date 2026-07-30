@@ -12,12 +12,20 @@ function getCompanyBySlug(slug) {
 
 function calcPremiums(vehicleValue, company, numPassengers) {
   var rate = company.rate || 0;
+  var minPremium = company.minPremium || 0;
   var basicPremium = vehicleValue * rate;
-  var pvtRate = company.pvtRate || 0;
-  var pvt = vehicleValue * pvtRate;
+  if (basicPremium < minPremium) basicPremium = minPremium;
+  var isPvtInclusive = company.isPvtInclusive || false;
+  var pvt = 0;
+  if (!isPvtInclusive) {
+    var pvtRate = company.pvtRate || 0;
+    pvt = vehicleValue * pvtRate;
+    var pvtMin = company.pvtMinValue || 0;
+    if (pvt < pvtMin) pvt = pvtMin;
+  }
   var pllPerPerson = company.pllPerPerson || 0;
   var pll = pllPerPerson * (numPassengers || 1);
-  var levis = (pvt + pll) * 0.0045;
+  var levis = (basicPremium + pvt + pll) * 0.0045;
   var stampDuty = 40;
   var total = basicPremium + pvt + pll + levis + stampDuty;
   return { basic: basicPremium, pvt: pvt, pll: pll, levis: levis, stampDuty: stampDuty, total: total };
@@ -324,7 +332,7 @@ function init() {
     ['Radio / Cassette Premium', 'Included', 'KES 0'],
     ['PVT Premium', '@ ' + (company.pvtRate * 100).toFixed(2) + '%', fmt(prems.pvt)],
     ['PLL Premium', '@ KES ' + (company.pllPerPerson || 0) + ' per person × ' + (window.quotationNumPassengers || 1) + ' pax', fmt(prems.pll)],
-    ['Levis (0.45%)', 'On PVT + PLL', fmt(prems.levis)],
+    ['Levis (0.45%)', 'On Basic + PVT + PLL', fmt(prems.levis)],
     ['Stamp Duty', 'Fixed', fmt(prems.stampDuty)],
   ];
   var tbody = document.getElementById('breakdown-rows');

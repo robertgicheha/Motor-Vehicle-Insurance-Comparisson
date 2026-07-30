@@ -76,7 +76,7 @@
     $_pllPerPerson = $_breakdown['pll_per_person'] ?? 0;
     $_numPassengers = $quotation->num_passengers ?? 1;
     $_pllTotal = $_pllPerPerson * $_numPassengers;
-    $_levisAmount = ($_pvtPremium + $_pllTotal) * $_levisRate;
+    $_levisAmount = ($quotation->premium + $_pvtPremium + $_pllTotal) * $_levisRate;
 
     function fmtRateValue($r) {
         $parts = [];
@@ -215,6 +215,28 @@
     </tbody>
 </table>
 @endif
+
+@php
+    $_maxAgeRatePDF = $__companyRates->get('Premium Rate')->firstWhere('item_name', 'Max Age New Business');
+    $_excessProtectorPDF = $__companyRates->get('Additional Cover') ? $__companyRates->get('Additional Cover')->firstWhere('item_name', 'Excess Protector') : null;
+    $_minSumInsuredPDF = $quotation->vehicle_type === 'private' ? $quotation->company->min_sum_insured_private : $quotation->company->min_sum_insured_psv;
+    $_minSumInsuredRatePDF = $__companyRates->get('Premium Rate')->firstWhere('item_name', 'Minimum Sum Insured');
+    $_geoAreaPDF = $__companyRates->get('Cover Limits') ? $__companyRates->get('Cover Limits')->firstWhere('item_name', 'Geographical Area') : null;
+@endphp
+
+<h3 style="margin:20px 0 0;font-size:12px;color:#004f8c">ADDITIONAL INFO</h3>
+<table>
+    <tbody>
+        <tr><td style="width:40%;font-weight:bold">Minimum Sum Insured</td><td>{{ $_minSumInsuredPDF ? 'KES ' . number_format($_minSumInsuredPDF, 0) : ($_minSumInsuredRatePDF?->notes ?? '—') }}</td></tr>
+        <tr><td style="font-weight:bold">Max Age New Business</td><td>{{ $_maxAgeRatePDF ? $_maxAgeRatePDF->value . ' years' : '—' }}</td></tr>
+        @if($_excessProtectorPDF)
+        <tr><td style="font-weight:bold">Excess Protector</td><td style="font-size:10px">{{ $_excessProtectorPDF->notes ?? '—' }}</td></tr>
+        @endif
+        @if($_geoAreaPDF)
+        <tr><td style="font-weight:bold">Geographical Area</td><td style="font-size:10px">{{ $_geoAreaPDF->notes ?? ($_geoAreaPDF->value > 0 ? 'KES ' . number_format($_geoAreaPDF->value, 0) : '—') }}</td></tr>
+        @endif
+    </tbody>
+</table>
 
 <p style="font-size:10px;color:#64748b;margin-top:15px">
     This quotation is valid for 15 days from the date of issue. Comprehensive cover is subject to a satisfactory valuation report conducted within the first month of cover. Subject to sanction limitation and exclusion clause and standard policy terms and conditions.

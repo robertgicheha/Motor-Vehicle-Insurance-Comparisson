@@ -37,6 +37,84 @@
       this.errors.password_confirmation = 'Passwords do not match';
     }
     return Object.keys(this.errors).length === 0;
+  },
+  submitLogin($event) {
+    if (!this.validateLogin()) { $event.preventDefault(); return; }
+    $event.preventDefault();
+    this.loading = true;
+    this.error = '';
+    this.errors = {};
+    var self = this;
+    var form = $event.target;
+    var formData = new FormData(form);
+    fetch(form.action, {
+      method: 'POST',
+      body: formData,
+      headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' }
+    }).then(function(response) {
+      return response.json().then(function(data) {
+        if (response.ok) {
+          window.location.href = self.redirectTo;
+        } else {
+          self.loading = false;
+          if (data.errors) {
+            var msgs = [];
+            if (data.errors.email) msgs.push(data.errors.email);
+            if (data.errors.password) msgs.push(data.errors.password);
+            if (msgs.length > 1) {
+              showToastError('Your credentials are invalid, check if the username or password are correct and try again');
+            } else if (msgs.length === 1) {
+              showToastError(msgs[0]);
+            }
+          } else if (data.message) {
+            showToastError(data.message);
+          } else {
+            showToastError('Your credentials are invalid, check if the username or password are correct and try again');
+          }
+        }
+      });
+    }).catch(function() {
+      self.loading = false;
+      showToastError('Your credentials are invalid, check if the username or password are correct and try again');
+    });
+  },
+  submitRegister($event) {
+    if (!this.validateRegister()) { $event.preventDefault(); return; }
+    $event.preventDefault();
+    this.loading = true;
+    this.error = '';
+    this.errors = {};
+    var self = this;
+    var form = $event.target;
+    var formData = new FormData(form);
+    fetch(form.action, {
+      method: 'POST',
+      body: formData,
+      headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' }
+    }).then(function(response) {
+      return response.json().then(function(data) {
+        if (response.ok) {
+          window.location.href = self.redirectTo;
+        } else {
+          self.loading = false;
+          if (data.errors) {
+            var firstField = Object.keys(data.errors)[0];
+            if (firstField && data.errors[firstField] && data.errors[firstField].length > 0) {
+              showToastError(data.errors[firstField][0]);
+            } else {
+              showToastError('Registration failed. Please check your details and try again.');
+            }
+          } else if (data.message) {
+            showToastError(data.message);
+          } else {
+            showToastError('Registration failed. Please check your details and try again.');
+          }
+        }
+      });
+    }).catch(function() {
+      self.loading = false;
+      showToastError('Registration failed. Please check your details and try again.');
+    });
   }
 }">
   <div class="auth-modal-split" @click.stop>
@@ -46,12 +124,12 @@
     <div class="auth-modal-form-side">
       <div class="auth-modal-form-wrap">
         <div class="auth-tabs">
-          <button class="auth-tab" :class="{ active: tab === 'login' }" @click="tab = 'login'">Login</button>
-          <button class="auth-tab" :class="{ active: tab === 'register' }" @click="tab = 'register'">Sign Up</button>
+          <button class="auth-tab" :class="{ active: tab === 'login' }" @click="tab = 'login'; loading = false; errors = {}; error = '';">Login</button>
+          <button class="auth-tab" :class="{ active: tab === 'register' }" @click="tab = 'register'; loading = false; errors = {}; error = '';">Sign Up</button>
         </div>
 
         <!-- Login Form -->
-        <form x-show="tab === 'login'" method="POST" action="{{ route('login') }}" @submit="if(!validateLogin()){ $event.preventDefault(); } else { loading = true; }">
+        <form x-show="tab === 'login'" method="POST" action="{{ route('login') }}" @submit="submitLogin($event)">
           @csrf
           <input type="hidden" name="redirect_to" :value="redirectTo">
           <div class="auth-field">
@@ -64,7 +142,13 @@
             <input type="password" id="auth-password" name="password" x-model="password" required placeholder="&bull;&bull;&bull;&bull;&bull;&bull;">
             <p class="auth-error" x-show="errors.password" x-text="errors.password"></p>
           </div>
-          <button type="submit" class="btn btn-primary auth-submit" :disabled="loading">Login</button>
+          <button type="submit" class="btn btn-primary auth-submit" :disabled="loading">
+            <span x-show="!loading">Login</span>
+            <span x-show="loading" class="auth-spinner">
+              <svg class="auth-spinner-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" opacity="0.25"/><path d="M4 12a8 8 0 018-8" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg>
+              Please wait...logging in
+            </span>
+          </button>
 
           <div class="relative my-5">
             <div class="absolute inset-0 flex items-center"><div class="w-full border-t border-gray-200"></div></div>
@@ -81,11 +165,11 @@
             Sign in with Google
           </a>
 
-          <p class="auth-switch">Don't have an account? <a href="#" @click.prevent="tab = 'register'">Sign Up</a></p>
+          <p class="auth-switch">Don't have an account? <a href="#" @click.prevent="tab = 'register'; loading = false; errors = {}; error = '';">Sign Up</a></p>
         </form>
 
     <!-- Register Form -->
-        <form x-show="tab === 'register'" method="POST" action="{{ route('register') }}" @submit="if(!validateRegister()){ $event.preventDefault(); } else { loading = true; }">
+        <form x-show="tab === 'register'" method="POST" action="{{ route('register') }}" @submit="submitRegister($event)">
           @csrf
           <input type="hidden" name="redirect_to" :value="redirectTo">
           <div class="auth-grid">
@@ -124,7 +208,13 @@
           </div>
 
             <div class="auth-grid">
-            <button type="submit" class="btn btn-primary auth-submit" :disabled="loading" style="padding-top:8px;padding-bottom:8px;">Create Account</button>
+            <button type="submit" class="btn btn-primary auth-submit" :disabled="loading" style="padding-top:8px;padding-bottom:8px;">
+              <span x-show="!loading">Create Account</span>
+              <span x-show="loading" class="auth-spinner">
+                <svg class="auth-spinner-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" opacity="0.25"/><path d="M4 12a8 8 0 018-8" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg>
+                Please wait...
+              </span>
+            </button>
             <a href="{{ route('auth.google') }}" class="flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium text-gray-600 border border-gray-200 rounded-md hover:bg-gray-50 transition no-underline">
               <svg class="w-5 h-5" viewBox="0 0 24 24">
                 <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4"/>
@@ -136,7 +226,7 @@
             </a>
           </div>
 
-          <p class="auth-switch">Already have an account? <a href="#" @click.prevent="tab = 'login'">Login</a></p>
+          <p class="auth-switch">Already have an account? <a href="#" @click.prevent="tab = 'login'; loading = false; errors = {}; error = '';">Login</a></p>
         </form>
       </div>
     </div>
@@ -147,3 +237,20 @@
     </div>
   </div>
 </div>
+
+<style>
+.auth-spinner {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.auth-spinner-icon {
+  width: 16px;
+  height: 16px;
+  animation: auth-spin 1s linear infinite;
+}
+@keyframes auth-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+</style>

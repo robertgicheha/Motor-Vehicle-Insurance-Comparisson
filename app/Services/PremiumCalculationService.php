@@ -71,7 +71,7 @@ class PremiumCalculationService
 
         $levis = 0;
         if ($levisRate && $levisRate->percentage) {
-            $levis = ($pvt + $pll) * ($levisRate->percentage / 100);
+            $levis = ($basicPremium + $pvt + $pll) * ($levisRate->percentage / 100);
         }
 
         $stampDutyAmount = 0;

@@ -3,7 +3,15 @@
         Let's get you signed in. Enter your email and password to continue.
     </p>
 
-    <form method="POST" action="{{ route('login') }}" class="space-y-6">
+    @if ($errors->any())
+        <div class="mb-4 p-3 rounded-md bg-red-50 border border-red-200">
+            @foreach ($errors->all() as $error)
+                <p class="text-sm text-red-600">{{ $error }}</p>
+            @endforeach
+        </div>
+    @endif
+
+    <form method="POST" action="{{ route('login') }}" class="space-y-6" id="loginForm" onsubmit="showLoginSpinner(this)">
         @csrf
         
         <div>
@@ -36,8 +44,12 @@
             </div>
         </div>
 
-        <button type="submit" class="flex justify-center w-full px-4 py-2 text-sm font-medium text-white transition border border-transparent rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#0066B3]" style="background:var(--button-blue)" onmouseover="this.style.background='var(--blue-dark)'" onmouseout="this.style.background='var(--blue)'">
-            Sign In
+        <button type="submit" id="loginBtn" class="flex justify-center items-center gap-2 w-full px-4 py-2 text-sm font-medium text-white transition border border-transparent rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#0066B3]" style="background:var(--button-blue)" onmouseover="this.style.background='var(--blue-dark)'" onmouseout="this.style.background='var(--blue)'">
+            <span id="loginBtnText">Sign In</span>
+            <span id="loginBtnSpinner" style="display:none" class="inline-flex items-center gap-2">
+                <svg class="animate-spin" width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" opacity="0.25"/><path d="M4 12a8 8 0 018-8" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg>
+                Please wait...logging in
+            </span>
         </button>
     </form>
 
@@ -64,4 +76,12 @@
         <span class="text-gray-500">New here?</span>
         <a href="{{ route('register') }}" class="font-medium" style="color:var(--button-blue)">Create an account</a>
     </div>
+
+    <script>
+    function showLoginSpinner(form) {
+        document.getElementById('loginBtnText').style.display = 'none';
+        document.getElementById('loginBtnSpinner').style.display = 'inline-flex';
+        document.getElementById('loginBtn').disabled = true;
+    }
+    </script>
 </x-auth-layout>

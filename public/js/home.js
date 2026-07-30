@@ -533,11 +533,20 @@ function closeIndividual(){
 // ── RENDER INDIVIDUAL QUOTATION DOC ──
 function renderIndividualQuote(key,d,co,qn){
   const fmt=n=>n.toLocaleString('en-KE',{minimumFractionDigits:0,maximumFractionDigits:0});
-  const premium=d.value*co.rate;
-  const pvt=d.value*(co.pvtRate||0);
-  const pllPerPerson = co.pllPerPerson || 0;
-  const pll = pllPerPerson * (d.numPassengers || 1);
-  const levis=(pvt + pll)*0.0045;
+  var minPremium = co.minPremium || 0;
+  var premium = d.value * co.rate;
+  if (premium < minPremium) premium = minPremium;
+  var isPvtInclusive = co.isPvtInclusive || false;
+  var pvt = 0;
+  if (!isPvtInclusive) {
+    var pvtRate = co.pvtRate || 0;
+    pvt = d.value * pvtRate;
+    var pvtMin = co.pvtMinValue || 0;
+    if (pvt < pvtMin) pvt = pvtMin;
+  }
+  var pllPerPerson = co.pllPerPerson || 0;
+  var pll = pllPerPerson * (d.numPassengers || 1);
+  var levis=(premium + pvt + pll)*0.0045;
   const stampDuty=40;
   const total=premium+pvt+pll+levis+stampDuty;
   const today=new Date().toLocaleDateString('en-GB',{day:'2-digit',month:'long',year:'numeric'});

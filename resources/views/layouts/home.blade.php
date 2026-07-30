@@ -18,6 +18,7 @@
         $iraLevy = $c->rates->where('vehicle_type', $__vehicleType)->firstWhere('item_name', 'IRA Levy');
         $pvtRate = $c->rates->where('vehicle_type', $__vehicleType)->firstWhere('item_name', 'PVT Rate');
         $pllRate = $c->rates->where('vehicle_type', $__vehicleType)->firstWhere('item_name', 'PLL Per Person');
+        $maxAgeRate = $c->rates->where('vehicle_type', $__vehicleType)->firstWhere('item_name', 'Max Age New Business');
         $stats = $__companyStats->get($c->id);
         return [
             'slug' => $c->slug,
@@ -25,8 +26,12 @@
             'logo' => $c->logoUrl(),
             'rate' => $rate ? (float) $rate->percentage / 100 : 0,
             'taxRate' => 0,
+            'minPremium' => $rate ? (float) $rate->min_premium : 0,
+            'isPvtInclusive' => $rate ? (bool) $rate->is_pvt_inclusive : false,
             'pvtRate' => $pvtRate ? (float) $pvtRate->percentage / 100 : 0,
+            'pvtMinValue' => $pvtRate ? (float) $pvtRate->min_value : 0,
             'pllPerPerson' => $pllRate ? (float) $pllRate->value : 0,
+            'maxAge' => $maxAgeRate ? (int) $maxAgeRate->value : 99,
             'color' => $companyColors[$i % count($companyColors)],
             'prefix' => $c->getInitials(),
             'logoFallback' => $c->logoUrl(),
@@ -35,8 +40,33 @@
     ];
 })->values();
 
-$__privateCompanyData = $__companyData->filter(fn($cd) => in_array($cd['slug'], $__companies->whereIn('company_type', ['private','both'])->pluck('slug')->toArray()))->values();
-$__psvCompanyData = $__companyData->filter(fn($cd) => in_array($cd['slug'], $__companies->whereIn('company_type', ['psv','both'])->pluck('slug')->toArray()))->values();
+    $__privateCompanies = $__companies->whereIn('company_type', ['private','both']);
+    $__privateCompanyData = $__privateCompanies->values()->map(function ($c, $i) use ($companyColors, $__companyStats) {
+        $rate = $c->rates->where('vehicle_type', 'private')->firstWhere('item_name', 'Premium Rate');
+        $pvtRate = $c->rates->where('vehicle_type', 'private')->firstWhere('item_name', 'PVT Rate');
+        $pllRate = $c->rates->where('vehicle_type', 'private')->firstWhere('item_name', 'PLL Per Person');
+        $maxAgeRate = $c->rates->where('vehicle_type', 'private')->firstWhere('item_name', 'Max Age New Business');
+        $stats = $__companyStats->get($c->id);
+        return [
+            'slug' => $c->slug,
+            'name' => $c->name,
+            'logo' => $c->logoUrl(),
+            'rate' => $rate ? (float) $rate->percentage / 100 : 0,
+            'taxRate' => 0,
+            'minPremium' => $rate ? (float) $rate->min_premium : 0,
+            'isPvtInclusive' => $rate ? (bool) $rate->is_pvt_inclusive : false,
+            'pvtRate' => $pvtRate ? (float) $pvtRate->percentage / 100 : 0,
+            'pvtMinValue' => $pvtRate ? (float) $pvtRate->min_value : 0,
+            'pllPerPerson' => $pllRate ? (float) $pllRate->value : 0,
+            'maxAge' => $maxAgeRate ? (int) $maxAgeRate->value : 99,
+            'color' => $companyColors[$i % count($companyColors)],
+            'prefix' => $c->getInitials(),
+            'logoFallback' => $c->logoUrl(),
+            'quote_count' => $stats ? $stats->total : 0,
+            'total_premium' => $stats ? $stats->total_premium : 0,
+        ];
+    })->values();
+    $__psvCompanyData = $__companyData->filter(fn($cd) => in_array($cd['slug'], $__companies->whereIn('company_type', ['psv','both'])->pluck('slug')->toArray()))->values();
 @endphp
 
 <!DOCTYPE html>
@@ -1959,25 +1989,32 @@ function validateStep2AndProceedVT() {
   var type = window.MIC_VEHICLE_TYPE;
   var companies = window.MIC_COMPANIES || [];
   var vehicleValue = parseFloat(document.getElementById('f-value-vt').value.replace(/[^0-9.]/g, ''));
+  var vehicleYear = parseInt(document.getElementById('f-year-vt').value);
+  var currentYear = new Date().getFullYear();
   var minHints = [];
+  var errors = [];
   if (type === 'psv') {
     var slugs = ['sanlam-allianz', 'ga-insurance-ltd', 'definite-insurance'];
     slugs.forEach(function(s) {
       var val = window.MIC_MIN_SUM_PSV[s];
-      if (val) {
+      if (val && vehicleValue < val) {
         var name = companies.find(function(c) { return c.slug === s; });
-        minHints.push((name ? name.name : s) + ': KES ' + Number(val).toLocaleString('en-KE'));
+        errors.push((name ? name.name : s) + ' requires minimum sum insured of KES ' + Number(val).toLocaleString('en-KE'));
       }
     });
   } else {
     var slugs = ['sanlam-allianz', 'ga-insurance-ltd', 'britam'];
     slugs.forEach(function(s) {
       var val = window.MIC_MIN_SUM_PRIVATE[s];
-      if (val) {
+      if (val && vehicleValue < val) {
         var name = companies.find(function(c) { return c.slug === s; });
-        minHints.push((name ? name.name : s) + ': KES ' + Number(val).toLocaleString('en-KE'));
+        errors.push((name ? name.name : s) + ' requires minimum sum insured of KES ' + Number(val).toLocaleString('en-KE'));
       }
     });
+  }
+  if (errors.length) {
+    alert('The following insurers cannot accept your vehicle value:\n• ' + errors.join('\n• '));
+    return;
   }
   var hintEl = document.getElementById('f-min-sum-hint-vt');
   if (minHints.length) {

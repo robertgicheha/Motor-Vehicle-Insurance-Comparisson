@@ -62,6 +62,7 @@
         <tr><td style="font-weight:bold">Cover Type</td><td>Comprehensive</td></tr>
     </table>
 
+@php
     $__companyRates = $quotation->company->rates()
         ->where('vehicle_type', $quotation->vehicle_type ?? 'private')
         ->get()

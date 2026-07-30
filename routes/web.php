@@ -41,6 +41,8 @@ Route::get('/generate-quote/{company?}', [PublicController::class, 'generateQuot
 Route::get('/quotation/{company?}', [PublicController::class, 'quotation'])->name('motor.quotation');
 Route::get('/psv-quote', [PublicController::class, 'motorQuote'])->name('psv.quote');
 Route::get('/private-quote', [PublicController::class, 'motorQuote'])->name('private.quote');
+Route::get('/psv-insurance/{company}', [PublicController::class, 'psvInsurance'])->name('psv.insurance');
+Route::get('/private-insurance/{company}', [PublicController::class, 'privateInsurance'])->name('private.insurance');
 
 Route::get('/api/vehicle-makes', [VehicleDataController::class, 'makes']);
 Route::get('/api/vehicle-models/{make}', [VehicleDataController::class, 'models']);

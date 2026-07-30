@@ -1,25 +1,34 @@
 @php
     $__companyStats = $companyStats ?? collect();
     $companyColors = ['#003087', '#0066B3', '#00205B', '#D0021B', '#7c3aed', '#0f7a65'];
-    $__vehicleType = request()->query('vehicle_type', 'psv');
-    $__companyData = $companies->map(function ($c, $i) use ($companyColors, $__companyStats, $__vehicleType) {
-        $rate = $c->rates->where('vehicle_type', $__vehicleType)->firstWhere('item_name', 'Premium Rate');
-        $pvtRate = $c->rates->where('vehicle_type', $__vehicleType)->firstWhere('item_name', 'PVT Rate');
-        $pllRate = $c->rates->where('vehicle_type', $__vehicleType)->firstWhere('item_name', 'PLL Per Person');
-        $stats = $__companyStats->get($c->id);
-        return [
-            'slug' => $c->slug,
-            'name' => $c->name,
-            'logo' => $c->logoUrl(),
-            'rate' => $rate ? (float) $rate->percentage / 100 : 0,
-            'pvtRate' => $pvtRate ? (float) $pvtRate->percentage / 100 : 0,
-            'pllPerPerson' => $pllRate ? (float) $pllRate->value : 0,
-            'color' => $companyColors[$i % count($companyColors)],
-            'prefix' => $c->getInitials(),
-            'quote_count' => $stats ? $stats->total : 0,
-            'total_premium' => $stats ? $stats->total_premium : 0,
-        ];
-    })->values();
+
+    $__buildCompanyData = function($companies, $vehicleType) use ($companyColors, $__companyStats) {
+        return $companies->filter(fn($c) => in_array($c->company_type, ['both', $vehicleType]))
+            ->values()
+            ->map(function ($c, $i) use ($companyColors, $__companyStats, $vehicleType) {
+                $rate = $c->rates->where('vehicle_type', $vehicleType)->firstWhere('item_name', 'Premium Rate');
+                $pvtRate = $c->rates->where('vehicle_type', $vehicleType)->firstWhere('item_name', 'PVT Rate');
+                $pllRate = $c->rates->where('vehicle_type', $vehicleType)->firstWhere('item_name', 'PLL Per Person');
+                $stats = $__companyStats->get($c->id);
+                return [
+                    'slug' => $c->slug,
+                    'name' => $c->name,
+                    'logo' => $c->logoUrl(),
+                    'rate' => $rate ? (float) $rate->percentage / 100 : 0,
+                    'pvtRate' => $pvtRate ? (float) $pvtRate->percentage / 100 : 0,
+                    'pllPerPerson' => $pllRate ? (float) $pllRate->value : 0,
+                    'color' => $companyColors[$i % count($companyColors)],
+                    'prefix' => $c->getInitials(),
+                    'quote_count' => $stats ? $stats->total : 0,
+                    'total_premium' => $stats ? $stats->total_premium : 0,
+                ];
+            });
+    };
+
+    $__privateCompanyData = $__buildCompanyData($companies, 'private');
+    $__psvCompanyData = $__buildCompanyData($companies, 'psv');
+    $__defaultVehicleType = request()->query('vehicle_type', 'private');
+    $__companyData = $__defaultVehicleType === 'psv' ? $__psvCompanyData : $__privateCompanyData;
 @endphp
 <!DOCTYPE html>
 <html lang="en">
@@ -284,11 +293,15 @@
 <x-public-footer/>
 
 <script>
+window.MIC_COMPANIES_PRIVATE = @json($__privateCompanyData);
+window.MIC_COMPANIES_PSV = @json($__psvCompanyData);
 window.MIC_COMPANIES = @json($__companyData);
-window.MIC_VEHICLE_TYPE = 'psv';
+window.MIC_VEHICLE_TYPE = '{{ $__defaultVehicleType }}';
 
 function selectVehicleType(type) {
   document.getElementById('f-vehicle-type').value = type;
+  window.MIC_VEHICLE_TYPE = type;
+  window.MIC_COMPANIES = type === 'psv' ? window.MIC_COMPANIES_PSV : window.MIC_COMPANIES_PRIVATE;
   var paxGroup = document.getElementById('f-pax-group');
   if (paxGroup) paxGroup.style.display = (type === 'psv') ? '' : 'none';
   var title = document.getElementById('form-title');
@@ -300,12 +313,12 @@ function selectVehicleType(type) {
     title.textContent = 'Get Your Motor Insurance Quote';
     subtitle.textContent = 'Complete the form below in three easy steps to receive your personalised quotation.';
   }
-  window.MIC_VEHICLE_TYPE = type;
   document.getElementById('vehicle-type-section').style.display = 'none';
   var form = document.getElementById('quote-form-section');
   form.style.display = 'block';
   form.scrollIntoView({ behavior: 'smooth', block: 'start' });
   if (typeof goStep === 'function') goStep(1);
+  if (typeof updatePremiumPreview === 'function') updatePremiumPreview();
 }
 
 function closeQuoteFlow() {

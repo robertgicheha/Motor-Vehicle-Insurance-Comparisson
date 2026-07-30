@@ -260,61 +260,84 @@ function handleSearchSticker(num){
 // }
 
 function goStep(type, stepNum){
+  if (stepNum === undefined) { stepNum = type; type = ''; }
   for (var i = 1; i <= 3; i++){
-    var tab = document.getElementById('step-tab-' + i + '-' + type);
-    var panel = document.getElementById('panel-' + i + '-' + type);
+    var suffix = type ? '-' + type : '';
+    var tab = document.getElementById('step-tab-' + i + suffix);
+    var panel = document.getElementById('panel-' + i + suffix);
     if (tab) tab.classList.toggle('active', i === stepNum);
     if (panel) panel.classList.toggle('active', i === stepNum);
   }
 }
 
 function guestGuard(callback) {
-  if (window.MIC_GUEST) {
-    if (typeof callback === 'function') {
-      var match = callback.toString().match(/openQuotePage\('([^']+)'\)/);
-      if (match) {
+  if (typeof callback === 'function') {
+    var match = callback.toString().match(/openQuotePage\('([^']+)'(?:,\s*'([^']*)')?\)/);
+    if (match && match[1] !== 'ALL') {
+      try {
+        var type = match[2] !== undefined ? match[2] : (document.getElementById('f-reg-private') ? 'private' : (document.getElementById('f-reg-psv') ? 'psv' : ''));
+        var d = typeof getFormData === 'function' ? getFormData(type) : {};
         sessionStorage.setItem('pending_quote_company', match[1]);
-        try {
-          if (typeof getFormData === 'function') {
-            var d = getFormData();
-            sessionStorage.setItem('micQuoteData', JSON.stringify({...d, mode: match[1]}));
-          }
-        } catch(e) {}
-      }
+        sessionStorage.setItem('micQuoteData', JSON.stringify({
+          ...d,
+          firstName: d.firstName || d.first || '',
+          lastName: d.lastName || d.last || '',
+          mode: match[1]
+        }));
+      } catch(e) {}
     }
-    sessionStorage.setItem('auth_redirect', '/dashboard?pending_quote=1');
-    var alpineEl = document.querySelector('#authModal');
-    if (alpineEl && alpineEl.__x) { alpineEl.__x.$data.redirectTo = '/dashboard?pending_quote=1'; }
-    openAuthModal();
-    return;
+    if (window.MIC_GUEST) {
+      if (match && match[1] !== 'ALL') {
+        sessionStorage.setItem('auth_redirect', '/dashboard?pending_quote=1');
+        var alpineEl = document.querySelector('#authModal');
+        if (alpineEl && alpineEl.__x) { alpineEl.__x.$data.redirectTo = '/dashboard?pending_quote=1'; }
+        openAuthModal();
+        return;
+      }
+      callback();
+      return;
+    }
+    // Logged-in user
+    if (match && match[1] !== 'ALL') {
+      window.location.href = '/dashboard?pending_quote=1';
+      return;
+    }
   }
   if (typeof callback === 'function') callback();
 }
 
 // ── PREMIUM PREVIEW ──
-function updatePremiumPreview(){
-  var raw = (document.getElementById('f-value').value || '').replace(/,/g, '');
+function updatePremiumPreview(type){
+  type = type || '';
+  var s = type ? '-' + type : '';
+  var raw = (document.getElementById('f-value' + s).value || '').replace(/,/g, '');
   var v = parseFloat(raw) || 0;
-  var prev = document.getElementById('premium-preview');
-  var prevEmpty = document.getElementById('premium-preview-empty');
-  var grid = document.getElementById('premium-cards-grid');
-  if (!v) { prev.style.display = 'none'; prevEmpty.style.display = 'block'; return; }
-  prevEmpty.style.display = 'none';
-  prev.style.display = 'block';
-  
-  var companies = window.MIC_COMPANIES || [];
+  var prev = document.getElementById('premium-preview' + s);
+  var prevEmpty = document.getElementById('premium-preview-empty' + s);
+  var grid = document.getElementById('premium-cards-grid' + s);
+  if (!v) { if (prev) prev.style.display = 'none'; if (prevEmpty) prevEmpty.style.display = 'block'; return; }
+  if (prevEmpty) prevEmpty.style.display = 'none';
+  if (prev) prev.style.display = 'block';
+
+  if (!grid) return;
+
+  var minHint = document.getElementById('f-min-sum-hint' + s);
+  if (minHint) {
+    var vt = window.MIC_VEHICLE_TYPE || 'private';
+    minHint.textContent = 'Minimum sum insured: ' + (vt === 'psv' ? 'KES 500,000' : 'KES 500,000');
+  }
+
+  var companies = type === 'psv' ? (window.MIC_COMPANIES_PSV || []) : type === 'private' ? (window.MIC_COMPANIES_PRIVATE || []) : (window.MIC_COMPANIES || []);
   if (!companies.length) return;
   
-  var vt = window.MIC_VEHICLE_TYPE || 'psv';
-  var make = (document.getElementById('f-make-value') || {}).value || (document.getElementById('f-make') || {}).value || '';
-  var model = (document.getElementById('f-model-value') || {}).value || (document.getElementById('f-model') || {}).value || '';
-  var year = (document.getElementById('f-year') || {}).value || '';
-  var reg = (document.getElementById('f-reg') || {}).value || '';
+  var paxEl = document.getElementById('f-pax' + s);
+  var numPassengers = paxEl ? parseInt(paxEl.value) || 1 : 1;
 
   // Build cards dynamically
   var html = '';
   companies.forEach(function(cd){
-    html += '<div class="preview-card" onclick="guestGuard(function(){ openQuotePage(\'' + cd.slug + '\'); })" style="background:white;border:1.5px solid var(--border);border-radius:var(--radius);padding:16px 14px;text-align:center;cursor:pointer;transition:box-shadow .2s,transform .15s">';
+    var calc = calcPremium(v, cd, numPassengers);
+    html += '<div class="preview-card" onclick="guestGuard(function(){ openQuotePage(\'' + cd.slug + '\',\'' + type + '\'); })" style="background:white;border:1.5px solid var(--border);border-radius:var(--radius);padding:16px 14px;text-align:center;cursor:pointer;transition:box-shadow .2s,transform .15s">';
     html += '<div style="height:36px;display:flex;align-items:center;justify-content:center;margin-bottom:8px">';
     if (cd.logo) {
       html += '<img src="' + cd.logo + '" alt="' + cd.name + '" style="max-height:32px;max-width:90px;object-fit:contain" onerror="fallbackLogo(this,\'' + cd.slug + '\')">';
@@ -322,7 +345,7 @@ function updatePremiumPreview(){
     html += '<span style="' + (cd.logo ? 'display:none' : '') + ';font-size:11px;font-weight:800;color:' + cd.color + '">' + cd.name.toUpperCase() + '</span>';
     html += '</div>';
     html += '<div style="font-size:11px;color:' + cd.color + ';font-weight:700;margin-bottom:6px">' + cd.name.toUpperCase() + '</div>';
-    html += '<div style="font-size:1.1rem;font-weight:700;color:' + cd.color + '" id="prev-' + cd.slug + '">KES ' + Number(v * cd.rate).toLocaleString('en-KE', {minimumFractionDigits:0, maximumFractionDigits:0}) + '</div>';
+    html += '<div style="font-size:1.1rem;font-weight:700;color:' + cd.color + '" id="prev-' + cd.slug + '">KES ' + Number(calc.grandTotal).toLocaleString('en-KE', {minimumFractionDigits:2, maximumFractionDigits:2}) + '</div>';
     html += '<div style="font-size:11px;color:var(--text-muted);margin-bottom:10px">@ ' + (cd.rate * 100) + '%</div>';
     html += '<div style="font-size:11px;font-weight:700;color:white;background:' + cd.color + ';border-radius:5px;padding:5px 0">View Quote ↗</div>';
     html += '</div>';
@@ -330,7 +353,7 @@ function updatePremiumPreview(){
 
   // Compare All card
   var compareColor = '#D0021B';
-  html += '<div class="preview-card" onclick="guestGuard(function(){ openQuotePage(\'ALL\'); })" style="background:white;border:1.5px solid ' + compareColor + ';border-radius:var(--radius);padding:16px 14px;text-align:center;cursor:pointer;transition:box-shadow .2s,transform .15s">';
+  html += '<div class="preview-card" onclick="guestGuard(function(){ openQuotePage(\'ALL\',\'' + type + '\'); })" style="background:white;border:1.5px solid ' + compareColor + ';border-radius:var(--radius);padding:16px 14px;text-align:center;cursor:pointer;transition:box-shadow .2s,transform .15s">';
   html += '<div style="height:36px;display:flex;align-items:center;justify-content:center;margin-bottom:8px">';
   html += '<span style="font-size:18px">📊</span></div>';
   html += '<div style="font-size:11px;color:' + compareColor + ';font-weight:700;margin-bottom:6px">COMPARE ALL</div>';
@@ -343,33 +366,35 @@ function updatePremiumPreview(){
 }
 
 // ── COLLECT FORM DATA ──
-function getFormData(){
-  var makeHidden = (document.getElementById('f-make-value') || {}).value || '';
-  var makeEl = document.getElementById('f-make');
+function getFormData(type){
+  type = type || '';
+  var s = type ? '-' + type : '';
+  var makeHidden = (document.getElementById('f-make-value' + s) || {}).value || '';
+  var makeEl = document.getElementById('f-make' + s);
   var make = makeHidden || (makeEl ? makeEl.value : '');
-  var modelHidden = (document.getElementById('f-model-value') || {}).value || '';
-  var modelEl = document.getElementById('f-model');
+  var modelHidden = (document.getElementById('f-model-value' + s) || {}).value || '';
+  var modelEl = document.getElementById('f-model' + s);
   var model = modelHidden || (modelEl ? modelEl.value : '');
-  var valueEl = document.getElementById('f-value');
+  var valueEl = document.getElementById('f-value' + s);
   var rawValue = (valueEl ? valueEl.value : '').replace(/,/g, '');
   return {
-    salutation: (document.getElementById('f-salutation') || {}).value || '',
-    first: (document.getElementById('f-first') || {}).value || '',
-    middle: (document.getElementById('f-middle') || {}).value || '',
-    last: (document.getElementById('f-last') || {}).value || '',
-    phone: (document.getElementById('f-phone') || {}).value || '',
-    email: (document.getElementById('f-email') || {}).value || '',
-    reg: (document.getElementById('f-reg') || {}).value || '',
-    chassis: (document.getElementById('f-chassis') || {}).value || '',
+    salutation: (document.getElementById('f-salutation' + s) || {}).value || '',
+    first: (document.getElementById('f-first' + s) || {}).value || '',
+    middle: (document.getElementById('f-middle' + s) || {}).value || '',
+    last: (document.getElementById('f-last' + s) || {}).value || '',
+    phone: (document.getElementById('f-phone' + s) || {}).value || '',
+    email: (document.getElementById('f-email' + s) || {}).value || '',
+    reg: (document.getElementById('f-reg' + s) || {}).value || '',
+    chassis: (document.getElementById('f-chassis' + s) || {}).value || '',
     make: make,
     model: model,
-    body: (document.getElementById('f-body') || {}).value || '',
-    year: (document.getElementById('f-year') || {}).value || '',
-    color: (document.getElementById('f-color') || {}).value || '',
+    body: (document.getElementById('f-body' + s) || {}).value || '',
+    year: (document.getElementById('f-year' + s) || {}).value || '',
+    color: (document.getElementById('f-color' + s) || {}).value || '',
     value: parseFloat(rawValue) || 0,
-    vehicleType: (document.getElementById('f-vehicle-type') || {}).value || 'psv',
-    numPassengers: parseInt((document.getElementById('f-pax') || {}).value) || 1,
-    cover: (document.getElementById('f-cover') || {}).value || ''
+    vehicleType: (document.getElementById('f-vehicle-type' + s) || {}).value || 'psv',
+    numPassengers: parseInt((document.getElementById('f-pax' + s) || {}).value) || 1,
+    cover: (document.getElementById('f-cover' + s) || {}).value || ''
   };
 }
 
@@ -440,30 +465,34 @@ function genQuoteNum(prefix){
 //   window.scrollTo(0,0);
 // }
 
-function openQuotePage(company) {
-  var salutation = (document.getElementById('f-salutation') || {}).value || '';
-  var firstName  = (document.getElementById('f-first') || {}).value     || '';
-  var lastName   = (document.getElementById('f-last') || {}).value      || '';
-  var phone      = (document.getElementById('f-phone') || {}).value     || '';
-  var email      = (document.getElementById('f-email') || {}).value     || '';
-  var reg        = (document.getElementById('f-reg') || {}).value       || '';
-  var chassis    = (document.getElementById('f-chassis') || {}).value   || '';
-  var makeHidden = (document.getElementById('f-make-value') || {}).value || '';
-  var makeOther  = (document.getElementById('f-make-other') || {}).value || '';
-  var makeInput  = (document.getElementById('f-make') || {}).value      || '';
+function openQuotePage(company, type) {
+  if (!type) {
+    type = document.getElementById('f-reg-private') ? 'private' : (document.getElementById('f-reg-psv') ? 'psv' : '');
+  }
+  var s = type ? '-' + type : '';
+  var salutation = (document.getElementById('f-salutation' + s) || {}).value || '';
+  var firstName  = (document.getElementById('f-first' + s) || {}).value     || '';
+  var lastName   = (document.getElementById('f-last' + s) || {}).value      || '';
+  var phone      = (document.getElementById('f-phone' + s) || {}).value     || '';
+  var email      = (document.getElementById('f-email' + s) || {}).value     || '';
+  var reg        = (document.getElementById('f-reg' + s) || {}).value       || '';
+  var chassis    = (document.getElementById('f-chassis' + s) || {}).value   || '';
+  var makeHidden = (document.getElementById('f-make-value' + s) || {}).value || '';
+  var makeOther  = (document.getElementById('f-make-other' + s) || {}).value || '';
+  var makeInput  = (document.getElementById('f-make' + s) || {}).value      || '';
   var make       = makeHidden === 'Other' ? makeOther : (makeHidden || makeInput);
-  var modelHidden = (document.getElementById('f-model-value') || {}).value || '';
-  var modelOther  = (document.getElementById('f-model-other') || {}).value || '';
-  var modelInput  = (document.getElementById('f-model') || {}).value      || '';
+  var modelHidden = (document.getElementById('f-model-value' + s) || {}).value || '';
+  var modelOther  = (document.getElementById('f-model-other' + s) || {}).value || '';
+  var modelInput  = (document.getElementById('f-model' + s) || {}).value      || '';
   var model       = modelHidden === 'Other' ? modelOther : (modelHidden || modelInput);
-  var body       = (document.getElementById('f-body') || {}).value      || '';
-  var year       = (document.getElementById('f-year') || {}).value      || '';
-  var colorRaw   = (document.getElementById('f-color') || {}).value     || '';
-  var colorOther = (document.getElementById('f-color-other') || {}).value|| '';
+  var body       = (document.getElementById('f-body' + s) || {}).value      || '';
+  var year       = (document.getElementById('f-year' + s) || {}).value      || '';
+  var colorRaw   = (document.getElementById('f-color' + s) || {}).value     || '';
+  var colorOther = (document.getElementById('f-color-other' + s) || {}).value|| '';
   var color      = colorRaw === 'Other' ? colorOther : colorRaw;
-  var valueEl    = document.getElementById('f-value');
+  var valueEl    = document.getElementById('f-value' + s);
   var value      = parseFloat((valueEl ? valueEl.value : '').replace(/,/g, '')) || 0;
-  var paxEl      = document.getElementById('f-pax');
+  var paxEl      = document.getElementById('f-pax' + s);
   var numPassengers = paxEl ? parseInt(paxEl.value) || 1 : 1;
 
   var prefix = company === 'ALL' ? 'MIC' : company;
@@ -530,25 +559,28 @@ function closeIndividual(){
   document.getElementById('indQuotePage').classList.remove('open');
 }
 
+// ── PREMIUM CALCULATION ENGINE ──
+function calcPremium(valuation, co, numPassengers) {
+  var minP = co.minPremium || 0;
+  var premium = Math.max(valuation * co.rate, minP);
+  var pvt = 0;
+  if (!co.isPvtInclusive) {
+    pvt = Math.max(valuation * (co.pvtRate || 0), co.pvtMinValue || 0);
+  }
+  var pll = (co.pllPerPerson || 0) * (numPassengers || 1);
+  var totalBeforeLevy = premium + pvt + pll;
+  var iraLevy = totalBeforeLevy * 0.0045;
+  var stampDuty = 40;
+  var grandTotal = totalBeforeLevy + iraLevy + stampDuty;
+  return { premium: premium, pvt: pvt, pll: pll, totalBeforeLevy: totalBeforeLevy, iraLevy: iraLevy, stampDuty: stampDuty, grandTotal: grandTotal };
+}
+
 // ── RENDER INDIVIDUAL QUOTATION DOC ──
 function renderIndividualQuote(key,d,co,qn){
   const fmt=n=>n.toLocaleString('en-KE',{minimumFractionDigits:0,maximumFractionDigits:0});
-  var minPremium = co.minPremium || 0;
-  var premium = d.value * co.rate;
-  if (premium < minPremium) premium = minPremium;
-  var isPvtInclusive = co.isPvtInclusive || false;
-  var pvt = 0;
-  if (!isPvtInclusive) {
-    var pvtRate = co.pvtRate || 0;
-    pvt = d.value * pvtRate;
-    var pvtMin = co.pvtMinValue || 0;
-    if (pvt < pvtMin) pvt = pvtMin;
-  }
-  var pllPerPerson = co.pllPerPerson || 0;
-  var pll = pllPerPerson * (d.numPassengers || 1);
-  var levis=(premium + pvt + pll)*0.0045;
-  const stampDuty=40;
-  const total=premium+pvt+pll+levis+stampDuty;
+  var calc = calcPremium(d.value, co, d.numPassengers);
+  var premium = calc.premium, pvt = calc.pvt, pll = calc.pll;
+  var levis = calc.iraLevy, stampDuty = calc.stampDuty, total = calc.grandTotal;
   const today=new Date().toLocaleDateString('en-GB',{day:'2-digit',month:'long',year:'numeric'});
   document.getElementById('indQuoteContent').innerHTML=`
     <div class="quotation-doc">
@@ -594,7 +626,7 @@ function renderIndividualQuote(key,d,co,qn){
           <div class="doc-row"><span>Basic Annual Premium (${(co.rate*100).toFixed(1)}% of KES ${fmt(d.value)})</span><span>KES ${fmt(premium)}</span></div>
           <div class="doc-row"><span>PVT Premium (${((co.pvtRate||0)*100).toFixed(2)}%)</span><span>KES ${fmt(pvt)}</span></div>
           <div class="doc-row"><span>PLL Premium (KES ${pllPerPerson} × ${d.numPassengers || 1} pax)</span><span>KES ${fmt(pll)}</span></div>
-          <div class="doc-row"><span>Levis (0.45% of PVT + PLL)</span><span>KES ${fmt(levis)}</span></div>
+          <div class="doc-row"><span>Levis (0.45% of Basic + PVT + PLL)</span><span>KES ${fmt(levis)}</span></div>
           <div class="doc-row"><span>Stamp Duty</span><span>KES ${fmt(stampDuty)}</span></div>
           <div class="doc-row" style="font-weight:600"><span>TOTAL ANNUAL PREMIUM</span><span style="color:${co.color}">KES ${fmt(total)}</span></div>
         </div>
@@ -640,13 +672,9 @@ function renderCompareAll(d){
     const key = co.slug;
     const qn=genQuoteNum(co.prefix);
     quoteStore[qn]={data:d,company:key,quoteNum:qn};
-    const premium=d.value*co.rate;
-    const pvt=d.value*(co.pvtRate||0);
-    const pllPerPerson = co.pllPerPerson || 0;
-    const pll = pllPerPerson * (d.numPassengers || 1);
-    const levis=(pvt + pll)*0.0045;
-    const stampDuty=40;
-    const total=premium+pvt+pll+levis+stampDuty;
+    var calc = calcPremium(d.value, co, d.numPassengers);
+    var premium = calc.premium, pvt = calc.pvt, pll = calc.pll;
+    var levis = calc.iraLevy, stampDuty = calc.stampDuty, total = calc.grandTotal;
     html+=`
       <div class="quotation-doc" style="margin-bottom:24px">
         <div class="doc-header">
@@ -692,17 +720,14 @@ function renderCompareAll(d){
   let coverRow = ['Cover Type'];
   let regionRow = ['Region'];
   companies.forEach(function(co){
+    var calc = calcPremium(d.value, co, d.numPassengers);
     rateRow.push((co.rate*100).toFixed(1)+'%');
-    basicRow.push('KES '+fmt(d.value*co.rate));
-    const pvt=d.value*(co.pvtRate||0);
-    const pllPerPerson = co.pllPerPerson || 0;
-    const pll = pllPerPerson * (d.numPassengers || 1);
-    pvtRow.push('KES '+fmt(pvt));
-    pllRow.push('KES '+fmt(pll));
-    levisRow.push('KES '+fmt((pvt + pll)*0.0045));
-    stampRow.push('KES 40');
-    const total=d.value*co.rate+pvt+pll+(pvt + pll)*0.0045+40;
-    totalRow.push('KES '+fmt(total));
+    basicRow.push('KES '+fmt(calc.premium));
+    pvtRow.push('KES '+fmt(calc.pvt));
+    pllRow.push('KES '+fmt(calc.pll));
+    levisRow.push('KES '+fmt(calc.iraLevy));
+    stampRow.push('KES '+fmt(calc.stampDuty));
+    totalRow.push('KES '+fmt(calc.grandTotal));
     coverRow.push(d.cover);
     regionRow.push('Kenya/Uganda/TZ');
   });
@@ -725,13 +750,9 @@ function confirmAndDownload(){
     var companiesArr = window.MIC_COMPANIES || [];
     var co=currentIndCompany==='ALL'||currentIndCompany==='COMPARE'?(companiesArr[0]||{}):COMPANIES[currentIndCompany];
     if(!co||!co.rate){ showToast('No company selected.'); return; }
-    var premium=d.value*co.rate;
-  const pvt=d.value*(co.pvtRate||0);
-  const pllPerPerson = co.pllPerPerson || 0;
-  const pll = pllPerPerson * (d.numPassengers || 1);
-  const levis=(pvt + pll)*0.0045;
-  const stampDuty=40;
-  const total=premium+pvt+pll+levis+stampDuty;
+    var calc = calcPremium(d.value, co, d.numPassengers);
+    var premium = calc.premium, pvt = calc.pvt, pll = calc.pll;
+    var levis = calc.iraLevy, stampDuty = calc.stampDuty, total = calc.grandTotal;
   const fmt=n=>n.toLocaleString('en-KE',{minimumFractionDigits:0,maximumFractionDigits:0});
   document.getElementById('m-name').textContent=fullName(d);
   document.getElementById('m-phone').textContent=d.phone||'—';
@@ -897,7 +918,8 @@ window.toggleOtherMake = function (sel) {
 
 // ── "OTHER" COLOR ──────────────────────────────────────────
 window.toggleOtherColor = function (type, sel) {
-  const box = document.getElementById('f-color-other-' + type);
+  var s = type ? '-' + type : '';
+  const box = document.getElementById('f-color-other' + s);
   if (!box) return;
   if (sel.value === 'Other') {
     box.style.display = 'block';
@@ -913,21 +935,22 @@ const _origGetFormData = window.getFormData || (function(){
   return function(){ return {}; };
 })();
 
-window.getFormData = function () {
-  var d = _origGetFormData();
+window.getFormData = function (type) {
+  var d = _origGetFormData(type);
+  var s = type ? '-' + type : '';
 
   if (d.make === 'Other') {
-    var ov = (document.getElementById('f-make-other') || {}).value || '';
+    var ov = (document.getElementById('f-make-other' + s) || {}).value || '';
     d.make = ov.trim() || 'Other';
   }
 
   if (d.model === 'Other') {
-    var ov = (document.getElementById('f-model-other') || {}).value || '';
+    var ov = (document.getElementById('f-model-other' + s) || {}).value || '';
     d.model = ov.trim() || 'Other';
   }
 
   if (d.color === 'Other') {
-    var ov = (document.getElementById('f-color-other') || {}).value || '';
+    var ov = (document.getElementById('f-color-other' + s) || {}).value || '';
     d.color = ov.trim() || 'Other';
   }
 
@@ -1169,15 +1192,34 @@ window.getFormData = function () {
       updatePremiumPreview();
     });
 
+    function getValueRange() {
+      var vt = window.MIC_VEHICLE_TYPE || 'private';
+      if (vt === 'psv') {
+        return { min: 500000, max: 10000000, label: 'KES 500,000' };
+      }
+      return { min: 500000, max: 5000000, label: 'KES 500,000' };
+    }
+
     valueInput.addEventListener('blur', function() {
       var raw = this.value.replace(/,/g, '');
       var val = parseInt(raw, 10) || 0;
       var hint = document.getElementById('f-value-hint');
       var err = document.getElementById('f-value-error');
+      var minHint = document.getElementById('f-min-sum-hint');
       if (!err) return;
 
-      if (val > 0 && (val < 800000 || val > 1300000)) {
-        err.textContent = 'Vehicle value must be between KES 800,000 and KES 1,300,000';
+      var range = getValueRange();
+      if (minHint) {
+        minHint.textContent = 'Minimum sum insured: ' + range.label;
+      }
+
+      if (val > 0 && val < range.min) {
+        err.textContent = 'Minimum vehicle value is ' + range.label;
+        err.style.display = 'block';
+        this.style.borderColor = '#CC0000';
+        if (hint) hint.style.display = 'none';
+      } else if (val > range.max) {
+        err.textContent = 'Maximum vehicle value is KES ' + Number(range.max).toLocaleString('en-KE');
         err.style.display = 'block';
         this.style.borderColor = '#CC0000';
         if (hint) hint.style.display = 'none';
@@ -1203,6 +1245,54 @@ window.getFormData = function () {
     }
   };
 })();
+
+// ── INIT VALUE INPUT FOR SUFFIXED FORMS (private/psv) ──
+function initValueInput(suffix) {
+  var s = suffix ? '-' + suffix : '';
+  var valueInput = document.getElementById('f-value' + s);
+  if (!valueInput) return;
+
+  valueInput.addEventListener('input', function() {
+    var cursor = this.selectionStart;
+    var raw = this.value.replace(/[^0-9]/g, '');
+    if (raw === '') { this.value = ''; return; }
+    var formatted = parseInt(raw, 10).toLocaleString('en-KE');
+    var diff = formatted.length - this.value.length;
+    this.value = formatted;
+    this.setSelectionRange(cursor + diff, cursor + diff);
+    updatePremiumPreview(suffix);
+  });
+
+  valueInput.addEventListener('blur', function() {
+    var raw = this.value.replace(/,/g, '');
+    var val = parseInt(raw, 10) || 0;
+    var hint = document.getElementById('f-value-hint' + s);
+    var err = document.getElementById('f-value-error' + s);
+    var minHint = document.getElementById('f-min-sum-hint' + s);
+    if (!err) return;
+
+    var vt = window.MIC_VEHICLE_TYPE || 'private';
+    var range = vt === 'psv' ? { min: 500000, max: 10000000 } : { min: 500000, max: 5000000 };
+    var label = 'KES ' + Number(range.min).toLocaleString('en-KE');
+    if (minHint) minHint.textContent = 'Minimum sum insured: ' + label;
+
+    if (val > 0 && val < range.min) {
+      err.textContent = 'Minimum vehicle value is ' + label;
+      err.style.display = 'block';
+      this.style.borderColor = '#CC0000';
+      if (hint) hint.style.display = 'none';
+    } else if (val > range.max) {
+      err.textContent = 'Maximum vehicle value is KES ' + Number(range.max).toLocaleString('en-KE');
+      err.style.display = 'block';
+      this.style.borderColor = '#CC0000';
+      if (hint) hint.style.display = 'none';
+    } else {
+      err.style.display = 'none';
+      this.style.borderColor = '';
+      if (hint) hint.style.display = '';
+    }
+  });
+}
 
 // ── AUTO SEARCH (fires as user types; instant on complete reg/vehicle/quotation no.) ──
 (function() {
@@ -1372,24 +1462,24 @@ function validateReg(type, input) {
 }
 
 function validateStep2AndProceed(type) {
-  var reg = (document.getElementById('f-reg-' + type) || {}).value || '';
-  var year = (document.getElementById('f-year-' + type) || {}).value || '';
-  var make = (document.getElementById('f-make-value-' + type) || {}).value || (document.getElementById('f-make-' + type) || {}).value || '';
-  var model = (document.getElementById('f-model-value-' + type) || {}).value || (document.getElementById('f-model-' + type) || {}).value || '';
-  var valueRaw = (document.getElementById('f-value-' + type) || {}).value || '';
+  type = type || '';
+  var s = type ? '-' + type : '';
+  var reg = (document.getElementById('f-reg' + s) || {}).value || '';
+  var year = (document.getElementById('f-year' + s) || {}).value || '';
+  var make = (document.getElementById('f-make-value' + s) || {}).value || (document.getElementById('f-make' + s) || {}).value || '';
+  var model = (document.getElementById('f-model-value' + s) || {}).value || (document.getElementById('f-model' + s) || {}).value || '';
+  var valueRaw = (document.getElementById('f-value' + s) || {}).value || '';
   var value = parseFloat(valueRaw.replace(/,/g, '')) || 0;
-  var yearError = document.getElementById('f-year-error-' + type);
+  var yearError = document.getElementById('f-year-error' + s);
 
-  // Validate registration
   var regPattern = /^[A-Z]{3}\s?\d{3}[A-Z]$/;
   if (!regPattern.test(reg)) {
-    var regError = document.getElementById('f-reg-error-' + type);
+    var regError = document.getElementById('f-reg-error' + s);
     if (regError) regError.style.display = 'block';
     showToast('Please enter a valid Kenyan registration number (e.g. KDH 291H)');
     return;
   }
 
-  // Validate year
   if (!year) {
     if (yearError) yearError.textContent = 'Please select the year of manufacture.';
     if (yearError) yearError.style.display = 'block';
@@ -1398,18 +1488,17 @@ function validateStep2AndProceed(type) {
   }
   if (yearError) yearError.style.display = 'none';
 
-  // Validate make/model
   if (!make || !model) {
     showToast('Please enter the vehicle make and model.');
     return;
   }
 
-  // Validate value
   if (!value || value <= 0) {
     showToast('Please enter a valid vehicle value.');
     return;
   }
 
+  updatePremiumPreview(type);
   goStep(type, 3);
 }
 // ── MAIN QUOTE FORM (un-suffixed IDs) ──
@@ -1534,6 +1623,11 @@ function closeQuoteFlow(type){
 
 function setVehicleType(type) {
     document.getElementById('f-vehicle-type').value = type;
+    window.MIC_VEHICLE_TYPE = type;
+
+    if (window.MIC_COMPANIES_PRIVATE && window.MIC_COMPANIES_PSV) {
+      window.MIC_COMPANIES = type === 'psv' ? window.MIC_COMPANIES_PSV : window.MIC_COMPANIES_PRIVATE;
+    }
 
     document.getElementById('toggle-private').classList.toggle('active', type === 'private');
     document.getElementById('toggle-private').setAttribute('aria-selected', type === 'private');
@@ -1556,4 +1650,6 @@ function setVehicleType(type) {
       subtitle.textContent = 'Complete the form below in three easy steps to receive your personalised quotation.';
       desc.textContent = 'Choose the cover type that matches your vehicle, then fill in your details to compare premiums from leading insurers.';
     }
+
+    if (typeof updatePremiumPreview === 'function') updatePremiumPreview();
   }

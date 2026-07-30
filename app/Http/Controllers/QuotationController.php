@@ -318,14 +318,16 @@ class QuotationController extends Controller
         $this->authorizeView($quotation);
         $quotation->load(['user', 'company']);
         $pdf = Pdf::loadView('pdf.quotation', ['quotation' => $quotation]);
-        return $pdf->download("quotation-{$quotation->quotation_number}.pdf");
+        $filename = 'quotation-' . str_replace(['/', '\\'], '-', $quotation->quotation_number) . '.pdf';
+        return $pdf->download($filename);
     }
 
     public function publicDownloadPdf(Quotation $quotation)
     {
         $quotation->load(['user', 'company']);
         $pdf = Pdf::loadView('pdf.quotation', ['quotation' => $quotation]);
-        return $pdf->download("quotation-{$quotation->quotation_number}.pdf");
+        $filename = 'quotation-' . str_replace(['/', '\\'], '-', $quotation->quotation_number) . '.pdf';
+        return $pdf->download($filename);
     }
 
     public function destroy(Quotation $quotation)

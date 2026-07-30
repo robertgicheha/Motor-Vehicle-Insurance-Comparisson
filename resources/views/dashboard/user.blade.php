@@ -798,6 +798,8 @@ window.MIC_COMPANIES = @json($_companyData);
           car_year: data.year || '',
           car_registration: data.reg || '',
           car_valuation: Number(data.value) || 0,
+          vehicle_type: data.vehicleType || '',
+          num_passengers: Number(data.numPassengers) || 1,
         }),
       })
       .then(function(r) { return r.json(); })

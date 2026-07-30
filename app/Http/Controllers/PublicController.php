@@ -34,13 +34,21 @@ class PublicController extends Controller
         $companyColors = ['#003087', '#0066B3', '#00205B', '#D0021B'];
         $companyData = $companies->filter(fn($c) => in_array($c->company_type, ['private', 'both']))->map(function ($c, $i) use ($companyColors, $vehicleType) {
             $rate = $c->rates->where('vehicle_type', $vehicleType)->firstWhere('item_name', 'Premium Rate');
+            $pvtRate = $c->rates->where('vehicle_type', $vehicleType)->firstWhere('item_name', 'PVT Rate');
+            $pllRate = $c->rates->where('vehicle_type', $vehicleType)->firstWhere('item_name', 'PLL Per Person');
             return [
                 'slug' => $c->slug,
                 'name' => $c->name,
                 'logo' => $c->logoUrl(),
                 'rate' => $rate ? (float) $rate->percentage / 100 : 0,
                 'rate_display' => $rate ? ((float)$rate->percentage) . '%' : '—',
+                'minPremium' => $rate ? (float) $rate->min_premium : 0,
+                'isPvtInclusive' => $rate ? (bool) $rate->is_pvt_inclusive : false,
+                'pvtRate' => $pvtRate ? (float) $pvtRate->percentage / 100 : 0,
+                'pvtMinValue' => $pvtRate ? (float) $pvtRate->min_value : 0,
+                'pllPerPerson' => $pllRate ? (float) $pllRate->value : 0,
                 'color' => $companyColors[$i % count($companyColors)],
+                'prefix' => $c->getInitials(),
             ];
         })->values();
         $companyStats = Quotation::selectRaw('company_id, COUNT(*) as total, SUM(total_premium) as total_premium')
@@ -58,13 +66,21 @@ class PublicController extends Controller
         $companyColors = ['#003087', '#0066B3', '#00205B', '#D0021B'];
         $companyData = $companies->filter(fn($c) => in_array($c->company_type, ['psv', 'both']))->map(function ($c, $i) use ($companyColors, $vehicleType) {
             $rate = $c->rates->where('vehicle_type', $vehicleType)->firstWhere('item_name', 'Premium Rate');
+            $pvtRate = $c->rates->where('vehicle_type', $vehicleType)->firstWhere('item_name', 'PVT Rate');
+            $pllRate = $c->rates->where('vehicle_type', $vehicleType)->firstWhere('item_name', 'PLL Per Person');
             return [
                 'slug' => $c->slug,
                 'name' => $c->name,
                 'logo' => $c->logoUrl(),
                 'rate' => $rate ? (float) $rate->percentage / 100 : 0,
                 'rate_display' => $rate ? ((float)$rate->percentage) . '%' : '—',
+                'minPremium' => $rate ? (float) $rate->min_premium : 0,
+                'isPvtInclusive' => $rate ? (bool) $rate->is_pvt_inclusive : false,
+                'pvtRate' => $pvtRate ? (float) $pvtRate->percentage / 100 : 0,
+                'pvtMinValue' => $pvtRate ? (float) $pvtRate->min_value : 0,
+                'pllPerPerson' => $pllRate ? (float) $pllRate->value : 0,
                 'color' => $companyColors[$i % count($companyColors)],
+                'prefix' => $c->getInitials(),
             ];
         })->values();
         $companyStats = Quotation::selectRaw('company_id, COUNT(*) as total, SUM(total_premium) as total_premium')
@@ -86,10 +102,11 @@ class PublicController extends Controller
             $selectedCompany = $companies->firstWhere('slug', $company);
         }
 
-        $coverage = $this->getCoverageData($companies);
+        $companiesForType = $companies->filter(fn($c) => in_array($c->company_type, ['both', $vehicleType]));
+        $coverage = $this->getCoverageData($companiesForType);
 
         $companyColors = ['#003087', '#0066B3', '#00205B', '#D0021B'];
-        $companyData = $companies->map(function ($c, $i) use ($companyColors, $vehicleType) {
+        $companyData = $companiesForType->values()->map(function ($c, $i) use ($companyColors, $vehicleType) {
             $rate = $c->rates->where('vehicle_type', $vehicleType)->firstWhere('item_name', 'Premium Rate');
             $pvtRate = $c->rates->where('vehicle_type', $vehicleType)->firstWhere('item_name', 'PVT Rate');
             $pllRate = $c->rates->where('vehicle_type', $vehicleType)->firstWhere('item_name', 'PLL Per Person');
@@ -364,7 +381,10 @@ class PublicController extends Controller
                     'logo' => $c->logoUrl(),
                     'rate' => $rate ? (float) $rate->percentage / 100 : 0,
                     'taxRate' => 0,
+                    'minPremium' => $rate ? (float) $rate->min_premium : 0,
+                    'isPvtInclusive' => $rate ? (bool) $rate->is_pvt_inclusive : false,
                     'pvtRate' => $pvtRate ? (float) $pvtRate->percentage / 100 : 0,
+                    'pvtMinValue' => $pvtRate ? (float) $pvtRate->min_value : 0,
                     'pllPerPerson' => $pllRate ? (float) $pllRate->value : 0,
                     'color' => $companyColors[$i % count($companyColors)],
                     'prefix' => $c->getInitials(),
@@ -447,5 +467,106 @@ class PublicController extends Controller
             'companies' => $data,
             'total_quotes' => $data->sum('quote_count'),
         ]);
+    }
+
+    public function psvInsurance(string $company)
+    {
+        $companies = Company::active()->with('rates')->get();
+        $selectedCompany = $companies->firstWhere('slug', $company);
+        if (!$selectedCompany) {
+            abort(404, 'Insurance company not found.');
+        }
+
+        $vehicleType = 'psv';
+        $companyColors = ['#003087', '#0066B3', '#00205B', '#D0021B', '#7c3aed', '#0f7a65'];
+        $numPassengers = request()->query('num_passengers', 1);
+
+        $buildData = function($companies, $vehicleType) use ($companyColors) {
+            return $companies->filter(function($c) use ($vehicleType) {
+                return in_array($c->company_type, ['both', $vehicleType]);
+            })->values()->map(function ($c, $i) use ($companyColors, $vehicleType) {
+                $rate = $c->rates->where('vehicle_type', $vehicleType)->firstWhere('item_name', 'Premium Rate');
+                $pvtRate = $c->rates->where('vehicle_type', $vehicleType)->firstWhere('item_name', 'PVT Rate');
+                $pllRate = $c->rates->where('vehicle_type', $vehicleType)->firstWhere('item_name', 'PLL Per Person');
+                return [
+                    'slug' => $c->slug,
+                    'name' => $c->name,
+                    'logo' => $c->logoUrl(),
+                    'rate' => $rate ? (float) $rate->percentage / 100 : 0,
+                    'taxRate' => 0,
+                    'minPremium' => $rate ? (float) $rate->min_premium : 0,
+                    'isPvtInclusive' => $rate ? (bool) $rate->is_pvt_inclusive : false,
+                    'pvtRate' => $pvtRate ? (float) $pvtRate->percentage / 100 : 0,
+                    'pvtMinValue' => $pvtRate ? (float) $pvtRate->min_value : 0,
+                    'pllPerPerson' => $pllRate ? (float) $pllRate->value : 0,
+                    'color' => $companyColors[$i % count($companyColors)],
+                    'prefix' => $c->getInitials(),
+                ];
+            });
+        };
+
+        $companyData = $buildData($companies, 'psv');
+        $privateCompanyData = $buildData($companies, 'private');
+        $psvCompanyData = $buildData($companies, 'psv');
+
+        $minSumInsured = (float)($selectedCompany->min_sum_insured_psv ?? 800000);
+        $maxSumInsured = 10000000;
+
+        $coverage = $this->getCoverageData($companies);
+
+        return view('public.psv-insurance', compact(
+            'companies', 'selectedCompany', 'companyData', 'privateCompanyData', 'psvCompanyData',
+            'coverage', 'vehicleType', 'minSumInsured', 'maxSumInsured', 'numPassengers'
+        ));
+    }
+
+    public function privateInsurance(string $company)
+    {
+        $companies = Company::active()->with('rates')->get();
+        $selectedCompany = $companies->firstWhere('slug', $company);
+        if (!$selectedCompany) {
+            abort(404, 'Insurance company not found.');
+        }
+
+        $vehicleType = 'private';
+        $companyColors = ['#003087', '#0066B3', '#00205B', '#D0021B', '#7c3aed', '#0f7a65'];
+
+        $buildData = function($companies, $vehicleType) use ($companyColors) {
+            return $companies->filter(function($c) use ($vehicleType) {
+                return in_array($c->company_type, ['both', $vehicleType]);
+            })->values()->map(function ($c, $i) use ($companyColors, $vehicleType) {
+                $rate = $c->rates->where('vehicle_type', $vehicleType)->firstWhere('item_name', 'Premium Rate');
+                $pvtRate = $c->rates->where('vehicle_type', $vehicleType)->firstWhere('item_name', 'PVT Rate');
+                $pllRate = $c->rates->where('vehicle_type', $vehicleType)->firstWhere('item_name', 'PLL Per Person');
+                return [
+                    'slug' => $c->slug,
+                    'name' => $c->name,
+                    'logo' => $c->logoUrl(),
+                    'rate' => $rate ? (float) $rate->percentage / 100 : 0,
+                    'taxRate' => 0,
+                    'minPremium' => $rate ? (float) $rate->min_premium : 0,
+                    'isPvtInclusive' => $rate ? (bool) $rate->is_pvt_inclusive : false,
+                    'pvtRate' => $pvtRate ? (float) $pvtRate->percentage / 100 : 0,
+                    'pvtMinValue' => $pvtRate ? (float) $pvtRate->min_value : 0,
+                    'pllPerPerson' => $pllRate ? (float) $pllRate->value : 0,
+                    'color' => $companyColors[$i % count($companyColors)],
+                    'prefix' => $c->getInitials(),
+                ];
+            });
+        };
+
+        $companyData = $buildData($companies, 'private');
+        $privateCompanyData = $buildData($companies, 'private');
+        $psvCompanyData = $buildData($companies, 'psv');
+
+        $minSumInsured = (float)($selectedCompany->min_sum_insured_private ?? 500000);
+        $maxSumInsured = 5000000;
+
+        $coverage = $this->getCoverageData($companies);
+
+        return view('public.private-insurance', compact(
+            'companies', 'selectedCompany', 'companyData', 'privateCompanyData', 'psvCompanyData',
+            'coverage', 'vehicleType', 'minSumInsured', 'maxSumInsured'
+        ));
     }
 }

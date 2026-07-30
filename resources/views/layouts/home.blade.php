@@ -530,271 +530,8 @@
 
 
 <div class="mic-motor">
- 
-<!-- ============================================================ PRIVATE MOTOR VEHICLE SECTION (modern / New-Features style) ============================================================ -->
-<section class="modern-section private" id="private-motor-section">
-  <div class="modern-head">
-    <div class="eyebrow">Comprehensive Motor Vehicle Insurance</div>
-    <h2 class="modern-title">Insuring a Private Vehicle?</h2>
-    <h3 class="modern-subtitle">Get a Comprehensive Private Motor Vehicle quote in minutes.</h3>
-    <p class="modern-desc">Our motor quote portal makes it simple to get comprehensive cover for your private vehicle, compare rates, and get on the road with confidence.</p>
-  </div>
-  <div class="modern-grid">
-    <div>
-      <div class="feature-list">
-        <div class="feature-item">
-          <div class="feature-icon">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M13 2 3 14h8l-1 8 10-12h-8l1-8Z"/></svg>
-          </div>
-          <div>
-            <h4>Instant Online Quotation</h4>
-            <p>Get a comprehensive private motor vehicle quote in minutes, without visiting a branch.</p>
-          </div>
-        </div>
-        <div class="feature-item">
-          <div class="feature-icon">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 3v18h18"/><path d="M7 15l4-5 3 3 5-7"/></svg>
-          </div>
-          <div>
-            <h4>Compare Rates From Leading Insurers</h4>
-            <p>See side-by-side premiums so you can choose the cover that best suits your vehicle and budget.</p>
-          </div>
-        </div>
-        <div class="feature-item">
-          <div class="feature-icon">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-          </div>
-          <div>
-            <h4>Download Your Quote Instantly</h4>
-            <p>Once you're happy with a rate, download your quotation immediately as a PDF.</p>
-          </div>
-        </div>
-      </div>
-      <div class="modern-cta">
-<a class="btn-section-cta" href="#quote-form-section-private" onclick="openQuoteFlow('private'); return false;">Get a Private Vehicle Quote</a>    </div>
-    </div>
-    <div class="modern-image">
-      <img src="{{ asset('images/hero/vehicle.jpg') }}" alt="Private motor vehicle insurance"/>
-    </div>
-  </div>
-</section>
 
-<!-- ── PRIVATE QUOTE FORM ── -->
-<section class="modern-section quote-form" style="display:none" id="quote-form-section-private">
-  <div class="form-container">
 
-    <button type="button" class="quote-form-back" onclick="closeQuoteFlow('private')">↑ Back to Private Section</button>
-
-    <div class="modern-head" style="text-align:center">
-      <div class="eyebrow">Motor Insurance Quotation</div>
-      <h2 class="modern-title">Get Your Private Motor Insurance Quote</h2>
-      <h3 class="modern-subtitle">Complete the form below in three easy steps to receive your personalised quotation.</h3>
-      <p class="modern-desc">Choose the cover type that matches your vehicle, then fill in your details to compare premiums from leading insurers.</p>
-    </div>
-
-    <input type="hidden" id="f-vehicle-type-private" value="private">
-
-    <!-- Step indicators -->
-    <div class="form-steps">
-      <div class="form-step active" id="step-tab-1-private" onclick="goStep('private',1)">
-        <div class="step-num">Step 1</div>
-        <div class="step-name">Personal Details</div>
-      </div>
-      <div class="form-step" id="step-tab-2-private" onclick="goStep('private',2)">
-        <div class="step-num">Step 2</div>
-        <div class="step-name">Vehicle Details</div>
-      </div>
-      <div class="form-step" id="step-tab-3-private" onclick="goStep('private',3)">
-        <div class="step-num">Step 3</div>
-        <div class="step-name">Quote Generation</div>
-      </div>
-    </div>
-
-    <!-- Step 1: Personal Details -->
-    <div class="form-panel active" id="panel-1-private">
-      <div class="form-grid three">
-        <div class="form-group">
-          <label>Salutation <span class="req">*</span></label>
-          <select id="f-salutation-private">
-            <option value="">Select...</option>
-            <option>Mr.</option><option>Mrs.</option><option>Miss</option><option>Dr.</option><option>Prof.</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label>First Name <span class="req">*</span></label>
-          <input type="text" id="f-first-private" placeholder="e.g. John">
-        </div>
-        <div class="form-group">
-          <label>Middle Name</label>
-          <input type="text" id="f-middle-private" placeholder="Optional">
-        </div>
-        <div class="form-group">
-          <label>Last Name <span class="req">*</span></label>
-          <input type="text" id="f-last-private" placeholder="e.g. Doe">
-        </div>
-        <div class="form-group">
-          <label>Phone Number <span class="req">*</span></label>
-          <input type="tel" id="f-phone-private" placeholder="07 XX XXX XXX">
-        </div>
-        <div class="form-group">
-          <label>Email Address <span class="req">*</span></label>
-          <input type="email" id="f-email-private" placeholder="email@example.com">
-        </div>
-      </div>
-      <div class="btn-group">
-        <button class="btn btn-primary" onclick="goStep('private',2)">Continue to Vehicle Details →</button>
-      </div>
-    </div>
-
-    <!-- Step 2: Vehicle Details -->
-    <div class="form-panel" id="panel-2-private">
-      <div class="form-grid">
-        <div class="form-group">
-          <label>Registration Number <span class="req">*</span></label>
-          <input type="text" id="f-reg-private" placeholder="e.g. KDH 724V" oninput="validateReg('private', this)">
-          <div class="reg-error" id="f-reg-error-private" style="color:var(--red);font-size:11px;display:none;margin-top:2px">Invalid Kenyan registration format (e.g. KDH 291H)</div>
-        </div>
-        <div class="form-group">
-          <label>Chassis / Frame Number</label>
-          <input type="text" id="f-chassis-private" placeholder="e.g. WVWZZZ1KZ9W123456">
-        </div>
-        <div class="form-group">
-          <label>Make of Vehicle <span class="req">*</span></label>
-          <div class="vehicle-search-wrap">
-            <input type="text" id="f-make-private" placeholder="Search vehicle make..." autocomplete="off">
-            <div class="vehicle-dropdown" id="f-make-dropdown-private"></div>
-          </div>
-          <input type="hidden" id="f-make-value-private" value="">
-          <input type="text" id="f-make-other-private" placeholder="Type your vehicle make..." style="display:none;margin-top:8px">
-        </div>
-        <div class="form-group">
-          <label>Model Name <span class="req">*</span></label>
-          <div class="vehicle-search-wrap">
-            <input type="text" id="f-model-private" placeholder="Select a make first..." autocomplete="off" disabled>
-            <div class="vehicle-dropdown" id="f-model-dropdown-private"></div>
-          </div>
-          <input type="hidden" id="f-model-value-private" value="">
-          <input type="text" id="f-model-other-private" placeholder="Type your vehicle model..." style="display:none;margin-top:8px">
-        </div>
-        <div class="form-group">
-          <label>Body Type</label>
-          <select id="f-body-private">
-            <option value="">Select body type...</option>
-            <option>Saloon</option><option>Station Wagon (S. Wagon)</option><option>SUV/4x4</option>
-            <option>Hatchback</option><option>Pick-Up</option><option>Van/Minivan</option><option>Convertible</option><option>Coupe</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label>Year of Manufacture <span class="req">*</span></label>
-          <select id="f-year-private">
-            <option value="">Select year...</option>
-          </select>
-          <div class="value-error" id="f-year-error-private" style="display:none;color:var(--red);font-size:11px;margin-top:4px"></div>
-        </div>
-        <div class="form-group">
-          <label>Color</label>
-          <select id="f-color-private" onchange="toggleOtherColor('private', this)">
-            <option value="">Select color...</option>
-            <option>White</option>
-            <option>Black</option>
-            <option>Silver/Grey</option>
-            <option>Blue</option>
-            <option>Red</option>
-            <option>Brown/Maroon</option>
-            <option>Gold/Champagne</option>
-            <option>Green</option>
-            <option>Orange</option>
-            <option>Purple</option>
-            <option>Other</option>
-          </select>
-          <input type="text" id="f-color-other-private" placeholder="Type your vehicle color..." style="display:none;margin-top:8px">
-        </div>
-        <div class="form-group">
-          <label>Value of Vehicle (KES) <span class="req">*</span></label>
-          <input type="text" id="f-value-private" placeholder="e.g. 800,000" autocomplete="off">
-          <div class="value-range-hint" id="f-value-hint-private">Enter the value of your vehicle</div>
-          <div class="value-error" id="f-value-error-private" style="display:none"></div>
-          <div class="min-sum-hint" id="f-min-sum-hint-private" style="font-size:11px;color:var(--text-muted);margin-top:4px"></div>
-        </div>
-      </div>
-      <div class="btn-group">
-        <button class="btn btn-secondary" onclick="goStep('private',1)">← Back</button>
-        <button class="btn btn-primary" onclick="validateStep2AndProceed('private')">Continue to Quote Generation →</button>
-      </div>
-    </div>
-
-    <!-- Step 3: Quote Generation -->
-    <div class="form-panel" id="panel-3-private">
-      <div class="valuation-box">
-        <h3 style="font-size:15px;font-weight:700;margin-bottom:4px;color:var(--text)">Premium Estimate</h3>
-        <p style="font-size:13px;color:var(--text-muted);margin-bottom:16px">Select an insurer card below to open its full quotation, or compare all side by side.</p>
-
-        <div id="premium-preview-empty-private" style="padding:20px;text-align:center;color:var(--text-muted);font-size:13px;border:1.5px dashed var(--border);border-radius:var(--radius)">
-          ← Go back to Step 2 and enter the vehicle value to see premium estimates.
-        </div>
-
-        <div id="premium-preview-private" style="display:none">
-          <div style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:14px">Click a card to open the full quotation</div>
-          <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px" id="premium-cards-grid-private"></div>
-        </div>
-      </div>
-      <div class="btn-group">
-        <button class="btn btn-secondary" onclick="goStep('private',2)">← Back to Vehicle Details</button>
-      </div>
-    </div>
-
-  </div>
-</section>
- 
-<!-- ============================================================ PRIVATE MOTOR STEPS (Effortless-Integration style) ============================================================ -->
-<section class="steps-section private-steps" id="private-steps-section">
-  <div class="steps-head">
-    <h2>How to Get a Private Motor Vehicle Quote</h2>
-    <p>Five simple steps to your comprehensive quote — <a href="https://www.micglobalrisks.com/motor-quote/">start your quote here</a>.</p>
-  </div>
-  <div class="steps-grid">
-    <div class="step-item">
-      <div class="step-top">
-        <span class="step-num">1</span>
-        <span class="step-arrow">&#8594;</span>
-      </div>
-      <h4>Enter Your Personal Details</h4>
-      <p>Input your name, contact details and ID/KRA PIN to get started.</p>
-    </div>
-    <div class="step-item">
-      <div class="step-top">
-        <span class="step-num">2</span>
-        <span class="step-arrow">&#8594;</span>
-      </div>
-      <h4>Input Your Vehicle Details</h4>
-      <p>Add your vehicle's make, model, year, registration and value.</p>
-    </div>
-    <div class="step-item">
-      <div class="step-top">
-        <span class="step-num">3</span>
-        <span class="step-arrow">&#8594;</span>
-      </div>
-      <h4>Generate a Quotation</h4>
-      <p>Our system instantly generates a comprehensive cover quotation for your vehicle.</p>
-    </div>
-    <div class="step-item">
-      <div class="step-top">
-        <span class="step-num">4</span>
-        <span class="step-arrow">&#8594;</span>
-      </div>
-      <h4>Compare Rates &amp; Premiums</h4>
-      <p>Compare rates and premiums across our panel of leading underwriters.</p>
-    </div>
-    <div class="step-item step-item-last">
-      <div class="step-top">
-        <span class="step-num">5</span>
-      </div>
-      <h4>Download Quote</h4>
-      <p>Download your preferred quotation instantly and proceed to cover.</p>
-    </div>
-  </div>
-</section>
- 
 <!-- ============================================================ PSV MOTOR VEHICLE SECTION (modern / New-Features style, mirrored) ============================================================ -->
 <section class="modern-section psv" id="psv-motor-section">
   <div class="modern-head">
@@ -1075,6 +812,272 @@
     </div>
   </div>
 </section>
+
+ 
+<!-- ============================================================ PRIVATE MOTOR VEHICLE SECTION (modern / New-Features style) ============================================================ -->
+<section class="modern-section private" id="private-motor-section">
+  <div class="modern-head">
+    <div class="eyebrow">Comprehensive Motor Vehicle Insurance</div>
+    <h2 class="modern-title">Insuring a Private Vehicle?</h2>
+    <h3 class="modern-subtitle">Get a Comprehensive Private Motor Vehicle quote in minutes.</h3>
+    <p class="modern-desc">Our motor quote portal makes it simple to get comprehensive cover for your private vehicle, compare rates, and get on the road with confidence.</p>
+  </div>
+  <div class="modern-grid">
+    <div>
+      <div class="feature-list">
+        <div class="feature-item">
+          <div class="feature-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M13 2 3 14h8l-1 8 10-12h-8l1-8Z"/></svg>
+          </div>
+          <div>
+            <h4>Instant Online Quotation</h4>
+            <p>Get a comprehensive private motor vehicle quote in minutes, without visiting a branch.</p>
+          </div>
+        </div>
+        <div class="feature-item">
+          <div class="feature-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 3v18h18"/><path d="M7 15l4-5 3 3 5-7"/></svg>
+          </div>
+          <div>
+            <h4>Compare Rates From Leading Insurers</h4>
+            <p>See side-by-side premiums so you can choose the cover that best suits your vehicle and budget.</p>
+          </div>
+        </div>
+        <div class="feature-item">
+          <div class="feature-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          </div>
+          <div>
+            <h4>Download Your Quote Instantly</h4>
+            <p>Once you're happy with a rate, download your quotation immediately as a PDF.</p>
+          </div>
+        </div>
+      </div>
+      <div class="modern-cta">
+<a class="btn-section-cta" href="#quote-form-section-private" onclick="openQuoteFlow('private'); return false;">Get a Private Vehicle Quote</a>    </div>
+    </div>
+    <div class="modern-image">
+      <img src="{{ asset('images/hero/vehicle.jpg') }}" alt="Private motor vehicle insurance"/>
+    </div>
+  </div>
+</section>
+
+<!-- ── PRIVATE QUOTE FORM ── -->
+<section class="modern-section quote-form" style="display:none" id="quote-form-section-private">
+  <div class="form-container">
+
+    <button type="button" class="quote-form-back" onclick="closeQuoteFlow('private')">↑ Back to Private Section</button>
+
+    <div class="modern-head" style="text-align:center">
+      <div class="eyebrow">Motor Insurance Quotation</div>
+      <h2 class="modern-title">Get Your Private Motor Insurance Quote</h2>
+      <h3 class="modern-subtitle">Complete the form below in three easy steps to receive your personalised quotation.</h3>
+      <p class="modern-desc">Choose the cover type that matches your vehicle, then fill in your details to compare premiums from leading insurers.</p>
+    </div>
+
+    <input type="hidden" id="f-vehicle-type-private" value="private">
+
+    <!-- Step indicators -->
+    <div class="form-steps">
+      <div class="form-step active" id="step-tab-1-private" onclick="goStep('private',1)">
+        <div class="step-num">Step 1</div>
+        <div class="step-name">Personal Details</div>
+      </div>
+      <div class="form-step" id="step-tab-2-private" onclick="goStep('private',2)">
+        <div class="step-num">Step 2</div>
+        <div class="step-name">Vehicle Details</div>
+      </div>
+      <div class="form-step" id="step-tab-3-private" onclick="goStep('private',3)">
+        <div class="step-num">Step 3</div>
+        <div class="step-name">Quote Generation</div>
+      </div>
+    </div>
+
+    <!-- Step 1: Personal Details -->
+    <div class="form-panel active" id="panel-1-private">
+      <div class="form-grid three">
+        <div class="form-group">
+          <label>Salutation <span class="req">*</span></label>
+          <select id="f-salutation-private">
+            <option value="">Select...</option>
+            <option>Mr.</option><option>Mrs.</option><option>Miss</option><option>Dr.</option><option>Prof.</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>First Name <span class="req">*</span></label>
+          <input type="text" id="f-first-private" placeholder="e.g. John">
+        </div>
+        <div class="form-group">
+          <label>Middle Name</label>
+          <input type="text" id="f-middle-private" placeholder="Optional">
+        </div>
+        <div class="form-group">
+          <label>Last Name <span class="req">*</span></label>
+          <input type="text" id="f-last-private" placeholder="e.g. Doe">
+        </div>
+        <div class="form-group">
+          <label>Phone Number <span class="req">*</span></label>
+          <input type="tel" id="f-phone-private" placeholder="07 XX XXX XXX">
+        </div>
+        <div class="form-group">
+          <label>Email Address <span class="req">*</span></label>
+          <input type="email" id="f-email-private" placeholder="email@example.com">
+        </div>
+      </div>
+      <div class="btn-group">
+        <button class="btn btn-primary" onclick="goStep('private',2)">Continue to Vehicle Details →</button>
+      </div>
+    </div>
+
+    <!-- Step 2: Vehicle Details -->
+    <div class="form-panel" id="panel-2-private">
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Registration Number <span class="req">*</span></label>
+          <input type="text" id="f-reg-private" placeholder="e.g. KDH 724V" oninput="validateReg('private', this)">
+          <div class="reg-error" id="f-reg-error-private" style="color:var(--red);font-size:11px;display:none;margin-top:2px">Invalid Kenyan registration format (e.g. KDH 291H)</div>
+        </div>
+        <div class="form-group">
+          <label>Chassis / Frame Number</label>
+          <input type="text" id="f-chassis-private" placeholder="e.g. WVWZZZ1KZ9W123456">
+        </div>
+        <div class="form-group">
+          <label>Make of Vehicle <span class="req">*</span></label>
+          <div class="vehicle-search-wrap">
+            <input type="text" id="f-make-private" placeholder="Search vehicle make..." autocomplete="off">
+            <div class="vehicle-dropdown" id="f-make-dropdown-private"></div>
+          </div>
+          <input type="hidden" id="f-make-value-private" value="">
+          <input type="text" id="f-make-other-private" placeholder="Type your vehicle make..." style="display:none;margin-top:8px">
+        </div>
+        <div class="form-group">
+          <label>Model Name <span class="req">*</span></label>
+          <div class="vehicle-search-wrap">
+            <input type="text" id="f-model-private" placeholder="Select a make first..." autocomplete="off" disabled>
+            <div class="vehicle-dropdown" id="f-model-dropdown-private"></div>
+          </div>
+          <input type="hidden" id="f-model-value-private" value="">
+          <input type="text" id="f-model-other-private" placeholder="Type your vehicle model..." style="display:none;margin-top:8px">
+        </div>
+        <div class="form-group">
+          <label>Body Type</label>
+          <select id="f-body-private">
+            <option value="">Select body type...</option>
+            <option>Saloon</option><option>Station Wagon (S. Wagon)</option><option>SUV/4x4</option>
+            <option>Hatchback</option><option>Pick-Up</option><option>Van/Minivan</option><option>Convertible</option><option>Coupe</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Year of Manufacture <span class="req">*</span></label>
+          <select id="f-year-private">
+            <option value="">Select year...</option>
+          </select>
+          <div class="value-error" id="f-year-error-private" style="display:none;color:var(--red);font-size:11px;margin-top:4px"></div>
+        </div>
+        <div class="form-group">
+          <label>Color</label>
+          <select id="f-color-private" onchange="toggleOtherColor('private', this)">
+            <option value="">Select color...</option>
+            <option>White</option>
+            <option>Black</option>
+            <option>Silver/Grey</option>
+            <option>Blue</option>
+            <option>Red</option>
+            <option>Brown/Maroon</option>
+            <option>Gold/Champagne</option>
+            <option>Green</option>
+            <option>Orange</option>
+            <option>Purple</option>
+            <option>Other</option>
+          </select>
+          <input type="text" id="f-color-other-private" placeholder="Type your vehicle color..." style="display:none;margin-top:8px">
+        </div>
+        <div class="form-group">
+          <label>Value of Vehicle (KES) <span class="req">*</span></label>
+          <input type="text" id="f-value-private" placeholder="e.g. 800,000" autocomplete="off">
+          <div class="value-range-hint" id="f-value-hint-private">Enter the value of your vehicle</div>
+          <div class="value-error" id="f-value-error-private" style="display:none"></div>
+          <div class="min-sum-hint" id="f-min-sum-hint-private" style="font-size:11px;color:var(--text-muted);margin-top:4px"></div>
+        </div>
+      </div>
+      <div class="btn-group">
+        <button class="btn btn-secondary" onclick="goStep('private',1)">← Back</button>
+        <button class="btn btn-primary" onclick="validateStep2AndProceed('private')">Continue to Quote Generation →</button>
+      </div>
+    </div>
+
+    <!-- Step 3: Quote Generation -->
+    <div class="form-panel" id="panel-3-private">
+      <div class="valuation-box">
+        <h3 style="font-size:15px;font-weight:700;margin-bottom:4px;color:var(--text)">Premium Estimate</h3>
+        <p style="font-size:13px;color:var(--text-muted);margin-bottom:16px">Select an insurer card below to open its full quotation, or compare all side by side.</p>
+
+        <div id="premium-preview-empty-private" style="padding:20px;text-align:center;color:var(--text-muted);font-size:13px;border:1.5px dashed var(--border);border-radius:var(--radius)">
+          ← Go back to Step 2 and enter the vehicle value to see premium estimates.
+        </div>
+
+        <div id="premium-preview-private" style="display:none">
+          <div style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:14px">Click a card to open the full quotation</div>
+          <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px" id="premium-cards-grid-private"></div>
+        </div>
+      </div>
+      <div class="btn-group">
+        <button class="btn btn-secondary" onclick="goStep('private',2)">← Back to Vehicle Details</button>
+      </div>
+    </div>
+
+  </div>
+</section>
+ 
+<!-- ============================================================ PRIVATE MOTOR STEPS (Effortless-Integration style) ============================================================ -->
+<section class="steps-section private-steps" id="private-steps-section">
+  <div class="steps-head">
+    <h2>How to Get a Private Motor Vehicle Quote</h2>
+    <p>Five simple steps to your comprehensive quote — <a href="https://www.micglobalrisks.com/motor-quote/">start your quote here</a>.</p>
+  </div>
+  <div class="steps-grid">
+    <div class="step-item">
+      <div class="step-top">
+        <span class="step-num">1</span>
+        <span class="step-arrow">&#8594;</span>
+      </div>
+      <h4>Enter Your Personal Details</h4>
+      <p>Input your name, contact details and ID/KRA PIN to get started.</p>
+    </div>
+    <div class="step-item">
+      <div class="step-top">
+        <span class="step-num">2</span>
+        <span class="step-arrow">&#8594;</span>
+      </div>
+      <h4>Input Your Vehicle Details</h4>
+      <p>Add your vehicle's make, model, year, registration and value.</p>
+    </div>
+    <div class="step-item">
+      <div class="step-top">
+        <span class="step-num">3</span>
+        <span class="step-arrow">&#8594;</span>
+      </div>
+      <h4>Generate a Quotation</h4>
+      <p>Our system instantly generates a comprehensive cover quotation for your vehicle.</p>
+    </div>
+    <div class="step-item">
+      <div class="step-top">
+        <span class="step-num">4</span>
+        <span class="step-arrow">&#8594;</span>
+      </div>
+      <h4>Compare Rates &amp; Premiums</h4>
+      <p>Compare rates and premiums across our panel of leading underwriters.</p>
+    </div>
+    <div class="step-item step-item-last">
+      <div class="step-top">
+        <span class="step-num">5</span>
+      </div>
+      <h4>Download Quote</h4>
+      <p>Download your preferred quotation instantly and proceed to cover.</p>
+    </div>
+  </div>
+</section>
+ 
 
 
 
@@ -1564,16 +1567,15 @@
   </div>
 </section> --}}
 
-
-<!-- Insuring a Private Vehicle? -->
-<section class="section section-alt" style="background-color: #003087;">
+<!-- Insuring a PSV? -->
+<section class="section section-alt" style="background-color: #D0021B;">
   <div style="text-align:center;margin-bottom:20px">
-    <div class="section-title" style="color:#F9F9FF;font-size:20px">🚗 Insuring a Private Vehicle?</div>
-    <div class="section-sub" style="color:#F9F9FF;font-size:15px;margin-top:4px">Select an insurer below to generate a tailored quote for your private vehicle.</div>
+    <div class="section-title" style="color:#F9F9FF;font-size:20px">🚌 Insuring a PSV?</div>
+    <div class="section-sub" style="color:#F9F9FF;font-size:15px;margin-top:4px">Select an insurer below for a tailored PSV insurance quote.</div>
   </div>
   <div class="company-cards">
-    @foreach ($__privateCompanyData as $cd)
-    <a href="{{ route('generate.quote', ['company' => $cd['slug'], 'vehicle_type' => 'private']) }}" class="company-card no-underline" style="cursor:pointer;display:block">
+    @foreach ($__psvCompanyData as $cd)
+    <a href="{{ route('generate.quote', ['company' => $cd['slug'], 'vehicle_type' => 'psv']) }}" class="company-card no-underline" style="cursor:pointer;display:block">
       <div class="company-logo-box">
         @if ($cd['logo'])
         <img src="{{ $cd['logo'] }}" alt="{{ $cd['name'] }}" class="nav-logo">
@@ -1597,7 +1599,7 @@
       <div style="display:flex;align-items:center;justify-content:center;gap:16px;margin-bottom:12px">
         <div style="text-align:center">
           <div style="font-size:10px;color:#6b7280;font-weight:500">Insurers</div>
-          <div style="font-size:13px;font-weight:800;color:#D0021B">{{ $__privateCompanyData->count() }}</div>
+          <div style="font-size:13px;font-weight:800;color:#D0021B">{{ $__psvCompanyData->count() }}</div>
         </div>
       </div>
       <button class="btn btn-primary" style="width:100%;justify-content:center;font-size:12px;padding:8px 10px;background:#D0021B;border-color:#D0021B;border-radius:10px;font-weight:700">Compare All ↗</button>
@@ -1645,15 +1647,17 @@
   </div>
 </section>
 
-<!-- Insuring a PSV? -->
-<section class="section section-alt" style="background-color: #D0021B;">
+
+
+<!-- Insuring a Private Vehicle? -->
+<section class="section section-alt" style="background-color: #003087;">
   <div style="text-align:center;margin-bottom:20px">
-    <div class="section-title" style="color:#F9F9FF;font-size:20px">🚌 Insuring a PSV?</div>
-    <div class="section-sub" style="color:#F9F9FF;font-size:15px;margin-top:4px">Select an insurer below for a tailored PSV insurance quote.</div>
+    <div class="section-title" style="color:#F9F9FF;font-size:20px">🚗 Insuring a Private Vehicle?</div>
+    <div class="section-sub" style="color:#F9F9FF;font-size:15px;margin-top:4px">Select an insurer below to generate a tailored quote for your private vehicle.</div>
   </div>
   <div class="company-cards">
-    @foreach ($__psvCompanyData as $cd)
-    <a href="{{ route('generate.quote', ['company' => $cd['slug'], 'vehicle_type' => 'psv']) }}" class="company-card no-underline" style="cursor:pointer;display:block">
+    @foreach ($__privateCompanyData as $cd)
+    <a href="{{ route('generate.quote', ['company' => $cd['slug'], 'vehicle_type' => 'private']) }}" class="company-card no-underline" style="cursor:pointer;display:block">
       <div class="company-logo-box">
         @if ($cd['logo'])
         <img src="{{ $cd['logo'] }}" alt="{{ $cd['name'] }}" class="nav-logo">
@@ -1677,13 +1681,16 @@
       <div style="display:flex;align-items:center;justify-content:center;gap:16px;margin-bottom:12px">
         <div style="text-align:center">
           <div style="font-size:10px;color:#6b7280;font-weight:500">Insurers</div>
-          <div style="font-size:13px;font-weight:800;color:#D0021B">{{ $__psvCompanyData->count() }}</div>
+          <div style="font-size:13px;font-weight:800;color:#D0021B">{{ $__privateCompanyData->count() }}</div>
         </div>
       </div>
       <button class="btn btn-primary" style="width:100%;justify-content:center;font-size:12px;padding:8px 10px;background:#D0021B;border-color:#D0021B;border-radius:10px;font-weight:700">Compare All ↗</button>
     </a>
   </div>
 </section>
+
+
+
 
 <!-- ── REGENERATE QUOTE ── -->
 {{-- <section class="section">
@@ -2065,7 +2072,35 @@ function generatePremiumCardsVT(companies, vehicleValue, type) {
 }
 
 function guestGuard(callback) {
-  if (window.MIC_GUEST) { sessionStorage.setItem('auth_redirect', '/dashboard?pending_quote=1'); openAuthModal(); return; }
+  if (typeof callback === 'function') {
+    var match = callback.toString().match(/openQuotePage\('([^']+)'(?:,\s*'([^']*)')?\)/);
+    if (match && match[1] !== 'ALL') {
+      try {
+        var type = match[2] !== undefined ? match[2] : (document.getElementById('f-reg-private') ? 'private' : (document.getElementById('f-reg-psv') ? 'psv' : ''));
+        var d = typeof getFormData === 'function' ? getFormData(type) : {};
+        sessionStorage.setItem('pending_quote_company', match[1]);
+        sessionStorage.setItem('micQuoteData', JSON.stringify({
+          ...d,
+          firstName: d.firstName || d.first || '',
+          lastName: d.lastName || d.last || '',
+          mode: match[1]
+        }));
+      } catch(e) {}
+    }
+    if (window.MIC_GUEST) {
+      if (match && match[1] !== 'ALL') {
+        sessionStorage.setItem('auth_redirect', '/dashboard?pending_quote=1');
+        openAuthModal();
+        return;
+      }
+      callback();
+      return;
+    }
+    if (match && match[1] !== 'ALL') {
+      window.location.href = '/dashboard?pending_quote=1';
+      return;
+    }
+  }
   if (typeof callback === 'function') callback();
 }
 function fallbackLogo(el, slug) {

@@ -325,7 +325,7 @@ Compare All Insurers
         </div>
         <div class="form-group">
           <label>Color</label>
-          <select id="f-color" onchange="toggleOtherColor(this)">
+          <select id="f-color" onchange="toggleOtherColor('', this)">
             <option value="">Select color...</option>
             <option>White</option><option>Black</option><option>Silver/Grey</option><option>Blue</option>
             <option>Red</option><option>Brown/Maroon</option><option>Gold/Champagne</option><option>Green</option>
@@ -555,7 +555,7 @@ Compare All Insurers
         </div>
         <div class="form-group">
           <label>Color</label>
-          <select id="f-color" onchange="toggleOtherColor(this)">
+          <select id="f-color" onchange="toggleOtherColor('', this)">
             <option value="">Select color...</option>
             <option>White</option>
             <option>Black</option>
@@ -617,7 +617,7 @@ Compare All Insurers
   </div>
   <div class="company-cards">
     @foreach ($__privateCompanyData as $cd)
-    <a href="{{ route('generate.quote', ['company' => $cd['slug'], 'vehicle_type' => 'private']) }}" class="company-card no-underline" style="cursor:pointer;display:block">
+    <a href="{{ route('private.insurance', ['company' => $cd['slug']]) }}" class="company-card no-underline" style="cursor:pointer;display:block">
       <div class="company-logo-box">
         @if ($cd['logo'])
         <img src="{{ $cd['logo'] }}" alt="{{ $cd['name'] }}" class="nav-logo">
@@ -697,7 +697,7 @@ Compare All Insurers
   </div>
   <div class="company-cards">
     @foreach ($__psvCompanyData as $cd)
-    <a href="{{ route('generate.quote', ['company' => $cd['slug'], 'vehicle_type' => 'psv']) }}" class="company-card no-underline" style="cursor:pointer;display:block">
+    <a href="{{ route('psv.insurance', ['company' => $cd['slug']]) }}" class="company-card no-underline" style="cursor:pointer;display:block">
       <div class="company-logo-box">
         @if ($cd['logo'])
         <img src="{{ $cd['logo'] }}" alt="{{ $cd['name'] }}" class="nav-logo">
@@ -762,31 +762,52 @@ window.MIC_SELECTED_COMPANY = @json($selectedCompany?->slug);
 window.MIC_VEHICLE_TYPE = @json($__vehicleType);
 
 function guestGuard(callback) {
-  if (window.MIC_GUEST) {
-    if (typeof callback === 'function') {
-      var match = callback.toString().match(/openQuotePage\('([^']+)'\)/);
-      if (match) {
+  if (typeof callback === 'function') {
+    var match = callback.toString().match(/openQuotePage\('([^']+)'(?:,\s*'([^']*)')?\)/);
+    if (match && match[1] !== 'ALL') {
+      try {
+        var type = match[2] !== undefined ? match[2] : (document.getElementById('f-reg-private') ? 'private' : (document.getElementById('f-reg-psv') ? 'psv' : ''));
+        var d = typeof getFormData === 'function' ? getFormData(type) : {};
         sessionStorage.setItem('pending_quote_company', match[1]);
-        try {
-          var d = getFormData();
-          sessionStorage.setItem('micQuoteData', JSON.stringify({...d, mode: match[1]}));
-        } catch(e) {}
-      }
+        sessionStorage.setItem('micQuoteData', JSON.stringify({
+          ...d,
+          firstName: d.firstName || d.first || '',
+          lastName: d.lastName || d.last || '',
+          mode: match[1]
+        }));
+      } catch(e) {}
     }
-    sessionStorage.setItem('auth_redirect', '/dashboard?pending_quote=1');
-    var alpineEl = document.querySelector('#authModal');
-    if (alpineEl && alpineEl.__x) { alpineEl.__x.$data.redirectTo = '/dashboard?pending_quote=1'; }
-    openAuthModal();
-    return;
+    if (window.MIC_GUEST) {
+      if (match && match[1] !== 'ALL') {
+        sessionStorage.setItem('auth_redirect', '/dashboard?pending_quote=1');
+        var alpineEl = document.querySelector('#authModal');
+        if (alpineEl && alpineEl.__x) { alpineEl.__x.$data.redirectTo = '/dashboard?pending_quote=1'; }
+        openAuthModal();
+        return;
+      }
+      callback();
+      return;
+    }
+    if (match && match[1] !== 'ALL') {
+      window.location.href = '/dashboard?pending_quote=1';
+      return;
+    }
   }
   if (typeof callback === 'function') callback();
 }
 
-// Populate year select
+// Populate year selects and init value formatting
 (function(){
-  var sel = document.getElementById('f-year');
-  if(sel) for(var y=2026;y>=1990;y--){ var o=document.createElement('option'); o.value=y; o.textContent=y; sel.appendChild(o); }
+  ['f-year'].forEach(function(id){
+    var sel = document.getElementById(id);
+    if(sel) for(var y = new Date().getFullYear(); y >= 1990; y--){
+      var o = document.createElement('option');
+      o.value = y; o.textContent = y; sel.appendChild(o);
+    }
+  });
 })();
+
+if (typeof initValueInput === 'function') initValueInput('');
 </script>
 <script src="{{ asset('js/home.js') }}"></script>
 </body>

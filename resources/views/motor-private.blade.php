@@ -450,6 +450,8 @@
 <x-public-footer/>
 <script src="{{ asset('js/home.js') }}"></script>
 <script>
+window.MIC_COMPANIES = @json($companyData);
+window.MIC_VEHICLE_TYPE = 'private';
 (function() {
   var sel = document.getElementById('f-year-private');
   if (sel) {
@@ -459,6 +461,10 @@
     }
   }
 })();
+
+document.addEventListener('DOMContentLoaded', function() {
+  if (typeof initValueInput === 'function') initValueInput('private');
+});
 
 function showPrivateQuoteForm() {
   var form = document.getElementById('quote-form-section-private');

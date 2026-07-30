@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Auth;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\LoginRequest;
 use App\Models\HealthCheck;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -24,7 +25,7 @@ class AuthenticatedSessionController extends Controller
     /**
      * Handle an incoming authentication request.
      */
-    public function store(LoginRequest $request): RedirectResponse
+    public function store(LoginRequest $request): RedirectResponse|JsonResponse
     {
         $request->authenticate();
 
@@ -45,6 +46,11 @@ class AuthenticatedSessionController extends Controller
 
         if (auth()->user()->hasRole('super-admin') || auth()->user()->hasRole('admin')) {
             $this->runHealthChecks();
+        }
+
+        if ($request->wantsJson()) {
+            $redirect = $request->input('redirect_to', route('dashboard'));
+            return response()->json(['redirect' => $redirect]);
         }
 
         if ($redirectTo = $request->input('redirect_to')) {

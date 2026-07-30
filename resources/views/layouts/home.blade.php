@@ -1990,7 +1990,7 @@ function validateStep2AndProceedVT() {
     if (!el || !el.value.trim()) missing.push(r.label);
   });
   if (missing.length) {
-    alert('Please fill in the following required fields:\n• ' + missing.join('\n• '));
+    alert('Please fill in the following required fields:\n\u2022 ' + missing.join('\n\u2022 '));
     return;
   }
   var type = window.MIC_VEHICLE_TYPE;
@@ -2020,7 +2020,7 @@ function validateStep2AndProceedVT() {
     });
   }
   if (errors.length) {
-    alert('The following insurers cannot accept your vehicle value:\n• ' + errors.join('\n• '));
+    alert('The following insurers cannot accept your vehicle value:\n\u2022 ' + errors.join('\n\u2022 '));
     return;
   }
   var hintEl = document.getElementById('f-min-sum-hint-vt');
@@ -2029,46 +2029,8 @@ function validateStep2AndProceedVT() {
   } else {
     hintEl.innerHTML = '';
   }
-  generatePremiumCardsVT(companies, vehicleValue, type);
+  if (typeof updatePremiumPreview === 'function') updatePremiumPreview('vt');
   goStepVT(3);
-}
-
-function generatePremiumCardsVT(companies, vehicleValue, type) {
-  var prev = document.getElementById('premium-preview-vt');
-  var prevEmpty = document.getElementById('premium-preview-empty-vt');
-  var grid = document.getElementById('premium-cards-grid-vt');
-  if (!vehicleValue) { prev.style.display = 'none'; prevEmpty.style.display = 'block'; return; }
-  prevEmpty.style.display = 'none';
-  prev.style.display = 'block';
-
-  var v = vehicleValue;
-  var html = '';
-  companies.forEach(function(cd) {
-    html += '<div class="preview-card" onclick="guestGuard(function(){ openQuotePage(\'' + cd.slug + '\'); })" style="background:white;border:1.5px solid var(--border);border-radius:var(--radius);padding:16px 14px;text-align:center;cursor:pointer;transition:box-shadow .2s,transform .15s">';
-    html += '<div style="height:36px;display:flex;align-items:center;justify-content:center;margin-bottom:8px">';
-    if (cd.logo) {
-      html += '<img src="' + cd.logo + '" alt="' + cd.name + '" style="max-height:32px;max-width:90px;object-fit:contain" onerror="fallbackLogo(this,\'' + cd.slug + '\')">';
-    }
-    html += '<span style="' + (cd.logo ? 'display:none' : '') + ';font-size:11px;font-weight:800;color:' + cd.color + '">' + cd.name.toUpperCase() + '</span>';
-    html += '</div>';
-    html += '<div style="font-size:11px;color:' + cd.color + ';font-weight:700;margin-bottom:6px">' + cd.name.toUpperCase() + '</div>';
-    html += '<div style="font-size:1.1rem;font-weight:700;color:' + cd.color + '">KES ' + Number(v * cd.rate).toLocaleString('en-KE', {minimumFractionDigits:0, maximumFractionDigits:0}) + '</div>';
-    html += '<div style="font-size:11px;color:var(--text-muted);margin-bottom:10px">@ ' + (cd.rate * 100) + '%</div>';
-    html += '<div style="font-size:11px;font-weight:700;color:white;background:' + cd.color + ';border-radius:5px;padding:5px 0">View Quote &#8599;</div>';
-    html += '</div>';
-  });
-
-  var compareColor = '#D0021B';
-  html += '<div class="preview-card" onclick="guestGuard(function(){ openQuotePage(\'ALL\'); })" style="background:white;border:1.5px solid ' + compareColor + ';border-radius:var(--radius);padding:16px 14px;text-align:center;cursor:pointer;transition:box-shadow .2s,transform .15s">';
-  html += '<div style="height:36px;display:flex;align-items:center;justify-content:center;margin-bottom:8px">';
-  html += '<span style="font-size:18px">&#128202;</span></div>';
-  html += '<div style="font-size:11px;color:' + compareColor + ';font-weight:700;margin-bottom:6px">COMPARE ALL</div>';
-  html += '<div style="font-size:1.1rem;font-weight:700;color:' + compareColor + '">' + companies.length + ' Quotes</div>';
-  html += '<div style="font-size:11px;color:var(--text-muted);margin-bottom:10px">All insurers</div>';
-  html += '<div style="font-size:11px;font-weight:700;color:white;background:' + compareColor + ';border-radius:5px;padding:5px 0">Compare &#8599;</div>';
-  html += '</div>';
-
-  grid.innerHTML = html;
 }
 
 function guestGuard(callback) {
@@ -2076,7 +2038,7 @@ function guestGuard(callback) {
     var match = callback.toString().match(/openQuotePage\('([^']+)'(?:,\s*'([^']*)')?\)/);
     if (match && match[1] !== 'ALL') {
       try {
-        var type = match[2] !== undefined ? match[2] : (document.getElementById('f-reg-private') ? 'private' : (document.getElementById('f-reg-psv') ? 'psv' : ''));
+        var type = match[2] !== undefined ? match[2] : (document.getElementById('f-reg-vt') ? 'vt' : (document.getElementById('f-reg-private') ? 'private' : (document.getElementById('f-reg-psv') ? 'psv' : '')));
         var d = typeof getFormData === 'function' ? getFormData(type) : {};
         sessionStorage.setItem('pending_quote_company', match[1]);
         sessionStorage.setItem('micQuoteData', JSON.stringify({
@@ -2090,6 +2052,8 @@ function guestGuard(callback) {
     if (window.MIC_GUEST) {
       if (match && match[1] !== 'ALL') {
         sessionStorage.setItem('auth_redirect', '/dashboard?pending_quote=1');
+        var alpineEl = document.querySelector('#authModal');
+        if (alpineEl && alpineEl.__x) { alpineEl.__x.$data.redirectTo = '/dashboard?pending_quote=1'; }
         openAuthModal();
         return;
       }
@@ -2115,6 +2079,28 @@ function fallbackLogo(el, slug) {
 }
 </script>
 <script src="{{ asset('js/home.js') }}"></script>
+<script>
+// Init value input listeners for suffixed forms
+['psv', 'private', 'vt'].forEach(function(sfx) {
+  if (typeof initValueInput === 'function') initValueInput(sfx);
+});
+
+// Wire up passenger inputs to trigger live premium preview
+function wirePaxInput(sfx) {
+  var el = document.getElementById('f-pax' + (sfx ? '-' + sfx : ''));
+  if (el) {
+    el.addEventListener('input', function() {
+      if (typeof updatePremiumPreview === 'function') updatePremiumPreview(sfx);
+    });
+    el.addEventListener('change', function() {
+      if (typeof updatePremiumPreview === 'function') updatePremiumPreview(sfx);
+    });
+  }
+}
+wirePaxInput('psv');
+wirePaxInput('vt');
+wirePaxInput('');    // main form
+</script>
 @yield('scripts')
 </body>
 </html>

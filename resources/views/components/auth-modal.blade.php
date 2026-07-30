@@ -54,7 +54,7 @@
     }).then(function(response) {
       return response.json().then(function(data) {
         if (response.ok) {
-          window.location.href = self.redirectTo;
+          window.location.href = data.redirect || self.redirectTo;
         } else {
           self.loading = false;
           if (data.errors) {
@@ -94,7 +94,7 @@
     }).then(function(response) {
       return response.json().then(function(data) {
         if (response.ok) {
-          window.location.href = self.redirectTo;
+          window.location.href = data.redirect || self.redirectTo;
         } else {
           self.loading = false;
           if (data.errors) {

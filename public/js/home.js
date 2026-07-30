@@ -275,7 +275,7 @@ function guestGuard(callback) {
     var match = callback.toString().match(/openQuotePage\('([^']+)'(?:,\s*'([^']*)')?\)/);
     if (match && match[1] !== 'ALL') {
       try {
-        var type = match[2] !== undefined ? match[2] : (document.getElementById('f-reg-private') ? 'private' : (document.getElementById('f-reg-psv') ? 'psv' : ''));
+        var type = match[2] !== undefined ? match[2] : (document.getElementById('f-reg-vt') ? 'vt' : (document.getElementById('f-reg-private') ? 'private' : (document.getElementById('f-reg-psv') ? 'psv' : '')));
         var d = typeof getFormData === 'function' ? getFormData(type) : {};
         sessionStorage.setItem('pending_quote_company', match[1]);
         sessionStorage.setItem('micQuoteData', JSON.stringify({
@@ -467,7 +467,7 @@ function genQuoteNum(prefix){
 
 function openQuotePage(company, type) {
   if (!type) {
-    type = document.getElementById('f-reg-private') ? 'private' : (document.getElementById('f-reg-psv') ? 'psv' : '');
+    type = document.getElementById('f-reg-vt') ? 'vt' : (document.getElementById('f-reg-private') ? 'private' : (document.getElementById('f-reg-psv') ? 'psv' : ''));
   }
   var s = type ? '-' + type : '';
   var salutation = (document.getElementById('f-salutation' + s) || {}).value || '';

@@ -315,8 +315,8 @@ class PublicController extends Controller
             'quotation' => [
                 'id' => $quotation->id,
                 'quotation_number' => $quotation->quotation_number,
-                'premium' => $basicPremium,
-                'total_premium' => $total,
+                'premium' => $result['basic_premium'],
+                'total_premium' => $result['total_premium'],
             ],
         ]);
     }

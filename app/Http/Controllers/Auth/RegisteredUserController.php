@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Auth;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use Illuminate\Auth\Events\Registered;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -30,7 +31,7 @@ class RegisteredUserController extends Controller
      *
      * @throws ValidationException
      */
-    public function store(Request $request): RedirectResponse
+    public function store(Request $request): RedirectResponse|JsonResponse
     {
         $request->validate([
             'first_name' => ['required', 'string', 'max:255'],
@@ -72,6 +73,11 @@ class RegisteredUserController extends Controller
             }
         } catch (\Exception $e) {
             // silently fail — weather will default to Nairobi
+        }
+
+        if ($request->wantsJson()) {
+            $redirect = $request->input('redirect_to', route('dashboard'));
+            return response()->json(['redirect' => $redirect]);
         }
 
         if ($redirectTo = $request->input('redirect_to')) {

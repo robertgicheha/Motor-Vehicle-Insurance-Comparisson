@@ -17,7 +17,7 @@
             </div>
         </div>
 
-        <div class="mt-6 grid grid-cols-2 md:grid-cols-5 gap-3">
+        <div class="mt-6 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-3">
             <a href="{{ route('admin.stickers.index') }}" class="kpi-card p-4 block hover:opacity-80 transition">
                 <div class="accent-bar"></div>
                 <p class="kpi-eyebrow">Total Generated</p>
@@ -42,17 +42,79 @@
                 <p class="kpi-value mt-1">{{ number_format($stats['this_month']) }}</p>
                 <span class="kpi-delta neutral mt-1.5 inline-block">Monthly total</span>
             </a>
-            <a href="{{ route('admin.reports.index', ['tab' => 'stickers']) }}" class="kpi-card p-4 block hover:opacity-80 transition">
-                <div class="accent-bar" style="background:linear-gradient(90deg,#fb7185,#fda4af)"></div>
-                <p class="kpi-eyebrow">Total Downloads</p>
-                <p class="kpi-value mt-1">{{ number_format($stats['total_downloads']) }}</p>
-                <span class="kpi-delta down mt-1.5 inline-block">All downloads</span>
+            <a href="{{ route('admin.stickers.settings') }}" class="kpi-card p-4 block hover:opacity-80 transition">
+                <div class="accent-bar" style="background:linear-gradient(90deg,#34d399,#6ee7b7)"></div>
+                <p class="kpi-eyebrow">Emails Sent</p>
+                <p class="kpi-value mt-1">{{ number_format($stats['emails_sent'] ?? 0) }}</p>
+                <span class="kpi-delta up mt-1.5 inline-block">To underwriters</span>
+            </a>
+            <a href="{{ route('admin.stickers.settings') }}" class="kpi-card p-4 block hover:opacity-80 transition">
+                <div class="accent-bar" style="background:linear-gradient(90deg,#f87171,#fca5a5)"></div>
+                <p class="kpi-eyebrow">Emails Failed</p>
+                <p class="kpi-value mt-1">{{ number_format($stats['emails_failed'] ?? 0) }}</p>
+                <span class="kpi-delta down mt-1.5 inline-block">Needs follow-up</span>
+            </a>
+            <a href="{{ route('admin.stickers.tracker') }}" class="kpi-card p-4 block hover:opacity-80 transition">
+                <div class="accent-bar" style="background:linear-gradient(90deg,#fbbf24,#fcd34d)"></div>
+                <p class="kpi-eyebrow">Pending Response</p>
+                <p class="kpi-value mt-1">{{ number_format($stats['pending_responses'] ?? 0) }}</p>
+                <span class="kpi-delta neutral mt-1.5 inline-block">Awaiting underwriter</span>
             </a>
         </div>
     </div>
 
-    @if($byCompany->count() > 0)
+    @if(($recentEmails ?? collect())->count() > 0)
         <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+            <div class="px-5 py-4 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between">
+                <div>
+                    <h2 class="text-xs font-semibold text-gray-800 dark:text-white">Recent Email Activity</h2>
+                    <p class="text-[10px] text-gray-400 mt-0.5">Last 10 emails sent to underwriters</p>
+                </div>
+                <a href="{{ route('admin.stickers.settings') }}" class="text-[10px] font-medium text-blue-600 hover:text-blue-800">View All Logs</a>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full text-xs">
+                    <thead>
+                        <tr class="bg-gray-50 dark:bg-gray-700/40">
+                            <th class="px-5 py-2.5 text-left font-semibold text-gray-400 uppercase tracking-wider text-[10px]">Sticker</th>
+                            <th class="px-5 py-2.5 text-left font-semibold text-gray-400 uppercase tracking-wider text-[10px]">Recipient</th>
+                            <th class="px-5 py-2.5 text-left font-semibold text-gray-400 uppercase tracking-wider text-[10px]">Subject</th>
+                            <th class="px-5 py-2.5 text-center font-semibold text-gray-400 uppercase tracking-wider text-[10px]">Status</th>
+                            <th class="px-5 py-2.5 text-left font-semibold text-gray-400 uppercase tracking-wider text-[10px]">Sent At</th>
+                            <th class="px-5 py-2.5 text-left font-semibold text-gray-400 uppercase tracking-wider text-[10px]">Sent By</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
+                        @forelse($recentEmails as $email)
+                            <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/30">
+                                <td class="px-5 py-2.5 font-mono text-[10px] font-bold text-gray-800 dark:text-white">{{ $email->sticker->sticker_number }}</td>
+                                <td class="px-5 py-2.5 text-gray-500 dark:text-gray-400">{{ $email->recipient }}</td>
+                                <td class="px-5 py-2.5 text-gray-500 dark:text-gray-400 max-w-xs truncate">{{ $email->subject }}</td>
+                                <td class="px-5 py-2.5 text-center">
+                                    @php
+                                        $color = match($email->status) {
+                                            'sent', 'delivered', 'opened' => 'bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400',
+                                            'failed', 'bounced' => 'bg-red-50 text-red-700 dark:bg-red-900/30 dark:text-red-400',
+                                            default => 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400',
+                                        };
+                                    @endphp
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium {{ $color }}">
+                                        {{ ucfirst($email->status) }}
+                                    </span>
+                                </td>
+                                <td class="px-5 py-2.5 text-gray-500 dark:text-gray-400">{{ $email->sent_at?->format('d M Y, H:i') ?? '-' }}</td>
+                                <td class="px-5 py-2.5 text-gray-500 dark:text-gray-400">{{ $email->triggeredBy->name ?? 'System' }}</td>
+                            </tr>
+                        @empty
+                            <tr><td colspan="6" class="px-5 py-6 text-center text-xs text-gray-400">No email activity yet.</td></tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    @endif
+
+    <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
             <div class="px-5 py-4 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between">
                 <div>
                     <h2 class="text-xs font-semibold text-gray-800 dark:text-white">Performance by Company</h2>
@@ -107,7 +169,7 @@
                 </table>
             </div>
         </div>
-    @endif
+    </div>
 
     <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
         <div class="px-5 py-4 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between">
@@ -121,11 +183,12 @@
                 <thead>
                     <tr class="bg-gray-50 dark:bg-gray-700/40">
                         <th class="px-5 py-2.5 text-left font-semibold text-gray-400 uppercase tracking-wider text-[10px]">Number</th>
-                        <th class="px-5 py-2.5 text-left font-semibold text-gray-400 uppercase tracking-wider text-[10px]">Company</th>
                         <th class="px-5 py-2.5 text-left font-semibold text-gray-400 uppercase tracking-wider text-[10px]">Customer</th>
                         <th class="px-5 py-2.5 text-left font-semibold text-gray-400 uppercase tracking-wider text-[10px]">Vehicle</th>
+                        <th class="px-5 py-2.5 text-left font-semibold text-gray-400 uppercase tracking-wider text-[10px]">Company</th>
                         <th class="px-5 py-2.5 text-right font-semibold text-gray-400 uppercase tracking-wider text-[10px]">Premium</th>
                         <th class="px-5 py-2.5 text-center font-semibold text-gray-400 uppercase tracking-wider text-[10px]">Status</th>
+                        <th class="px-5 py-2.5 text-center font-semibold text-gray-400 uppercase tracking-wider text-[10px]">Email Status</th>
                         <th class="px-5 py-2.5 text-center font-semibold text-gray-400 uppercase tracking-wider text-[10px]">Downloads</th>
                         <th class="px-5 py-2.5 text-center font-semibold text-gray-400 uppercase tracking-wider text-[10px]">Via</th>
                         <th class="px-5 py-2.5 text-left font-semibold text-gray-400 uppercase tracking-wider text-[10px]">Date</th>
@@ -136,14 +199,33 @@
                     @forelse($stickers as $sticker)
                         <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/30">
                             <td class="px-5 py-2.5 font-mono text-[10px] font-bold text-gray-800 dark:text-white">{{ $sticker->sticker_number }}</td>
-                            <td class="px-5 py-2.5 font-medium text-gray-800 dark:text-white">{{ $sticker->company->name }}</td>
                             <td class="px-5 py-2.5 text-gray-500 dark:text-gray-400">{{ $sticker->customer_name }}</td>
                             <td class="px-5 py-2.5 text-gray-500 dark:text-gray-400">{{ $sticker->car_make }} {{ $sticker->car_model }} ({{ $sticker->car_year }})</td>
+                            <td class="px-5 py-2.5 font-medium text-gray-800 dark:text-white">{{ $sticker->company->name }}</td>
                             <td class="px-5 py-2.5 text-right font-semibold text-gray-800 dark:text-white">KES {{ number_format($sticker->premium) }}</td>
                             <td class="px-5 py-2.5 text-center">
-                                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium {{ $sticker->status === 'active' ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400' : 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400' }}">
+                                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium {{ $sticker->status === 'completed' ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400' : ($sticker->status === 'issued' ? 'bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400' : ($sticker->status === 'pending' ? 'bg-amber-50 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400' : 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400')) }}">
                                     {{ ucfirst($sticker->status) }}
                                 </span>
+                            </td>
+                            <td class="px-5 py-2.5 text-center">
+                                @if($sticker->last_email_status)
+                                    @php
+                                        $emailColor = match($sticker->last_email_status) {
+                                            'sent', 'delivered', 'opened' => 'bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400',
+                                            'failed', 'bounced' => 'bg-red-50 text-red-700 dark:bg-red-900/30 dark:text-red-400',
+                                            default => 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400',
+                                        };
+                                    @endphp
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium {{ $emailColor }}">
+                                        {{ ucfirst($sticker->last_email_status) }}
+                                    </span>
+                                    @if($sticker->email_sent_at)
+                                        <span class="block text-[10px] text-gray-400">{{ $sticker->email_sent_at->format('d M H:i') }}</span>
+                                    @endif
+                                @else
+                                    <span class="text-[10px] text-gray-400">Not sent</span>
+                                @endif
                             </td>
                             <td class="px-5 py-2.5 text-center">
                                 <span class="font-semibold text-gray-800 dark:text-white">{{ $sticker->download_count }}</span>
@@ -162,7 +244,7 @@
                             </td>
                         </tr>
                     @empty
-                        <tr><td colspan="10" class="px-5 py-10 text-center text-xs text-gray-400">No certificates generated yet.</td></tr>
+                        <tr><td colspan="11" class="px-5 py-10 text-center text-xs text-gray-400">No certificates generated yet.</td></tr>
                     @endforelse
                 </tbody>
             </table>

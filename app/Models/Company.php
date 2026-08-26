@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class Company extends Model
 {
-    protected $fillable = ['name', 'slug', 'description', 'logo', 'is_active', 'company_type', 'min_sum_insured_psv', 'min_sum_insured_private'];
+    protected $fillable = ['name', 'slug', 'description', 'logo', 'is_active', 'company_type', 'min_sum_insured_psv', 'min_sum_insured_private', 'underwriter_email', 'claims_email', 'sticker_notification_emails'];
 
     protected function casts(): array
     {

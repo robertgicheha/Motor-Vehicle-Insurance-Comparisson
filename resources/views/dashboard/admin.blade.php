@@ -1,50 +1,30 @@
 <x-app-layout>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
-  
+
     <div class="db-root fade-in">
       <div class="db-layout">
       <div class="db-main-content">
-      <h2 class="sr-only">MIC Global Risks Motor Insurance Admin Dashboard</h2>
+      <h2 class="sr-only">MIC Admin Dashboard</h2>
 
       <div class="db-top-bar">
         <div class="db-greeting">
-          <h1>{{ $greeting }}, {{ auth()->user()->first_name ?: auth()->user()->name }}!</h1>
+          <h1>{{ $greeting ?? 'Welcome' }}, {{ auth()->user()->first_name ?: auth()->user()->name }}!</h1>
           <p>Admin Dashboard &mdash; Motor Insurance Portal</p>
         </div>
-         @if(isset($weather))
-        @php
-            $weatherEmoji = match(true) {
-                str_contains(strtolower($weather['condition']), 'clear')        => '☀️',
-                str_contains(strtolower($weather['condition']), 'cloud')        => str_contains($weather['icon'], '02') ? '⛅' : '☁️',
-                str_contains(strtolower($weather['condition']), 'rain')         => '🌧️',
-                str_contains(strtolower($weather['condition']), 'drizzle')      => '🌦️',
-                str_contains(strtolower($weather['condition']), 'thunderstorm') => '⛈️',
-                str_contains(strtolower($weather['condition']), 'snow')         => '❄️',
-                str_contains(strtolower($weather['condition']), 'fog')          => '🌫️',
-                str_contains(strtolower($weather['condition']), 'mist')         => '🌫️',
-                str_contains(strtolower($weather['condition']), 'haze')         => '🌫️',
-                str_contains(strtolower($weather['condition']), 'smoke')        => '🌫️',
-                str_contains(strtolower($weather['condition']), 'dust')         => '🌪️',
-                str_contains(strtolower($weather['condition']), 'sand')         => '🌪️',
-                str_contains(strtolower($weather['condition']), 'tornado')      => '🌪️',
-                str_contains(strtolower($weather['condition']), 'squall')       => '💨',
-                default                                                          => '🌤️',
-            };
-        @endphp
         <div class="db-weather" x-data="weatherWidget()" x-init="init()">
-          <span style="font-size:36px;line-height:1;display:flex;align-items:center;" x-html="emoji">@isset($weatherEmoji){{ $weatherEmoji }}@endisset</span>
+          <span style="font-size:36px;line-height:1;display:flex;align-items:center;" x-html="emoji">🌤️</span>
           <div>
             <p class="temp">
-              <span x-text="temp">@isset($weather['temperature']){{ $weather['temperature'] }}@endisset</span>°C
-              <span style="font-size:11px;font-weight:500;color:#7a8baa">Feels <span x-text="feels">@isset($weather['feels_like']){{ $weather['feels_like'] }}@endisset</span>°C</span>
+              <span x-text="temp">--</span>°C
+              <span style="font-size:11px;font-weight:500;color:#7a8baa">Feels <span x-text="feels">--</span>°C</span>
             </p>
             <p class="cond">
-              <span x-text="description">@isset($weather['description']){{ $weather['description'] }}@endisset</span> &middot; <span x-text="city">@isset($weather['city']){{ $weather['city'] }}@endisset</span>
-              &middot; <span x-text="humidity">@isset($weather['humidity']){{ $weather['humidity'] }}@endisset</span>% RH
+              <span x-text="description">Loading...</span> &middot; <span x-text="city">Nairobi</span>
+              &middot; <span x-text="humidity">--</span>% RH
               <span x-show="wind" x-text="' · ' + wind + ' m/s wind'"></span>
             </p>
             <p style="font-size:10px;color:#7a8baa;margin:2px 0 0;font-weight:500;">
-              <span x-text="localTime">@isset($weather['local_time']){{ $weather['local_time'] }}@endisset</span>
+              <span x-text="localTime"></span>
               <span x-show="sunrise" x-text="' · ☀️ ' + sunrise"></span>
               <span x-show="sunset" x-text="'  🌙 ' + sunset"></span>
               <span x-show="uvi" x-text="' · UV ' + uvi"></span>
@@ -54,7 +34,6 @@
             </template>
           </div>
         </div>
-        @endif
       </div>
 
       {{-- ─── PROFILE COMPLETION ALERT ─────────────────────────────────────── --}}
@@ -80,106 +59,191 @@
 
       <div class="db-section-label">Key Metrics</div>
       <div class="db-kpi-grid">
-        <div class="db-kpi" style="--accent:#7c3aed;--icon-bg:#ede9fe">
+        <a href="{{ route('admin.users.index') }}" class="db-kpi" style="--accent:#1756c8;--icon-bg:#e8f0fc;cursor:pointer;text-decoration:none;">
+          <div class="db-kpi-icon"><i class="ti ti-users" aria-hidden="true"></i></div>
+          <div class="db-kpi-label">Total Users</div>
+          <div class="db-kpi-value">{{ $totalUsers ?? 0 }}</div>
+          <div class="db-kpi-trend trend-neutral"><i class="ti ti-users" style="font-size:12px"></i> {{ $activeUsers ?? 0 }} active</div>
+        </a>
+
+        <a href="{{ route('quotations.index') }}" class="db-kpi" style="--accent:#0f7a65;--icon-bg:#e8f5f0;cursor:pointer;text-decoration:none;">
           <div class="db-kpi-icon"><i class="ti ti-file-description" aria-hidden="true"></i></div>
           <div class="db-kpi-label">Total Quotations</div>
-          <div class="db-kpi-value">{{ $totalQuotations }}</div>
-          <div class="db-kpi-trend trend-up"><i class="ti ti-trending-up" style="font-size:12px"></i> +12% vs last month</div>
-        </div>
-        <div class="db-kpi" style="--accent:#d4860e;--icon-bg:#fef3c7">
-          <div class="db-kpi-icon"><i class="ti ti-coins" aria-hidden="true"></i></div>
-          <div class="db-kpi-label">Total Premium (KES)</div>
-          <div class="db-kpi-value" style="font-size:20px">{{ number_format($totalPremium) }}</div>
-          <div class="db-kpi-trend trend-up"><i class="ti ti-trending-up" style="font-size:12px"></i> +5.3% growth</div>
-        </div>
-      </div>
+          <div class="db-kpi-value">{{ $totalQuotations ?? 0 }}</div>
+          <div class="db-kpi-trend trend-up"><i class="ti ti-trending-up" style="font-size:12px"></i> +{{ $todayQuotations ?? 0 }} today</div>
+        </a>
 
-      <div class="db-kpi-grid" style="margin-top:14px">
-        <div class="db-kpi" style="--accent:#c0392b;--icon-bg:#fdeaea">
-          <div class="db-kpi-icon"><i class="ti ti-car" aria-hidden="true"></i></div>
-          <div class="db-kpi-label">Vehicles Insured</div>
-          <div class="db-kpi-value">{{ $totalQuotations }}</div>
-          <div class="db-kpi-sub">Across all policies</div>
-        </div>
-        <div class="db-kpi" style="--accent:#0f7a65;--icon-bg:#e1f5ee">
+        <a href="{{ route('admin.claims.index') }}" class="db-kpi" style="--accent:#d4860e;--icon-bg:#fef5e7;cursor:pointer;text-decoration:none;">
+          <div class="db-kpi-icon"><i class="ti ti-article" aria-hidden="true"></i></div>
+          <div class="db-kpi-label">Total Claims</div>
+          <div class="db-kpi-value">{{ $totalClaims ?? 0 }}</div>
+          <div class="db-kpi-sub">All submitted claims</div>
+        </a>
+
+        <a href="{{ route('admin.stickers.index') }}" class="db-kpi" style="--accent:#c0392b;--icon-bg:#fce8e8;cursor:pointer;text-decoration:none;">
           <div class="db-kpi-icon"><i class="ti ti-ticket" aria-hidden="true"></i></div>
-          <div class="db-kpi-label">Stickers Issued</div>
-          <div class="db-kpi-value">{{ $totalQuotations }}</div>
-          <div class="db-kpi-trend trend-neutral"><i class="ti ti-minus" style="font-size:12px"></i> Stable</div>
-        </div>
-        <div class="db-kpi" style="--accent:#1756c8;--icon-bg:#e8f0fc">
-          <div class="db-kpi-icon"><i class="ti ti-mail-forward" aria-hidden="true"></i></div>
-          <div class="db-kpi-label">Emails Dispatched</div>
-          <div class="db-kpi-value">{{ $totalQuotations }}</div>
-          <div class="db-kpi-sub">PDFs attached</div>
-        </div>
-        <div class="db-kpi" style="--accent:#7c3aed;--icon-bg:#ede9fe">
-          <div class="db-kpi-icon"><i class="ti ti-shield-check" aria-hidden="true"></i></div>
-          <div class="db-kpi-label">Conversion Rate</div>
-          <div class="db-kpi-value">68%</div>
-          <div class="db-kpi-trend trend-up"><i class="ti ti-trending-up" style="font-size:12px"></i> +3% this week</div>
-        </div>
+          <div class="db-kpi-label">Stickers / Certificates</div>
+          <div class="db-kpi-value">{{ $totalStickers ?? 0 }}</div>
+          <div class="db-kpi-sub">Across all policies</div>
+        </a>
       </div>
-
-      
 
       <div class="db-section-label">Period Breakdown</div>
       <div class="db-period-grid">
-        <div class="db-period-card">
+        <a href="{{ route('quotations.index') }}" class="db-period-card" style="cursor:pointer;text-decoration:none;">
           <div class="db-period-label">Today</div>
-          <div class="db-period-value">{{ $todayQuotations }}</div>
+          <div class="db-period-value">{{ $todayQuotations ?? 0 }}</div>
           <div class="db-period-desc">quotations generated</div>
-        </div>
-        <div class="db-period-card amber">
+        </a>
+        <a href="{{ route('quotations.index') }}" class="db-period-card amber" style="cursor:pointer;text-decoration:none;">
           <div class="db-period-label">This Week</div>
-          <div class="db-period-value">{{ $weekQuotations }}</div>
+          <div class="db-period-value">{{ $weekQuotations ?? 0 }}</div>
           <div class="db-period-desc">quotations generated</div>
-        </div>
-        <div class="db-period-card teal">
+        </a>
+        <a href="{{ route('quotations.index') }}" class="db-period-card teal" style="cursor:pointer;text-decoration:none;">
           <div class="db-period-label">This Month</div>
-          <div class="db-period-value">{{ $monthQuotations }}</div>
+          <div class="db-period-value">{{ $monthQuotations ?? 0 }}</div>
           <div class="db-period-desc">quotations generated</div>
-        </div>
+        </a>
       </div>
+
+      <div class="db-section-label">Quick Quote</div>
+      <div style="margin-bottom:8px">@include('dashboard.partials.quick-quote')</div>
 
       <div class="db-section-label">Quick Actions</div>
       <div class="db-kpi-grid" style="margin-top:0">
-        <a href="{{ route('admin.reports.index') }}" class="db-kpi" style="--accent:#0f7a65;--icon-bg:#e1f5ee;cursor:pointer;text-decoration:none;display:flex;flex-direction:column;">
-          <div class="db-kpi-icon"><i class="ti ti-report" aria-hidden="true"></i></div>
-          <div class="db-kpi-label" style="margin-bottom:0">Generate Reports</div>
-          <div class="db-kpi-sub">Export quotation data</div>
+        <a href="{{ route('admin.users.create') }}" class="db-kpi" style="--accent:#1756c8;--icon-bg:#e8f0fc;cursor:pointer;text-decoration:none;display:flex;flex-direction:column;">
+          <div class="db-kpi-icon"><i class="ti ti-user-plus" aria-hidden="true"></i></div>
+          <div class="db-kpi-label" style="margin-bottom:0">Create User</div>
+          <div class="db-kpi-sub">Email credentials to new user</div>
         </a>
-        <a href="{{ route('quotations.index') }}" class="db-kpi" style="--accent:#7c3aed;--icon-bg:#ede9fe;cursor:pointer;text-decoration:none;display:flex;flex-direction:column;">
+        <a href="{{ route('claims.create') }}" class="db-kpi" style="--accent:#d4860e;--icon-bg:#fef5e7;cursor:pointer;text-decoration:none;display:flex;flex-direction:column;">
+          <div class="db-kpi-icon"><i class="ti ti-file-plus" aria-hidden="true"></i></div>
+          <div class="db-kpi-label" style="margin-bottom:0">Log Claim</div>
+          <div class="db-kpi-sub">For you, a user or customer</div>
+        </a>
+        <a href="{{ route('quotations.index') }}" class="db-kpi" style="--accent:#0f7a65;--icon-bg:#e8f5f0;cursor:pointer;text-decoration:none;display:flex;flex-direction:column;">
           <div class="db-kpi-icon"><i class="ti ti-file-description" aria-hidden="true"></i></div>
           <div class="db-kpi-label" style="margin-bottom:0">View Quotations</div>
           <div class="db-kpi-sub">Browse all quotations</div>
         </a>
+        <a href="{{ route('stickers.issue') }}" class="db-kpi" style="--accent:#c0392b;--icon-bg:#fdeaea;cursor:pointer;text-decoration:none;display:flex;flex-direction:column;">
+          <div class="db-kpi-icon"><i class="ti ti-ticket" aria-hidden="true"></i></div>
+          <div class="db-kpi-label" style="margin-bottom:0">Issue Certificate</div>
+          <div class="db-kpi-sub">KYC upload & sticker issuance</div>
+        </a>
+        <a href="{{ route('admin.email-settings.index') }}" class="db-kpi" style="--accent:#7c3aed;--icon-bg:#ede9fe;cursor:pointer;text-decoration:none;display:flex;flex-direction:column;">
+          <div class="db-kpi-icon"><i class="ti ti-mail-forward" aria-hidden="true"></i></div>
+          <div class="db-kpi-label" style="margin-bottom:0">Email Templates</div>
+          <div class="db-kpi-sub">Edit inbound / outbound emails</div>
+        </a>
+        <a href="{{ route('admin.settings.index') }}" class="db-kpi" style="--accent:#c0392b;--icon-bg:#fdeaea;cursor:pointer;text-decoration:none;display:flex;flex-direction:column;">
+          <div class="db-kpi-icon"><i class="ti ti-settings" aria-hidden="true"></i></div>
+          <div class="db-kpi-label" style="margin-bottom:0">Mail Settings</div>
+          <div class="db-kpi-sub">SMTP &amp; delivery configuration</div>
+        </a>
+        <a href="{{ route('admin.reports.index') }}" class="db-kpi" style="--accent:#1E40AF;--icon-bg:#e0edff;cursor:pointer;text-decoration:none;display:flex;flex-direction:column;">
+          <div class="db-kpi-icon"><i class="ti ti-report" aria-hidden="true"></i></div>
+          <div class="db-kpi-label" style="margin-bottom:0">Generate Reports</div>
+          <div class="db-kpi-sub">PDF / Excel / CSV exports</div>
+        </a>
       </div>
 
       <div class="db-section-label">Analytics</div>
-      <div class="db-chart-grid">
-        <div class="db-card" style="max-width:360px">
+      <div class="db-chart-grid-3col">
+        <div class="db-card">
           <div class="db-card-header"><span><span class="dot"></span>Quotations by Company</span></div>
           <canvas id="companyChart" height="200"></canvas>
         </div>
-        <div class="db-card" style="max-width:480px">
+        <div class="db-card">
           <div class="db-card-header"><span><span class="dot"></span>Monthly Trend</span></div>
           <canvas id="monthlyChart" height="200"></canvas>
         </div>
+        <div class="db-card">
+          <div class="db-card-header"><span><span class="dot"></span>Total Distribution of Quotations</span></div>
+          <canvas id="distributionChart" height="200"></canvas>
+        </div>
+        <div class="db-card">
+          <div class="db-card-header"><span><span class="dot"></span>Most Subscribed Premium</span></div>
+          <canvas id="premiumChart" height="200"></canvas>
+        </div>
+        <div class="db-card">
+          <div class="db-card-header"><span><span class="dot"></span>Recent Quotations</span></div>
+          <div class="db-table-wrap">
+            <table class="db-table">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>User</th>
+                  <th>Company</th>
+                  <th>Vehicle</th>
+                  <th>Premium (KES)</th>
+                  <th>Status</th>
+                  <th>Date</th>
+                </tr>
+              </thead>
+              <tbody>
+                @forelse($recentQuotations ?? [] as $q)
+                <tr>
+                  <td><a href="{{ route('quotations.show', $q) }}" style="color:#1756c8;font-weight:700">{{ $q->quotation_number }}</a></td>
+                  <td>{{ $q->user->name }}</td>
+                  <td>{{ $q->company->name }}</td>
+                  <td>{{ $q->car_make }} {{ $q->car_model }}</td>
+                  <td>{{ number_format($q->total_premium) }}</td>
+                  <td>
+                    <span class="db-badge badge-active">{{ ucfirst($q->status) }}</span>
+                  </td>
+                  <td>{{ $q->created_at->format('d M Y') }}</td>
+                </tr>
+                @empty
+                <tr>
+                  <td colspan="7" style="padding:32px;text-align:center;color:#7a8baa;font-size:12px">No quotations yet.</td>
+                </tr>
+                @endforelse
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div class="db-card">
+          <div class="db-card-header"><span><span class="dot"></span>Companies Breakdown</span></div>
+          <div class="db-company-grid">
+            @foreach($companies ?? [] as $company)
+            <div class="db-company-card">
+              <div class="db-company-name">{{ $company->name }}</div>
+              <div class="db-company-label">Total Quotations</div>
+              <div class="db-company-count">{{ $company->quotations_count }}</div>
+              <div class="db-progress">
+                @php $maxCount = ($companies ?? collect())->max('quotations_count') ?: 1; @endphp
+                <div class="db-progress-fill" style="width:{{ ($company->quotations_count / $maxCount) * 100 }}%"></div>
+              </div>
+            </div>
+            @endforeach
+          </div>
+        </div>
       </div>
 
-      <div class="db-section-label">Activity &amp; Alerts</div>
+      <div class="db-section-label">
+        Activity &amp; Alerts
+        <span style="float:right;display:inline-flex;gap:6px;">
+          <label class="db-auto-refresh" style="display:inline-flex;align-items:center;gap:4px;font-size:10px;color:#7a8baa;cursor:pointer;">
+            <input type="checkbox" id="dbActivityAutoRefresh" style="accent-color:#1756c8"> Auto-refresh (30s)
+          </label>
+          <button type="button" id="dbActivityRefresh" style="border:1px solid #d5deeb;background:#fff;border-radius:6px;padding:2px 10px;font-size:11px;font-weight:600;color:#1756c8;cursor:pointer;">
+            <i class="ti ti-refresh" style="font-size:12px"></i> Refresh
+          </button>
+        </span>
+      </div>
       <div class="db-chart-grid">
         <div class="db-card">
           <div class="db-card-header"><span><span class="dot"></span>System Activity</span></div>
           <div class="db-activity-list">
-            @forelse($allActivities as $a)
+            @forelse($allActivities ?? [] as $a)
             @php
               $descLower = strtolower($a->description ?? $a->action);
               $dotColor = str_contains($descLower, 'quotation') ? '#1756c8'
                 : (str_contains($descLower, 'sticker') ? '#0f7a65'
                 : (str_contains($descLower, 'user') ? '#7c3aed'
-                : (str_contains($descLower, 'rate') || str_contains($descLower, 'company') ? '#d4860e'
+                : (str_contains($descLower, 'claim') ? '#d4860e'
                 : '#c0392b')));
             @endphp
             <div class="db-activity-item">
@@ -199,30 +263,89 @@
             </div>
             @endforelse
           </div>
-          <a href="{{ route('admin.audit.activity') }}" style="display:inline-block;margin-top:10px;font-size:10px;font-weight:600;color:#1756c8;text-decoration:none;">View all activity →</a>
         </div>
         <div class="db-card">
-          <div class="db-card-header"><span><span class="dot"></span>My Activity</span></div>
+          <div class="db-card-header"><span><span class="dot"></span>Notifications &amp; Alerts</span></div>
           <div class="db-activity-list">
-            @forelse($myActivities as $a)
-            <div class="db-activity-item">
-              <div class="db-activity-dot" style="background:#7c3aed"></div>
+            @forelse($unreadNotifications ?? [] as $n)
+            <a href="{{ route('admin.notifications.show', $n->id) }}" class="db-activity-item" style="text-decoration:none;color:inherit;">
+              <div class="db-activity-dot" style="background:#3b82f6"></div>
               <div>
-                <div class="db-activity-text">{{ $a->description ?? $a->action }}</div>
-                <div class="db-activity-time">{{ $a->created_at->diffForHumans() }}</div>
+                <div class="db-activity-text">{{ $n->data['message'] ?? $n->data['action'] ?? 'Notification' }}</div>
+                <div class="db-activity-time">{{ $n->created_at->diffForHumans() }}</div>
+              </div>
+            </a>
+            @empty
+            <div class="db-activity-item">
+              <div class="db-activity-dot" style="background:#7a8baa"></div>
+              <div>
+                <div class="db-activity-text">No unread notifications</div>
+                <div class="db-activity-time">You are all caught up</div>
+              </div>
+            </div>
+            @endforelse
+            @if(($unreadCount ?? 0) > 5)
+            <a href="{{ route('admin.notifications.index') }}" class="text-[10px] font-semibold text-blue-600 hover:underline" style="display:block;margin-top:6px;">+{{ $unreadCount - 5 }} more unread</a>
+            @endif
+          </div>
+          <div style="height:10px"></div>
+          <div class="db-activity-list">
+            <div class="db-activity-item" style="margin-bottom:6px">
+              <div class="db-activity-dot" style="background:#c0392b"></div>
+              <div style="font-weight:600;font-size:10px;color:#7a8baa;text-transform:uppercase;letter-spacing:0.6px">Recent Claims</div>
+            </div>
+            @forelse($recentClaims ?? [] as $claim)
+            <div class="db-activity-item">
+              <div class="db-activity-dot" style="background:#d4860e"></div>
+              <div>
+                <div class="db-activity-text"><a href="{{ route('admin.claims.show', $claim) }}" style="color:#d4860e;font-weight:700">{{ $claim->claim_number }}</a> &mdash; {{ $claim->customer_name ?? 'N/A' }}</div>
+                <div class="db-activity-time">{{ $claim->created_at->diffForHumans() }}</div>
               </div>
             </div>
             @empty
             <div class="db-activity-item">
               <div class="db-activity-dot" style="background:#7a8baa"></div>
               <div>
-                <div class="db-activity-text">No personal activity yet.</div>
-                <div class="db-activity-time">Start performing actions to see them here</div>
+                <div class="db-activity-text">No claims yet</div>
+                <div class="db-activity-time">Claims will appear here</div>
               </div>
             </div>
             @endforelse
           </div>
+          <a href="{{ route('admin.claims.index') }}" style="display:inline-block;margin-top:10px;font-size:10px;font-weight:600;color:#1756c8;text-decoration:none;">View all claims →</a>
         </div>
+      </div>
+
+      <div class="db-section-label">Recent Users</div>
+      <div class="db-table-wrap">
+        <table class="db-table">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Email</th>
+              <th>Role</th>
+              <th>Status</th>
+              <th>Date</th>
+            </tr>
+          </thead>
+          <tbody>
+            @forelse($recentUsers ?? [] as $u)
+            <tr>
+              <td>{{ $u->name }}</td>
+              <td>{{ $u->email }}</td>
+              <td>{{ $u->roles->first()?->name ?? 'N/A' }}</td>
+              <td>
+                <span class="db-badge {{ $u->is_active ? 'badge-active' : 'badge-expired' }}">{{ $u->is_active ? 'Active' : 'Inactive' }}</span>
+              </td>
+              <td>{{ $u->created_at->format('d M Y') }}</td>
+            </tr>
+            @empty
+            <tr>
+              <td colspan="5" style="padding:32px;text-align:center;color:#7a8baa;font-size:12px">No users yet.</td>
+            </tr>
+            @endforelse
+          </tbody>
+        </table>
       </div>
 
       <div class="db-chart-grid" style="margin-top:14px">
@@ -236,8 +359,8 @@
             showModal: false,
             modalDate: '',
             modalQuotes: [],
-            quotationDates: {{ json_encode($quotationDates->map(fn($d) => ['date' => $d['date'], 'count' => $d['count']])->values()) }},
-            allQuotationData: {{ json_encode($quotationDates) }},
+            quotationDates: {{ json_encode(($quotationDates ?? collect())->map(fn($d) => ['date' => $d['date'], 'count' => $d['count']])->values()) }},
+            allQuotationData: {{ json_encode($quotationDates ?? collect()) }},
             daysInMonth() { return new Date(this.year, this.month + 1, 0).getDate(); },
             firstDay() { return new Date(this.year, this.month, 1).getDay(); },
             monthName() { return new Date(this.year, this.month).toLocaleString('default', { month: 'long' }); },
@@ -322,7 +445,6 @@
               </template>
             </div>
 
-            {{-- Modal --}}
             <template x-teleport="body">
               <div x-show="showModal" class="fixed inset-0 z-50 flex items-center justify-center" style="background:rgba(0,0,0,0.5);backdrop-filter:blur(2px)">
                 <div @click.away="closeModal()" class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-lg w-full mx-4 max-h-[80vh] overflow-y-auto">
@@ -364,40 +486,9 @@
           </div>
         </div>
         <div class="db-card">
-          <div class="db-card-header"><span><span class="dot"></span>Notifications &amp; Alerts</span></div>
+          <div class="db-card-header"><span><span class="dot"></span>Recent Audit Alerts</span></div>
           <div class="db-activity-list">
-            <div class="db-activity-item" style="margin-bottom:6px">
-              <div class="db-activity-dot" style="background:#1756c8"></div>
-              <div style="font-weight:600;font-size:10px;color:#7a8baa;text-transform:uppercase;letter-spacing:0.6px">Unread Notifications</div>
-            </div>
-            @forelse($unreadNotifications as $n)
-            <div class="db-activity-item">
-              <div class="db-activity-dot" style="background:#3b82f6"></div>
-              <div>
-                <div class="db-activity-text">{{ $n->data['message'] ?? $n->data['action'] ?? 'Notification' }}</div>
-                <div class="db-activity-time">{{ $n->created_at->diffForHumans() }}</div>
-              </div>
-            </div>
-            @empty
-            <div class="db-activity-item">
-              <div class="db-activity-dot" style="background:#7a8baa"></div>
-              <div>
-                <div class="db-activity-text">No unread notifications</div>
-                <div class="db-activity-time">You are all caught up</div>
-              </div>
-            </div>
-            @endforelse
-            @if($unreadCount > 5)
-            <a href="{{ route('admin.notifications.index') }}" class="text-[10px] font-semibold text-blue-600 hover:underline" style="display:block;margin-top:6px;">+{{ $unreadCount - 5 }} more unread</a>
-            @endif
-          </div>
-          <div style="height:10px"></div>
-          <div class="db-activity-list">
-            <div class="db-activity-item" style="margin-bottom:6px">
-              <div class="db-activity-dot" style="background:#c0392b"></div>
-              <div style="font-weight:600;font-size:10px;color:#7a8baa;text-transform:uppercase;letter-spacing:0.6px">Recent Audit Alerts</div>
-            </div>
-            @forelse($recentAlerts as $alert)
+            @forelse($recentAlerts ?? [] as $alert)
             <div class="db-activity-item">
               <div class="db-activity-dot" style="background:#d4860e"></div>
               <div>
@@ -419,58 +510,6 @@
         </div>
       </div>
 
-      <div class="db-section-label">Companies Breakdown</div>
-      <div class="db-company-grid">
-        @foreach($companies as $company)
-        <div class="db-company-card">
-          <div class="db-company-name">{{ $company->name }}</div>
-          <div class="db-company-label">Total Quotations</div>
-          <div class="db-company-count">{{ $company->quotations_count }}</div>
-          <div class="db-progress">
-            @php $maxCount = $companies->max('quotations_count') ?: 1; @endphp
-            <div class="db-progress-fill" style="width:{{ ($company->quotations_count / $maxCount) * 100 }}%"></div>
-          </div>
-        </div>
-        @endforeach
-      </div>
-
-      <div class="db-section-label">Recent Quotations</div>
-      <div class="db-table-wrap">
-        <table class="db-table">
-          <thead>
-            <tr>
-              <th>#</th>
-              <th>User</th>
-              <th>Company</th>
-              <th>Vehicle</th>
-              <th>Premium (KES)</th>
-              <th>Status</th>
-              <th>Date</th>
-            </tr>
-          </thead>
-          <tbody>
-            @forelse($recentQuotations as $q)
-            <tr>
-              <td><a href="{{ route('quotations.show', $q) }}" style="color:#1756c8;font-weight:700">{{ $q->quotation_number }}</a></td>
-              <td>{{ $q->user->name }}</td>
-              <td>{{ $q->company->name }}</td>
-              <td>{{ $q->car_make }} {{ $q->car_model }}</td>
-              <td>{{ number_format($q->total_premium) }}</td>
-              <td>
-                <span class="db-badge badge-active">{{ ucfirst($q->status) }}</span>
-              </td>
-              <td>{{ $q->created_at->format('d M Y') }}</td>
-            </tr>
-            @empty
-            <tr>
-              <td colspan="7" style="padding:32px;text-align:center;color:#7a8baa;font-size:12px">No quotations yet.</td>
-            </tr>
-            @endforelse
-          </tbody>
-        </table>
-      </div>
-
-      <!-- ── ACTION BAR ── -->
       <div class="db-section-label">Quotation Tools</div>
       <div class="action-bar">
         <span class="action-bar-label">Actions</span>
@@ -488,7 +527,6 @@
         </button>
       </div>
 
-      <!-- ── PDF PREVIEW ── -->
       <div class="pdf-preview">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
           <div style="font-size:11px;font-weight:700;color:#1a2540">PDF Preview</div>
@@ -497,10 +535,9 @@
         <iframe srcdoc="<p style='font-family:system-ui;padding:40px;text-align:center;color:#7a8baa'>Select a quotation to preview</p>"></iframe>
       </div>
 
-      <!-- ── COMPARISON GRID ── -->
       <div class="db-section-label">Compare Insurance Companies</div>
       <div class="comparison-grid">
-        @foreach($companies as $company)
+        @foreach($companies ?? [] as $company)
         <div class="compare-card">
           <div class="compare-card-logo">
             @php $__cl = $company->logoUrl(); @endphp
@@ -512,13 +549,12 @@
           </div>
           <div class="compare-card-name">{{ $company->name }}</div>
           <div class="compare-card-rate">{{ $company->rate ?? $defaultRate ?? 6.5 }}% rate</div>
-          <div class="compare-card-premium">KES {{ number_format($totalPremium > 0 ? $totalPremium / max($companies->count(), 1) : 0) }}</div>
+          <div class="compare-card-premium">KES {{ number_format($totalPremium > 0 ? $totalPremium / max(($companies ?? collect())->count(), 1) : 0) }}</div>
           <a href="{{ route('quotations.index') }}?company={{ urlencode($company->name) }}" class="compare-card-btn">View Quotes</a>
         </div>
         @endforeach
       </div>
 
-      <!-- ── COMPARE TABLE ── -->
       <div class="compare-table-wrap">
         <table>
           <thead>
@@ -531,22 +567,22 @@
             </tr>
           </thead>
           <tbody>
-            @foreach($companies as $company)
+            @foreach($companies ?? [] as $company)
             <tr>
               <td style="font-weight:700;color:#1a2540">{{ $company->name }}</td>
               <td>{{ $company->quotations_count }}</td>
-              <td>KES {{ number_format($company->quotations_count > 0 ? $totalPremium / max($totalQuotations, 1) : 0) }}</td>
+              <td>KES {{ number_format($company->quotations_count > 0 ? $totalPremium / max($totalQuotations ?? 1, 1) : 0) }}</td>
               <td>{{ $company->rate ?? $defaultRate ?? 6.5 }}%</td>
               <td><span class="db-badge badge-active">Active</span></td>
             </tr>
             @endforeach
           </tbody>
-          @if($companies->count() > 1)
+          @if(($companies ?? collect())->count() > 1)
           <tfoot>
             <tr>
               <td>Total</td>
-              <td>{{ $totalQuotations }}</td>
-              <td>KES {{ number_format($totalPremium) }}</td>
+              <td>{{ $totalQuotations ?? 0 }}</td>
+              <td>KES {{ number_format($totalPremium ?? 0) }}</td>
               <td>&mdash;</td>
               <td>&mdash;</td>
             </tr>
@@ -555,43 +591,7 @@
         </table>
       </div>
 
-    </div>
-    <!-- /db-main-content -->
-
-     {{-- <div class="db-right-sidebar">
-      <a href="{{ route('quotations.index') }}" class="cta-card-link">
-        <div class="cta-card">
-          <div class="cta-card-icon" style="background:#e8f0fc;color:#1756c8"><i class="ti ti-file-description"></i></div>
-          <div class="cta-card-title">All Quotations</div>
-          <div class="cta-card-desc">Browse, filter, and manage all quotations</div>
-        </div>
-      </a>
-      <a href="{{ route('admin.reports.index') }}" class="cta-card-link">
-        <div class="cta-card">
-          <div class="cta-card-icon" style="background:#e1f5ee;color:#0f7a65"><i class="ti ti-report"></i></div>
-          <div class="cta-card-title">Reports</div>
-          <div class="cta-card-desc">Export and analyze quotation data</div>
-        </div>
-      </a>
-      <a href="{{ route('admin.audit.index') }}" class="cta-card-link">
-        <div class="cta-card">
-          <div class="cta-card-icon" style="background:#fef3c7;color:#d4860e"><i class="ti ti-shield"></i></div>
-          <div class="cta-card-title">Audit Log</div>
-          <div class="cta-card-desc">Monitor system activity and changes</div>
-        </div>
-      </a>
-      <a href="{{ route('settings.index') }}" class="cta-card-link">
-        <div class="cta-card">
-          <div class="cta-card-icon" style="background:#fdeaea;color:#c0392b"><i class="ti ti-settings"></i></div>
-          <div class="cta-card-title">Settings</div>
-          <div class="cta-card-desc">Configure system preferences</div>
-        </div>
-      </a>
-    </div>  --}}
-    </div>
-    <!-- /db-layout -->
-
-    <div class="db-section-label">Platform Health</div>
+      <div class="db-section-label">Platform Health</div>
       <div class="db-kpi-grid" style="margin-top:0">
         @php
             $healthChecks = $healthChecks ?? collect();
@@ -616,8 +616,15 @@
         @endforeach
       </div>
 
+    </div>
+    <!-- /db-main-content -->
+    </div>
+    <!-- /db-layout -->
+    </div>
+
     @push('scripts')
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+    <script src="{{ asset('js/dashboard-quote.js') }}"></script>
     <script>
     function weatherWidget() {
         return {
@@ -692,10 +699,10 @@
     var companyChart = new Chart(document.getElementById('companyChart'), {
       type: 'doughnut',
       data: {
-        labels: {!! json_encode($quotationsByCompany->keys()) !!},
+        labels: {!! json_encode(($quotationsByCompany ?? collect())->keys()) !!},
         datasets: [{
           label: 'Quotations',
-          data: {!! json_encode($quotationsByCompany->values()) !!},
+          data: {!! json_encode(($quotationsByCompany ?? collect())->values()) !!},
           backgroundColor: ['#1756c8','#7c3aed','#0f7a65','#d4860e','#c0392b','#0f7a65'],
           borderWidth: 2,
           borderColor: '#fff',
@@ -721,10 +728,10 @@
     var monthlyChart = new Chart(document.getElementById('monthlyChart'), {
       type: 'line',
       data: {
-        labels: {!! json_encode($monthlyQuotations->pluck('month')) !!},
+        labels: {!! json_encode(($monthlyQuotations ?? collect())->pluck('month')) !!},
         datasets: [{
           label: 'Quotations',
-          data: {!! json_encode($monthlyQuotations->pluck('total')) !!},
+          data: {!! json_encode(($monthlyQuotations ?? collect())->pluck('total')) !!},
           borderColor: '#1756c8',
           backgroundColor: 'rgba(23,86,200,0.08)',
           fill: true,
@@ -748,6 +755,93 @@
           window.location.href = '{{ route("quotations.index") }}';
         }
       }
+    });
+
+    var distributionChart = new Chart(document.getElementById('distributionChart'), {
+  type: 'bar',
+  data: {
+    labels: ['Generated', 'Completed'],
+    datasets: [{
+      label: 'Quotations',
+      data: [
+        {{ $statusDistribution['generated'] ?? 0 }},
+        {{ $statusDistribution['completed'] ?? 0 }}
+      ],
+      backgroundColor: ['#1756c8', '#0f7a65'],
+      borderRadius: 6,
+      borderWidth: 0,
+    }]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: true,
+    aspectRatio: 1.8,
+    plugins: {
+      legend: { display: false }
+    },
+    scales: {
+      y: { beginAtZero: true, grid: { color: 'rgba(0,0,0,0.04)' }, ticks: { color: '#7a8baa' } },
+      x: { grid: { display: false }, ticks: { color: '#7a8baa' } }
+    }
+  }
+});
+
+var premiumChart = new Chart(document.getElementById('premiumChart'), {
+  type: 'line',
+  data: {
+    labels: {!! json_encode(($premiumTrend ?? collect())->pluck('month')) !!},
+    datasets: [{
+      label: 'Avg Premium (KES)',
+      data: {!! json_encode(($premiumTrend ?? collect())->pluck('avg_premium')) !!},
+      borderColor: '#7c3aed',
+      backgroundColor: 'rgba(124,58,237,0.08)',
+      fill: true,
+      tension: 0.4,
+      pointBackgroundColor: '#7c3aed',
+      pointBorderColor: '#fff',
+      pointBorderWidth: 2,
+      pointRadius: 4,
+    }]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: true,
+    aspectRatio: 1.8,
+    plugins: { legend: { display: false } },
+    scales: {
+      y: {
+        beginAtZero: false,
+        grid: { color: 'rgba(0,0,0,0.04)' },
+        ticks: { color: '#7a8baa', callback: v => 'KES ' + Number(v).toLocaleString() }
+      },
+      x: { grid: { display: false }, ticks: { color: '#7a8baa' } }
+    }
+  }
+});
+
+    document.addEventListener('DOMContentLoaded', function () {
+      var btn = document.getElementById('dbActivityRefresh');
+      var auto = document.getElementById('dbActivityAutoRefresh');
+      if (!btn) return;
+      var saved = localStorage.getItem('db_activity_auto_refresh');
+      if (auto && saved === '1') auto.checked = true;
+      var timer = null;
+      function schedule() {
+        if (timer) clearInterval(timer);
+        if (auto && auto.checked) timer = setInterval(function () { window.location.reload(); }, 30000);
+      }
+      if (auto) {
+        auto.addEventListener('change', function () {
+          localStorage.setItem('db_activity_auto_refresh', auto.checked ? '1' : '0');
+          schedule();
+        });
+      }
+      btn.addEventListener('click', function () {
+        btn.disabled = true;
+        btn.innerHTML = '<i class="ti ti-loader" style="font-size:12px;display:inline-block"></i> Refreshing...';
+        window.location.reload();
+      });
+      schedule();
     });
     </script>
     @endpush

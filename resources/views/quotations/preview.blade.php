@@ -167,6 +167,8 @@
                     <input type="hidden" name="car_year" :value="data.year">
                     <input type="hidden" name="car_registration" :value="data.reg">
                     <input type="hidden" name="car_valuation" :value="vehicleValue">
+                    <input type="hidden" name="vehicle_type" :value="data.vehicle_type || 'private'">
+                    <input type="hidden" name="num_passengers" value="1">
                     <input type="hidden" name="on_behalf_of" :value="onBehalfOf">
                     <input type="hidden" name="company_id" :value="selectedCompany.id">
                     <input type="hidden" name="premium" :value="basePremium">

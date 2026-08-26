@@ -18,8 +18,16 @@ class AuditLogController extends Controller
         if ($request->model) {
             $query->where('model', $request->model);
         }
+        if ($request->level) {
+            $query->where('level', $request->level);
+        }
         $logs = $query->latest()->paginate(30);
-        return view('admin.audit.index', compact('logs'));
+
+        $infoCount = 0;
+        $warningCount = 0;
+        $errorCount = 0;
+
+        return view('admin.audit.index', compact('logs', 'infoCount', 'warningCount', 'errorCount'));
     }
 
     public function indexActivity(Request $request)
@@ -32,6 +40,11 @@ class AuditLogController extends Controller
             $query->where('level', $request->level);
         }
         $logs = $query->latest()->paginate(30);
-        return view('admin.audit.activity', compact('logs'));
+
+        $infoCount = ActivityLog::where('level', 'info')->count();
+        $warningCount = ActivityLog::where('level', 'warning')->count();
+        $errorCount = ActivityLog::where('level', 'error')->count();
+
+        return view('admin.audit.activity', compact('logs', 'infoCount', 'warningCount', 'errorCount'));
     }
 }

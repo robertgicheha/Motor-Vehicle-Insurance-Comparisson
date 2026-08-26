@@ -1,5 +1,5 @@
 <x-app-layout>
-<div class="space-y-6 pt-10 fade-in max-w-4xl mx-auto">
+<div class="space-y-6 pt-10 fade-in max-w-10xl mx-auto">
 
     {{-- ─── HERO ─────────────────────────────────────────────────────────── --}}
     <div class="rounded-2xl bg-micblue px-6 py-7 shadow-sm">
@@ -67,12 +67,47 @@
     <div class="h-4"></div>
     @endif
 
+    {{-- ─── VEHICLE TYPE SELECTOR ─────────────────────────────────────────--}}
+    <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+        <div class="px-6 py-5 border-b border-gray-100 dark:border-gray-700">
+            <p class="text-[10px] font-semibold uppercase tracking-widest text-gray-400">Motor Insurance</p>
+            <h2 class="text-xs font-bold text-gray-800 dark:text-white mt-0.5">What type of vehicle do you own?</h2>
+            <p class="text-[10px] text-gray-400 mt-0.5">Select your vehicle category to get a tailored insurance quote.</p>
+        </div>
+        <div class="p-6 grid grid-cols-1 md:grid-cols-2 gap-4" id="vehicle-type-select">
+            <button type="button" onclick="selectVehicleType('private')" id="vt-card-private"
+                class="vehicle-type-card text-left flex items-start gap-4 rounded-xl border-2 border-gray-200 dark:border-gray-700 p-5 transition hover:shadow-md hover:-translate-y-0.5 cursor-pointer">
+                <div class="w-11 h-11 rounded-lg bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center shrink-0">
+                    <svg class="w-5 h-5 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7h8m-8 0a2 2 0 00-2 2v6a2 2 0 002 2h8a2 2 0 002-2V9a2 2 0 00-2-2m-8 0H4a2 2 0 00-2 2v6a2 2 0 002 2h2m10-8h4a2 2 0 012 2v6a2 2 0 01-2 2h-2"/></svg>
+                </div>
+                <div>
+                    <p class="text-xs font-bold text-gray-800 dark:text-white">Private Car Owner</p>
+                    <p class="text-[10px] text-gray-400 mt-0.5 leading-relaxed">I own a personal / private motor vehicle and need comprehensive insurance.</p>
+                    <span class="inline-flex items-center gap-1 mt-2 text-[10px] font-semibold text-blue-600 dark:text-blue-400">Get Started →</span>
+                </div>
+            </button>
+            <button type="button" onclick="selectVehicleType('psv')" id="vt-card-psv"
+                class="vehicle-type-card text-left flex items-start gap-4 rounded-xl border-2 border-gray-200 dark:border-gray-700 p-5 transition hover:shadow-md hover:-translate-y-0.5 cursor-pointer">
+                <div class="w-11 h-11 rounded-lg bg-emerald-50 dark:bg-emerald-900/20 flex items-center justify-center shrink-0">
+                    <svg class="w-5 h-5 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7h8m-8 0a2 2 0 00-2 2v6a2 2 0 002 2h8a2 2 0 002-2V9a2 2 0 00-2-2m-8 0H4a2 2 0 00-2 2v6a2 2 0 002 2h2m10-8h4a2 2 0 012 2v6a2 2 0 01-2 2h-2m-3 2a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+                </div>
+                <div>
+                    <p class="text-xs font-bold text-gray-800 dark:text-white">Public Service Vehicle (PSV) Owner</p>
+                    <p class="text-[10px] text-gray-400 mt-0.5 leading-relaxed">I own a matatu, bus, taxi or other public service vehicle and need PSV insurance.</p>
+                    <span class="inline-flex items-center gap-1 mt-2 text-[10px] font-semibold text-emerald-600 dark:text-emerald-400">Get Started →</span>
+                </div>
+            </button>
+        </div>
+    </div>
+    <div class="h-4"></div>
+
     {{-- ─── FORM CARD ─────────────────────────────────────────────────────── --}}
     <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
-        {{-- Hidden fields for signed form token and admin --}}
+        {{-- Hidden fields for signed form token, admin and vehicle type --}}
         <input type="hidden" id="f-signed" value="{{ $signedToken }}">
         <input type="hidden" id="f-user-id" value="{{ $targetUser->id ?? '' }}">
         <input type="hidden" id="f-on-behalf-of-hidden" value="{{ request('on_behalf_of', '') }}">
+        <input type="hidden" id="f-vehicle-type" value="{{ $prefill['vehicle_type'] ?? 'private' }}">
 
         {{-- Step Indicators --}}
         <div class="px-6 py-5 border-b border-gray-100 dark:border-gray-700">
@@ -106,28 +141,32 @@
                     <label class="block text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Salutation <span class="text-rose-500">*</span></label>
                     <select id="f-salutation" class="w-full px-3 py-2 text-xs rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none">
                         <option value="">Select...</option>
-                        <option>Mr.</option><option>Mrs.</option><option>Miss</option><option>Dr.</option><option>Prof.</option>
+                        <option {{ $prefill['salutation'] === 'Mr.' ? 'selected' : '' }}>Mr.</option>
+                        <option {{ $prefill['salutation'] === 'Mrs.' ? 'selected' : '' }}>Mrs.</option>
+                        <option {{ $prefill['salutation'] === 'Miss' ? 'selected' : '' }}>Miss</option>
+                        <option {{ $prefill['salutation'] === 'Dr.' ? 'selected' : '' }}>Dr.</option>
+                        <option {{ $prefill['salutation'] === 'Prof.' ? 'selected' : '' }}>Prof.</option>
                     </select>
                 </div>
                 <div>
                     <label class="block text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">First Name <span class="text-rose-500">*</span></label>
-                    <input type="text" id="f-first" class="w-full px-3 py-2 text-xs rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none" placeholder="e.g. John">
+                    <input type="text" id="f-first" value="{{ $prefill['first_name'] }}" class="w-full px-3 py-2 text-xs rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none" placeholder="e.g. John">
                 </div>
                 <div>
                     <label class="block text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Middle Name</label>
-                    <input type="text" id="f-middle" class="w-full px-3 py-2 text-xs rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Optional">
+                    <input type="text" id="f-middle" value="{{ $prefill['middle_name'] }}" class="w-full px-3 py-2 text-xs rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Optional">
                 </div>
                 <div>
                     <label class="block text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Last Name <span class="text-rose-500">*</span></label>
-                    <input type="text" id="f-last" class="w-full px-3 py-2 text-xs rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none" placeholder="e.g. Doe">
+                    <input type="text" id="f-last" value="{{ $prefill['last_name'] }}" class="w-full px-3 py-2 text-xs rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none" placeholder="e.g. Doe">
                 </div>
                 <div>
                     <label class="block text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Phone Number <span class="text-rose-500">*</span></label>
-                    <input type="tel" id="f-phone" class="w-full px-3 py-2 text-xs rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none" placeholder="07 XX XXX XXX">
+                    <input type="tel" id="f-phone" value="{{ $prefill['phone'] }}" class="w-full px-3 py-2 text-xs rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none" placeholder="07 XX XXX XXX">
                 </div>
                 <div>
                     <label class="block text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Email Address <span class="text-rose-500">*</span></label>
-                    <input type="email" id="f-email" class="w-full px-3 py-2 text-xs rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none" placeholder="email@example.com">
+                    <input type="email" id="f-email" value="{{ $prefill['email'] }}" class="w-full px-3 py-2 text-xs rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none" placeholder="email@example.com">
                 </div>
             </div>
             <div class="flex justify-end gap-2 mt-6 pt-4 border-t border-gray-100 dark:border-gray-700">
@@ -145,37 +184,42 @@
             <div class="grid grid-cols-2 gap-4">
                 <div>
                     <label class="block text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Registration Number <span class="text-rose-500">*</span></label>
-                    <input type="text" id="f-reg" class="w-full px-3 py-2 text-xs rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none" placeholder="e.g. KDH 724V">
+                    <input type="text" id="f-reg" value="{{ $prefill['reg'] }}" class="w-full px-3 py-2 text-xs rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none" placeholder="e.g. KDH 724V">
                 </div>
                 <div>
                     <label class="block text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Chassis / Frame Number</label>
-                    <input type="text" id="f-chassis" class="w-full px-3 py-2 text-xs rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none" placeholder="e.g. WVWZZZ1KZ9W123456">
+                    <input type="text" id="f-chassis" value="{{ $prefill['chassis'] }}" class="w-full px-3 py-2 text-xs rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none" placeholder="e.g. WVWZZZ1KZ9W123456">
                 </div>
                 <div>
                     <label class="block text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Make of Vehicle <span class="text-rose-500">*</span></label>
                     <div class="vehicle-search-wrap-dash">
-                        <input type="text" id="f-make" class="w-full px-3 py-2 text-xs rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Search vehicle make..." autocomplete="off">
+                        <input type="text" id="f-make" value="{{ $prefill['make'] }}" class="w-full px-3 py-2 text-xs rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Search vehicle make..." autocomplete="off">
                         <div class="vehicle-dropdown-dash" id="f-make-dropdown"></div>
                     </div>
-                    <input type="hidden" id="f-make-value" value="">
+                    <input type="hidden" id="f-make-value" value="{{ $prefill['make'] }}">
                     <input type="text" id="f-make-other" class="w-full px-3 py-2 text-xs rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none mt-1.5" placeholder="Type your vehicle make..." style="display:none">
                 </div>
                 <div>
                     <label class="block text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Model Name <span class="text-rose-500">*</span></label>
                     <div class="vehicle-search-wrap-dash">
-                        <input type="text" id="f-model" class="w-full px-3 py-2 text-xs rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Select a make first..." autocomplete="off" disabled>
+                        <input type="text" id="f-model" value="{{ $prefill['model'] }}" class="w-full px-3 py-2 text-xs rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Select a make first..." autocomplete="off" disabled>
                         <div class="vehicle-dropdown-dash" id="f-model-dropdown"></div>
                     </div>
-                    <input type="hidden" id="f-model-value" value="">
+                    <input type="hidden" id="f-model-value" value="{{ $prefill['model'] }}">
                     <input type="text" id="f-model-other" class="w-full px-3 py-2 text-xs rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none mt-1.5" placeholder="Type your vehicle model..." style="display:none">
                 </div>
                 <div>
                     <label class="block text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Body Type</label>
                     <select id="f-body" class="w-full px-3 py-2 text-xs rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none">
                         <option value="">Select body type...</option>
-                        <option>Saloon</option><option>Station Wagon (S. Wagon)</option><option>SUV/4x4</option>
-                        <option>Hatchback</option><option>Pick-Up</option><option>Van/Minivan</option>
-                        <option>Convertible</option><option>Coupe</option>
+                        <option {{ $prefill['body'] === 'Saloon' ? 'selected' : '' }}>Saloon</option>
+                        <option {{ $prefill['body'] === 'Station Wagon (S. Wagon)' ? 'selected' : '' }}>Station Wagon (S. Wagon)</option>
+                        <option {{ $prefill['body'] === 'SUV/4x4' ? 'selected' : '' }}>SUV/4x4</option>
+                        <option {{ $prefill['body'] === 'Hatchback' ? 'selected' : '' }}>Hatchback</option>
+                        <option {{ $prefill['body'] === 'Pick-Up' ? 'selected' : '' }}>Pick-Up</option>
+                        <option {{ $prefill['body'] === 'Van/Minivan' ? 'selected' : '' }}>Van/Minivan</option>
+                        <option {{ $prefill['body'] === 'Convertible' ? 'selected' : '' }}>Convertible</option>
+                        <option {{ $prefill['body'] === 'Coupe' ? 'selected' : '' }}>Coupe</option>
                     </select>
                 </div>
                 <div>
@@ -186,10 +230,17 @@
                     <label class="block text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Color</label>
                     <select id="f-color" class="w-full px-3 py-2 text-xs rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none" onchange="toggleOtherColor(this)">
                         <option value="">Select color...</option>
-                        <option>White</option><option>Black</option><option>Silver/Grey</option>
-                        <option>Blue</option><option>Red</option><option>Brown/Maroon</option>
-                        <option>Gold/Champagne</option><option>Green</option><option>Orange</option>
-                        <option>Purple</option><option>Other</option>
+                        <option {{ $prefill['color'] === 'White' ? 'selected' : '' }}>White</option>
+                        <option {{ $prefill['color'] === 'Black' ? 'selected' : '' }}>Black</option>
+                        <option {{ $prefill['color'] === 'Silver/Grey' ? 'selected' : '' }}>Silver/Grey</option>
+                        <option {{ $prefill['color'] === 'Blue' ? 'selected' : '' }}>Blue</option>
+                        <option {{ $prefill['color'] === 'Red' ? 'selected' : '' }}>Red</option>
+                        <option {{ $prefill['color'] === 'Brown/Maroon' ? 'selected' : '' }}>Brown/Maroon</option>
+                        <option {{ $prefill['color'] === 'Gold/Champagne' ? 'selected' : '' }}>Gold/Champagne</option>
+                        <option {{ $prefill['color'] === 'Green' ? 'selected' : '' }}>Green</option>
+                        <option {{ $prefill['color'] === 'Orange' ? 'selected' : '' }}>Orange</option>
+                        <option {{ $prefill['color'] === 'Purple' ? 'selected' : '' }}>Purple</option>
+                        <option {{ $prefill['color'] === 'Other' ? 'selected' : '' }}>Other</option>
                     </select>
                     <input type="text" id="f-color-other" class="w-full px-3 py-2 text-xs rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none mt-1.5" placeholder="Type your vehicle color..." style="display:none">
                 </div>
@@ -197,7 +248,7 @@
                     <label class="block text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Value of Vehicle (KES) <span class="text-rose-500">*</span></label>
                     <div class="relative">
                         <span class="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-bold text-gray-400">KES</span>
-                        <input type="text" id="f-value" class="w-full pl-11 pr-3 py-2 text-xs rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none" placeholder="800,000" autocomplete="off">
+                        <input type="text" id="f-value" value="{{ $prefill['value'] ? number_format((float) $prefill['value']) : '' }}" class="w-full pl-11 pr-3 py-2 text-xs rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none" placeholder="800,000" autocomplete="off">
                     </div>
                     <div class="text-[10px] text-gray-400 mt-1" id="f-value-hint">Enter between KES 800,000 and KES 1,300,000</div>
                     <div class="text-[10px] text-red-500 font-semibold mt-1" id="f-value-error" style="display:none"></div>
@@ -310,6 +361,23 @@ function toggleUserSelector(val) {
     }
 }
 
+// ── Vehicle type selection ──
+function selectVehicleType(type) {
+    var hidden = document.getElementById('f-vehicle-type');
+    if (hidden) hidden.value = type;
+    ['private', 'psv'].forEach(function (t) {
+        var card = document.getElementById('vt-card-' + t);
+        if (!card) return;
+        var active = t === type;
+        card.classList.toggle('border-blue-500', active);
+        card.classList.toggle('bg-blue-50', active);
+        card.classList.toggle('dark:bg-blue-900/20', active);
+        card.classList.toggle('border-gray-200', !active);
+        card.classList.toggle('dark:border-gray-700', !active);
+    });
+    document.getElementById('vehicle-type-select').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
 function onUserSelected(userId) {
     var hidden = document.getElementById('f-user-id');
     if (!userId) {
@@ -380,6 +448,31 @@ document.addEventListener('DOMContentLoaded', function() {
     if (preSelected && document.getElementById('f-on-behalf-of')) {
         document.getElementById('f-on-behalf-of').value = preSelected;
         onUserSelected(preSelected);
+    }
+
+    // ── Prefill helpers ──
+    var prefillYear = "{{ $prefill['year'] }}";
+    var prefillMake = "{{ $prefill['make'] }}";
+    var prefillModel = "{{ $prefill['model'] }}";
+
+    var yearSel = document.getElementById('f-year');
+    if (prefillYear && yearSel) yearSel.value = prefillYear;
+
+    if (prefillMake) {
+        var mi = document.getElementById('f-model');
+        if (mi) { mi.disabled = false; mi.placeholder = 'Search model...'; }
+    }
+    if (prefillMake && prefillModel) {
+        var mv = document.getElementById('f-model-value');
+        if (mv) mv.value = prefillModel;
+    }
+
+    var vt = document.getElementById('f-vehicle-type')?.value || 'private';
+    if (vt) selectVehicleType(vt);
+
+    var valEl = document.getElementById('f-value');
+    if (valEl && valEl.value) {
+        updatePremiumPreview();
     }
 });
 
@@ -456,6 +549,7 @@ function openQuotePage(insurer) {
         year       : document.getElementById('f-year').value,
         color      : color,
         value      : rawValue,
+        vehicle_type : (document.getElementById('f-vehicle-type') || {}).value || 'private',
         _signed    : document.getElementById('f-signed').value,
         userId: userId,
     };
@@ -609,7 +703,7 @@ function openQuotePage(insurer) {
         'f-salutation', 'f-first', 'f-middle', 'f-last', 'f-phone', 'f-email',
         'f-reg', 'f-chassis', 'f-make', 'f-make-value', 'f-make-other',
         'f-model', 'f-model-value', 'f-model-other', 'f-body',
-        'f-year', 'f-color', 'f-color-other', 'f-value', 'f-signed'
+        'f-year', 'f-color', 'f-color-other', 'f-value', 'f-signed', 'f-vehicle-type'
     ];
 
     function saveDraft() {

@@ -30,9 +30,36 @@
                     Add User
                 </button>
             </div>
-        </div>
+    </div>
 
-        {{-- Stat strip --}}
+    @if(session('generated_password'))
+        <div class="rounded-2xl bg-emerald-500/10 border border-emerald-500/30 px-6 py-5 shadow-sm fade-in">
+            <div class="flex items-center justify-between gap-4 flex-wrap">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-full bg-emerald-500/20 flex items-center justify-center shrink-0">
+                        <svg class="w-5 h-5 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                    </div>
+                    <div>
+                        <p class="text-sm font-bold text-emerald-600 dark:text-emerald-400">User created successfully!</p>
+                        <p class="text-xs text-emerald-500/70 mt-0.5">Login username is the email. Save this password — it will not be shown again.</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2">
+                    <code id="generated-password" class="px-3 py-1.5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded text-xs font-mono text-gray-800 dark:text-white">{{ session('generated_password') }}</code>
+                    <button onclick="copyPassword()" class="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold bg-emerald-500 hover:bg-emerald-400 text-white rounded-lg transition">
+                        <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+                        Copy
+                    </button>
+                    <button onclick="sendPasswordEmail()" class="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold bg-blue-500 hover:bg-blue-400 text-white rounded-lg transition">
+                        <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+                        Send via Email
+                    </button>
+                </div>
+            </div>
+        </div>
+    @endif
+
+    {{-- Stat strip --}}
         {{-- KPI row --}}
             <div class="mt-6 grid grid-cols-2 md:grid-cols-4 gap-3">
                 <a href="{{ route('admin.users.index') }}" class="kpi-card p-4 block hover:opacity-80 transition">
@@ -425,5 +452,41 @@ function submitAddUser() {
 
 // ESC to close
 document.addEventListener('keydown', e => { if (e.key === 'Escape') closeAddModal(); });
+
+function copyPassword() {
+    var password = document.getElementById('generated-password')?.textContent;
+    if (!password) return;
+    navigator.clipboard.writeText(password).then(function() {
+        alert('Password copied to clipboard!');
+    }).catch(function() {
+        var textarea = document.createElement('textarea');
+        textarea.value = password;
+        document.body.appendChild(textarea);
+        textarea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textarea);
+        alert('Password copied to clipboard!');
+    });
+}
+
+function sendPasswordEmail() {
+    var password = document.getElementById('generated-password')?.textContent;
+    if (!password) return;
+    var form = document.createElement('form');
+    form.method = 'POST';
+    form.action = '{{ route("admin.users.send-credentials") }}';
+    var csrf = document.createElement('input');
+    csrf.type = 'hidden';
+    csrf.name = '_token';
+    csrf.value = '{{ csrf_token() }}';
+    form.appendChild(csrf);
+    var passwordInput = document.createElement('input');
+    passwordInput.type = 'hidden';
+    passwordInput.name = 'password';
+    passwordInput.value = password;
+    form.appendChild(passwordInput);
+    document.body.appendChild(form);
+    form.submit();
+}
 </script>
 </x-app-layout>

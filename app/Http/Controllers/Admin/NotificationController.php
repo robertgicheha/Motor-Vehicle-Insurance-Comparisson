@@ -20,6 +20,16 @@ class NotificationController extends Controller
         return back()->with('success', 'Notification marked as read.');
     }
 
+    public function show($id)
+    {
+        $notification = auth()->user()->notifications()->findOrFail($id);
+        if (! $notification->read_at) {
+            $notification->markAsRead();
+        }
+
+        return view('admin.notifications.show', compact('notification'));
+    }
+
     public function markAllAsRead()
     {
         auth()->user()->unreadNotifications->markAsRead();

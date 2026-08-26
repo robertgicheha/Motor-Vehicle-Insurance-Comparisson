@@ -112,7 +112,13 @@
                                 </span>
                             </td>
                             <td class="px-5 py-2.5">
-                                <p class="text-xs text-gray-800 dark:text-white font-medium">{{ $notification->data['message'] ?? 'Notification' }}</p>
+                                <a href="{{ route('notifications.show', $notification->id) }}"
+                                   class="inline-flex items-start gap-1.5 group max-w-md">
+                                    <p class="text-xs text-gray-800 dark:text-white font-medium group-hover:text-blue-600 dark:group-hover:text-blue-400 transition">
+                                        {{ $notification->data['message'] ?? 'Notification' }}
+                                    </p>
+                                    <svg class="w-3 h-3 text-gray-300 dark:text-gray-600 group-hover:text-blue-400 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"/></svg>
+                                </a>
                             </td>
                             <td class="px-5 py-2.5 text-right text-[10px] text-gray-400 whitespace-nowrap">{{ $notification->created_at->diffForHumans() }}</td>
                             <td class="px-5 py-2.5 text-right">

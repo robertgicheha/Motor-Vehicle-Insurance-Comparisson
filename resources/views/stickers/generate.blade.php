@@ -8,6 +8,7 @@
     <div class="bg-white border border-gray-200 rounded-2xl p-8 shadow-sm mb-8">
         <form method="POST" action="{{ route('stickers.store') }}" class="space-y-6">
             @csrf
+            <input type="hidden" name="quotation_id" value="{{ $quotation->id ?? '' }}">
 
             <div class="grid grid-cols-2 gap-6">
                 <div>

@@ -33,32 +33,50 @@ class QuotationController extends Controller
         $isAdmin = $user->hasRole('super-admin') || $user->hasRole('admin');
 
         $query = Quotation::with(['user', 'company'])
-            ->when(!$isAdmin, fn($q) => $q->where('user_id', $user->id))
-            ->latest();
+            ->when(!$isAdmin, fn($q) => $q->where('user_id', $user->id));
 
-        $quotations = $query->paginate(20);
+        $quotations = (clone $query)->latest()->paginate(20);
 
         $stats = [
-            'total' => (clone $query)->count(),
-            'active' => (clone $query)->where('status', 'active')->count(),
-            'pending' => (clone $query)->where('status', 'pending')->count(),
-            'expired' => (clone $query)->where('status', 'expired')->count(),
-            'processing' => (clone $query)->where('status', 'processing')->count(),
-            'completed' => (clone $query)->where('status', 'completed')->count(),
-            'closed' => (clone $query)->where('status', 'closed')->count(),
-            'insuring_sticker' => (clone $query)->where('status', 'insuring_sticker')->count(),
-            'draft' => (clone $query)->where('status', 'draft')->count(),
+            'total'     => (clone $query)->count(),
             'generated' => (clone $query)->where('status', 'generated')->count(),
+            'completed' => (clone $query)->where('status', 'completed')->count(),
         ];
 
-        return view('quotations.tracker', compact('quotations', 'stats'));
+        // Quotations grouped by underwriter / company.
+        $byCompany = (clone $query)
+            ->with('company')
+            ->get()
+            ->groupBy('company_id')
+            ->map(function ($group) {
+                $company = $group->first()->company;
+                return [
+                    'company'        => $company->name ?? 'Unknown',
+                    'count'          => $group->count(),
+                    'generated'      => $group->where('status', 'generated')->count(),
+                    'completed'      => $group->where('status', 'completed')->count(),
+                    'total_premium'  => $group->sum('total_premium'),
+                ];
+            })
+            ->sortByDesc('count')
+            ->values();
+
+        // Quotations that have been issued an insurance certificate / sticker.
+        $certified = (clone $query)
+            ->where('status', 'completed')
+            ->with(['user', 'company', 'stickers'])
+            ->latest()
+            ->take(20)
+            ->get();
+
+        return view('quotations.tracker', compact('quotations', 'stats', 'byCompany', 'certified'));
     }
 
     public function updateStatus(Request $request, Quotation $quotation)
     {
         $this->authorizeView($quotation);
 
-        $request->validate(['status' => 'required|string']);
+        $request->validate(['status' => 'required|string|in:generated,completed']);
 
         $oldStatus = $quotation->status;
         if ($oldStatus === $request->status) {
@@ -98,41 +116,32 @@ class QuotationController extends Controller
             // ── Analytics (same scope as query above) ───────────────
             $analyticsBase = Quotation::query()
                 ->when(! $isAdmin, fn($q) => $q->where('user_id', $user->id));
-        
-            $dbDriver = DB::connection()->getDriverName();
-            $dateExpr = $dbDriver === 'sqlite'
-                ? "strftime('%d %b', created_at) as date"
-                : "DATE_FORMAT(created_at, '%d %b') as date";
 
+            $scope = $isAdmin ? null : $user->id;
+
+            // ── Analytics (scoped to the user unless admin) ──────────
             $analytics = [
-            'total'      => Quotation::count(),
-            'today'      => Quotation::whereDate('created_at', today())->count(),
-            'this_week'  => Quotation::whereBetween('created_at', [now()->startOfWeek(), now()->endOfWeek()])->count(),
-            'this_month' => Quotation::whereMonth('created_at', now()->month)
-                                    ->whereYear('created_at', now()->year)->count(),
+                'total'      => (clone $analyticsBase)->count(),
+                'today'      => (clone $analyticsBase)->whereDate('created_at', today())->count(),
+                'this_week'  => (clone $analyticsBase)->whereBetween('created_at', [now()->startOfWeek(), now()->endOfWeek()])->count(),
+                'this_month' => (clone $analyticsBase)->whereMonth('created_at', now()->month)
+                                        ->whereYear('created_at', now()->year)->count(),
 
-            // Daily trend — last 14 days
-            'trend' => Quotation::select(
-                            DB::raw($dateExpr),
-                            DB::raw('COUNT(*) as count')
-                        )
-                        ->where('created_at', '>=', now()->subDays(13)->startOfDay())
-                        ->groupBy('date', DB::raw('DATE(created_at)'))
-                        ->orderBy(DB::raw('DATE(created_at)'))
-                        ->get(),
+                // Daily trend — last 14 days (zero-filled)
+                'trend' => $this->buildTrend($analyticsBase),
 
-            // Per-company quotation count + total premium — for both charts
-            'by_company' => Company::withCount('quotations')
-                        ->withSum('quotations', 'total_premium')
-                        ->get()
-                        ->filter(fn($c) => $c->quotations_count > 0)
-                        ->map(fn($c) => [
-                            'company'       => $c->name,
-                            'count'         => $c->quotations_count,
-                            'total_premium' => (int) $c->quotations_sum_total_premium,
-                        ])
-                        ->values(),
-        ];
+                // Per-company quotation count + total premium — for both charts
+                'by_company' => Company::withCount(['quotations' => fn($q) => $scope ? $q->where('user_id', $scope) : $q])
+                    ->withSum(['quotations' => fn($q) => $scope ? $q->where('user_id', $scope) : $q], 'total_premium')
+                    ->get()
+                    ->filter(fn($c) => $c->quotations_count > 0)
+                    ->map(fn($c) => [
+                        'company'       => $c->name,
+                        'count'         => $c->quotations_count,
+                        'total_premium' => (int) $c->quotations_sum_total_premium,
+                    ])
+                    ->values(),
+            ];
                 
             // ── Users list for admin "Apply for User" modal ──────────
             $users = $isAdmin ? \App\Models\User::orderBy('name')->get(['id', 'name', 'email']) : collect();
@@ -141,6 +150,35 @@ class QuotationController extends Controller
             session(['quotations_last_viewed_at' => now()]);
             return view('quotations.index', compact('quotations', 'analytics', 'users', 'companies'));
         }
+
+    /**
+     * Build a zero-filled daily trend for the last 14 days.
+     */
+    protected function buildTrend($baseQuery)
+    {
+        $dbDriver = DB::connection()->getDriverName();
+        $dateExpr = $dbDriver === 'sqlite'
+            ? "strftime('%Y-%m-%d', created_at) as day"
+            : "DATE(created_at) as day";
+
+        $rows = (clone $baseQuery)
+            ->select(DB::raw($dateExpr), DB::raw('COUNT(*) as count'))
+            ->where('created_at', '>=', now()->subDays(13)->startOfDay())
+            ->groupBy('day')
+            ->orderBy('day')
+            ->get()
+            ->keyBy('day');
+
+        $labels = [];
+        $counts = [];
+        for ($i = 13; $i >= 0; $i--) {
+            $day = now()->subDays($i);
+            $labels[] = $day->format('d M');
+            $counts[] = (int) ($rows[$day->toDateString()]->count ?? 0);
+        }
+
+        return ['labels' => $labels, 'counts' => $counts];
+    }
 
     public function create()
     {
@@ -171,7 +209,37 @@ class QuotationController extends Controller
             $targetUser = User::find(request('on_behalf_of'));
         }
 
-        return view('quotations.create', compact('companies', 'rates', 'signedToken', 'users', 'targetUser'));
+        $prefill = $this->buildPrefill($targetUser ?? $user);
+
+        return view('quotations.create', compact('companies', 'rates', 'signedToken', 'users', 'targetUser', 'prefill'));
+    }
+
+    /**
+     * Prefill personal + vehicle fields from the user's profile and latest quotation.
+     */
+    protected function buildPrefill(?User $profileUser)
+    {
+        $profileUser = $profileUser ?? auth()->user();
+
+        $latest = $profileUser->quotations()->latest()->first();
+
+        return [
+            'salutation'   => '',
+            'first_name'   => $profileUser->first_name ?? '',
+            'middle_name'  => '',
+            'last_name'    => $profileUser->last_name ?? '',
+            'phone'        => $profileUser->mobile ?? '',
+            'email'        => $profileUser->email ?? '',
+            'reg'          => $latest->car_registration ?? '',
+            'chassis'      => '',
+            'make'         => $latest->car_make ?? '',
+            'model'        => $latest->car_model ?? '',
+            'body'         => '',
+            'year'         => $latest->car_year ?? '',
+            'color'        => '',
+            'value'        => $latest ? (string) $latest->car_valuation : '',
+            'vehicle_type' => $latest->vehicle_type ?? 'private',
+        ];
     }
 
     public function calculate(Request $request)
@@ -273,7 +341,7 @@ class QuotationController extends Controller
                 'total_premium' => $request->total_premium,
                 'excess_own_damage' => $request->excess_own_damage,
                 'excess_theft' => $request->excess_theft,
-                'status' => 'processing',
+                'status' => 'generated',
                 'breakdown' => $request->breakdown ?? [],
             ]);
 
@@ -294,10 +362,10 @@ class QuotationController extends Controller
 
         $admins = User::role(['super-admin', 'admin'])->get();
         foreach ($admins as $admin) {
-            $admin->notify(new QuotationStatusChanged($quotation, 'new', 'processing'));
+            $admin->notify(new QuotationStatusChanged($quotation, 'new', 'generated'));
         }
         try {
-            $quotation->user->notify(new QuotationStatusChanged($quotation, 'new', 'processing'));
+            $quotation->user->notify(new QuotationStatusChanged($quotation, 'new', 'generated'));
         } catch (\Exception $e) {
             \Illuminate\Support\Facades\Log::warning("Failed to notify quotation owner: " . $e->getMessage());
         }
@@ -309,8 +377,18 @@ class QuotationController extends Controller
     public function show(Quotation $quotation)
     {
         $this->authorizeView($quotation);
-        $quotation->load(['user', 'company', 'items']);
-        return view('quotations.show', compact('quotation'));
+        $quotation->load(['user', 'company', 'items', 'stickers']);
+
+        $recentQuotations = collect();
+        if (!auth()->user()->hasRole('super-admin') && !auth()->user()->hasRole('admin')) {
+            $recentQuotations = auth()->user()->quotations()
+                ->with(['user', 'company'])
+                ->latest()
+                ->take(10)
+                ->get();
+        }
+
+        return view('quotations.show', compact('quotation', 'recentQuotations'));
     }
 
     public function downloadPdf(Quotation $quotation)
@@ -369,9 +447,50 @@ class QuotationController extends Controller
     public function myQuote(Request $request)
     {
         $user = auth()->user();
-        $quotation = $user->quotations()->with(['user', 'company', 'items'])->latest()->firstOrFail();
+        $quotation = $user->quotations()->with(['user', 'company', 'items', 'stickers'])->latest()->firstOrFail();
         $showSuccess = $request->query('generated') === '1';
-        return view('quotations.show', compact('quotation', 'showSuccess'));
+
+        $recentQuotations = $user->quotations()
+            ->with(['user', 'company'])
+            ->latest()
+            ->take(10)
+            ->get();
+
+        return view('quotations.show', compact('quotation', 'showSuccess', 'recentQuotations'));
+    }
+
+    public function myQuotations()
+    {
+        $user = auth()->user();
+
+        $query = Quotation::with(['user', 'company'])
+            ->where('user_id', $user->id)
+            ->latest();
+
+        $quotations = $query->paginate(15)->withQueryString();
+
+        $analytics = [
+            'total'      => (clone $query)->count(),
+            'today'      => (clone $query)->whereDate('created_at', today())->count(),
+            'this_week'  => (clone $query)->whereBetween('created_at', [now()->startOfWeek(), now()->endOfWeek()])->count(),
+            'this_month' => (clone $query)->whereMonth('created_at', now()->month)->whereYear('created_at', now()->year)->count(),
+            'trend'      => $this->buildTrend($query),
+        ];
+
+        return view('quotations.mine', compact('quotations', 'analytics'));
+    }
+
+    public function recentQuotations()
+    {
+        $user = auth()->user();
+
+        $quotations = $user->quotations()
+            ->with(['user', 'company'])
+            ->latest()
+            ->take(10)
+            ->get();
+
+        return view('quotations.recent', compact('quotations'));
     }
 
     public function preview(Request $request)
@@ -395,5 +514,77 @@ class QuotationController extends Controller
         }
 
         return view('quotations.preview', compact('companies', 'targetUser'));
+    }
+
+    public function regenerate(Request $request)
+    {
+        $registrationNumber = null;
+
+        if ($request->isMethod('post')) {
+            $request->validate([
+                'registration_number' => 'required|string|max:50',
+            ]);
+
+            $registrationNumber = strtoupper(trim($request->registration_number));
+        } elseif ($request->isMethod('get') && session()->has('regenerate_registration')) {
+            $registrationNumber = session()->pull('regenerate_registration');
+        } else {
+            return redirect()->route('home')->with('error', 'Invalid request.');
+        }
+
+        $existingQuotation = Quotation::where('car_registration', $registrationNumber)
+            ->with(['company', 'items'])
+            ->latest()
+            ->first();
+
+        if (!$existingQuotation) {
+            return redirect()->route('home')->with('error', 'No quotation found for vehicle registration ' . $registrationNumber . '. Please generate a new quote.');
+        }
+
+        if (!auth()->check()) {
+            session(['regenerate_registration' => $registrationNumber]);
+            return redirect()->route('login')->with('info', 'Please log in to regenerate your quote.');
+        }
+
+        $user = auth()->user();
+
+        $newQuotation = DB::transaction(function () use ($existingQuotation, $user) {
+            $company = $existingQuotation->company;
+            $quotation = Quotation::create([
+                'user_id' => $user->id,
+                'company_id' => $company->id,
+                'quotation_number' => Quotation::generateNumber($company),
+                'car_make' => $existingQuotation->car_make,
+                'car_model' => $existingQuotation->car_model,
+                'car_year' => $existingQuotation->car_year,
+                'car_registration' => $existingQuotation->car_registration,
+                'car_valuation' => $existingQuotation->car_valuation,
+                'vehicle_type' => $existingQuotation->vehicle_type,
+                'num_passengers' => $existingQuotation->num_passengers,
+                'premium' => $existingQuotation->premium,
+                'pvt_premium' => $existingQuotation->pvt_premium,
+                'total_premium' => $existingQuotation->total_premium,
+                'excess_own_damage' => $existingQuotation->excess_own_damage,
+                'excess_theft' => $existingQuotation->excess_theft,
+                'status' => 'generated',
+                'breakdown' => $existingQuotation->breakdown,
+            ]);
+
+            foreach ($existingQuotation->items as $item) {
+                $quotation->items()->create([
+                    'item_name' => $item->item_name,
+                    'coverage' => $item->coverage,
+                    'limit_amount' => $item->limit_amount,
+                    'notes' => $item->notes,
+                ]);
+            }
+
+            return $quotation;
+        });
+
+        $user->notify(new \App\Notifications\QuotationStatusChanged($newQuotation, 'regenerated', 'generated'));
+
+        return redirect()->route('my.quote', ['generated' => 1])
+            ->with('success', 'A quote for vehicle registration ' . $registrationNumber . ' has been found. Regenerating the quote.');
     }
 }

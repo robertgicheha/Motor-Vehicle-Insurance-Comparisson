@@ -1,6 +1,5 @@
 <?php
 
-use App\Http\Controllers\Api\StickerApiController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\ProfileController;
@@ -11,6 +10,7 @@ use App\Http\Controllers\QuotationController;
 use App\Http\Controllers\StickerController;
 use App\Http\Controllers\Auth\GoogleAuthController;
 use App\Http\Controllers\Admin\StickerAdminController;
+use App\Http\Controllers\Admin\StickerSettingsController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\RoleController;
 use App\Http\Controllers\Admin\CompanyController;
@@ -24,7 +24,11 @@ use App\Http\Controllers\Admin\RateSettingController;
 use App\Http\Controllers\Admin\HealthCheckController;
 use App\Http\Controllers\Admin\ChangeRequestController;
 use App\Http\Controllers\Admin\MediaController;
+use App\Http\Controllers\Admin\EmailSettingController;
 use App\Http\Controllers\User\HelpController as UserHelpController;
+use App\Http\Controllers\ClaimsController;
+use App\Http\Controllers\Admin\ClaimController as AdminClaimController;
+use App\Http\Controllers\CertificateController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -64,7 +68,17 @@ Route::prefix('lookup')->name('public.')->group(function () {
 
 Route::get('/quotation/{quotation}/download-pdf', [QuotationController::class, 'publicDownloadPdf'])->name('quotation.download.pdf');
 
+Route::post('/quotations/regenerate', [QuotationController::class, 'regenerate'])->name('quotations.regenerate');
+
 Route::prefix('stickers')->name('stickers.')->group(function () {
+    Route::get('/user-lookup', [StickerController::class, 'userLookup'])->name('user-lookup');
+    Route::post('/lookup-by-quotation', [StickerController::class, 'lookupByQuotation'])->name('lookup-by-quotation');
+    Route::get('/issue', [StickerController::class, 'issueForm'])->name('issue');
+    Route::post('/search-quotation', [StickerController::class, 'searchQuotation'])->name('search-quotation');
+    Route::post('/upload-document', [StickerController::class, 'uploadDocument'])->name('upload-document');
+    Route::post('/scan-status', [StickerController::class, 'scanStatus'])->name('scan-status');
+    Route::post('/issue', [StickerController::class, 'issue'])->name('issue.store');
+    Route::post('/test-email', [StickerController::class, 'sendTestEmail'])->name('test-email');
     Route::get('/generate', [StickerController::class, 'create'])->name('create');
     Route::post('/generate', [StickerController::class, 'store'])->name('store');
     Route::get('/lookup', [StickerController::class, 'lookup'])->name('lookup');
@@ -74,7 +88,6 @@ Route::prefix('stickers')->name('stickers.')->group(function () {
     Route::get('/{sticker}/print', [StickerController::class, 'printView'])->name('print');
 });
 
-Route::post('/api/sticker/generate', [StickerApiController::class, 'generate']);
 Route::post('/api/quotation/from-session', [PublicController::class, 'storeQuotationFromSession'])->middleware('auth')->name('api.quotation.from-session');
 
 Route::get('auth/google', [GoogleAuthController::class, 'redirect'])->name('auth.google');
@@ -84,6 +97,8 @@ Route::middleware(['auth', 'online'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
     Route::get('/my-quote', [QuotationController::class, 'myQuote'])->name('my.quote');
+    Route::get('/my-quotations', [QuotationController::class, 'myQuotations'])->name('my.quotations');
+    Route::get('/recent-quotations', [QuotationController::class, 'recentQuotations'])->name('recent.quotations');
 
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
@@ -98,14 +113,27 @@ Route::middleware(['auth', 'online'])->group(function () {
     Route::get('/quotations/{quotation}/download-pdf', [QuotationController::class, 'downloadPdf'])->name('quotations.download.pdf');
     Route::post('/quotations/{id}/restore', [QuotationController::class, 'restore'])->name('quotations.restore');
 
+    Route::get('/claims/mine', [ClaimsController::class, 'myClaims'])->name('claims.mine');
+    Route::get('/claims/lookup-vehicle', [ClaimsController::class, 'lookupVehicle'])->name('claims.lookup-vehicle');
+    Route::get('/claims/suggest-vehicles', [ClaimsController::class, 'suggestVehicles'])->name('claims.suggest-vehicles');
+    Route::resource('claims', ClaimsController::class);
+    Route::match(['post', 'patch'], '/claims/{claim}/update-status', [ClaimsController::class, 'updateStatus'])->name('claims.update-status');
+    Route::match(['post', 'patch'], '/claims/{claim}/update-documents-confirmed', [ClaimsController::class, 'updateDocumentsConfirmed'])->name('claims.update-documents-confirmed');
+    Route::match(['post', 'patch'], '/claims/{claim}/update-vehicle-assessment', [ClaimsController::class, 'updateVehicleAssessment'])->name('claims.update-vehicle-assessment');
+
+    Route::get('/quotations/regenerate', [QuotationController::class, 'regenerate'])->name('quotations.regenerate.get');
+
     Route::get('/help', [UserHelpController::class, 'index'])->name('user.help.index');
     Route::post('/help', [UserHelpController::class, 'store'])->name('user.help.store');
 
-    Route::get('/stickers/user-lookup', [StickerController::class, 'userLookup'])->name('stickers.user-lookup');
-    Route::post('/api/sticker/lookup-by-quotation', [StickerController::class, 'lookupByQuotation'])->name('stickers.lookup-by-quotation');
+    Route::get('/certificates', [CertificateController::class, 'create'])->name('certificates.create');
+    Route::post('/certificates', [CertificateController::class, 'store'])->name('certificates.store');
+
+    Route::get('/claims/tracker', [ClaimsController::class, 'publicTracker'])->name('claims.public-tracker');
 
     Route::prefix('notifications')->name('notifications.')->group(function () {
         Route::get('/', [NotificationController::class, 'index'])->name('index');
+        Route::get('{id}', [NotificationController::class, 'show'])->name('show');
         Route::post('{id}/read', [NotificationController::class, 'markAsRead'])->name('read');
         Route::post('read-all', [NotificationController::class, 'markAllAsRead'])->name('read-all');
         Route::post('{id}/mark-unread', [NotificationController::class, 'markAsUnread'])->name('mark-unread');
@@ -119,12 +147,13 @@ Route::middleware(['auth', 'online'])->group(function () {
     Route::get('/dashboard/weather', [DashboardController::class, 'weatherJson'])->name('dashboard.weather');
 
     Route::middleware(['role:super-admin|admin'])->prefix('admin')->name('admin.')->group(function () {
-    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+        Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
         Route::resource('users', UserController::class);
         Route::patch('/users/{user}/toggle-status', [UserController::class, 'toggleStatus'])->name('users.toggle-status');
         Route::get('/users/export', [UserController::class, 'export'])->name('users.export');
         Route::post('/users/import', [UserController::class, 'import'])->name('users.import')->middleware('throttle:3,1');
+        Route::post('/users/send-credentials', [UserController::class, 'sendCredentials'])->name('users.send-credentials');
 
         Route::resource('roles', RoleController::class);
 
@@ -142,23 +171,47 @@ Route::middleware(['auth', 'online'])->group(function () {
         Route::delete('/compare-all', [CompareAllController::class, 'destroy'])->name('compare-all.destroy');
 
         Route::get('/stickers', [StickerAdminController::class, 'index'])->name('stickers.index');
+        Route::get('/stickers/tracker', [StickerAdminController::class, 'tracker'])->name('stickers.tracker');
+        Route::get('/stickers/update', [StickerAdminController::class, 'updateStickerForm'])->name('stickers.update-form');
+        Route::post('/stickers/update', [StickerAdminController::class, 'updateSticker'])->name('stickers.update');
+        Route::post('/stickers/search', [StickerAdminController::class, 'searchSticker'])->name('stickers.search');
+        Route::get('/stickers/analytics', [App\Http\Controllers\Admin\StickerAnalyticsController::class, 'index'])->name('stickers.analytics');
+        Route::get('/stickers/settings', [App\Http\Controllers\Admin\StickerSettingsController::class, 'index'])->name('stickers.settings');
+        Route::get('/stickers/email-settings', [App\Http\Controllers\Admin\StickerSettingsController::class, 'emailSettings'])->name('stickers.email-settings');
+        Route::post('/stickers/settings/email', [App\Http\Controllers\Admin\StickerSettingsController::class, 'updateEmailConfig'])->name('stickers.settings.email');
+        Route::post('/stickers/{sticker}/response', [App\Http\Controllers\Admin\StickerSettingsController::class, 'logResponse'])->name('stickers.response');
 
         Route::get('/reports', [ReportController::class, 'index'])->name('reports.index');
         Route::post('/reports/generate', [ReportController::class, 'generate'])->name('reports.generate')->middleware('throttle:10,1');
         Route::post('/reports/stickers', [ReportController::class, 'stickerReport'])->name('reports.stickers')->middleware('throttle:10,1');
         Route::get('/reports/export-csv', [ReportController::class, 'exportCsv'])->name('reports.export-csv');
         Route::get('/reports/export-excel', [ReportController::class, 'exportExcel'])->name('reports.export-excel');
+        Route::get('/reports/export-pdf', [ReportController::class, 'exportPdf'])->name('reports.export-pdf');
         Route::get('/reports/stickers/export-csv', [ReportController::class, 'exportStickersCsv'])->name('reports.stickers.export-csv');
+        Route::get('/reports/stickers/export-excel', [ReportController::class, 'exportStickersExcel'])->name('reports.stickers.export-excel');
+        Route::get('/reports/stickers/export-pdf', [ReportController::class, 'exportStickersPdf'])->name('reports.stickers.export-pdf');
 
         Route::get('/audit-logs', [AuditLogController::class, 'indexAudit'])->name('audit.index');
         Route::get('/activity-logs', [AuditLogController::class, 'indexActivity'])->name('audit.activity');
 
         Route::get('/settings', [SettingController::class, 'index'])->name('settings.index');
         Route::post('/settings', [SettingController::class, 'update'])->name('settings.update')->middleware('throttle:10,1');
+        Route::post('/settings/cache/clear', [SettingController::class, 'clearCache'])->name('settings.cache.clear');
+        Route::post('/settings/cache/config', [SettingController::class, 'clearConfigCache'])->name('settings.cache.config');
+        Route::post('/settings/cache/view', [SettingController::class, 'clearViewCache'])->name('settings.cache.view');
+        Route::post('/settings/cache/route', [SettingController::class, 'clearRouteCache'])->name('settings.cache.route');
+        Route::post('/settings/cache/optimize', [SettingController::class, 'optimize'])->name('settings.cache.optimize');
+        Route::post('/settings/cache/all', [SettingController::class, 'clearAllCaches'])->name('settings.cache.all');
+
+        Route::get('/email-settings', [EmailSettingController::class, 'index'])->name('email-settings.index');
+        Route::post('/email-settings', [EmailSettingController::class, 'store'])->name('email-settings.store');
+        Route::patch('/email-settings/{emailSetting}', [EmailSettingController::class, 'update'])->name('email-settings.update');
+        Route::delete('/email-settings/{emailSetting}', [EmailSettingController::class, 'destroy'])->name('email-settings.destroy');
 
         Route::get('/analytics', [AnalyticsController::class, 'index'])->name('analytics.index');
 
         Route::get('/notifications', [AdminNotificationController::class, 'index'])->name('notifications.index');
+        Route::get('/notifications/{id}', [AdminNotificationController::class, 'show'])->name('notifications.show');
         Route::post('/notifications/{id}/read', [AdminNotificationController::class, 'markAsRead'])->name('notifications.read');
         Route::post('/notifications/read-all', [AdminNotificationController::class, 'markAllAsRead'])->name('notifications.read-all');
         Route::post('/notifications/{id}/mark-unread', [AdminNotificationController::class, 'markAsUnread'])->name('notifications.mark-unread');
@@ -192,6 +245,9 @@ Route::middleware(['auth', 'online'])->group(function () {
             Route::delete('/file/{path}', [MediaController::class, 'destroy'])->name('destroy-file');
             Route::get('/list', [MediaController::class, 'list'])->name('list');
         });
+
+        Route::resource('claims', AdminClaimController::class)->except(['create', 'store']);
+        Route::patch('/claims/{claim}/update-status', [AdminClaimController::class, 'updateStatus'])->name('claims.update-status');
     });
 
 });

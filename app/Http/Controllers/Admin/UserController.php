@@ -63,7 +63,6 @@ class UserController extends Controller
             'first_name' => 'required|string|max:255',
             'last_name' => 'required|string|max:255',
             'email' => 'required|email|unique:users',
-            'password' => 'required|min:8',
             'mobile' => 'required|string|max:20',
             'gender' => 'nullable|in:male,female,other',
             'role' => 'required|exists:roles,id',
@@ -79,12 +78,14 @@ class UserController extends Controller
             return back()->with('error', 'You can only create users with the User role.')->withInput();
         }
 
+        $generatedPassword = $this->generateStrongPassword();
+
         $user = User::create([
             'first_name' => $request->first_name,
             'last_name' => $request->last_name,
             'name' => $request->first_name . ' ' . $request->last_name,
             'email' => $request->email,
-            'password' => Hash::make($request->password),
+            'password' => Hash::make($generatedPassword),
             'mobile' => $request->mobile,
             'gender' => $request->gender,
             'is_active' => true,
@@ -93,10 +94,14 @@ class UserController extends Controller
 
         $user->assignRole($requestedRole->name);
 
+        session(['last_created_user_id' => $user->id]);
+
         AuditService::log('create', 'User', $user->id, null, $user->toArray());
         AuditService::activity('user_created', "User {$user->name} created by admin");
 
-        return redirect()->route('admin.users.index')->with('success', 'User created successfully.');
+        return redirect()->route('admin.users.index')
+            ->with('success', 'User created successfully. Password: ' . $generatedPassword)
+            ->with('generated_password', $generatedPassword);
     }
 
     public function edit(User $user)
@@ -203,5 +208,43 @@ class UserController extends Controller
         AuditService::activity('users_imported', "{$result['imported']} users imported via file upload");
 
         return back()->with('success', $message);
+    }
+
+    protected function generateStrongPassword(int $length = 12): string
+    {
+        $upper = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+        $lower = 'abcdefghijklmnopqrstuvwxyz';
+        $numbers = '0123456789';
+        $symbols = '!@#$%^&*()_+-=[]{}|;:,.<>?';
+        $all = $upper . $lower . $numbers . $symbols;
+
+        $password = '';
+        $password .= $upper[random_int(0, strlen($upper) - 1)];
+        $password .= $lower[random_int(0, strlen($lower) - 1)];
+        $password .= $numbers[random_int(0, strlen($numbers) - 1)];
+        $password .= $symbols[random_int(0, strlen($symbols) - 1)];
+
+        for ($i = 4; $i < $length; $i++) {
+            $password .= $all[random_int(0, strlen($all) - 1)];
+        }
+
+        return str_shuffle($password);
+    }
+
+    public function sendCredentials(Request $request)
+    {
+        $request->validate([
+            'password' => 'required|string',
+        ]);
+
+        $user = User::find(session('last_created_user_id'));
+
+        if (!$user) {
+            return back()->with('error', 'No recently created user found.');
+        }
+
+        \Mail::to($user->email)->send(new \App\Mail\UserCredentialsMail($user, $request->password));
+
+        return back()->with('success', 'Login credentials sent to ' . $user->email);
     }
 }

@@ -27,11 +27,11 @@
 <body>
     <div class="wrapper">
         <div class="header">
-            @php $__logoPath = $quotation->company->logo ? public_path('storage/' . $quotation->company->logo) : (isset(\App\Models\Company::hardcodedLogoMap()[$quotation->company->slug]) ? public_path(\App\Models\Company::hardcodedLogoMap()[$quotation->company->slug]) : ''); @endphp
+            @php $__company = $quotation->company; $__logoPath = $__company ? ($__company->logo ? public_path('storage/' . $__company->logo) : (isset(\App\Models\Company::hardcodedLogoMap()[strtoupper($__company->slug ?? '')]) ? public_path(\App\Models\Company::hardcodedLogoMap()[strtoupper($__company->slug ?? '')]) : '')) : ''; @endphp
             @if($__logoPath && file_exists($__logoPath))
-                <img src="{{ $message->embed($__logoPath) }}" alt="{{ $quotation->company->name }}" style="max-height:50px;max-width:160px;margin-bottom:8px;">
+                <img src="{{ $message->embed($__logoPath) }}" alt="{{ $__company->name }}" style="max-height:50px;max-width:160px;margin-bottom:8px;">
             @else
-                <img src="{{ $message->embed(public_path('img/MIC-Global-Risks_logo_no_background.png')) }}" alt="MIC Global Risks" style="max-height:50px;max-width:160px;margin-bottom:8px;filter:brightness(0) invert(1)">
+                <img src="{{ $message->embed(public_path('images/MIC-Global-Risks_logo_no_background.png')) }}" alt="MIC Global Risks" style="max-height:50px;max-width:160px;margin-bottom:8px;filter:brightness(0) invert(1)">
             @endif
             <h1>Insurance Quotation Generated</h1>
             <p>{{ $quotation->quotation_number }}</p>

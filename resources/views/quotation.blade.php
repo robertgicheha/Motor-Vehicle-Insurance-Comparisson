@@ -1,161 +1,260 @@
-@extends('layouts.quotation')
+<x-app-layout>
+<div class="max-w-5xl mx-auto space-y-5 pt-10 fade-in font-montserrat" x-data="{ expanded: true }">
 
-@section('title', 'Motor Insurance Quotation | MIC Global Risks')
+    @if(!empty($showSuccess))
+    <div class="rounded-2xl bg-emerald-500/10 border border-emerald-500/30 px-6 py-5 shadow-sm flex items-center gap-4">
+        <div class="w-10 h-10 rounded-full bg-emerald-500/20 flex items-center justify-center shrink-0">
+            <svg class="w-5 h-5 text-emerald-400" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+        </div>
+        <div>
+            <p class="text-sm font-bold text-emerald-600 dark:text-emerald-400">Your quotation was successfully generated</p>
+            <p class="text-xs text-emerald-500/70 mt-0.5">Your quotation has been saved and is now available in your account.</p>
+        </div>
+    </div>
+    @endif
 
-@section('styles')
+    {{-- ─── HERO ─────────────────────────────────────────────────────────── --}}
+    <div class="rounded-2xl bg-micblue px-6 py-7 shadow-sm">
+        <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
+            <div>
+                <p class="text-[10px] font-semibold uppercase tracking-widest text-blue-300">Quotation / <span id="hero-company-name" x-text="selectedName">All Insurers</span></p>
+                <div class="flex items-center gap-3 mt-0.5">
+                    <h1 class="text-2xl font-bold text-white tracking-tight" style="font-size:26px">Motor Insurance Quotation</h1>
+                    <img id="hero-company-logo" src="" alt="" class="hidden h-9 w-auto" onerror="this.style.display='none'">
+                    <button id="copy-quote-btn" onclick="copyQuoteNumber()"
+                            class="inline-flex items-center gap-1 px-2.5 py-1 text-[10px] font-semibold bg-white/20 text-white rounded-lg hover:bg-white/30 transition"
+                            style="border:1px solid rgba(255,255,255,0.25)">
+                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                        Copy
+                    </button>
+                </div>
+                <p class="mt-1 text-xs text-blue-200">
+                    Reference:
+                    <span id="hero-quote-num" class="font-semibold text-white">—</span>
+                    &middot; Generated {{ now()->format('d M Y, h:i A') }}
+                </p>
+            </div>
+            <div class="flex items-center gap-2 shrink-0">
+                <a href="{{ route('motor.quotation') }}"
+                   class="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold border border-white/20 text-white/80 hover:bg-white/10 rounded-lg transition">
+                    All Insurers
+                </a>
+                <button class="action-btn action-btn-download inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold bg-blue-500 hover:bg-blue-400 text-white rounded-lg transition"
+                        onclick="actionDownload()">
+                    <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                    Download PDF
+                </button>
+            </div>
+        </div>
 
-@endsection
+        {{-- Vehicle summary bar --}}
+        <div class="mt-4 flex flex-wrap items-center gap-4 text-xs text-white/70" id="vehicle-bar">
+            <span class="flex items-center gap-1.5" id="vb-make"><span x-show="false"></span>—</span>
+            <span class="flex items-center gap-1.5" id="vb-reg">—</span>
+            <span class="flex items-center gap-1.5" id="vb-value">—</span>
+            <span class="flex items-center gap-1.5" id="vb-company">—</span>
+        </div>
+    </div>
 
-@section('content')
-<main class="main-content">
+    {{-- ─── EXPANDED DETAILS (collapsible) ───────────────────────────────── --}}
+    <div x-show="expanded" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 -translate-y-1" x-transition:enter-end="opacity-100 translate-y-0" class="space-y-5">
 
-  <div class="toast-container" id="toast-container"></div>
+    {{-- ─── CUSTOMER & VEHICLE SUMMARY ──────────────────────────────────── --}}
+    <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+        <div class="px-6 py-4 border-b border-gray-100 dark:border-gray-700">
+            <p class="text-[10px] font-semibold uppercase tracking-widest text-gray-400">Summary</p>
+            <h2 class="text-xs font-bold text-gray-800 dark:text-white mt-0.5">Customer &amp; Vehicle</h2>
+        </div>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-5 p-6 text-xs">
+            <div>
+                <span class="block text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Full Name</span>
+                <span class="block font-medium text-gray-800 dark:text-white mt-1" id="s-name">—</span>
+            </div>
+            <div>
+                <span class="block text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Phone</span>
+                <span class="block font-medium text-gray-800 dark:text-white mt-1" id="s-phone">—</span>
+            </div>
+            <div>
+                <span class="block text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Email</span>
+                <span class="block font-medium text-gray-800 dark:text-white mt-1" id="s-email">—</span>
+            </div>
+            <div>
+                <span class="block text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Insurer</span>
+                <span class="block font-medium text-gray-800 dark:text-white mt-1" id="s-company">—</span>
+            </div>
+            <div>
+                <span class="block text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Registration</span>
+                <span class="block font-medium text-gray-800 dark:text-white mt-1" id="s-reg">—</span>
+            </div>
+            <div>
+                <span class="block text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Make / Model</span>
+                <span class="block font-medium text-gray-800 dark:text-white mt-1" id="s-make">—</span>
+            </div>
+            <div>
+                <span class="block text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Year / Body</span>
+                <span class="block font-medium text-gray-800 dark:text-white mt-1" id="s-year">—</span>
+            </div>
+            <div>
+                <span class="block text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Colour</span>
+                <span class="block font-medium text-gray-800 dark:text-white mt-1" id="s-color">—</span>
+            </div>
+            <div>
+                <span class="block text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Chassis No.</span>
+                <span class="block font-medium text-gray-800 dark:text-white mt-1" id="s-chassis">—</span>
+            </div>
+            <div>
+                <span class="block text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Estimated Value</span>
+                <span class="block font-medium text-gray-800 dark:text-white mt-1" id="s-value">—</span>
+            </div>
+        </div>
+    </div>
 
-  <div class="hero-card">
-    <div class="hero-card-left">
-      <h2>Motor Insurance Quotation</h2>
-      <div class="quote-number">
-        <span id="hero-quote-num">—</span>
-        <button class="copy-btn" id="copy-quote-btn" onclick="copyQuoteNumber()">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
-          Copy
+    {{-- ─── QUOTATION BREAKDOWN (selected company) ──────────────────────── --}}
+    <div id="single-breakdown-wrap" class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+        <div class="px-6 py-4 border-b border-gray-100 dark:border-gray-700">
+            <p class="text-[10px] font-semibold uppercase tracking-widest text-gray-400">Financials</p>
+            <h2 class="text-xs font-bold text-gray-800 dark:text-white mt-0.5">Quotation Summary — <span id="breakdown-company-label">—</span></h2>
+        </div>
+        <div class="p-6 overflow-x-auto">
+            <table class="w-full text-xs">
+                <thead>
+                    <tr class="text-gray-400 uppercase tracking-wider text-[10px]">
+                        <th class="text-left font-semibold pb-2">Description</th>
+                        <th class="text-left font-semibold pb-2">Rate / Notes</th>
+                        <th class="text-right font-semibold pb-2">Amount (KES)</th>
+                    </tr>
+                </thead>
+                <tbody id="breakdown-rows" class="divide-y divide-gray-100 dark:divide-gray-700"></tbody>
+                <tfoot>
+                    <tr class="border-t-2 border-gray-200 dark:border-gray-600">
+                        <td colspan="2" class="pt-3 font-bold text-gray-800 dark:text-white">Total Premium (incl. taxes)</td>
+                        <td id="breakdown-total" class="pt-3 text-right font-extrabold text-lg text-blue-600 dark:text-blue-400">—</td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+    </div>
+
+    {{-- ─── COMPARE PREMIUMS ACROSS INSURERS ────────────────────────────── --}}
+    <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+        <div class="px-6 py-4 border-b border-gray-100 dark:border-gray-700">
+            <p class="text-[10px] font-semibold uppercase tracking-widest text-gray-400">Comparison</p>
+            <h2 class="text-xs font-bold text-gray-800 dark:text-white mt-0.5">Compare Premiums Across Insurers</h2>
+        </div>
+        <div id="comparison-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 p-6"></div>
+    </div>
+
+    {{-- ─── DETAILED COMPARE TABLE ──────────────────────────────────────── --}}
+    <div id="compare-all-wrap" class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+        <div class="px-6 py-4 border-b border-gray-100 dark:border-gray-700">
+            <p class="text-[10px] font-semibold uppercase tracking-widest text-gray-400">Detailed</p>
+            <h2 class="text-xs font-bold text-gray-800 dark:text-white mt-0.5">Premium Comparison — All Insurers</h2>
+        </div>
+        <div class="p-6 overflow-x-auto">
+            <table class="w-full text-xs">
+                <thead>
+                    <tr class="text-gray-400 uppercase tracking-wider text-[10px]">
+                        <th class="text-left font-semibold pb-2">Description</th>
+                        <th id="cmp-head-0" class="text-right font-semibold pb-2">Insurer 1</th>
+                        <th id="cmp-head-1" class="text-right font-semibold pb-2">Insurer 2</th>
+                        <th id="cmp-head-2" class="text-right font-semibold pb-2">Insurer 3</th>
+                    </tr>
+                </thead>
+                <tbody id="compare-rows" class="divide-y divide-gray-100 dark:divide-gray-700"></tbody>
+                <tfoot>
+                    <tr class="border-t-2 border-gray-200 dark:border-gray-600">
+                        <td class="pt-3 font-bold text-gray-800 dark:text-white">Total Premium (incl. taxes)</td>
+                        <td id="cmp-total-0" class="pt-3 text-right font-extrabold text-blue-600 dark:text-blue-400">—</td>
+                        <td id="cmp-total-1" class="pt-3 text-right font-extrabold text-blue-600 dark:text-blue-400">—</td>
+                        <td id="cmp-total-2" class="pt-3 text-right font-extrabold text-blue-600 dark:text-blue-400">—</td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+    </div>
+
+    {{-- ─── DOWNLOAD CARDS ──────────────────────────────────────────────── --}}
+    <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+        <div class="px-6 py-4 border-b border-gray-100 dark:border-gray-700">
+            <p class="text-[10px] font-semibold uppercase tracking-widest text-gray-400">Actions</p>
+            <h2 class="text-xs font-bold text-gray-800 dark:text-white mt-0.5" id="dl-cards-label">Download Quote</h2>
+        </div>
+        <div id="dl-cards" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 p-6"></div>
+    </div>
+
+    {{-- ─── ACTION BAR ──────────────────────────────────────────────────── --}}
+    <div class="action-bar bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-5 flex items-center gap-3" id="action-bar">
+        <span class="action-bar-label text-[11px] font-semibold uppercase tracking-widest text-gray-400 flex-1">Quotation Actions</span>
+        <button class="action-btn action-btn-download inline-flex items-center gap-1.5 px-4 py-2.5 text-xs font-semibold bg-blue-500 hover:bg-blue-400 text-white rounded-lg transition" onclick="actionDownload()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            Download PDF
         </button>
-      </div>
-      <p style="font-size:13px;color:rgba(255,255,255,.65);margin-top:4px">Your personalised premium breakdown</p>
+        <button class="action-btn action-btn-print inline-flex items-center gap-1.5 px-4 py-2.5 text-xs font-semibold bg-gray-700 hover:bg-gray-600 text-white rounded-lg transition" onclick="actionPrint()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+            Print
+        </button>
+        <button class="action-btn action-btn-preview inline-flex items-center gap-1.5 px-4 py-2.5 text-xs font-semibold text-blue-600 border border-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition" id="btn-preview" onclick="actionTogglePreview()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            Preview
+        </button>
     </div>
-    <div class="hero-card-right">
-      <img id="hero-company-logo" src="" alt="Company Logo" style="display:none">
+
     </div>
-  </div>
+    {{-- /END EXPANDED DETAILS --}}
 
-  <div class="section-label">Customer &amp; Vehicle Summary</div>
-  <div class="summary-grid">
-    <div class="summary-card">
-      <h4>Personal Details</h4>
-      <div class="summary-row"><span>Full Name</span><span id="s-name">—</span></div>
-      <div class="summary-row"><span>Phone</span><span id="s-phone">—</span></div>
-      <div class="summary-row"><span>Email</span><span id="s-email">—</span></div>
+    {{-- ─── COLLAPSED SUMMARY ROW (compact) ────────────────────────────── --}}
+    <div x-show="!expanded" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 translate-y-1" x-transition:enter-end="opacity-100 translate-y-0"
+         class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+        <div class="px-5 py-3.5 flex flex-wrap items-center gap-x-5 gap-y-2 text-xs">
+            <span class="font-semibold text-blue-600 dark:text-blue-400" id="compact-quote">—</span>
+            <span class="text-gray-800 dark:text-white font-medium" id="compact-vehicle">—</span>
+            <span class="text-gray-400" id="compact-company">—</span>
+            <button @click="expanded = true" class="inline-flex items-center gap-1 px-3 py-1.5 text-[10px] font-semibold bg-blue-500 text-white rounded-lg hover:bg-blue-400 transition ml-auto">Expand</button>
+        </div>
     </div>
-    <div class="summary-card">
-      <h4>Vehicle Details</h4>
-      <div class="summary-row"><span>Registration</span><span id="s-reg">—</span></div>
-      <div class="summary-row"><span>Make / Model</span><span id="s-make">—</span></div>
-      <div class="summary-row"><span>Year / Body</span><span id="s-year">—</span></div>
-      <div class="summary-row"><span>Color</span><span id="s-color">—</span></div>
-      <div class="summary-row"><span>Chassis No.</span><span id="s-chassis">—</span></div>
-    </div>
-    <div class="summary-card">
-      <h4>Valuation</h4>
-      <div class="summary-row"><span>Estimated Value</span><span id="s-value">—</span></div>
-      <div class="summary-row"><span>Cover Type</span><span>Comprehensive</span></div>
-      <div class="summary-row"><span>Frequency</span><span>Annually</span></div>
-      <div class="summary-row"><span>Geo. Limit</span><span>Kenya / Uganda / TZ</span></div>
-    </div>
-  </div>
 
-  <div id="single-breakdown-wrap">
-    <div class="section-label">Quotation Summary — <span id="breakdown-company-label"></span></div>
-    <div class="breakdown-table">
-      <table>
-        <thead>
-          <tr>
-            <th>Description</th>
-            <th>Rate / Notes</th>
-            <th style="text-align:right">Amount (KES)</th>
-          </tr>
-        </thead>
-        <tbody id="breakdown-rows"></tbody>
-        <tfoot>
-          <tr>
-            <td colspan="2">Total Premium (incl. taxes)</td>
-            <td id="breakdown-total">—</td>
-          </tr>
-        </tfoot>
-      </table>
-    </div>
-  </div>
+    {{-- ─── PDF PREVIEW (print target) ──────────────────────────────────── --}}
+    <div class="pdf-preview" id="pdf-preview" style="display:none"></div>
 
-  <div class="section-label">Compare Premiums Across Insurers</div>
-  <div class="comparison-grid" id="comparison-grid"></div>
+</div>
 
-  <div id="compare-all-wrap" class="compare-table-wrap">
-    <div style="padding:18px 20px 10px;font-size:13px;font-weight:700;color:var(--text)">Detailed Premium Comparison — All Insurers</div>
-    <table>
-      <thead>
-        <tr>
-          <th>Description</th>
-          <th id="cmp-head-0">Insurer 1</th>
-          <th id="cmp-head-1">Insurer 2</th>
-          <th id="cmp-head-2">Insurer 3</th>
-        </tr>
-      </thead>
-      <tbody id="compare-rows"></tbody>
-      <tfoot>
-        <tr>
-          <td>Total Premium (incl. taxes)</td>
-          <td id="cmp-total-0">—</td>
-          <td id="cmp-total-1">—</td>
-          <td id="cmp-total-2">—</td>
-        </tr>
-      </tfoot>
-    </table>
-  </div>
+{{-- Toast container used by quotation.js --}}
+<div class="toast-container" id="toast-container"></div>
 
-  <div class="section-label" id="dl-cards-label">Download Quote</div>
-  <div class="download-cards" id="dl-cards"></div>
-
-  <div class="action-bar" id="action-bar">
-    <span class="action-bar-label">Quotation Actions</span>
-    <button class="action-btn action-btn-download" onclick="actionDownload()">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-      Download PDF
-    </button>
-    <button class="action-btn action-btn-print" onclick="actionPrint()">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
-      Print
-    </button>
-    <button class="action-btn action-btn-preview" id="btn-preview" onclick="actionTogglePreview()">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-      Preview
-    </button>
-  </div>
-
-  <div class="pdf-preview" id="pdf-preview"></div>
-
-</main>
-@endsection
-
-@section('scripts')
+@push('scripts')
 <script>
-window.quotationData = @json($companyData);
+window.quotationData    = @json($companyData);
 window.quotationTaxRate = {{ $taxRate }};
 window.quotationVehicleType = '{{ $vehicleType ?? 'psv' }}';
 window.quotationNumPassengers = {{ $numPassengers ?? 1 }};
 window.quotationCompanies = @json($companies->map(fn($c) => ['slug' => $c->slug, 'name' => $c->name, 'logo' => $c->logoUrl()]));
-window.hardcodedLogos = @json($hardcodedLogos ?? []);
+window.hardcodedLogos  = @json($hardcodedLogos ?? []);
 window.selectedCompanySlug = {{ $selectedCompany ? json_encode($selectedCompany->slug) : 'null' }};
+window.MIC_QUOTATION_SLUG  = {{ $selectedCompany ? json_encode($selectedCompany->slug) : 'null' }};
+</script>
+
 @php
     $_quotationDbData = $userQuotation ? [
         'firstName' => $userQuotation->user->first_name ?? '',
-        'lastName' => $userQuotation->user->last_name ?? '',
+        'lastName'  => $userQuotation->user->last_name ?? '',
         'salutation' => '',
-        'phone' => $userQuotation->user->mobile ?? '',
-        'email' => $userQuotation->user->email ?? '',
-        'reg' => $userQuotation->car_registration ?? '',
-        'chassis' => '',
-        'make' => $userQuotation->car_make ?? '',
-        'model' => $userQuotation->car_model ?? '',
-        'body' => '',
-        'year' => $userQuotation->car_year ?? '',
-        'color' => '',
-        'value' => (float)($userQuotation->car_valuation ?? 0),
-        'quoteNum' => $userQuotation->quotation_number ?? '',
+        'phone'     => $userQuotation->user->mobile ?? '',
+        'email'     => $userQuotation->user->email ?? '',
+        'reg'       => $userQuotation->car_registration ?? '',
+        'chassis'   => '',
+        'make'      => $userQuotation->car_make ?? '',
+        'model'     => $userQuotation->car_model ?? '',
+        'body'      => '',
+        'year'      => $userQuotation->car_year ?? '',
+        'color'     => '',
+        'value'     => (float)($userQuotation->car_valuation ?? 0),
+        'quoteNum'  => $userQuotation->quotation_number ?? '',
     ] : null;
 @endphp
+<script>
 window.quotationDbData = @json($_quotationDbData);
-window.MIC_AUTH = @json(auth()->check());
+window.MIC_AUTH  = @json(auth()->check());
 window.MIC_GUEST = @json(auth()->guest());
-window.MIC_QUOTATION_SLUG = {{ $selectedCompany ? json_encode($selectedCompany->slug) : 'null' }};
 </script>
 
 @if(auth()->guest())
@@ -229,4 +328,7 @@ function closeAuthModal() {
 </script>
 @endif
 
-@endsection
+<script src="{{ asset('js/quotation.js') }}"></script>
+@endpush
+
+</x-app-layout>

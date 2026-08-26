@@ -1,7 +1,5 @@
 <x-app-layout>
 <div class="space-y-6 pt-10 fade-in">
-
-    {{-- ─── HERO ─────────────────────────────────────────────────────────── --}}
     <div class="rounded-2xl bg-micblue px-6 py-7 shadow-sm">
         <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
             <div>
@@ -19,11 +17,37 @@
         </div>
     </div>
 
-    {{-- ─── FORM CARD ──────────────────────────────────────────────────── --}}
+    @if(session('generated_password'))
+        <div class="rounded-2xl bg-emerald-500/10 border border-emerald-500/30 px-6 py-5 shadow-sm fade-in">
+            <div class="flex items-center justify-between gap-4">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-full bg-emerald-500/20 flex items-center justify-center shrink-0">
+                        <svg class="w-5 h-5 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                    </div>
+                    <div>
+                        <p class="text-sm font-bold text-emerald-600 dark:text-emerald-400">User created successfully!</p>
+                        <p class="text-xs text-emerald-500/70 mt-0.5">Save this password. It will not be shown again.</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2">
+                    <code id="generated-password" class="px-3 py-1.5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded text-xs font-mono text-gray-800 dark:text-white">{{ session('generated_password') }}</code>
+                    <button onclick="copyPassword()" class="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold bg-emerald-500 hover:bg-emerald-400 text-white rounded-lg transition">
+                        <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+                        Copy
+                    </button>
+                    <button onclick="sendPasswordEmail()" class="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold bg-blue-500 hover:bg-blue-400 text-white rounded-lg transition">
+                        <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+                        Send via Email
+                    </button>
+                </div>
+            </div>
+        </div>
+    @endif
+
     <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
         <div class="px-5 py-4 border-b border-gray-100 dark:border-gray-700">
             <h2 class="text-xs font-semibold text-gray-800 dark:text-white">Account Details</h2>
-            <p class="text-[10px] text-gray-400 mt-0.5">All fields marked with * are required.</p>
+            <p class="text-[10px] text-gray-400 mt-0.5">All fields marked with * are required. Password will be auto-generated.</p>
         </div>
 
         <form action="{{ route('admin.users.store') }}" method="POST" class="p-5">
@@ -47,11 +71,6 @@
                 <div>
                     <label class="block text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Mobile *</label>
                     <input type="text" name="mobile" value="{{ old('mobile') }}" required
-                           class="w-full px-3 py-2 text-xs rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none">
-                </div>
-                <div>
-                    <label class="block text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Password *</label>
-                    <input type="password" name="password" required minlength="8"
                            class="w-full px-3 py-2 text-xs rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none">
                 </div>
                 <div>
@@ -88,4 +107,43 @@
         </form>
     </div>
 </div>
+
+<script>
+function copyPassword() {
+    var password = document.getElementById('generated-password').textContent;
+    navigator.clipboard.writeText(password).then(function() {
+        alert('Password copied to clipboard!');
+    }).catch(function() {
+        var textarea = document.createElement('textarea');
+        textarea.value = password;
+        document.body.appendChild(textarea);
+        textarea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textarea);
+        alert('Password copied to clipboard!');
+    });
+}
+
+function sendPasswordEmail() {
+    var password = document.getElementById('generated-password').textContent;
+    var form = document.createElement('form');
+    form.method = 'POST';
+    form.action = '{{ route("admin.users.send-credentials") }}';
+    
+    var csrf = document.createElement('input');
+    csrf.type = 'hidden';
+    csrf.name = '_token';
+    csrf.value = '{{ csrf_token() }}';
+    form.appendChild(csrf);
+    
+    var passwordInput = document.createElement('input');
+    passwordInput.type = 'hidden';
+    passwordInput.name = 'password';
+    passwordInput.value = password;
+    form.appendChild(passwordInput);
+    
+    document.body.appendChild(form);
+    form.submit();
+}
+</script>
 </x-app-layout>

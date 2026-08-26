@@ -10,19 +10,11 @@
                 <p class="mt-0.5 text-xs text-slate-400">Compare and generate insurance quotations</p>
             </div>
             <div class="flex items-center gap-2 shrink-0">
-                @if(isset($weather))
                     <div class="flex items-center gap-2 px-3 py-1.5 text-xs font-medium border border-white/20 text-white/80 rounded-lg" x-data="userWeather()" x-init="init()">
-                        <span x-html="emoji">
-                            @php
-                                $wc = strtolower($weather['condition']);
-                                $we = str_contains($wc,'clear')?'☀️':(str_contains($wc,'cloud')?'☁️':(str_contains($wc,'rain')?'🌧️':(str_contains($wc,'snow')?'❄️':'🌤️')));
-                            @endphp
-                            {{ $we }}
-                        </span>
-                        <span><span x-text="temp">{{ $weather['temperature'] }}</span>°C</span>
-                        <span class="text-white/60 hidden sm:inline" id="weather-city">{{ $weather['city'] ?? '' }}</span>
+                        <span x-html="emoji">🌤️</span>
+                        <span><span x-text="temp">--</span>°C</span>
+                        <span class="text-white/60 hidden sm:inline" id="weather-city">Nairobi</span>
                     </div>
-                @endif
 
 
                 <a href="{{ route('quotations.create') }}"
@@ -49,7 +41,7 @@
                 <p class="kpi-value mt-1">{{ $weeklyQuotations }}</p>
                 <span class="kpi-delta up mt-1.5 inline-block">Generated this week</span>
             </a>
-            <a href="{{ route('stickers.user-lookup') }}" class="kpi-card p-4 block hover:opacity-80 transition">
+            <a href="{{ route('stickers.issue') }}" class="kpi-card p-4 block hover:opacity-80 transition">
                 <div class="accent-bar" style="background:linear-gradient(90deg,#818cf8,#a5b4fc)"></div>
                 <p class="kpi-eyebrow">Stickers</p>
                 <p class="kpi-value mt-1">{{ $stickersCount }}</p>
@@ -143,7 +135,10 @@
         {{-- ─── LEFT COLUMN (2/3) ───────────────────────────────────────── --}}
         <div class="lg:col-span-2 space-y-6">
 
-             {{-- A. RECENT QUOTATIONS TABLE ────────────────────────────────── --}}
+            {{-- QUOTE FORM --}}
+            @include('dashboard.partials.quick-quote')
+
+            {{-- A. RECENT QUOTATIONS TABLE ────────────────────────────────── --}}
             <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
                 <div class="px-5 py-4 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between">
                     <div>
@@ -354,13 +349,13 @@
                             <div class="text-[10px] text-gray-400">View all quotes</div>
                         </div>
                     </a>
-                    <a href="{{ route('stickers.user-lookup') }}" class="flex items-center gap-2 px-3 py-2.5 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:border-blue-300 dark:hover:border-blue-700 transition no-underline">
+                    <a href="{{ route('stickers.issue') }}" class="flex items-center gap-2 px-3 py-2.5 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:border-blue-300 dark:hover:border-blue-700 transition no-underline">
                         <div class="w-8 h-8 rounded-lg bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center shrink-0">
                             <svg class="w-4 h-4 text-amber-600 dark:text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z"/></svg>
                         </div>
                         <div>
-                            <div class="text-xs font-semibold text-gray-800 dark:text-white">Stickers</div>
-                            <div class="text-[10px] text-gray-400">View certificates</div>
+                            <div class="text-xs font-semibold text-gray-800 dark:text-white">Issue Certificate</div>
+                            <div class="text-[10px] text-gray-400">Upload KYC & issue sticker</div>
                         </div>
                     </a>
                     <a href="{{ route('profile.edit') }}" class="flex items-center gap-2 px-3 py-2.5 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:border-blue-300 dark:hover:border-blue-700 transition no-underline">
@@ -370,6 +365,24 @@
                         <div>
                             <div class="text-xs font-semibold text-gray-800 dark:text-white">My Profile</div>
                             <div class="text-[10px] text-gray-400">Update details</div>
+                        </div>
+                    </a>
+                    <a href="{{ route('claims.create') }}" class="flex items-center gap-2 px-3 py-2.5 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-red-50 dark:hover:bg-red-900/20 hover:border-red-300 dark:hover:border-red-700 transition no-underline">
+                        <div class="w-8 h-8 rounded-lg bg-red-100 dark:bg-red-900/30 flex items-center justify-center shrink-0">
+                            <svg class="w-4 h-4 text-red-600 dark:text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>
+                        </div>
+                        <div>
+                            <div class="text-xs font-semibold text-gray-800 dark:text-white">Log Claim</div>
+                            <div class="text-[10px] text-gray-400">For you or a customer</div>
+                        </div>
+                    </a>
+                    <a href="{{ route('claims.mine') }}" class="flex items-center gap-2 px-3 py-2.5 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-red-50 dark:hover:bg-red-900/20 hover:border-red-300 dark:hover:border-red-700 transition no-underline">
+                        <div class="w-8 h-8 rounded-lg bg-orange-100 dark:bg-orange-900/30 flex items-center justify-center shrink-0">
+                            <svg class="w-4 h-4 text-orange-600 dark:text-orange-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
+                        </div>
+                        <div>
+                            <div class="text-xs font-semibold text-gray-800 dark:text-white">My Claims</div>
+                            <div class="text-[10px] text-gray-400">{{ $myClaimsCount ?? 0 }} claims logged</div>
                         </div>
                     </a>
                 </div>
@@ -528,6 +541,40 @@
                 </div>
             </div>
 
+            {{-- A2. RECENT MY CLAIMS ─────────────────────────────────────── --}}
+            <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+                <div class="px-5 py-4 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between">
+                    <div>
+                        <h2 class="text-xs font-semibold text-gray-800 dark:text-white">My Claims</h2>
+                        <p class="text-[10px] text-gray-400 mt-0.5">Your latest claims</p>
+                    </div>
+                    <a href="{{ route('claims.mine') }}" class="text-[10px] font-semibold text-blue-600 dark:text-blue-400 hover:underline no-underline">View all →</a>
+                </div>
+                <div class="p-4 space-y-3">
+                    @forelse($recentMyClaims ?? [] as $claim)
+                    <a href="{{ route('claims.show', $claim) }}" class="flex items-center gap-3 p-3 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700/30 transition no-underline">
+                        <div class="w-8 h-8 rounded-lg bg-red-100 dark:bg-red-900/30 flex items-center justify-center shrink-0">
+                            <svg class="w-4 h-4 text-red-600 dark:text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <div class="flex items-center gap-2">
+                                <span class="text-xs font-bold text-gray-800 dark:text-white">{{ $claim->claim_number }}</span>
+                                <span class="text-[9px] font-semibold px-1.5 py-0.5 rounded {{ $claim->status === 'settled' ? 'bg-emerald-100 text-emerald-700' : ($claim->status === 'declined' ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-700') }}">{{ \App\Models\Claim::statuses()[$claim->status] ?? $claim->status }}</span>
+                            </div>
+                            <p class="text-[11px] text-gray-500 mt-0.5">
+                                {{ $claim->registration_number }} <span class="mx-1">&middot;</span> {{ $claim->created_at->format('d M Y') }}
+                            </p>
+                        </div>
+                    </a>
+                    @empty
+                    <div class="text-center py-4">
+                        <p class="text-xs text-gray-400">No claims yet.</p>
+                        <a href="{{ route('claims.create') }}" class="inline-block mt-2 text-[10px] font-semibold text-blue-600 dark:text-blue-400 hover:underline">Log your first claim</a>
+                    </div>
+                    @endforelse
+                </div>
+            </div>
+
             {{-- B. RECENT ACTIVITY ───────────────────────────────────────── --}}
             <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
                 <div class="px-5 py-4 border-b border-gray-100 dark:border-gray-700">
@@ -617,17 +664,17 @@
                                 $bgColor = 'bg-gray-500'; $icon = 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z';
                             }
                         @endphp
-                        <div class="flex items-start gap-3">
+                        <a href="{{ route('notifications.show', $n->id) }}" class="flex items-start gap-3 group">
                             <div class="w-7 h-7 rounded-full {{ $bgColor }} flex items-center justify-center shrink-0">
                                 <svg class="w-3.5 h-3.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="{{ $icon }}"/>
                                 </svg>
                             </div>
                             <div class="min-w-0 flex-1">
-                                <p class="text-[11px] font-medium text-gray-800 dark:text-white leading-tight">{{ $notifMsg }}</p>
+                                <p class="text-[11px] font-medium text-gray-800 dark:text-white leading-tight group-hover:text-blue-600 dark:group-hover:text-blue-400 transition">{{ $notifMsg }}</p>
                                 <p class="text-[10px] text-gray-400 mt-0.5">{{ $n->created_at->diffForHumans() }}</p>
                             </div>
-                        </div>
+                        </a>
                     @empty
                         <div class="text-center py-4">
                             <svg class="w-6 h-6 mx-auto text-gray-300 dark:text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
@@ -752,7 +799,11 @@
 @endphp
 <script>
 window.MIC_COMPANIES = @json($_companyData);
+window.MIC_QUOTE_COMPANIES = @json($quoteCompanies->values());
+window.MIC_QUOTE_COMPANY_DATA_PRIVATE = @json($quoteCompanyDataPrivate ?? []);
+window.MIC_QUOTE_COMPANY_DATA_PSV = @json($quoteCompanyDataPsv ?? []);
 </script>
+<script src="{{ asset('js/dashboard-quote.js') }}"></script>
 <script>
 (function(){
   var urlParams = new URLSearchParams(window.location.search);

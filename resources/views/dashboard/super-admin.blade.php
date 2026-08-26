@@ -12,40 +12,20 @@
           <h1>{{ $greeting }}, {{ auth()->user()->first_name ?: auth()->user()->name }}!</h1>
           <p>Admin Dashboard &mdash; Motor Insurance Portal</p>
         </div>
-         @if(isset($weather))
-        @php
-            $weatherEmoji = match(true) {
-                str_contains(strtolower($weather['condition']), 'clear')        => '☀️',
-                str_contains(strtolower($weather['condition']), 'cloud')        => str_contains($weather['icon'], '02') ? '⛅' : '☁️',
-                str_contains(strtolower($weather['condition']), 'rain')         => '🌧️',
-                str_contains(strtolower($weather['condition']), 'drizzle')      => '🌦️',
-                str_contains(strtolower($weather['condition']), 'thunderstorm') => '⛈️',
-                str_contains(strtolower($weather['condition']), 'snow')         => '❄️',
-                str_contains(strtolower($weather['condition']), 'fog')          => '🌫️',
-                str_contains(strtolower($weather['condition']), 'mist')         => '🌫️',
-                str_contains(strtolower($weather['condition']), 'haze')         => '🌫️',
-                str_contains(strtolower($weather['condition']), 'smoke')        => '🌫️',
-                str_contains(strtolower($weather['condition']), 'dust')         => '🌪️',
-                str_contains(strtolower($weather['condition']), 'sand')         => '🌪️',
-                str_contains(strtolower($weather['condition']), 'tornado')      => '🌪️',
-                str_contains(strtolower($weather['condition']), 'squall')       => '💨',
-                default                                                          => '🌤️',
-            };
-        @endphp
         <div class="db-weather" x-data="weatherWidget()" x-init="init()">
-          <span style="font-size:36px;line-height:1;display:flex;align-items:center;" x-html="emoji">@isset($weatherEmoji){{ $weatherEmoji }}@endisset</span>
+          <span style="font-size:36px;line-height:1;display:flex;align-items:center;" x-html="emoji">🌤️</span>
           <div>
             <p class="temp">
-              <span x-text="temp">@isset($weather['temperature']){{ $weather['temperature'] }}@endisset</span>°C
-              <span style="font-size:11px;font-weight:500;color:#7a8baa">Feels <span x-text="feels">@isset($weather['feels_like']){{ $weather['feels_like'] }}@endisset</span>°C</span>
+              <span x-text="temp">--</span>°C
+              <span style="font-size:11px;font-weight:500;color:#7a8baa">Feels <span x-text="feels">--</span>°C</span>
             </p>
             <p class="cond">
-              <span x-text="description">@isset($weather['description']){{ $weather['description'] }}@endisset</span> &middot; <span x-text="city">@isset($weather['city']){{ $weather['city'] }}@endisset</span>
-              &middot; <span x-text="humidity">@isset($weather['humidity']){{ $weather['humidity'] }}@endisset</span>% RH
+              <span x-text="description">Loading...</span> &middot; <span x-text="city">Nairobi</span>
+              &middot; <span x-text="humidity">--</span>% RH
               <span x-show="wind" x-text="' · ' + wind + ' m/s wind'"></span>
             </p>
             <p style="font-size:10px;color:#7a8baa;margin:2px 0 0;font-weight:500;">
-              <span x-text="localTime">@isset($weather['local_time']){{ $weather['local_time'] }}@endisset</span>
+              <span x-text="localTime"></span>
               <span x-show="sunrise" x-text="' · ☀️ ' + sunrise"></span>
               <span x-show="sunset" x-text="'  🌙 ' + sunset"></span>
               <span x-show="uvi" x-text="' · UV ' + uvi"></span>
@@ -55,7 +35,6 @@
             </template>
           </div>
         </div>
-        @endif
       </div>
 
       {{-- ─── PROFILE COMPLETION ALERT ─────────────────────────────────────── --}}
@@ -81,53 +60,53 @@
 
       <div class="db-section-label">Key Metrics</div>
       <div class="db-kpi-grid">
-        <div class="db-kpi" style="--accent:#1756c8;--icon-bg:#e8f0fc">
+        <a href="{{ route('admin.users.index') }}" class="db-kpi" style="--accent:#1756c8;--icon-bg:#e8f0fc;cursor:pointer;text-decoration:none;">
           <div class="db-kpi-icon"><i class="ti ti-users" aria-hidden="true"></i></div>
           <div class="db-kpi-label">Total Users</div>
           <div class="db-kpi-value">{{ $totalUsers }}</div>
           <div class="db-kpi-trend trend-up"><i class="ti ti-trending-up" style="font-size:12px"></i> +8% this month</div>
-        </div>
+        </a>
 
-        <div class="db-kpi" style="--accent:#7c3aed;--icon-bg:#ede9fe">
+        <a href="{{ route('admin.companies.index') }}" class="db-kpi" style="--accent:#7c3aed;--icon-bg:#ede9fe;cursor:pointer;text-decoration:none;">
         <div class="db-kpi-icon"><i class="ti ti-building" aria-hidden="true"></i></div>
         <div class="db-kpi-label">Total Companies</div>
         <div class="db-kpi-value">{{ $totalCompanies }}</div>
         <div class="db-kpi-trend trend-up"><i class="ti ti-trending-up" style="font-size:12px"></i> +3% this week</div>
-      </div>
+      </a>
       
-        <div class="db-kpi" style="--accent:#7c3aed;--icon-bg:#ede9fe">
+        <a href="{{ route('quotations.index') }}" class="db-kpi" style="--accent:#7c3aed;--icon-bg:#ede9fe;cursor:pointer;text-decoration:none;">
           <div class="db-kpi-icon"><i class="ti ti-file-description" aria-hidden="true"></i></div>
           <div class="db-kpi-label">Total Quotations</div>
           <div class="db-kpi-value">{{ $totalQuotations }}</div>
           <div class="db-kpi-trend trend-up"><i class="ti ti-trending-up" style="font-size:12px"></i> +12% vs last month</div>
-        </div>
-        <div class="db-kpi" style="--accent:#d4860e;--icon-bg:#fef3c7">
+        </a>
+        <a href="{{ route('quotations.index') }}" class="db-kpi" style="--accent:#d4860e;--icon-bg:#fef3c7;cursor:pointer;text-decoration:none;">
           <div class="db-kpi-icon"><i class="ti ti-coins" aria-hidden="true"></i></div>
           <div class="db-kpi-label">Total Premium (KES)</div>
           <div class="db-kpi-value" style="font-size:20px">{{ number_format($totalPremium) }}</div>
           <div class="db-kpi-trend trend-up"><i class="ti ti-trending-up" style="font-size:12px"></i> +5.3% growth</div>
-        </div>
+        </a>
       </div>
 
       <div class="db-kpi-grid" style="margin-top:14px">
-        <div class="db-kpi" style="--accent:#c0392b;--icon-bg:#fdeaea">
+        <a href="{{ route('quotations.index') }}" class="db-kpi" style="--accent:#c0392b;--icon-bg:#fdeaea;cursor:pointer;text-decoration:none;">
           <div class="db-kpi-icon"><i class="ti ti-car" aria-hidden="true"></i></div>
           <div class="db-kpi-label">Vehicles Insured</div>
           <div class="db-kpi-value">{{ $totalQuotations }}</div>
           <div class="db-kpi-sub">Across all policies</div>
-        </div>
-        <div class="db-kpi" style="--accent:#0f7a65;--icon-bg:#e1f5ee">
+        </a>
+        <a href="{{ route('admin.stickers.index') }}" class="db-kpi" style="--accent:#0f7a65;--icon-bg:#e1f5ee;cursor:pointer;text-decoration:none;">
           <div class="db-kpi-icon"><i class="ti ti-ticket" aria-hidden="true"></i></div>
           <div class="db-kpi-label">Stickers Issued</div>
           <div class="db-kpi-value">{{ $totalQuotations }}</div>
           <div class="db-kpi-trend trend-neutral"><i class="ti ti-minus" style="font-size:12px"></i> Stable</div>
-        </div>
-        <div class="db-kpi" style="--accent:#1756c8;--icon-bg:#e8f0fc">
+        </a>
+        <a href="{{ route('admin.users.index') }}" class="db-kpi" style="--accent:#1756c8;--icon-bg:#e8f0fc;cursor:pointer;text-decoration:none;">
           <div class="db-kpi-icon"><i class="ti ti-mail-forward" aria-hidden="true"></i></div>
           <div class="db-kpi-label">Emails Dispatched</div>
           <div class="db-kpi-value">{{ $totalQuotations }}</div>
           <div class="db-kpi-sub">PDFs attached</div>
-        </div>
+        </a>
         <div class="db-kpi" style="--accent:#0f7a65;--icon-bg:#e1f5ee">
           <div class="db-kpi-icon"><i class="ti ti-wifi" aria-hidden="true"></i></div>
           <div class="db-kpi-label">Online Now</div>
@@ -140,22 +119,25 @@
 
       <div class="db-section-label">Period Breakdown</div>
       <div class="db-period-grid">
-        <div class="db-period-card">
+        <a href="{{ route('quotations.index') }}" class="db-period-card" style="cursor:pointer;text-decoration:none;">
           <div class="db-period-label">Today</div>
           <div class="db-period-value">{{ $todayQuotations }}</div>
           <div class="db-period-desc">quotations generated</div>
-        </div>
-        <div class="db-period-card amber">
+        </a>
+        <a href="{{ route('quotations.index') }}" class="db-period-card amber" style="cursor:pointer;text-decoration:none;">
           <div class="db-period-label">This Week</div>
           <div class="db-period-value">{{ $weekQuotations }}</div>
           <div class="db-period-desc">quotations generated</div>
-        </div>
-        <div class="db-period-card teal">
+        </a>
+        <a href="{{ route('quotations.index') }}" class="db-period-card teal" style="cursor:pointer;text-decoration:none;">
           <div class="db-period-label">This Month</div>
           <div class="db-period-value">{{ $monthQuotations }}</div>
           <div class="db-period-desc">quotations generated</div>
-        </div>
+        </a>
       </div>
+
+      <div class="db-section-label">Quick Quote</div>
+      <div style="margin-bottom:8px">@include('dashboard.partials.quick-quote')</div>
 
       <div class="db-section-label">Quick Actions</div>
       <div class="db-kpi-grid" style="margin-top:0">
@@ -178,6 +160,21 @@
           <div class="db-kpi-icon"><i class="ti ti-file-description" aria-hidden="true"></i></div>
           <div class="db-kpi-label" style="margin-bottom:0">View Quotations</div>
           <div class="db-kpi-sub">Browse all quotations</div>
+        </a>
+        <a href="{{ route('stickers.issue') }}" class="db-kpi" style="--accent:#c0392b;--icon-bg:#fdeaea;cursor:pointer;text-decoration:none;display:flex;flex-direction:column;">
+          <div class="db-kpi-icon"><i class="ti ti-ticket" aria-hidden="true"></i></div>
+          <div class="db-kpi-label" style="margin-bottom:0">Issue Certificate</div>
+          <div class="db-kpi-sub">KYC upload & sticker issuance</div>
+        </a>
+        <a href="{{ route('admin.email-settings.index') }}" class="db-kpi" style="--accent:#c0392b;--icon-bg:#fdeaea;cursor:pointer;text-decoration:none;display:flex;flex-direction:column;">
+          <div class="db-kpi-icon"><i class="ti ti-mail-forward" aria-hidden="true"></i></div>
+          <div class="db-kpi-label" style="margin-bottom:0">Email Templates</div>
+          <div class="db-kpi-sub">Edit inbound / outbound emails</div>
+        </a>
+        <a href="{{ route('admin.settings.index') }}" class="db-kpi" style="--accent:#1756c8;--icon-bg:#e8f0fc;cursor:pointer;text-decoration:none;display:flex;flex-direction:column;">
+          <div class="db-kpi-icon"><i class="ti ti-settings" aria-hidden="true"></i></div>
+          <div class="db-kpi-label" style="margin-bottom:0">Mail Settings</div>
+          <div class="db-kpi-sub">SMTP &amp; delivery configuration</div>
         </a>
       </div>
 
@@ -254,7 +251,17 @@
   </div>
 </div>
 
-      <div class="db-section-label">Activity &amp; Alerts</div>
+      <div class="db-section-label">
+        Activity &amp; Alerts
+        <span style="float:right;display:inline-flex;gap:6px;">
+          <label class="db-auto-refresh" style="display:inline-flex;align-items:center;gap:4px;font-size:10px;color:#7a8baa;cursor:pointer;">
+            <input type="checkbox" id="dbActivityAutoRefresh" style="accent-color:#1756c8"> Auto-refresh (30s)
+          </label>
+          <button type="button" id="dbActivityRefresh" style="border:1px solid #d5deeb;background:#fff;border-radius:6px;padding:2px 10px;font-size:11px;font-weight:600;color:#1756c8;cursor:pointer;">
+            <i class="ti ti-refresh" style="font-size:12px"></i> Refresh
+          </button>
+        </span>
+      </div>
       <div class="db-chart-grid">
         <div class="db-card">
           <div class="db-card-header"><span><span class="dot"></span>System Activity</span></div>
@@ -457,13 +464,13 @@
               <div style="font-weight:600;font-size:10px;color:#7a8baa;text-transform:uppercase;letter-spacing:0.6px">Unread Notifications</div>
             </div>
             @forelse($unreadNotifications as $n)
-            <div class="db-activity-item">
+            <a href="{{ route('admin.notifications.show', $n->id) }}" class="db-activity-item" style="text-decoration:none;color:inherit;">
               <div class="db-activity-dot" style="background:#3b82f6"></div>
               <div>
                 <div class="db-activity-text">{{ $n->data['message'] ?? $n->data['action'] ?? 'Notification' }}</div>
                 <div class="db-activity-time">{{ $n->created_at->diffForHumans() }}</div>
               </div>
-            </div>
+            </a>
             @empty
             <div class="db-activity-item">
               <div class="db-activity-dot" style="background:#7a8baa"></div>
@@ -704,6 +711,7 @@
 
     @push('scripts')
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+    <script src="{{ asset('js/dashboard-quote.js') }}"></script>
     <script>
     function weatherWidget() {
         return {
@@ -839,15 +847,14 @@
     var distributionChart = new Chart(document.getElementById('distributionChart'), {
   type: 'bar',
   data: {
-    labels: ['Processed', 'Completed', 'Rejected'],
+    labels: ['Generated', 'Completed'],
     datasets: [{
       label: 'Quotations',
       data: [
-        {{ $statusDistribution['processed'] ?? 0 }},
-        {{ $statusDistribution['completed'] ?? 0 }},
-        {{ $statusDistribution['rejected'] ?? 0 }}
+        {{ $statusDistribution['generated'] ?? 0 }},
+        {{ $statusDistribution['completed'] ?? 0 }}
       ],
-      backgroundColor: ['#1756c8', '#0f7a65', '#c0392b'],
+      backgroundColor: ['#1756c8', '#0f7a65'],
       borderRadius: 6,
       borderWidth: 0,
     }]
@@ -898,6 +905,31 @@ var premiumChart = new Chart(document.getElementById('premiumChart'), {
     }
   }
 });
+
+    document.addEventListener('DOMContentLoaded', function () {
+      var btn = document.getElementById('dbActivityRefresh');
+      var auto = document.getElementById('dbActivityAutoRefresh');
+      if (!btn) return;
+      var saved = localStorage.getItem('db_activity_auto_refresh');
+      if (auto && saved === '1') auto.checked = true;
+      var timer = null;
+      function schedule() {
+        if (timer) clearInterval(timer);
+        if (auto && auto.checked) timer = setInterval(function () { window.location.reload(); }, 30000);
+      }
+      if (auto) {
+        auto.addEventListener('change', function () {
+          localStorage.setItem('db_activity_auto_refresh', auto.checked ? '1' : '0');
+          schedule();
+        });
+      }
+      btn.addEventListener('click', function () {
+        btn.disabled = true;
+        btn.innerHTML = '<i class="ti ti-loader" style="font-size:12px;display:inline-block"></i> Refreshing...';
+        window.location.reload();
+      });
+      schedule();
+    });
     </script>
     @endpush
 </x-app-layout>

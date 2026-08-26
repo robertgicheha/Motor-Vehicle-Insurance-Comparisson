@@ -17,7 +17,7 @@
             <div>
                 <p class="text-[10px] font-semibold uppercase tracking-widest text-blue-400">MIC Global Risks · Insurance Management</p>
                 <h1 class="mt-0.5 text-xl font-bold text-white">Quotation Registry</h1>
-                <p class="mt-0.5 text-xs text-slate-400">All motor insurance quotations across active underwriters</p>
+                <p class="mt-0.5 text-xs text-slate-400">{{ auth()->user()->hasRole('super-admin') || auth()->user()->hasRole('admin') ? 'All motor insurance quotations across active underwriters' : 'Your motor insurance quotations across active underwriters' }}</p>
             </div>
             <div class="flex items-center gap-2 shrink-0">
                 @if(auth()->user()->hasRole('super-admin') || auth()->user()->hasRole('admin'))
@@ -27,23 +27,29 @@
                     Apply for User
                 </button>
                 @endif
-                <button onclick="openNewQuoteModal()"
+                <a href="{{ route('quotations.create') }}"
                     class="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold bg-blue-500 hover:bg-blue-400 text-white rounded-lg transition">
                     <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
                     New Quotation
-                </button>
+                </a>
             </div>
         </div>
 
         {{-- KPI row --}}
         <div class="mt-6 grid grid-cols-2 md:grid-cols-4 gap-3">
-            <div class="kpi-card p-4">
+            <div class="kpi-card p-4 cursor-pointer transition"
+                 @click="setPeriod('')"
+                 :class="period === '' ? 'ring-2 ring-blue-400' : 'hover:ring-1 hover:ring-blue-300'"
+                 title="Show all quotations">
                 <div class="accent-bar"></div>
                 <p class="kpi-eyebrow">Total Quotations</p>
                 <p class="kpi-value mt-1">{{ $analytics['total'] }}</p>
-                <span class="kpi-delta neutral mt-1.5 inline-block">All time</span>
+                <span class="kpi-delta neutral mt-1.5 inline-block">All time · click to filter</span>
             </div>
-            <div class="kpi-card p-4">
+            <div class="kpi-card p-4 cursor-pointer transition"
+                 @click="setPeriod('today')"
+                 :class="period === 'today' ? 'ring-2 ring-blue-400' : 'hover:ring-1 hover:ring-blue-300'"
+                 title="Show today's quotations">
                 <div class="accent-bar" style="background:linear-gradient(90deg,#34d399,#6ee7b7)"></div>
                 <p class="kpi-eyebrow">Today</p>
                 <p class="kpi-value mt-1">{{ $analytics['today'] }}</p>
@@ -53,13 +59,19 @@
                     <span class="kpi-delta neutral mt-1.5 inline-block">No new</span>
                 @endif
             </div>
-            <div class="kpi-card p-4">
+            <div class="kpi-card p-4 cursor-pointer transition"
+                 @click="setPeriod('this_week')"
+                 :class="period === 'this_week' ? 'ring-2 ring-blue-400' : 'hover:ring-1 hover:ring-blue-300'"
+                 title="Show this week's quotations">
                 <div class="accent-bar" style="background:linear-gradient(90deg,#818cf8,#a5b4fc)"></div>
                 <p class="kpi-eyebrow">This Week</p>
                 <p class="kpi-value mt-1">{{ $analytics['this_week'] }}</p>
                 <span class="kpi-delta up mt-1.5 inline-block">{{ $analytics['this_week'] }} new</span>
             </div>
-            <div class="kpi-card p-4">
+            <div class="kpi-card p-4 cursor-pointer transition"
+                 @click="setPeriod('this_month')"
+                 :class="period === 'this_month' ? 'ring-2 ring-blue-400' : 'hover:ring-1 hover:ring-blue-300'"
+                 title="Show this month's quotations">
                 <div class="accent-bar" style="background:linear-gradient(90deg,#fb7185,#fda4af)"></div>
                 <p class="kpi-eyebrow">This Month</p>
                 <p class="kpi-value mt-1">{{ $analytics['this_month'] }}</p>
@@ -87,13 +99,8 @@
                 <select x-model="statusFilter" @change="filterTable()"
                     class="px-3 py-1.5 text-xs rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200 focus:ring-2 focus:ring-blue-500 outline-none">
                     <option value="">All statuses</option>
-                    <option value="processing">Processing</option>
+                    <option value="generated">Generated</option>
                     <option value="completed">Completed</option>
-                    <option value="active">Active</option>
-                    <option value="draft">Draft</option>
-                    <option value="closed">Closed</option>
-                    <option value="insuring_sticker">Insuring Sticker</option>
-                    <option value="expired">Expired</option>
                 </select>
                 <button class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium border border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition">
                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
@@ -124,7 +131,8 @@
                         <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/30"
                             x-show="rowVisible($el)"
                             data-search="{{ strtolower($q->quotation_number . ' ' . $q->car_make . ' ' . $q->car_model . ' ' . ($q->user->name ?? '') . ' ' . ($q->company->name ?? '')) }}"
-                            data-status="{{ strtolower($q->status) }}">
+                            data-status="{{ strtolower($q->status) }}"
+                            data-date="{{ $q->created_at->format('Y-m-d') }}">
                             <td class="px-5 py-2.5">
                                 <a href="{{ route('quotations.show', $q) }}" class="font-medium text-blue-600 hover:text-blue-800">{{ $q->quotation_number }}</a>
                             </td>
@@ -148,15 +156,8 @@
                             <td class="px-5 py-2.5 text-center">
                                 @php
                                     $statusColors = [
-                                        'processing'      => 'bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
                                         'completed'       => 'bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400',
-                                        'closed'          => 'bg-gray-50 text-gray-500 dark:bg-gray-700 dark:text-gray-400',
-                                        'insuring_sticker'=> 'bg-amber-50 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
-                                        'active'          => 'bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400',
-                                        'draft'           => 'bg-gray-50 text-gray-500 dark:bg-gray-700 dark:text-gray-400',
-                                        'expired'         => 'bg-red-50 text-red-700 dark:bg-red-900/30 dark:text-red-400',
                                         'generated'       => 'bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
-                                        'pending'         => 'bg-yellow-50 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400',
                                     ];
                                 @endphp
                                 <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium {{ $statusColors[$q->status] ?? 'bg-gray-50 text-gray-500 dark:bg-gray-700 dark:text-gray-400' }}">
@@ -520,6 +521,7 @@ function quotationsPage() {
     return {
         search: '',
         statusFilter: '',
+        period: '',
         quoteStep: 1,
         qf: {
             salutation: '', first_name: '', middle_name: '', last_name: '',
@@ -582,8 +584,33 @@ function quotationsPage() {
         rowVisible(el) {
             const searchStr = (el.dataset.search || '').toLowerCase();
             const statusStr = (el.dataset.status || '').toLowerCase();
-            return (!this.search || searchStr.includes(this.search.toLowerCase()))
+
+            let periodOk = true;
+            if (this.period && el.dataset.date) {
+                const rowDate = new Date(el.dataset.date + 'T00:00:00');
+                if (this.period === 'today') {
+                    periodOk = rowDate.toDateString() === new Date().toDateString();
+                } else if (this.period === 'this_week') {
+                    const now = new Date();
+                    const start = new Date(now);
+                    start.setDate(now.getDate() - ((now.getDay() + 6) % 7));
+                    start.setHours(0, 0, 0, 0);
+                    const end = new Date(start);
+                    end.setDate(start.getDate() + 6);
+                    periodOk = rowDate >= start && rowDate <= end;
+                } else if (this.period === 'this_month') {
+                    const now = new Date();
+                    periodOk = rowDate.getFullYear() === now.getFullYear() && rowDate.getMonth() === now.getMonth();
+                }
+            }
+
+            return periodOk
+                && (!this.search || searchStr.includes(this.search.toLowerCase()))
                 && (!this.statusFilter || statusStr === this.statusFilter.toLowerCase());
+        },
+
+        setPeriod(p) {
+            this.period = p;
         },
 
         filterTable() {},
@@ -642,10 +669,10 @@ function quotationsPage() {
             new Chart(ctx, {
                 type: 'line',
                 data: {
-                    labels: this.trendData.map(d => d.date),
+                    labels: (this.trendData.labels || []),
                     datasets: [{
                         label: 'Quotations',
-                        data: this.trendData.map(d => d.count),
+                        data: (this.trendData.counts || []),
                         borderColor: '#1E40AF',
                         backgroundColor: 'rgba(30,64,175,0.07)',
                         borderWidth: 2,

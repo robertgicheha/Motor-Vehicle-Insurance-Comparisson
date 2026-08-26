@@ -6,7 +6,7 @@
             <div>
                 <p class="text-[10px] font-semibold uppercase tracking-widest text-blue-400">Quotations</p>
                 <h1 class="mt-0.5 text-xl font-bold text-white">Quotation Tracker</h1>
-                <p class="mt-0.5 text-xs text-slate-400">Track the status of all your insurance quotations</p>
+                <p class="mt-0.5 text-xs text-slate-400">Track all your generated quotations and issued insurance certificates</p>
             </div>
             <div class="flex items-center gap-2 shrink-0">
                 <a href="{{ route('quotations.create') }}"
@@ -18,112 +18,99 @@
         </div>
 
         {{-- State cards --}}
-        <div class="mt-6 grid grid-cols-2 md:grid-cols-4 gap-3">
+        <div class="mt-6 grid grid-cols-2 md:grid-cols-3 gap-3">
             <div class="kpi-card p-4">
                 <div class="accent-bar" style="background:linear-gradient(90deg,#3b82f6,#60a5fa)"></div>
-                <p class="kpi-eyebrow">Processing</p>
-                <p class="kpi-value mt-1">{{ $stats['processing'] ?? 0 }}</p>
-                <span class="kpi-delta neutral mt-1.5 inline-block">Awaiting completion</span>
+                <p class="kpi-eyebrow">Total</p>
+                <p class="kpi-value mt-1">{{ $stats['total'] ?? 0 }}</p>
+                <span class="kpi-delta neutral mt-1.5 inline-block">All quotations</span>
+            </div>
+            <div class="kpi-card p-4">
+                <div class="accent-bar" style="background:linear-gradient(90deg,#3b82f6,#60a5fa)"></div>
+                <p class="kpi-eyebrow">Generated</p>
+                <p class="kpi-value mt-1">{{ $stats['generated'] ?? 0 }}</p>
+                <span class="kpi-delta neutral mt-1.5 inline-block">Awaiting certificate</span>
             </div>
             <div class="kpi-card p-4">
                 <div class="accent-bar" style="background:linear-gradient(90deg,#34d399,#6ee7b7)"></div>
                 <p class="kpi-eyebrow">Completed</p>
                 <p class="kpi-value mt-1">{{ $stats['completed'] ?? 0 }}</p>
-                <span class="kpi-delta up mt-1.5 inline-block">Ready for closure</span>
-            </div>
-            <div class="kpi-card p-4">
-                <div class="accent-bar" style="background:linear-gradient(90deg,#9ca3af,#d1d5db)"></div>
-                <p class="kpi-eyebrow">Closed</p>
-                <p class="kpi-value mt-1">{{ $stats['closed'] ?? 0 }}</p>
-                <span class="kpi-delta neutral mt-1.5 inline-block">Finalised</span>
-            </div>
-            <div class="kpi-card p-4">
-                <div class="accent-bar" style="background:linear-gradient(90deg,#f59e0b,#fbbf24)"></div>
-                <p class="kpi-eyebrow">Insuring Sticker</p>
-                <p class="kpi-value mt-1">{{ $stats['insuring_sticker'] ?? 0 }}</p>
                 <span class="kpi-delta up mt-1.5 inline-block">Certificate issued</span>
             </div>
         </div>
     </div>
 
-    {{-- Quotations with timeline --}}
+    {{-- ─── ALL QUOTATIONS TABLE ─────────────────────────────────────────── --}}
     <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
         <div class="px-5 py-4 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between">
             <div>
-                <h2 class="text-xs font-semibold text-gray-800 dark:text-white">Quotation Timeline</h2>
-                <p class="text-[10px] text-gray-400 mt-0.5">Track progress of each quotation</p>
+                <h2 class="text-xs font-semibold text-gray-800 dark:text-white">All Generated Quotations</h2>
+                <p class="text-[10px] text-gray-400 mt-0.5">{{ $quotations->total() }} total</p>
             </div>
-            <span class="text-[10px] text-gray-400">{{ $quotations->total() }} total</span>
         </div>
 
-        <div class="divide-y divide-gray-100 dark:divide-gray-700">
-            @forelse($quotations as $q)
-                @php
-                    $statuses = ['processing', 'completed', 'closed', 'insuring_sticker'];
-                    $currentIdx = array_search($q->status, $statuses);
-                    if ($currentIdx === false) $currentIdx = -1;
-
-                    $stateColors = [
-                        'processing' => ['bg' => 'bg-blue-500', 'text' => 'text-blue-700 dark:text-blue-400', 'ring' => 'ring-blue-500'],
-                        'completed' => ['bg' => 'bg-emerald-500', 'text' => 'text-emerald-700 dark:text-emerald-400', 'ring' => 'ring-emerald-500'],
-                        'closed' => ['bg' => 'bg-gray-400', 'text' => 'text-gray-500 dark:text-gray-400', 'ring' => 'ring-gray-400'],
-                        'insuring_sticker' => ['bg' => 'bg-amber-500', 'text' => 'text-amber-700 dark:text-amber-400', 'ring' => 'ring-amber-500'],
-                    ];
-                    $color = $stateColors[$q->status] ?? ['bg' => 'bg-gray-400', 'text' => 'text-gray-500', 'ring' => 'ring-gray-400'];
-                @endphp
-                <div class="px-5 py-4 hover:bg-gray-50 dark:hover:bg-gray-700/30 transition">
-                    <div class="flex items-start gap-4">
-                        {{-- Timeline circles --}}
-                        <div class="flex flex-col items-center shrink-0 pt-1">
-                            <div class="flex items-center">
-                                @foreach($statuses as $i => $s)
-                                    <div class="flex items-center">
-                                        <div class="w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-bold
-                                            {{ $i <= $currentIdx ? ($stateColors[$s]['bg'] . ' text-white shadow-sm') : 'bg-gray-200 dark:bg-gray-600 text-gray-400 dark:text-gray-500' }}
-                                            {{ $i === $currentIdx ? 'ring-2 ring-offset-1 ' . $stateColors[$s]['ring'] : '' }}">
-                                            {{ $i + 1 }}
-                                        </div>
-                                        @if($i < count($statuses) - 1)
-                                            <div class="w-6 h-0.5 {{ $i < $currentIdx ? 'bg-blue-400' : 'bg-gray-200 dark:bg-gray-600' }}"></div>
-                                        @endif
-                                    </div>
-                                @endforeach
-                            </div>
-                            <div class="flex mt-1 gap-1">
-                                @foreach($statuses as $i => $s)
-                                    <span class="text-[7px] uppercase tracking-wider {{ $i <= $currentIdx ? 'text-gray-500 dark:text-gray-400 font-semibold' : 'text-gray-300 dark:text-gray-600' }}"
-                                          style="width:32px;text-align:center;{{ $i > 0 ? 'margin-left:0' : '' }}">{{ str_replace('_', ' ', $s) }}</span>
-                                @endforeach
-                            </div>
-                        </div>
-
-                        {{-- Quotation details --}}
-                        <div class="flex-1 min-w-0">
-                            <div class="flex items-center justify-between gap-2">
-                                <div>
-                                    <a href="{{ route('quotations.show', $q) }}" class="font-medium text-blue-600 hover:text-blue-800 text-xs">{{ $q->quotation_number }}</a>
-                                    <span class="text-gray-400 text-[10px] ml-2">{{ $q->company->name }}</span>
-                                </div>
-                                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium {{ $color['text'] }} bg-gray-100 dark:bg-gray-700">
-                                    {{ ucfirst(str_replace('_', ' ', $q->status)) }}
+        <div class="overflow-x-auto">
+            <table class="w-full text-xs">
+                <thead>
+                    <tr class="bg-gray-50 dark:bg-gray-700/40">
+                        <th class="px-5 py-2.5 text-left font-semibold text-gray-400 uppercase tracking-wider text-[10px]">#</th>
+                        @if(auth()->user()->hasRole('super-admin') || auth()->user()->hasRole('admin'))
+                            <th class="px-5 py-2.5 text-left font-semibold text-gray-400 uppercase tracking-wider text-[10px]">User</th>
+                        @endif
+                        <th class="px-5 py-2.5 text-left font-semibold text-gray-400 uppercase tracking-wider text-[10px]">Underwriter</th>
+                        <th class="px-5 py-2.5 text-left font-semibold text-gray-400 uppercase tracking-wider text-[10px]">Vehicle</th>
+                        <th class="px-5 py-2.5 text-right font-semibold text-gray-400 uppercase tracking-wider text-[10px]">Premium</th>
+                        <th class="px-5 py-2.5 text-center font-semibold text-gray-400 uppercase tracking-wider text-[10px]">Status</th>
+                        <th class="px-5 py-2.5 text-right font-semibold text-gray-400 uppercase tracking-wider text-[10px]">Date</th>
+                        <th class="px-5 py-2.5 text-right font-semibold text-gray-400 uppercase tracking-wider text-[10px]">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
+                    @forelse($quotations as $q)
+                        @php
+                            $statusColors = [
+                                'generated' => 'bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
+                                'completed' => 'bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400',
+                            ];
+                        @endphp
+                        <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/30">
+                            <td class="px-5 py-2.5 text-gray-400">{{ $loop->iteration }}</td>
+                            @if(auth()->user()->hasRole('super-admin') || auth()->user()->hasRole('admin'))
+                                <td class="px-5 py-2.5 font-medium text-gray-800 dark:text-white">{{ $q->user->name }}</td>
+                            @endif
+                            <td class="px-5 py-2.5 font-medium text-gray-800 dark:text-white">{{ $q->company->name }}</td>
+                            <td class="px-5 py-2.5">
+                                <span class="font-medium text-gray-800 dark:text-white">{{ $q->car_make }} {{ $q->car_model }}</span>
+                                <p class="text-[10px] text-gray-400">{{ $q->car_year }}</p>
+                            </td>
+                            <td class="px-5 py-2.5 text-right font-bold text-gray-800 dark:text-white font-mono">KES {{ number_format($q->total_premium, 0) }}</td>
+                            <td class="px-5 py-2.5 text-center">
+                                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium {{ $statusColors[$q->status] ?? 'bg-gray-50 text-gray-500 dark:bg-gray-700 dark:text-gray-400' }}">
+                                    {{ ucfirst($q->status) }}
                                 </span>
-                            </div>
-                            <p class="text-[10px] text-gray-400 mt-0.5">{{ $q->car_make }} {{ $q->car_model }} ({{ $q->car_year }}) · KES {{ number_format($q->total_premium, 0) }}</p>
-                            <p class="text-[10px] text-gray-400">{{ $q->created_at->format('d M Y, H:i') }}</p>
-                        </div>
-                    </div>
-                </div>
-            @empty
-                <div class="px-5 py-10 text-center">
-                    <div class="flex flex-col items-center gap-2">
-                        <div class="w-10 h-10 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center">
-                            <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
-                        </div>
-                        <p class="text-xs text-gray-400">No quotations yet.</p>
-                        <a href="{{ route('quotations.create') }}" class="text-xs text-blue-600 hover:underline">Generate your first quotation</a>
-                    </div>
-                </div>
-            @endforelse
+                            </td>
+                            <td class="px-5 py-2.5 text-right text-gray-500 dark:text-gray-400">{{ $q->created_at->format('d M Y') }}</td>
+                            <td class="px-5 py-2.5 text-right">
+                                <a href="{{ route('quotations.show', $q) }}" class="inline-flex items-center gap-1 px-3 py-1.5 text-[10px] font-semibold bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400 rounded-lg hover:bg-blue-100 transition">
+                                    View
+                                </a>
+                            </td>
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="8" class="px-5 py-10 text-center">
+                                <div class="flex flex-col items-center gap-2">
+                                    <div class="w-10 h-10 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center">
+                                        <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
+                                    </div>
+                                    <p class="text-xs text-gray-400">No quotations yet.</p>
+                                    <a href="{{ route('quotations.create') }}" class="text-xs text-blue-600 hover:underline">Generate your first quotation</a>
+                                </div>
+                            </td>
+                        </tr>
+                    @endforelse
+                </tbody>
+            </table>
         </div>
 
         @if($quotations->hasPages())
@@ -131,27 +118,87 @@
         @endif
     </div>
 
-    {{-- Legacy stats summary --}}
-    <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-4">
-            <p class="text-[10px] font-semibold uppercase tracking-wider text-gray-400">Total</p>
-            <p class="text-lg font-bold text-gray-800 dark:text-white mt-1">{{ $stats['total'] }}</p>
-            <span class="text-[10px] text-gray-400">All quotations</span>
+    {{-- ─── GROUPED BY COMPANY ───────────────────────────────────────────── --}}
+    <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+        <div class="px-5 py-4 border-b border-gray-100 dark:border-gray-700">
+            <h2 class="text-xs font-semibold text-gray-800 dark:text-white">Quotations by Underwriter</h2>
+            <p class="text-[10px] text-gray-400 mt-0.5">Number of quotations generated per insurance company</p>
         </div>
-        <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-4">
-            <p class="text-[10px] font-semibold uppercase tracking-wider text-gray-400">Active</p>
-            <p class="text-lg font-bold text-gray-800 dark:text-white mt-1">{{ $stats['active'] }}</p>
-            <span class="text-[10px] text-gray-400">Currently valid</span>
+
+        @forelse($byCompany as $c)
+            <div class="px-5 py-3.5 border-b border-gray-100 dark:border-gray-700 last:border-b-0 flex items-center gap-4">
+                <div class="w-9 h-9 rounded-lg bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center shrink-0">
+                    <span class="text-blue-600 dark:text-blue-400 text-xs font-bold">{{ strtoupper(substr($c['company'], 0, 2)) }}</span>
+                </div>
+                <div class="flex-1 min-w-0">
+                    <p class="text-xs font-semibold text-gray-800 dark:text-white">{{ $c['company'] }}</p>
+                    <p class="text-[10px] text-gray-400 mt-0.5">{{ $c['generated'] }} generated &middot; {{ $c['completed'] }} completed</p>
+                </div>
+                <div class="w-40 shrink-0">
+                    <div class="flex items-center gap-2">
+                        <div class="flex-1 h-1.5 rounded-full bg-gray-100 dark:bg-gray-700 overflow-hidden">
+                            <div class="h-full rounded-full bg-blue-500" style="width:{{ $c['count'] > 0 ? min(100, round($c['generated'] / max(1, $c['count']) * 100)) : 0 }}%"></div>
+                        </div>
+                        <span class="text-[10px] font-semibold text-gray-500 dark:text-gray-400">{{ $c['count'] }}</span>
+                    </div>
+                </div>
+                <div class="text-right shrink-0">
+                    <p class="text-xs font-bold text-gray-800 dark:text-white">KES {{ number_format($c['total_premium'], 0) }}</p>
+                    <p class="text-[10px] text-gray-400">Total premium</p>
+                </div>
+            </div>
+        @empty
+            <div class="px-5 py-10 text-center">
+                <p class="text-xs text-gray-400">No quotations to group.</p>
+            </div>
+        @endforelse
+    </div>
+
+    {{-- ─── CERTIFICATES ISSUED ──────────────────────────────────────────── --}}
+    <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+        <div class="px-5 py-4 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between">
+            <div>
+                <h2 class="text-xs font-semibold text-gray-800 dark:text-white">Issued Insurance Certificates</h2>
+                <p class="text-[10px] text-gray-400 mt-0.5">Quotations that have been completed with a certificate</p>
+            </div>
+            <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">
+                <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                {{ $certified->count() }} issued
+            </span>
         </div>
-        <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-4">
-            <p class="text-[10px] font-semibold uppercase tracking-wider text-gray-400">Pending</p>
-            <p class="text-lg font-bold text-gray-800 dark:text-white mt-1">{{ $stats['pending'] }}</p>
-            <span class="text-[10px] text-gray-400">Awaiting processing</span>
-        </div>
-        <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-4">
-            <p class="text-[10px] font-semibold uppercase tracking-wider text-gray-400">Expired</p>
-            <p class="text-lg font-bold text-gray-800 dark:text-white mt-1">{{ $stats['expired'] }}</p>
-            <span class="text-[10px] text-gray-400">No longer valid</span>
+
+        <div class="divide-y divide-gray-100 dark:divide-gray-700">
+            @forelse($certified as $cq)
+                @php $sticker = $cq->stickers->first(); @endphp
+                <a href="{{ route('quotations.show', $cq) }}" class="px-5 py-3.5 flex items-center gap-4 hover:bg-gray-50 dark:hover:bg-gray-700/30 transition">
+                    <div class="w-9 h-9 rounded-lg bg-emerald-50 dark:bg-emerald-900/20 flex items-center justify-center shrink-0">
+                        <svg class="w-4 h-4 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <p class="text-xs font-semibold text-blue-600 dark:text-blue-400">{{ $cq->quotation_number }}</p>
+                        <p class="text-[10px] text-gray-400 mt-0.5 truncate">{{ $cq->car_make }} {{ $cq->car_model }} ({{ $cq->car_year }}) &middot; {{ $cq->company->name }}</p>
+                    </div>
+                    @if($sticker)
+                        <div class="text-right shrink-0">
+                            <p class="text-[10px] font-semibold text-gray-500 dark:text-gray-400">{{ $sticker->sticker_number }}</p>
+                            <p class="text-[10px] text-gray-400">{{ $sticker->generated_at?->format('d M Y') ?? $sticker->created_at->format('d M Y') }}</p>
+                        </div>
+                    @endif
+                    <div class="text-right shrink-0">
+                        <p class="text-xs font-bold text-gray-800 dark:text-white">KES {{ number_format($cq->total_premium, 0) }}</p>
+                    </div>
+                </a>
+            @empty
+                <div class="px-5 py-10 text-center">
+                    <div class="flex flex-col items-center gap-2">
+                        <div class="w-10 h-10 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center">
+                            <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z"/></svg>
+                        </div>
+                        <p class="text-xs text-gray-400">No certificates issued yet.</p>
+                        <p class="text-[10px] text-gray-400">Once a certificate is generated for a quotation, it will appear here as Completed.</p>
+                    </div>
+                </div>
+            @endforelse
         </div>
     </div>
 

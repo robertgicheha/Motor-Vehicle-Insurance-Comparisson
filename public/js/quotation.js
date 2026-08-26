@@ -58,20 +58,9 @@ function getFormData() {
     }
   } catch(e) {}
   return {
-    salutation: '',
-    firstName: '',
-    lastName: '',
-    phone: '',
-    email: '',
-    reg: '',
-    chassis: '',
-    make: '',
-    model: '',
-    body: '',
-    year: '',
-    color: '',
-    value: 0,
-    quoteNum: '',
+    salutation: '', firstName: '', lastName: '', phone: '', email: '',
+    reg: '', chassis: '', make: '', model: '', body: '', year: '', color: '',
+    value: 0, quoteNum: '',
   };
 }
 
@@ -82,22 +71,24 @@ function genQuoteNum(company) {
   return (company.prefix || 'MIC') + '-' + y + '/' + n;
 }
 
+// Action bar is always visible in the new layout; kept for parity with the old call sites.
 function showActionBar() {
-  document.getElementById('action-bar').classList.add('visible');
+  var bar = document.getElementById('action-bar');
+  if (bar) bar.classList.add('visible');
 }
 
 function copyQuoteNumber() {
   var el = document.getElementById('hero-quote-num');
-  var text = el.textContent;
+  var text = el ? el.textContent : '';
   if (!text || text === '—') return;
   if (navigator.clipboard && navigator.clipboard.writeText) {
     navigator.clipboard.writeText(text).then(function() {
       var btn = document.getElementById('copy-quote-btn');
       btn.classList.add('copied');
-      btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Copied';
+      btn.innerHTML = '<svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Copied';
       setTimeout(function() {
         btn.classList.remove('copied');
-        btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg> Copy';
+        btn.innerHTML = '<svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg> Copy';
       }, 2000);
     });
   }
@@ -105,14 +96,20 @@ function copyQuoteNumber() {
 
 function showToast(message, type) {
   type = type || 'success';
+  if (type === 'success') {
+    if (window.showToastSuccess) return window.showToastSuccess(message);
+  } else {
+    if (window.showToastError) return window.showToastError(message);
+  }
+  // Fallback if toast component not present
   var container = document.getElementById('toast-container');
-  if (!container) return;
-  var toast = document.createElement('div');
-  toast.className = 'toast ' + type;
-  var icon = type === 'success' ? '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>' : '';
-  toast.innerHTML = icon + message;
-  container.appendChild(toast);
-  setTimeout(function() { toast.remove(); }, 3000);
+  if (container) {
+    var toast = document.createElement('div');
+    toast.className = 'toast ' + type;
+    toast.textContent = message;
+    container.appendChild(toast);
+    setTimeout(function() { toast.remove(); }, 3000);
+  }
 }
 
 function fallbackLogo(el, slug) {
@@ -132,9 +129,9 @@ function renderCompanyLogo(slug) {
   var img = document.getElementById('hero-company-logo');
   if (company && company.logo) {
     img.src = company.logo;
-    img.style.display = 'block';
+    img.classList.remove('hidden');
     img.onerror = function() { fallbackLogo(img, slug); };
-  } else {
+  } else if (img) {
     img.style.display = 'none';
   }
 }
@@ -146,24 +143,24 @@ function renderComparisonGrid(companies, value, selectedSlug) {
     var p = calcPremiums(value, c, window.quotationNumPassengers);
     var isSelected = c.slug === selectedSlug;
     var logo = c.logo || '';
-    return '<div class="comparison-card' + (isSelected ? ' selected' : '') + '" onclick="downloadQuote(\'' + c.slug + '\')">' +
-      '<div class="comparison-card-header">' +
-        (logo ? '<img src="' + logo + '" alt="' + c.name + '" onerror="fallbackLogo(this,\'' + c.slug + '\')">' : '') +
-        '<span class="initials" style="color:' + c.color + '">' + (c.prefix || c.slug.toUpperCase()) + '</span>' +
-      '</div>' +
-      '<div class="comparison-card-body">' +
-        '<div class="cmp-row"><span>Rate</span><span>' + (c.rate * 100).toFixed(1) + '%</span></div>' +
-        '<div class="cmp-row"><span>Basic Premium</span><span>' + fmt(p.basic) + '</span></div>' +
-        '<div class="cmp-row"><span>PVT</span><span>' + fmt(p.pvt) + '</span></div>' +
-        '<div class="cmp-total"><span>Total</span><span>' + fmt(p.total) + '</span></div>' +
-      '</div>' +
-    '</div>';
+    return '<button type="button" onclick="downloadQuote(\'' + c.slug + '\')" class="text-left rounded-2xl border bg-white dark:bg-gray-800 shadow-sm p-5 transition hover:-translate-y-0.5 hover:shadow-md ' +
+      (isSelected ? 'border-blue-500 ring-2 ring-blue-500/20' : 'border-gray-200 dark:border-gray-700') + '">' +
+        '<div class="flex items-center gap-3 mb-3 h-10">' +
+          (logo ? '<img src="' + logo + '" alt="' + c.name + '" class="max-h-9 max-w-[120px] object-contain" onerror="fallbackLogo(this,\'' + c.slug + '\')">' : '') +
+          '<span class="text-[11px] font-extrabold tracking-wider text-blue-600 dark:text-blue-400">' + (c.prefix || c.slug.toUpperCase()) + '</span>' +
+        '</div>' +
+        '<div class="space-y-1.5 text-xs">' +
+          '<div class="flex justify-between"><span class="text-gray-500">Rate</span><span class="font-semibold text-gray-800 dark:text-white">' + (c.rate * 100).toFixed(1) + '%</span></div>' +
+          '<div class="flex justify-between"><span class="text-gray-500">Basic Premium</span><span class="font-semibold text-gray-800 dark:text-white">' + fmt(p.basic) + '</span></div>' +
+          '<div class="flex justify-between"><span class="text-gray-500">PVT</span><span class="font-semibold text-gray-800 dark:text-white">' + fmt(p.pvt) + '</span></div>' +
+          '<div class="flex justify-between pt-1.5 border-t border-gray-100 dark:border-gray-700"><span class="font-semibold text-gray-800 dark:text-white">Total</span><span class="font-extrabold text-blue-600 dark:text-blue-400">' + fmt(p.total) + '</span></div>' +
+        '</div>' +
+      '</button>';
   }).join('');
   container.innerHTML = html;
 }
 
 function renderCompareTable(companies, value) {
-  var names = companies.map(function(c) { return c.name; });
   var maxCols = 3;
   for (var i = 0; i < maxCols; i++) {
     var th = document.getElementById('cmp-head-' + i);
@@ -184,39 +181,38 @@ function renderCompareTable(companies, value) {
     { label: 'Basic Annual Premium', vals: companies.map(function(c) { return fmt(calcPremiums(value, c, window.quotationNumPassengers).basic); }) },
     { label: 'PVT Premium', vals: companies.map(function(c) { return fmt(calcPremiums(value, c, window.quotationNumPassengers).pvt); }) },
     { label: 'PLL Premium', vals: companies.map(function(c) { return fmt(calcPremiums(value, c, window.quotationNumPassengers).pll); }) },
-    { label: 'Levis & Stamp Duty', vals: companies.map(function(c) { return fmt(calcPremiums(value, c, window.quotationNumPassengers).levis + calcPremiums(value, c, window.quotationNumPassengers).stampDuty); }) },
+    { label: 'Levis & Stamp Duty', vals: companies.map(function(c) { var pp = calcPremiums(value, c, window.quotationNumPassengers); return fmt(pp.levis + pp.stampDuty); }) },
   ];
   var tbody = document.getElementById('compare-rows');
   if (!tbody) return;
   tbody.innerHTML = rows.map(function(r) {
-    var cells = '<td>' + r.label + '</td>';
+    var cells = '<td class="py-2 text-gray-800 dark:text-white">' + r.label + '</td>';
     for (var i = 0; i < maxCols; i++) {
-      cells += '<td>' + (r.vals[i] || '—') + '</td>';
+      cells += '<td class="py-2 text-right font-semibold text-gray-800 dark:text-white">' + (r.vals[i] || '—') + '</td>';
     }
-    return '<tr>' + cells + '</tr>';
+    return '<tr class="border-t border-gray-100 dark:border-gray-700">' + cells + '</tr>';
   }).join('');
 }
 
 function renderDownloadCards(activeCompany, value, prems, fd, qNum) {
   var container = document.getElementById('dl-cards');
   var companies = getCompanyData();
-
   var html = companies.map(function(c) {
     var p = calcPremiums(value, c, window.quotationNumPassengers);
-    var selected = (c.slug === activeCompany.slug) ? 'border-color:var(--blue);box-shadow:0 0 0 2px rgba(0,102,179,.15)' : '';
+    var selected = (c.slug === activeCompany.slug);
     var logo = c.logo || '';
-    return '<div class="dl-card" style="' + selected + '" onclick="downloadQuote(\'' + c.slug + '\')">' +
-      '<div class="dl-card-logo">' +
-        (logo ? '<img src="' + logo + '" alt="' + c.name + '" onerror="fallbackLogo(this,\'' + c.slug + '\')">' : '') +
-        '<span class="logo-text" style="display:' + (logo ? 'none' : 'block') + '">' + (c.prefix || c.slug) + '</span>' +
-      '</div>' +
-      '<div class="dl-card-name">' + c.name + '</div>' +
-      '<div class="dl-card-rate">Rate: <strong>' + (c.rate * 100).toFixed(1) + '%</strong> of vehicle value</div>' +
-      '<div class="dl-card-premium">' + fmt(p.total) + '<small>Total incl. taxes</small></div>' +
-      '<button class="dl-btn" style="background:' + c.color + ';color:#fff">Download ' + c.name.split(' ')[0] + ' Quote ↓</button>' +
-    '</div>';
+    return '<button type="button" onclick="downloadQuote(\'' + c.slug + '\')" class="text-left rounded-2xl border bg-white dark:bg-gray-800 shadow-sm p-4 text-center transition hover:-translate-y-0.5 hover:shadow-md ' +
+      (selected ? 'border-blue-500 ring-2 ring-blue-500/20' : 'border-gray-200 dark:border-gray-700') + '">' +
+        '<div class="h-11 flex items-center justify-center mb-3">' +
+          (logo ? '<img src="' + logo + '" alt="' + c.name + '" class="max-h-9 max-w-[110px] object-contain" onerror="fallbackLogo(this,\'' + c.slug + '\')">' : '') +
+          '<span class="text-[12px] font-extrabold tracking-wider text-blue-600 dark:text-blue-400" style="display:' + (logo ? 'none' : 'block') + '">' + (c.prefix || c.slug) + '</span>' +
+        '</div>' +
+        '<div class="text-xs font-bold text-gray-800 dark:text-white">' + c.name + '</div>' +
+        '<div class="text-[11px] text-gray-400 mb-3">Rate: <strong>' + (c.rate * 100).toFixed(1) + '%</strong> of vehicle value</div>' +
+        '<div class="text-lg font-extrabold text-blue-600 dark:text-blue-400 mb-3">' + fmt(p.total) + '<small class="block text-[10px] font-semibold text-gray-400">Total incl. taxes</small></div>' +
+        '<span class="block w-full rounded-lg py-2 text-xs font-bold text-white" style="background:' + (c.color || '#005F9E') + '">Download ' + c.name.split(' ')[0] + ' Quote ↓</span>' +
+      '</button>';
   }).join('');
-
   container.innerHTML = html;
 }
 
@@ -225,30 +221,34 @@ function buildPDFPreview(company, value, prem, fd, qNum) {
   var now = new Date().toLocaleString('en-KE', { dateStyle: 'long', timeStyle: 'short' });
   var logo = company.logo || '';
   var html =
-    '<div class="pdf-letterhead" style="background:' + company.color + '">' +
-      '<div class="pdf-lh-left">' +
-        (logo ? '<img src="' + logo + '" alt="' + company.name + '" onerror="fallbackLogo(this,\'' + company.slug + '\')">' : '') +
-        '<span class="pdf-lh-name" style="display:' + (logo ? 'none' : 'block') + ';color:#fff;font-size:22px;font-weight:800">' + (company.prefix || company.slug) + '</span>' +
+    '<div class="rounded-xl overflow-hidden border border-gray-200 dark:border-gray-700 mb-6" style="background:' + company.color + '">' +
+      '<div class="flex justify-between items-stretch min-h-[90px]">' +
+        '<div class="flex items-center p-5">' +
+          (logo ? '<img src="' + logo + '" alt="' + company.name + '" class="max-h-11 max-w-[160px] object-contain" onerror="fallbackLogo(this,\'' + company.slug + '\')">' : '') +
+          '<span class="text-white text-2xl font-extrabold" style="display:' + (logo ? 'none' : 'block') + '">' + (company.prefix || company.slug) + '</span>' +
+        '</div>' +
+        '<div class="flex items-center justify-end p-5 text-right">' +
+          '<p class="text-[12px] leading-7 text-white/90 m-0">' + company.name + '<br>Website: micglobalrisks.com</p>' +
+        '</div>' +
       '</div>' +
-      '<div class="pdf-lh-right"><p style="color:rgba(255,255,255,.92);font-size:12px;line-height:1.75;margin:0">' + company.name + '<br>Website: micglobalrisks.com</p></div>' +
     '</div>' +
-    '<div class="pdf-body">' +
-      '<p style="margin-top:4px">' + now + '</p>' +
-      '<p>Dear ' + name + ',</p>' +
-      '<h2>RE: PRIVATE CAR INSURANCE QUOTE</h2>' +
-      '<p class="pdf-date">Quotation Reference: <strong>' + qNum + '</strong></p>' +
-      '<p>Thank you for requesting us to provide a quote for the above mentioned. We are pleased to submit the quote</p>' +
-      '<table><thead><tr><th>Owner\'s Name</th><th>Vehicle Make</th><th>Year of Manufacture</th></tr></thead><tbody><tr><td>' + name + '</td><td>' + (fd.make || '—') + '</td><td>' + (fd.year || '—') + '</td></tr></tbody></table>' +
-      '<table><thead><tr><th>Registration Number</th><th>Vehicle Estimated Price</th><th>Phone Number</th></tr></thead><tbody><tr><td>' + (fd.reg || '—') + '</td><td>' + fmt(value) + '</td><td>' + (fd.phone || '—') + '</td></tr></tbody></table>' +
-      '<table><thead><tr><th colspan="2">COVER TYPE</th></tr></thead><tbody><tr><td>Scope of Cover</td><td>Comprehensive</td></tr><tr><td>Frequency</td><td>Annually</td></tr></tbody></table>' +
-      '<table><thead><tr><th colspan="2" style="background:' + company.color + ';color:#fff;border-color:' + company.color + '">SCHEDULE OF INSURANCE</th></tr></thead><tbody>' +
-        '<tr><td>Basic Annual Premium</td><td>' + fmt(prem.basic) + '</td></tr>' +
-        '<tr><td>Annual Premium + Taxes</td><td>' + fmt(prem.total) + '</td></tr>' +
-        '<tr><td>Windscreen Annual Premium</td><td>KES 0</td></tr>' +
-        '<tr><td>Radio Cassette Premium</td><td>KES 0</td></tr>' +
+    '<div class="px-2">' +
+      '<p class="text-[13px]">' + now + '</p>' +
+      '<p class="text-gray-800 dark:text-white">Dear ' + name + '</p>' +
+      '<h2 class="text-[15px] font-bold uppercase tracking-wider mb-1">RE: PRIVATE CAR INSURANCE QUOTE</h2>' +
+      '<p class="text-[12px] text-gray-500 mb-4">Quotation Reference: <strong>' + qNum + '</strong></p>' +
+      '<p class="text-[13px] leading-7 mb-4 text-gray-700 dark:text-gray-300">Thank you for requesting us to provide a quote for the above mentioned. We are pleased to submit the quote</p>' +
+      '<table class="w-full text-[13px] border-collapse mb-4"><thead><tr><th class="bg-gray-100 dark:bg-gray-700 text-left p-2 border border-gray-200 dark:border-gray-600">Owner\'s Name</th><th class="bg-gray-100 dark:bg-gray-700 text-left p-2 border border-gray-200 dark:border-gray-600">Vehicle Make</th><th class="bg-gray-100 dark:bg-gray-700 text-left p-2 border border-gray-200 dark:border-gray-600">Year of Manufacture</th></tr></thead><tbody><tr><td class="p-2 border border-gray-200 dark:border-gray-600">' + name + '</td><td class="p-2 border border-gray-200 dark:border-gray-600">' + (fd.make || '—') + '</td><td class="p-2 border border-gray-200 dark:border-gray-600">' + (fd.year || '—') + '</td></tr></tbody></table>' +
+      '<table class="w-full text-[13px] border-collapse mb-4"><thead><tr><th class="bg-gray-100 dark:bg-gray-700 text-left p-2 border border-gray-200 dark:border-gray-600">Registration Number</th><th class="bg-gray-100 dark:bg-gray-700 text-left p-2 border border-gray-200 dark:border-gray-600">Vehicle Estimated Price</th><th class="bg-gray-100 dark:bg-gray-700 text-left p-2 border border-gray-200 dark:border-gray-600">Phone Number</th></tr></thead><tbody><tr><td class="p-2 border border-gray-200 dark:border-gray-600">' + (fd.reg || '—') + '</td><td class="p-2 border border-gray-200 dark:border-gray-600">' + fmt(value) + '</td><td class="p-2 border border-gray-200 dark:border-gray-600">' + (fd.phone || '—') + '</td></tr></tbody></table>' +
+      '<table class="w-full text-[13px] border-collapse mb-4"><thead><tr><th colspan="2" class="text-left p-2 border text-white" style="background:' + company.color + '">COVER TYPE</th></tr></thead><tbody><tr><td class="p-2 border border-gray-200 dark:border-gray-600">Scope of Cover</td><td class="p-2 border border-gray-200 dark:border-gray-600">Comprehensive</td></tr><tr><td class="p-2 border border-gray-200 dark:border-gray-600">Frequency</td><td class="p-2 border border-gray-200 dark:border-gray-600">Annually</td></tr></tbody></table>' +
+      '<table class="w-full text-[13px] border-collapse mb-4"><thead><tr><th colspan="2" class="text-left p-2 border text-white" style="background:' + company.color + '">SCHEDULE OF INSURANCE</th></tr></thead><tbody>' +
+        '<tr><td class="p-2 border border-gray-200 dark:border-gray-600">Basic Annual Premium</td><td class="p-2 border border-gray-200 dark:border-gray-600">' + fmt(prem.basic) + '</td></tr>' +
+        '<tr><td class="p-2 border border-gray-200 dark:border-gray-600">Annual Premium + Taxes</td><td class="p-2 border border-gray-200 dark:border-gray-600">' + fmt(prem.total) + '</td></tr>' +
+        '<tr><td class="p-2 border border-gray-200 dark:border-gray-600">Windscreen Annual Premium</td><td class="p-2 border border-gray-200 dark:border-gray-600">KES 0</td></tr>' +
+        '<tr><td class="p-2 border border-gray-200 dark:border-gray-600">Radio Cassette Premium</td><td class="p-2 border border-gray-200 dark:border-gray-600">KES 0</td></tr>' +
       '</tbody></table>' +
     '</div>' +
-    '<div class="pdf-footer-text">KENYA | UGANDA | TANZANIA | Rate subject to satisfactory valuation report</div>';
+    '<div class="px-5 py-4 bg-gray-50 dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 text-[11px] leading-7 text-gray-400">KENYA | UGANDA | TANZANIA | Rate subject to satisfactory valuation report</div>';
 
   var wrap = document.getElementById('pdf-preview');
   wrap.innerHTML = html;
@@ -307,6 +307,10 @@ function init() {
   var prems = calcPremiums(value, company, np);
   var qNum = fd.quoteNum || genQuoteNum(company);
 
+  // Keep Alpine hero label in sync with the selected company.
+  var alpineEl = document.querySelector('[x-data]');
+  if (alpineEl && alpineEl.__x) alpineEl.__x.$data.selectedName = company.name;
+
   renderCompanyLogo(slug);
 
   document.getElementById('hero-quote-num').textContent = qNum;
@@ -314,6 +318,7 @@ function init() {
   document.getElementById('s-name').textContent = [fd.salutation, fd.firstName, fd.lastName].filter(Boolean).join(' ') || '—';
   document.getElementById('s-phone').textContent = fd.phone || '—';
   document.getElementById('s-email').textContent = fd.email || '—';
+  document.getElementById('s-company').textContent = company.name;
   document.getElementById('s-reg').textContent = fd.reg || '—';
   document.getElementById('s-make').textContent = ((fd.make || '') + ' ' + (fd.model || '')).trim() || '—';
   document.getElementById('s-year').textContent = (fd.year || '—') + '  •  ' + (fd.body || '—');
@@ -337,7 +342,7 @@ function init() {
   ];
   var tbody = document.getElementById('breakdown-rows');
   tbody.innerHTML = rows.map(function(r) {
-    return '<tr><td>' + r[0] + '</td><td style="color:var(--text-muted);font-size:12.5px">' + r[1] + '</td><td>' + r[2] + '</td></tr>';
+    return '<tr><td class="py-2 text-gray-800 dark:text-white">' + r[0] + '</td><td class="py-2 text-gray-400 text-[12.5px]">' + r[1] + '</td><td class="py-2 text-right font-semibold text-gray-800 dark:text-white">' + r[2] + '</td></tr>';
   }).join('');
   document.getElementById('breakdown-total').textContent = fmt(prems.total);
 
@@ -345,6 +350,12 @@ function init() {
   renderCompareTable(companies, value);
   renderDownloadCards(company, value, prems, fd, qNum);
   buildPDFPreview(company, value, prems, fd, qNum);
+
+  // Compact collapsed row
+  var compactVehicle = document.getElementById('compact-vehicle');
+  var compactCompany = document.getElementById('compact-company');
+  if (compactVehicle) compactVehicle.textContent = ((fd.make || '') + ' ' + (fd.model || '')).trim() || '—';
+  if (compactCompany) compactCompany.textContent = company.name;
 
   try {
     var raw = sessionStorage.getItem('micQuoteData');
@@ -380,11 +391,13 @@ function actionTogglePreview() {
   var btn = document.getElementById('btn-preview');
   if (wrap.style.display === 'none' || !wrap.style.display) {
     wrap.style.display = 'block';
-    btn.classList.add('active');
+    btn.classList.add('active', 'bg-blue-600', 'text-white');
+    btn.classList.remove('text-blue-600', 'border-blue-600', 'hover:bg-blue-50', 'dark:hover:bg-blue-900/20');
     wrap.scrollIntoView({ behavior: 'smooth', block: 'start' });
   } else {
     wrap.style.display = 'none';
-    btn.classList.remove('active');
+    btn.classList.remove('active', 'bg-blue-600', 'text-white');
+    btn.classList.add('text-blue-600', 'border-blue-600', 'hover:bg-blue-50', 'dark:hover:bg-blue-900/20');
   }
 }
 
@@ -397,7 +410,8 @@ function downloadQuote(slug) {
   var prems = calcPremiums(value, company, np);
   var qNum = fd.quoteNum || genQuoteNum(company);
   buildPDFPreview(company, value, prems, fd, qNum);
-  document.getElementById('btn-preview').classList.remove('active');
+  document.getElementById('btn-preview').classList.remove('active', 'bg-blue-600', 'text-white');
+  document.getElementById('btn-preview').classList.add('text-blue-600', 'border-blue-600');
   showActionBar();
   document.getElementById('pdf-preview').style.display = 'block';
   setTimeout(function() { window.print(); }, 150);

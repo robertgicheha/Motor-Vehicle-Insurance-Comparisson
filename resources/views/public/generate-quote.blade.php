@@ -732,18 +732,18 @@ Compare All Insurers
 <!-- RETRIEVE EXISTING QUOTE -->
 <section class="section">
   <div class="section-head" style="text-align:center">
-    <div class="section-title">Retrieve Existing Quote</div>
-    <div class="section-sub">Already received a quotation number? Enter it below to regenerate your quote.</div>
+    <div class="section-title">Regenerate Quote</div>
+    <div class="section-sub">Enter your vehicle registration number to regenerate a previous quote.</div>
   </div>
   <div class="regen-box">
-    <div class="regen-icon">🔍</div>
+    <div class="regen-icon">🔁</div>
     <h3>Regenerate Your Quotation</h3>
-    <p>Enter your unique quotation number to retrieve your insurance quote.</p>
-    <form method="POST" action="{{ route('motor.lookup.quotation') }}" style="display:contents">
+    <p>We will check if a previous quote exists for this vehicle and regenerate it for you.</p>
+    <form method="POST" action="{{ route('quotations.regenerate') }}" style="display:contents">
       @csrf
       <div class="regen-input-row">
-        <input type="text" name="number" placeholder="e.g. GA-2026/001" required>
-        <button type="submit" class="btn btn-primary">Retrieve →</button>
+        <input type="text" name="registration_number" placeholder="e.g. KDH 724V" required>
+        <button type="submit" class="btn btn-primary">Regenerate →</button>
       </div>
     </form>
   </div>

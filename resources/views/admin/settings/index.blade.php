@@ -191,6 +191,56 @@
             </div>
         @endforeach
     </div>
+
+    {{-- ─── CACHE MANAGEMENT ─────────────────────────────────────────────────── --}}
+    <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+        <div class="flex items-start justify-between px-6 py-4 border-b border-gray-100 dark:border-gray-700">
+            <div class="flex items-center gap-3">
+                <div class="w-9 h-9 rounded-xl bg-indigo-50 dark:bg-indigo-900/30 flex items-center justify-center shrink-0">
+                    <svg class="w-4.5 h-4.5 w-5 h-5 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                </div>
+                <div>
+                    <h2 class="text-sm font-bold text-gray-900 dark:text-white">Cache Management</h2>
+                    <p class="text-[11px] text-gray-400 dark:text-gray-500 mt-0.5">Clear compiled caches or optimise the application for production.</p>
+                </div>
+            </div>
+        </div>
+
+        @php
+            $cacheActions = [
+                'clear'    => ['Clear Cache',        'Flush the application cache',                      'bg-amber-500 hover:bg-amber-400',   'cache'],
+                'config'   => ['Clear Config Cache', 'Remove the merged configuration cache',            'bg-blue-500 hover:bg-blue-400',     'cog'],
+                'view'     => ['Clear View Cache',   'Remove all compiled Blade templates',              'bg-violet-500 hover:bg-violet-400', 'eye'],
+                'route'    => ['Clear Route Cache',  'Remove the compiled route cache',                  'bg-pink-500 hover:bg-pink-400',     'map'],
+                'optimize' => ['Optimize',           'Cache config, routes, views & events',             'bg-emerald-500 hover:bg-emerald-400','bolt'],
+                'all'      => ['Clear All Caches',   'Run optimize:clear (all caches removed)',          'bg-red-500 hover:bg-red-400',       'trash'],
+            ];
+        @endphp
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 p-6">
+            @foreach($cacheActions as $action => [$label, $desc, $colorClass, $icon])
+                <form method="POST" action="{{ route('admin.settings.cache.' . $action) }}" class="group">
+                    @csrf
+                    <button type="submit" class="w-full text-left rounded-xl border border-gray-200 dark:border-gray-700 p-4 hover:shadow-md hover:border-blue-300 dark:hover:border-blue-600 hover:-translate-y-0.5 transition-all">
+                        <div class="flex items-start justify-between">
+                            <span class="inline-flex items-center gap-1.5 text-[11px] font-bold {{ $colorClass }} text-white px-2.5 py-1 rounded-lg">
+                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                                Run
+                            </span>
+                        </div>
+                        <p class="mt-2.5 text-xs font-bold text-gray-800 dark:text-white">{{ $label }}</p>
+                        <p class="text-[10px] text-gray-400 mt-0.5 leading-relaxed">{{ $desc }}</p>
+                    </button>
+                </form>
+            @endforeach
+        </div>
+
+        <div class="px-6 pb-5">
+            <p class="text-[10px] text-gray-400 dark:text-gray-500 leading-relaxed">
+                <span class="font-semibold text-gray-500 dark:text-gray-400">Note:</span>
+                Clearing or optimising caches affects the running application immediately. Optimisation is recommended after deployment, and cache clearing is recommended after configuration changes.
+            </p>
+        </div>
+    </div>
 </div>
 
 {{-- Media Picker Modal --}}

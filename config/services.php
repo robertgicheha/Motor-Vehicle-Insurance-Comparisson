@@ -50,4 +50,19 @@ return [
         'secret_key' => env('RECAPTCHA_SECRET_KEY', '6LeIxAcTAAAAAGG-vFI1TnRWxMZNFuojJ4WifJWe'),
     ],
 
+    'clamav' => [
+        'host' => env('CLAMAV_HOST', '127.0.0.1'),
+        'port' => (int) env('CLAMAV_PORT', 3310),
+    ],
+
+    'ai_document' => [
+        'api_key' => env('AI_DOCUMENT_API_KEY', ''),
+        'endpoint' => env('AI_DOCUMENT_ENDPOINT', 'https://api.openai.com/v1/chat/completions'),
+    ],
+
+    'sticker' => [
+        'turnaround_minutes' => (int) env('STICKER_TURNAROUND_MINUTES', 30),
+        'mic_cc_email' => env('MIC_CC_EMAIL', config('mail.from.address')),
+    ],
+
 ];

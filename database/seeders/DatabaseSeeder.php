@@ -13,6 +13,7 @@ class DatabaseSeeder extends Seeder
             SettingsSeeder::class,
             CompanyRatesSeeder::class,
             AdminUserSeeder::class,
+            EmailSettingsSeeder::class,
         ]);
     }
 }

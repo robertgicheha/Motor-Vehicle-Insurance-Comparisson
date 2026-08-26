@@ -132,10 +132,10 @@
     const el = document.getElementById('distributionChart');
     if (!el) return;
 
-    const dist = data.statusDistribution || { processed: 0, completed: 0, rejected: 0 };
-    const labels = ['Processed', 'Completed', 'Rejected'];
-    const values = [dist.processed || 0, dist.completed || 0, dist.rejected || 0];
-    const colors = ['#1756c8', '#0f7a65', '#c0392b'];
+    const dist = data.statusDistribution || { generated: 0, completed: 0 };
+    const labels = ['Generated', 'Completed'];
+    const values = [dist.generated || 0, dist.completed || 0];
+    const colors = ['#1756c8', '#0f7a65'];
 
     if (values.every(v => v === 0)) {
       renderEmptyState(el, 'No status data yet');

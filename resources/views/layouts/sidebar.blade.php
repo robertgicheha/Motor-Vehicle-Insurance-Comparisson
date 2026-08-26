@@ -1,326 +1,567 @@
-<aside class="fixed inset-y-0 left-0 z-40 flex flex-col sidebar-transition overflow-x-hidden"
-       :class="sidebarOpen ? 'w-64' : 'w-20'"
-       style="background:#1a2540; border-right:0.5px solid rgba(255,255,255,0.08); font-family:'Montserrat',sans-serif;"
-       x-cloak>
+@php
+    $isAdmin = auth()->user()->hasRole('super-admin') || auth()->user()->hasRole('admin');
+    $isSuperAdmin = auth()->user()->hasRole('super-admin');
 
-    {{-- Expanded: light mode logo --}}
-        <div :class="sidebarOpen ? 'flex items-center gap-2' : 'hidden'" class="dark:hidden">
+    $currentRoute = request()->route()?->getName() ?? '';
+    $isActive = fn(string $pattern) => request()->routeIs($pattern);
+
+    $lastViewed = session('quotations_last_viewed_at');
+    $quoteCount = $lastViewed
+        ? \App\Models\Quotation::where('created_at', '>', $lastViewed)->count()
+        : \App\Models\Quotation::count();
+    $claimCount = \App\Models\Claim::where(function ($q) {
+        $q->where('user_id', auth()->id())->orWhere('on_behalf_of_user_id', auth()->id());
+    })->count();
+    $pendingStickerCount = $isAdmin ? \App\Models\Sticker::where('status', 'issued')->count() : 0;
+
+    // Shared style strings so every toggle button behaves identically
+    $activeStyle   = 'background:rgba(255,255,255,0.16); color:#ffffff; box-shadow: inset 0 0 0 1px rgba(255,255,255,0.18);';
+    $inactiveStyle = 'color:#ffffff;';
+@endphp
+
+<aside
+    class="fixed inset-y-0 left-0 z-40 flex flex-col sidebar-transition overflow-x-hidden bg-[#005F9E] border-r border-white/[0.08] shadow-[4px_0_24px_rgba(0,0,0,0.12)]"
+    :class="sidebarOpen ? 'w-60' : 'w-[68px]'"
+    x-data="{
+        open: {},
+        isMobile: window.innerWidth < 1024,
+        init() {
+            this.isMobile = window.innerWidth < 1024;
+            window.addEventListener('resize', () => {
+                this.isMobile = window.innerWidth < 1024;
+                if (!this.isMobile) this.mobileSidebarOpen = false;
+            });
+            @if($isAdmin && ($isActive('quotations*') || $isActive('my.quotations') || $isActive('recent.quotations')))
+                this.open.quotations = true;
+            @endif
+            @if($isAdmin && ($isActive('claims*') || $isActive('claims.mine')))
+                this.open.claims = true;
+            @endif
+            @if($isAdmin && ($isActive('admin.companies*') || $isActive('admin.compare-all*')))
+                this.open.companies = true;
+            @endif
+            @if($isAdmin && ($isActive('admin.users*') || $isActive('admin.roles*') || $isActive('admin.stickers*')))
+                this.open.users = true;
+            @endif
+            @if($isAdmin && ($isActive('stickers.issue*') || $isActive('stickers.*') || $isActive('admin.stickers*') || $isActive('stickers.user-lookup')))
+                this.open.certificates = true;
+            @endif
+            @if($isAdmin && ($isActive('admin.reports*') || $isActive('admin.analytics*') || $isActive('admin.audit*')))
+                this.open.insights = true;
+            @endif
+            @if($isAdmin && ($isActive('admin.settings*') || $isActive('admin.notifications*') || $isActive('admin.rate-settings*') || $isActive('admin.help*') || $isActive('admin.media*') || $isActive('admin.health*') || $isActive('admin.email-settings*')))
+                this.open.system = true;
+            @endif
+        },
+        toggle(key) {
+            if (!this.sidebarOpen) {
+                window.dispatchEvent(new CustomEvent('sidebar-expand'));
+                this.$nextTick(() => { this.open[key] = true; });
+            } else {
+                this.open[key] = !this.open[key];
+            }
+        },
+        isOpen(key) { return this.open[key] || false; }
+    }"
+    :style="{ transform: isMobile ? (mobileSidebarOpen ? 'translateX(0)' : 'translateX(-100%)') : 'none' }"
+    x-cloak
+>
+    {{-- Logo --}}
+    <div class="flex items-center shrink-0" :class="sidebarOpen ? 'px-4 py-4' : 'px-0 py-4 justify-center'">
+        <a href="{{ route('dashboard') }}" class="block" :class="sidebarOpen ? '' : 'flex justify-center'">
             <img src="{{ asset('images/MIC-Global-Risks_logo_no_background.png') }}"
-                alt="MIC Global Risks"
-                class="h-8  w-auto max-w-[140px] ml-5 mt-4 mb-4 object-contain">
-        </div>
-
-        {{-- Expanded: dark mode logo (no background) --}}
-        <div :class="sidebarOpen ? 'flex items-center gap-2' : 'hidden'" class="hidden dark:flex">
-            <img src="{{ asset('images/MIC-Global-Risks_logo_no_background.png') }}"
-                alt="MIC Global Risks"
-                class="h-8  w-auto max-w-[140px] ml-5 mt-4 mb-4 object-contain">
-        </div>
-
-        {{-- Collapsed: light mode logo --}}
-        <div :class="!sidebarOpen ? 'flex justify-center w-full' : 'hidden'" class="dark:hidden">
-            <img src="{{ asset('images/MIC-Global-Risks_logo_no_background.png') }}"
-    alt="MIC Global Risks"
-    class="h-7 w-auto max-w-[40px] mt-4 object-contain">
-        </div>
-
-        {{-- Collapsed: dark mode logo --}}
-        <div :class="!sidebarOpen ? 'flex justify-center w-full' : 'hidden'" class="hidden dark:flex">
-           <img src="{{ asset('images/MIC-Global-Risks_logo_no_background.png') }}"
-     alt="MIC Global Risks"
-    class="h-7 w-auto max-w-[40px] mt-4 object-contain">
-        </div>
-
-    {{-- Global Search --}}
-    <div :class="sidebarOpen ? 'block px-3 pt-3' : 'hidden'">
-        <div onclick="document.dispatchEvent(new CustomEvent('open-search'))"
-             style="display:flex;align-items:center;gap:8px;background:rgba(255,255,255,0.06);border-radius:9px;padding:8px 10px;border:0.5px solid rgba(255,255,255,0.08);cursor:pointer;">
-            <svg style="width:15px;height:15px;color:rgba(255,255,255,0.35)" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
-            <span style="font-size:11px;color:rgba(255,255,255,0.3);font-weight:500;">Quick search...</span>
-            <span style="margin-left:auto;font-size:10px;color:rgba(255,255,255,0.2);font-weight:600;">⌘K</span>
-        </div>
+                 alt="MIC Global Risks"
+                 class="object-contain transition-all duration-300"
+                 :class="sidebarOpen ? 'h-8 w-auto max-w-[140px]' : 'h-7 w-auto max-w-[36px]'">
+        </a>
     </div>
 
-    <nav class="flex-1 overflow-y-auto overflow-x-hidden py-3 px-2 space-y-0.5">
-        {{-- Section: Main --}}
-        <p :class="sidebarOpen ? 'block' : 'hidden'" style="font-size:9px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:rgba(255,255,255,0.3);padding:14px 10px 5px;">Main</p>
+    {{-- Quick Search --}}
+    <div x-show="sidebarOpen" x-cloak class="px-3 pb-2">
+        <button onclick="document.dispatchEvent(new CustomEvent('open-search'))"
+                class="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-xs text-white hover:bg-white/[0.10] transition-all duration-150"
+                style="background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.12);">
+            <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+            <span class="flex-1 text-left text-white/80">Quick search...</span>
+            <kbd class="hidden lg:inline-flex items-center px-1.5 py-0.5 text-[10px] font-semibold text-white bg-white/[0.14] rounded">⌘K</kbd>
+        </button>
+    </div>
 
-        <x-sidebar-link href="{{ route('dashboard') }}" :active="request()->routeIs('dashboard')" icon="dashboard">
-            Dashboard
-        </x-sidebar-link>
+    {{-- Scrollable Nav --}}
+    <nav class="flex-1 overflow-y-auto overflow-x-hidden px-2.5 pb-3 scrollbar-thin scrollbar-thumb-white/20 scrollbar-track-transparent"
+         @click="if (isMobile && $event.target.closest('a')) { window.dispatchEvent(new CustomEvent('sidebar-close-mobile')); }">
 
-        {{-- Divider --}}
-        <div style="height:0.5px;background:rgba(255,255,255,0.07);margin:8px 10px;"></div>
+        {{-- ─── Main ─── --}}
+        <div class="pt-1 pb-1">
+            <p x-show="sidebarOpen" x-cloak class="px-3 pt-3 pb-1.5 text-[9px] font-bold uppercase tracking-[0.15em] text-white/70">
+                Main
+            </p>
+            <x-sidebar-link href="{{ route('dashboard') }}" :active="$isActive('dashboard')" icon="dashboard">
+                Dashboard
+            </x-sidebar-link>
+        </div>
 
-        {{-- Quotations Dropdown --}}
-        <div x-data="{ open: true }">
-            <p :class="sidebarOpen ? 'block' : 'hidden'" style="font-size:9px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:rgba(255,255,255,0.3);padding:6px 10px 5px;">Quotations</p>
+        <div class="mx-3 my-1 h-px bg-white/[0.12]"></div>
+
+        {{-- ─── Quotations ─── --}}
+        <div class="py-1">
+            <p x-show="sidebarOpen" x-cloak class="px-3 pt-2 pb-1.5 text-[9px] font-bold uppercase tracking-[0.15em] text-white/70">
+                Quotations
+            </p>
             @can('view quotations')
-                <button @click="open = !open"
-                        style="display:flex;align-items:center;gap:8px;width:100%;padding:8px 12px;border-radius:9px;border:none;background:transparent;color:rgba(255,255,255,0.72);font-size:11.5px;font-weight:500;cursor:pointer;font-family:'Montserrat',sans-serif;{{ request()->routeIs('quotations*') ? 'background:rgba(0,95,158,0.18);color:#fff;' : '' }}"
-                        :class="sidebarOpen ? '' : 'justify-center'">
-                    <span style="opacity:0.7">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                <button @click.prevent.stop="toggle('quotations')"
+                        class="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-[13px] font-medium transition-all duration-150 group"
+                        :class="sidebarOpen ? 'justify-start' : 'justify-center'"
+                        style="{{ ($isActive('quotations*') || $isActive('my.quotations') || $isActive('recent.quotations')) ? $activeStyle : $inactiveStyle }}">
+                    <span class="shrink-0 text-white transition-opacity">
+                        <svg class="w-[18px] h-[18px]" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
                     </span>
-                    <span x-show="sidebarOpen" x-cloak style="flex:1;text-align:left;line-height:1.2">Quotations</span>
-                    @php
-                        $lastViewed = session('quotations_last_viewed_at');
-                        $newQuoteCount = $lastViewed ? \App\Models\Quotation::where('created_at', '>', $lastViewed)->count() : \App\Models\Quotation::count();
-                    @endphp
-                    <span x-show="sidebarOpen" x-cloak style="font-size:10px;background:rgba(255,255,255,0.12);color:rgba(255,255,255,0.7);padding:2px 7px;border-radius:20px;">{{ $newQuoteCount }}</span>
-                    <svg x-show="sidebarOpen" x-cloak class="w-3 h-3 transition-transform" :class="open ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                    <span x-show="sidebarOpen" x-cloak class="flex-1 text-white text-left leading-tight">Quotations</span>
+                    <span x-show="sidebarOpen" x-cloak
+                          class="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-white/[0.18] text-white">{{ $quoteCount }}</span>
+                    <svg x-show="sidebarOpen" x-cloak class="w-3 h-3 shrink-0 text-white transition-transform duration-200" :class="isOpen('quotations') ? 'rotate-180' : ''" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
                 </button>
-                <div x-show="open && sidebarOpen" x-cloak class="ml-2 space-y-0.5">
+                <div x-show="isOpen('quotations') && sidebarOpen" x-cloak
+                     x-transition:enter="transition ease-out duration-150"
+                     x-transition:enter-start="opacity-0 -translate-y-1"
+                     x-transition:enter-end="opacity-100 translate-y-0"
+                     x-transition:leave="transition ease-in duration-100"
+                     x-transition:leave-start="opacity-100 translate-y-0"
+                     x-transition:leave-end="opacity-0 -translate-y-1"
+                     class="mt-0.5 space-y-0.5">
                     <a href="{{ route('quotations.index') }}"
-                       style="display:flex;align-items:center;gap:8px;padding:6px 12px;border-radius:8px;font-size:11px;color:rgba(255,255,255,0.6);text-decoration:none;{{ request()->routeIs('quotations.index') ? 'background:rgba(0,95,158,0.18);color:#fff;' : '' }}"
-                       hover="background:rgba(255,255,255,0.06);color:#fff;">
-                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+                       class="sidebar-sub-link flex items-center gap-2 pl-[42px] pr-3 py-1.5 rounded-lg text-[12px] text-white transition-all duration-150
+                              {{ $isActive('quotations.index') ? 'bg-white/[0.16]' : 'hover:bg-white/[0.10]' }}">
                         View All
                     </a>
+                    <a href="{{ route('my.quotations') }}"
+                       class="sidebar-sub-link flex items-center gap-2 pl-[42px] pr-3 py-1.5 rounded-lg text-[12px] text-white transition-all duration-150
+                              {{ $isActive('my.quotations') ? 'bg-white/[0.16]' : 'hover:bg-white/[0.10]' }}">
+                        My Quotations
+                    </a>
+                    <a href="{{ route('recent.quotations') }}"
+                       class="sidebar-sub-link flex items-center gap-2 pl-[42px] pr-3 py-1.5 rounded-lg text-[12px] text-white transition-all duration-150
+                              {{ $isActive('recent.quotations') ? 'bg-white/[0.16]' : 'hover:bg-white/[0.10]' }}">
+                        Recent
+                    </a>
                     <a href="{{ route('quotations.tracker') }}"
-                       style="display:flex;align-items:center;gap:8px;padding:6px 12px;border-radius:8px;font-size:11px;color:rgba(255,255,255,0.6);text-decoration:none;{{ request()->routeIs('quotations.tracker') ? 'background:rgba(0,95,158,0.18);color:#fff;' : '' }}"
-                       hover="background:rgba(255,255,255,0.06);color:#fff;">
-                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
+                       class="sidebar-sub-link flex items-center gap-2 pl-[42px] pr-3 py-1.5 rounded-lg text-[12px] text-white transition-all duration-150
+                              {{ $isActive('quotations.tracker') ? 'bg-white/[0.16]' : 'hover:bg-white/[0.10]' }}">
                         Tracker
                     </a>
                     <a href="{{ route('quotations.create') }}"
-                       style="display:flex;align-items:center;gap:8px;padding:6px 12px;border-radius:8px;font-size:11px;color:rgba(255,255,255,0.6);text-decoration:none;{{ request()->routeIs('quotations.create') ? 'background:rgba(0,95,158,0.18);color:#fff;' : '' }}"
-                       hover="background:rgba(255,255,255,0.06);color:#fff;">
-                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                       class="sidebar-sub-link flex items-center gap-2 pl-[42px] pr-3 py-1.5 rounded-lg text-[12px] text-white transition-all duration-150
+                              {{ $isActive('quotations.create') ? 'bg-white/[0.16]' : 'hover:bg-white/[0.10]' }}">
+                        <span class="w-3 h-3 flex items-center justify-center rounded-full border border-white/40 text-[9px] leading-none">+</span>
                         New Quotation
                     </a>
                 </div>
             @endcan
         </div>
 
-        {{-- Divider --}}
-        <div style="height:0.5px;background:rgba(255,255,255,0.07);margin:8px 10px;"></div>
+        {{-- ─── Claims ─── --}}
+        <div class="py-1">
+            <p x-show="sidebarOpen" x-cloak class="px-3 pt-2 pb-1.5 text-[9px] font-bold uppercase tracking-[0.15em] text-white/70">
+                Claims
+            </p>
+            <button @click.prevent.stop="toggle('claims')"
+                    class="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-[13px] font-medium transition-all duration-150 group"
+                    :class="sidebarOpen ? 'justify-start' : 'justify-center'"
+                    style="{{ ($isActive('claims*') || $isActive('claims.mine')) ? $activeStyle : $inactiveStyle }}">
+                <span class="shrink-0 text-white transition-opacity">
+                    <svg class="w-[18px] h-[18px]" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+                </span>
+                <span x-show="sidebarOpen" x-cloak class="flex-1 text-left text-white leading-tight">Claims</span>
+                <span x-show="sidebarOpen" x-cloak
+                      class="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-white/[0.18] text-white">{{ $claimCount }}</span>
+                <svg x-show="sidebarOpen" x-cloak class="w-3 h-3 shrink-0 text-white transition-transform duration-200" :class="isOpen('claims') ? 'rotate-180' : ''" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+            </button>
+                <div x-show="isOpen('claims') && sidebarOpen" x-cloak
+                     x-transition:enter="transition ease-out duration-150"
+                     x-transition:enter-start="opacity-0 -translate-y-1"
+                     x-transition:enter-end="opacity-100 translate-y-0"
+                     x-transition:leave="transition ease-in duration-100"
+                     x-transition:leave-start="opacity-100 translate-y-0"
+                     x-transition:leave-end="opacity-0 -translate-y-1"
+                     class="mt-0.5 space-y-0.5">
+                <a href="{{ route('claims.create') }}"
+                   class="sidebar-sub-link flex items-center gap-2 pl-[42px] pr-3 py-1.5 rounded-lg text-[12px] text-white transition-all duration-150
+                          {{ $isActive('claims.create') ? 'bg-white/[0.16]' : 'hover:bg-white/[0.10]' }}">
+                    Log New Claim
+                </a>
+                @if($isAdmin)
+                    <a href="{{ route('admin.claims.index') }}"
+                       class="sidebar-sub-link flex items-center gap-2 pl-[42px] pr-3 py-1.5 rounded-lg text-[12px] text-white transition-all duration-150
+                              {{ $isActive('admin.claims*') ? 'bg-white/[0.16]' : 'hover:bg-white/[0.10]' }}">
+                        All Claims
+                    </a>
+                @else
+                    <a href="{{ route('claims.index') }}"
+                       class="sidebar-sub-link flex items-center gap-2 pl-[42px] pr-3 py-1.5 rounded-lg text-[12px] text-white transition-all duration-150
+                              {{ $isActive('claims.index') ? 'bg-white/[0.16]' : 'hover:bg-white/[0.10]' }}">
+                        All Claims
+                    </a>
+                @endif
+                {{-- <a href="{{ route('claims.mine') }}"
+                   class="sidebar-sub-link flex items-center gap-2 pl-[42px] pr-3 py-1.5 rounded-lg text-[12px] text-white transition-all duration-150
+                          {{ $isActive('claims.mine') ? 'bg-white/[0.16]' : 'hover:bg-white/[0.10]' }}">
+                    My Claims
+                </a> --}}
+            </div>
+        </div>
 
-        @if(auth()->user()->hasRole('super-admin') || auth()->user()->hasRole('admin'))
-            {{-- Companies Dropdown --}}
-            <div x-data="{ open: true }">
-                <p :class="sidebarOpen ? 'block' : 'hidden'" style="font-size:9px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:rgba(255,255,255,0.3);padding:6px 10px 5px;">Companies</p>
-                <button @click="open = !open"
-                        style="display:flex;align-items:center;gap:8px;width:100%;padding:8px 12px;border-radius:9px;border:none;background:transparent;color:rgba(255,255,255,0.72);font-size:11.5px;font-weight:500;cursor:pointer;font-family:'Montserrat',sans-serif;{{ request()->routeIs('admin.companies*') ? 'background:rgba(0,95,158,0.18);color:#fff;' : '' }}"
-                        :class="sidebarOpen ? '' : 'justify-center'">
-                    <span style="opacity:0.7">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+        @if($isAdmin)
+            <div class="mx-3 my-1 h-px bg-white/[0.12]"></div>
+
+            {{-- ─── Companies ─── --}}
+            <div class="py-1">
+                <p x-show="sidebarOpen" x-cloak class="px-3 pt-2 pb-1.5 text-[9px] font-bold uppercase tracking-[0.15em] text-white/70">
+                    Companies
+                </p>
+                <button @click.prevent.stop="toggle('companies')"
+                        class="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-[13px] font-medium transition-all duration-150 group"
+                        :class="sidebarOpen ? 'justify-start' : 'justify-center'"
+                        style="{{ ($isActive('admin.companies*') || $isActive('admin.compare-all*')) ? $activeStyle : $inactiveStyle }}">
+                    <span class="shrink-0 text-white transition-opacity">
+                        <svg class="w-[18px] h-[18px]" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
                     </span>
-                    <span x-show="sidebarOpen" x-cloak style="flex:1;text-align:left;line-height:1.2">Companies</span>
-                    <svg x-show="sidebarOpen" x-cloak class="w-3 h-3 transition-transform" :class="open ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                    <span x-show="sidebarOpen" x-cloak class="flex-1 text-left text-white leading-tight">Companies</span>
+                    <svg x-show="sidebarOpen" x-cloak class="w-3 h-3 shrink-0 text-white transition-transform duration-200" :class="isOpen('companies') ? 'rotate-180' : ''" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
                 </button>
-                <div x-show="open && sidebarOpen" x-cloak class="ml-2 space-y-0.5">
+                <div x-show="isOpen('companies') && sidebarOpen" x-cloak
+                     x-transition:enter="transition ease-out duration-150"
+                     x-transition:enter-start="opacity-0 -translate-y-1"
+                     x-transition:enter-end="opacity-100 translate-y-0"
+                     x-transition:leave="transition ease-in duration-100"
+                     x-transition:leave-start="opacity-100 translate-y-0"
+                     x-transition:leave-end="opacity-0 -translate-y-1"
+                     class="mt-0.5 space-y-0.5">
                     <a href="{{ route('admin.companies.index') }}"
-                       style="display:flex;align-items:center;gap:8px;padding:6px 12px;border-radius:8px;font-size:11px;color:rgba(255,255,255,0.6);text-decoration:none;{{ request()->routeIs('admin.companies.index') ? 'background:rgba(0,95,158,0.18);color:#fff;' : '' }}">
-                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+                       class="sidebar-sub-link flex items-center gap-2 pl-[42px] pr-3 py-1.5 rounded-lg text-[12px] text-white transition-all duration-150
+                              {{ $isActive('admin.companies.index') ? 'bg-white/[0.16]' : 'hover:bg-white/[0.10]' }}">
                         View All
                     </a>
                     <a href="{{ route('admin.companies.create') }}"
-                       style="display:flex;align-items:center;gap:8px;padding:6px 12px;border-radius:8px;font-size:11px;color:rgba(255,255,255,0.6);text-decoration:none;{{ request()->routeIs('admin.companies.create') ? 'background:rgba(0,95,158,0.18);color:#fff;' : '' }}">
-                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                       class="sidebar-sub-link flex items-center gap-2 pl-[42px] pr-3 py-1.5 rounded-lg text-[12px] text-white transition-all duration-150
+                              {{ $isActive('admin.companies.create') ? 'bg-white/[0.16]' : 'hover:bg-white/[0.10]' }}">
                         Add Company
                     </a>
-
-                     <a href="#"
-                       style="display:flex;align-items:center;gap:8px;padding:6px 12px;border-radius:8px;font-size:11px;color:rgba(255,255,255,0.6);text-decoration:none;{{ request()->routeIs('admin.companies.create') ? 'background:rgba(0,95,158,0.18);color:#fff;' : '' }}">
-                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
-                        Bulk Upload
-                    </a>
                     <a href="{{ route('admin.compare-all.index') }}"
-                       style="display:flex;align-items:center;gap:8px;padding:6px 12px;border-radius:8px;font-size:11px;color:rgba(255,255,255,0.6);text-decoration:none;{{ request()->routeIs('admin.compare-all*') ? 'background:rgba(0,95,158,0.18);color:#fff;' : '' }}">
-                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-                        Compare All Card
+                       class="sidebar-sub-link flex items-center gap-2 pl-[42px] pr-3 py-1.5 rounded-lg text-[12px] text-white transition-all duration-150
+                              {{ $isActive('admin.compare-all*') ? 'bg-white/[0.16]' : 'hover:bg-white/[0.10]' }}">
+                        Compare All
                     </a>
                 </div>
             </div>
 
-            {{-- Divider --}}
-            <div style="height:0.5px;background:rgba(255,255,255,0.07);margin:8px 10px;"></div>
+            <div class="mx-3 my-1 h-px bg-white/[0.12]"></div>
 
-            {{-- Administration Dropdown --}}
-            <div x-data="{ open: true }">
-                <p :class="sidebarOpen ? 'block' : 'hidden'" style="font-size:9px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:rgba(255,255,255,0.3);padding:6px 10px 5px;">User Management</p>
+            {{-- ─── Administration ─── --}}
+            <div class="py-1">
+                <p x-show="sidebarOpen" x-cloak class="px-3 pt-2 pb-1.5 text-[9px] font-bold uppercase tracking-[0.15em] text-white/70">
+                    Administration
+                </p>
 
-                {{-- Users with sub-dropdown --}}
-                <div x-data="{ subOpen: true }">
-                    <button @click="subOpen = !subOpen"
-                            style="display:flex;align-items:center;gap:8px;width:100%;padding:8px 12px;border-radius:9px;border:none;background:transparent;color:rgba(255,255,255,0.72);font-size:11.5px;font-weight:500;cursor:pointer;font-family:'Montserrat',sans-serif;{{ request()->routeIs('admin.users*') ? 'background:rgba(0,95,158,0.18);color:#fff;' : '' }}"
-                            :class="sidebarOpen ? '' : 'justify-center'">
-                        <span style="opacity:0.7">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"/></svg>
-                        </span>
-                        <span x-show="sidebarOpen" x-cloak style="flex:1;text-align:left;line-height:1.2">Users</span>
-                        <svg x-show="sidebarOpen" x-cloak class="w-3 h-3 transition-transform" :class="subOpen ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
-                    </button>
-                    <div x-show="subOpen && sidebarOpen" x-cloak class="ml-4 space-y-0.5">
-                        <a href="{{ route('admin.users.index') }}" style="display:flex;align-items:center;gap:8px;padding:5px 12px;border-radius:6px;font-size:10.5px;color:rgba(255,255,255,0.5);text-decoration:none;">View All</a>
-                        <a href="{{ route('admin.users.create') }}" style="display:flex;align-items:center;gap:8px;padding:5px 12px;border-radius:6px;font-size:10.5px;color:rgba(255,255,255,0.5);text-decoration:none;">Add User</a>
-                    </div>
+                <button @click.prevent.stop="toggle('users')"
+                        class="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-[13px] font-medium transition-all duration-150 group"
+                        :class="sidebarOpen ? 'justify-start' : 'justify-center'"
+                        style="{{ ($isActive('admin.users*') || $isActive('admin.roles*') || $isActive('admin.stickers*')) ? $activeStyle : $inactiveStyle }}">
+                    <span class="shrink-0 text-white transition-opacity">
+                        <svg class="w-[18px] h-[18px]" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                    </span>
+                    <span x-show="sidebarOpen" x-cloak class="flex-1 text-left text-white leading-tight">Users & Roles</span>
+                    <svg x-show="sidebarOpen" x-cloak class="w-3 h-3 shrink-0 text-white transition-transform duration-200" :class="isOpen('users') ? 'rotate-180' : ''" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+                </button>
+                <div x-show="isOpen('users') && sidebarOpen" x-cloak
+                     x-transition:enter="transition ease-out duration-150"
+                     x-transition:enter-start="opacity-0 -translate-y-1"
+                     x-transition:enter-end="opacity-100 translate-y-0"
+                     x-transition:leave="transition ease-in duration-100"
+                     x-transition:leave-start="opacity-100 translate-y-0"
+                     x-transition:leave-end="opacity-0 -translate-y-1"
+                     class="mt-0.5 space-y-0.5">
+                    <a href="{{ route('admin.users.index') }}"
+                       class="sidebar-sub-link flex items-center gap-2 pl-[42px] pr-3 py-1.5 rounded-lg text-[12px] text-white transition-all duration-150
+                              {{ $isActive('admin.users.index') ? 'bg-white/[0.16]' : 'hover:bg-white/[0.10]' }}">
+                        View All Users
+                    </a>
+                    <a href="{{ route('admin.users.create') }}"
+                       class="sidebar-sub-link flex items-center gap-2 pl-[42px] pr-3 py-1.5 rounded-lg text-[12px] text-white transition-all duration-150
+                              {{ $isActive('admin.users.create') ? 'bg-white/[0.16]' : 'hover:bg-white/[0.10]' }}">
+                        Add User
+                    </a>
+                    <a href="{{ route('admin.roles.index') }}"
+                       class="sidebar-sub-link flex items-center gap-2 pl-[42px] pr-3 py-1.5 rounded-lg text-[12px] text-white transition-all duration-150
+                              {{ $isActive('admin.roles*') ? 'bg-white/[0.16]' : 'hover:bg-white/[0.10]' }}">
+                        Roles & Permissions
+                    </a>
+                    
                 </div>
-
-                {{-- Roles & Permissions (flat link) --}}
-                <a href="{{ route('admin.roles.index') }}"
-                style="display:flex;align-items:center;gap:8px;padding:8px 12px;border-radius:9px;font-size:11.5px;font-weight:500;color:rgba(255,255,255,0.72);text-decoration:none;{{ request()->routeIs('admin.roles*') ? 'background:rgba(0,95,158,0.18);color:#fff;' : '' }}">
-                    <span style="opacity:0.7">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
-                    </span>
-                    <span x-show="sidebarOpen" x-cloak>Roles &amp; Permissions</span>
-                </a>
-
-                {{-- Stickers (flat link) --}}
-                <a href="{{ route('admin.stickers.index') }}"
-                style="display:flex;align-items:center;gap:8px;padding:8px 12px;border-radius:9px;font-size:11.5px;font-weight:500;color:rgba(255,255,255,0.72);text-decoration:none;{{ request()->routeIs('admin.stickers*') ? 'background:rgba(0,95,158,0.18);color:#fff;' : '' }}">
-                    <span style="opacity:0.7">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z"/></svg>
-                    </span>
-                    <span x-show="sidebarOpen" x-cloak>Sickers</span>
-                </a>
             </div>
 
-            {{-- Divider --}}
-            <div style="height:0.5px;background:rgba(255,255,255,0.07);margin:8px 10px;"></div>
+            <div class="mx-3 my-1 h-px bg-white/[0.12]"></div>
 
-            {{-- Insights Dropdown --}}
-            <div x-data="{ open: true }">
-                <p :class="sidebarOpen ? 'block' : 'hidden'" style="font-size:9px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:rgba(255,255,255,0.3);padding:6px 10px 5px;">Insights</p>
-                <button @click="open = !open"
-                        style="display:flex;align-items:center;gap:8px;width:100%;padding:8px 12px;border-radius:9px;border:none;background:transparent;color:rgba(255,255,255,0.72);font-size:11.5px;font-weight:500;cursor:pointer;font-family:'Montserrat',sans-serif;{{ request()->routeIs('admin.reports*') || request()->routeIs('admin.analytics*') || request()->routeIs('admin.audit*') ? 'background:rgba(0,95,158,0.18);color:#fff;' : '' }}"
-                        :class="sidebarOpen ? '' : 'justify-center'">
-                    <span style="opacity:0.7">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>
+            {{-- ─── Insurance Certificates ─── --}}
+            <div class="py-1">
+                <p x-show="sidebarOpen" x-cloak class="px-3 pt-2 pb-1.5 text-[9px] font-bold uppercase tracking-[0.15em] text-white/70">
+                    Sticker Issuance
+                </p>
+
+                <button @click.prevent.stop="toggle('certificates')"
+                        class="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-[13px] font-medium transition-all duration-150 group"
+                        :class="sidebarOpen ? 'justify-start' : 'justify-center'"
+                        style="{{ ($isActive('stickers.issue*') || $isActive('stickers.*') || $isActive('admin.stickers*') || $isActive('stickers.user-lookup')) ? $activeStyle : $inactiveStyle }}">
+                    <span class="shrink-0 text-white transition-opacity">
+                        <svg class="w-[18px] h-[18px]" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
                     </span>
-                    <span x-show="sidebarOpen" x-cloak style="flex:1;text-align:left;line-height:1.2">Insights</span>
-                    <svg x-show="sidebarOpen" x-cloak class="w-3 h-3 transition-transform" :class="open ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                    <span x-show="sidebarOpen" x-cloak class="flex-1 text-left text-white leading-tight">Stickers</span>
+                    <svg x-show="sidebarOpen" x-cloak class="w-3 h-3 shrink-0 text-white transition-transform duration-200" :class="isOpen('certificates') ? 'rotate-180' : ''" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
                 </button>
-                <div x-show="open && sidebarOpen" x-cloak class="ml-2 space-y-0.5">
+                <div x-show="isOpen('certificates') && sidebarOpen" x-cloak
+                     x-transition:enter="transition ease-out duration-150"
+                     x-transition:enter-start="opacity-0 -translate-y-1"
+                     x-transition:enter-end="opacity-100 translate-y-0"
+                     x-transition:leave="transition ease-in duration-100"
+                     x-transition:leave-start="opacity-100 translate-y-0"
+                     x-transition:leave-end="opacity-0 -translate-y-1"
+                     class="mt-0.5 space-y-0.5">
+                     <a href="{{ route('stickers.issue') }}"
+                       class="sidebar-sub-link flex items-center gap-2 pl-[42px] pr-3 py-1.5 rounded-lg text-[12px] text-white transition-all duration-150
+                              {{ $isActive('stickers.issue') ? 'bg-white/[0.16]' : 'hover:bg-white/[0.10]' }}">
+                        Create New Sticker
+                    </a>
+
+                     <a href="{{ route('admin.stickers.update-form') }}"
+                       class="sidebar-sub-link flex items-center gap-2 pl-[42px] pr-3 py-1.5 rounded-lg text-[12px] text-white transition-all duration-150
+                              {{ $isActive('admin.stickers.update-form') ? 'bg-white/[0.16]' : 'hover:bg-white/[0.10]' }}">
+                        Update Stickers
+                        @if($pendingStickerCount > 0)
+                            <span class="ml-auto text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-amber-400 text-amber-900">{{ $pendingStickerCount }}</span>
+                        @endif
+                    </a>
+
+                    <a href="{{ route('admin.stickers.index') }}"
+                       class="sidebar-sub-link flex items-center gap-2 pl-[42px] pr-3 py-1.5 rounded-lg text-[12px] text-white transition-all duration-150
+                              {{ $isActive('admin.stickers.index') ? 'bg-white/[0.16]' : 'hover:bg-white/[0.10]' }}">
+                        View All Stickers
+                    </a>
+                    <a href="{{ route('stickers.user-lookup') }}"
+                       class="sidebar-sub-link flex items-center gap-2 pl-[42px] pr-3 py-1.5 rounded-lg text-[12px] text-white transition-all duration-150
+                              {{ $isActive('stickers.user-lookup') ? 'bg-white/[0.16]' : 'hover:bg-white/[0.10]' }}">
+                        Sticker Tracker
+                    </a>
+
+                     
+                    {{-- <a href="{{ route('admin.stickers.email-settings') }}"
+                       class="sidebar-sub-link flex items-center gap-2 pl-[42px] pr-3 py-1.5 rounded-lg text-[12px] text-white transition-all duration-150
+                              {{ $isActive('admin.stickers.email-settings*') ? 'bg-white/[0.16]' : 'hover:bg-white/[0.10]' }}">
+                        Email Settings
+                    </a> --}}
+                    {{-- <a href="{{ route('admin.stickers.analytics') }}"
+                       class="sidebar-sub-link flex items-center gap-2 pl-[42px] pr-3 py-1.5 rounded-lg text-[12px] text-white transition-all duration-150
+                              {{ $isActive('admin.stickers.analytics') ? 'bg-white/[0.16]' : 'hover:bg-white/[0.10]' }}">
+                        Reports & Analytics
+                    </a> --}}
+                </div>
+            </div>
+
+          <div class="mx-3 my-1 h-px bg-white/[0.12]"></div>
+
+
+            {{-- ─── Insights ─── --}}
+            <div class="py-1">
+                <p x-show="sidebarOpen" x-cloak class="px-3 pt-2 pb-1.5 text-[9px] font-bold uppercase tracking-[0.15em] text-white/70">
+                    Insights
+                </p>
+                <button @click.prevent.stop="toggle('insights')"
+                        class="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-[13px] font-medium transition-all duration-150 group"
+                        :class="sidebarOpen ? 'justify-start' : 'justify-center'"
+                        style="{{ ($isActive('admin.reports*') || $isActive('admin.analytics*') || $isActive('admin.audit*')) ? $activeStyle : $inactiveStyle }}">
+                    <span class="shrink-0 text-white transition-opacity">
+                        <svg class="w-[18px] h-[18px]" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+                    </span>
+                    <span x-show="sidebarOpen" x-cloak class="flex-1 text-left text-white leading-tight">Insights</span>
+                    <svg x-show="sidebarOpen" x-cloak class="w-3 h-3 shrink-0 text-white transition-transform duration-200" :class="isOpen('insights') ? 'rotate-180' : ''" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+                </button>
+                <div x-show="isOpen('insights') && sidebarOpen" x-cloak
+                     x-transition:enter="transition ease-out duration-150"
+                     x-transition:enter-start="opacity-0 -translate-y-1"
+                     x-transition:enter-end="opacity-100 translate-y-0"
+                     x-transition:leave="transition ease-in duration-100"
+                     x-transition:leave-start="opacity-100 translate-y-0"
+                     x-transition:leave-end="opacity-0 -translate-y-1"
+                     class="mt-0.5 space-y-0.5">
                     <a href="{{ route('admin.reports.index') }}"
-                       style="display:flex;align-items:center;gap:8px;padding:6px 12px;border-radius:8px;font-size:11px;color:rgba(255,255,255,0.6);text-decoration:none;{{ request()->routeIs('admin.reports*') ? 'background:rgba(0,95,158,0.18);color:#fff;' : '' }}">
-                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+                       class="sidebar-sub-link flex items-center gap-2 pl-[42px] pr-3 py-1.5 rounded-lg text-[12px] text-white transition-all duration-150
+                              {{ $isActive('admin.reports*') ? 'bg-white/[0.16]' : 'hover:bg-white/[0.10]' }}">
                         Reports
                     </a>
                     <a href="{{ route('admin.analytics.index') }}"
-                       style="display:flex;align-items:center;gap:8px;padding:6px 12px;border-radius:8px;font-size:11px;color:rgba(255,255,255,0.6);text-decoration:none;{{ request()->routeIs('admin.analytics*') ? 'background:rgba(0,95,158,0.18);color:#fff;' : '' }}">
-                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>
+                       class="sidebar-sub-link flex items-center gap-2 pl-[42px] pr-3 py-1.5 rounded-lg text-[12px] text-white transition-all duration-150
+                              {{ $isActive('admin.analytics*') ? 'bg-white/[0.16]' : 'hover:bg-white/[0.10]' }}">
                         Analytics
-                        <span style="font-size:9px;font-weight:700;background:#0f7a65;color:#fff;padding:1px 6px;border-radius:20px;">New</span>
+                        <span class="ml-1 text-[9px] font-bold px-1.5 py-px rounded-full bg-emerald-400 text-[#005F9E]">New</span>
                     </a>
                     <a href="{{ route('admin.audit.index') }}"
-                       style="display:flex;align-items:center;gap:8px;padding:6px 12px;border-radius:8px;font-size:11px;color:rgba(255,255,255,0.6);text-decoration:none;{{ request()->routeIs('admin.audit*') ? 'background:rgba(0,95,158,0.18);color:#fff;' : '' }}">
-                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                       class="sidebar-sub-link flex items-center gap-2 pl-[42px] pr-3 py-1.5 rounded-lg text-[12px] text-white transition-all duration-150
+                              {{ $isActive('admin.audit*') ? 'bg-white/[0.16]' : 'hover:bg-white/[0.10]' }}">
                         Audit Trail
                     </a>
                 </div>
             </div>
 
-            {{-- Divider --}}
-            <div style="height:0.5px;background:rgba(255,255,255,0.07);margin:8px 10px;"></div>
+            <div class="mx-3 my-1 h-px bg-white/[0.12]"></div>
 
-            {{-- System Dropdown --}}
-            <div x-data="{ open: true }">
-                <p :class="sidebarOpen ? 'block' : 'hidden'" style="font-size:9px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:rgba(255,255,255,0.3);padding:6px 10px 5px;">System</p>
-                <button @click="open = !open"
-                        style="display:flex;align-items:center;gap:8px;width:100%;padding:8px 12px;border-radius:9px;border:none;background:transparent;color:rgba(255,255,255,0.72);font-size:11.5px;font-weight:500;cursor:pointer;font-family:'Montserrat',sans-serif;{{ request()->routeIs('admin.settings*') || request()->routeIs('admin.notifications*') || request()->routeIs('admin.rate-settings*') || request()->routeIs('admin.help*') ? 'background:rgba(0,95,158,0.18);color:#fff;' : '' }}"
-                        :class="sidebarOpen ? '' : 'justify-center'">
-                    <span style="opacity:0.7">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+            {{-- ─── System ─── --}}
+            <div class="py-1">
+                <p x-show="sidebarOpen" x-cloak class="px-3 pt-2 pb-1.5 text-[9px] font-bold uppercase tracking-[0.15em] text-white/70">
+                    System
+                </p>
+                <button @click.prevent.stop="toggle('system')"
+                        class="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-[13px] font-medium transition-all duration-150 group"
+                        :class="sidebarOpen ? 'justify-start' : 'justify-center'"
+                        style="{{ ($isActive('admin.settings*') || $isActive('admin.notifications*') || $isActive('admin.rate-settings*') || $isActive('admin.help*') || $isActive('admin.media*') || $isActive('admin.health*') || $isActive('admin.email-settings*')) ? $activeStyle : $inactiveStyle }}">
+                    <span class="shrink-0 text-white transition-opacity">
+                        <svg class="w-[18px] h-[18px]" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
                     </span>
-                    <span x-show="sidebarOpen" x-cloak style="flex:1;text-align:left;line-height:1.2">System</span>
-                    <svg x-show="sidebarOpen" x-cloak class="w-3 h-3 transition-transform" :class="open ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                    <span x-show="sidebarOpen" x-cloak class="flex-1 text-left text-white leading-tight">System</span>
+                    @php $unread = auth()->user()->unreadNotifications()->count(); @endphp
+                    @if($unread > 0)
+                        <span x-show="sidebarOpen" x-cloak
+                              class="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-red-500 text-white">{{ $unread }}</span>
+                    @endif
+                    <svg x-show="sidebarOpen" x-cloak class="w-3 h-3 shrink-0 text-white transition-transform duration-200" :class="isOpen('system') ? 'rotate-180' : ''" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
                 </button>
-                <div x-show="open && sidebarOpen" x-cloak class="ml-2 space-y-0.5">
+                <div x-show="isOpen('system') && sidebarOpen" x-cloak
+                     x-transition:enter="transition ease-out duration-150"
+                     x-transition:enter-start="opacity-0 -translate-y-1"
+                     x-transition:enter-end="opacity-100 translate-y-0"
+                     x-transition:leave="transition ease-in duration-100"
+                     x-transition:leave-start="opacity-100 translate-y-0"
+                     x-transition:leave-end="opacity-0 -translate-y-1"
+                     class="mt-0.5 space-y-0.5">
                     <a href="{{ route('admin.rate-settings.index') }}"
-                       style="display:flex;align-items:center;gap:8px;padding:6px 12px;border-radius:8px;font-size:11px;color:rgba(255,255,255,0.6);text-decoration:none;{{ request()->routeIs('admin.rate-settings*') ? 'background:rgba(0,95,158,0.18);color:#fff;' : '' }}">
-                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"/></svg>
+                       class="sidebar-sub-link flex items-center gap-2 pl-[42px] pr-3 py-1.5 rounded-lg text-[12px] text-white transition-all duration-150
+                              {{ $isActive('admin.rate-settings*') ? 'bg-white/[0.16]' : 'hover:bg-white/[0.10]' }}">
                         Rate Settings
                     </a>
+                    <a href="{{ route('admin.email-settings.index') }}"
+                       class="sidebar-sub-link flex items-center gap-2 pl-[42px] pr-3 py-1.5 rounded-lg text-[12px] text-white transition-all duration-150
+                              {{ $isActive('admin.email-settings*') ? 'bg-white/[0.16]' : 'hover:bg-white/[0.10]' }}">
+                        Email Templates
+                    </a>
                     <a href="{{ route('admin.notifications.index') }}"
-                       style="display:flex;align-items:center;gap:8px;padding:6px 12px;border-radius:8px;font-size:11px;color:rgba(255,255,255,0.6);text-decoration:none;{{ request()->routeIs('admin.notifications*') ? 'background:rgba(0,95,158,0.18);color:#fff;' : '' }}">
-                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
+                       class="sidebar-sub-link flex items-center gap-2 pl-[42px] pr-3 py-1.5 rounded-lg text-[12px] text-white transition-all duration-150
+                              {{ $isActive('admin.notifications*') ? 'bg-white/[0.16]' : 'hover:bg-white/[0.10]' }}">
                         Notifications
-                        @php $unread = auth()->user()->unreadNotifications()->count(); @endphp
-                        @if($unread > 0)
-                            <span style="font-size:9px;font-weight:700;background:#c0392b;color:#fff;padding:1px 6px;border-radius:20px;">{{ $unread }}</span>
-                        @endif
                     </a>
                     <a href="{{ route('admin.settings.index') }}"
-                       style="display:flex;align-items:center;gap:8px;padding:6px 12px;border-radius:8px;font-size:11px;color:rgba(255,255,255,0.6);text-decoration:none;{{ request()->routeIs('admin.settings.index') ? 'background:rgba(0,95,158,0.18);color:#fff;' : '' }}">
-                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                       class="sidebar-sub-link flex items-center gap-2 pl-[42px] pr-3 py-1.5 rounded-lg text-[12px] text-white transition-all duration-150
+                              {{ $isActive('admin.settings.index') ? 'bg-white/[0.16]' : 'hover:bg-white/[0.10]' }}">
                         Settings
                     </a>
                     <a href="{{ route('admin.help.index') }}"
-                       style="display:flex;align-items:center;gap:8px;padding:6px 12px;border-radius:8px;font-size:11px;color:rgba(255,255,255,0.6);text-decoration:none;{{ request()->routeIs('admin.help*') ? 'background:rgba(0,95,158,0.18);color:#fff;' : '' }}">
-                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                        Help &amp; Support
+                       class="sidebar-sub-link flex items-center gap-2 pl-[42px] pr-3 py-1.5 rounded-lg text-[12px] text-white transition-all duration-150
+                              {{ $isActive('admin.help*') ? 'bg-white/[0.16]' : 'hover:bg-white/[0.10]' }}">
+                        Help & Support
                     </a>
+
+                    <a href="{{ route('admin.stickers.settings') }}"
+                       class="sidebar-sub-link flex items-center gap-2 pl-[42px] pr-3 py-1.5 rounded-lg text-[12px] text-white transition-all duration-150
+                              {{ $isActive('admin.stickers.settings') ? 'bg-white/[0.16]' : 'hover:bg-white/[0.10]' }}">
+                        Sticker Settings
+                    </a>
+                    
                     <a href="{{ route('admin.media.index') }}"
-                       style="display:flex;align-items:center;gap:8px;padding:6px 12px;border-radius:8px;font-size:11px;color:rgba(255,255,255,0.6);text-decoration:none;{{ request()->routeIs('admin.media*') ? 'background:rgba(0,95,158,0.18);color:#fff;' : '' }}">
-                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                       class="sidebar-sub-link flex items-center gap-2 pl-[42px] pr-3 py-1.5 rounded-lg text-[12px] text-white transition-all duration-150
+                              {{ $isActive('admin.media*') ? 'bg-white/[0.16]' : 'hover:bg-white/[0.10]' }}">
                         Media Library
                     </a>
                     <a href="{{ route('admin.health.index') }}"
-                       style="display:flex;align-items:center;gap:8px;padding:6px 12px;border-radius:8px;font-size:11px;color:rgba(255,255,255,0.6);text-decoration:none;{{ request()->routeIs('admin.health*') ? 'background:rgba(0,95,158,0.18);color:#fff;' : '' }}">
-                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+                       class="sidebar-sub-link flex items-center gap-2 pl-[42px] pr-3 py-1.5 rounded-lg text-[12px] text-white transition-all duration-150
+                              {{ $isActive('admin.health*') ? 'bg-white/[0.16]' : 'hover:bg-white/[0.10]' }}">
                         Platform Health
                     </a>
                 </div>
             </div>
         @endif
 
-        {{-- Non-admin links --}}
-        @if(!auth()->user()->hasRole('super-admin') && !auth()->user()->hasRole('admin'))
-            <div style="height:0.5px;background:rgba(255,255,255,0.07);margin:8px 10px;"></div>
-            @php
-                $latestQuote = auth()->user()->quotations()->with('company')->latest()->first();
-                $viewQuoteUrl = route('my.quote');
-            @endphp
-            <x-sidebar-link href="{{ $viewQuoteUrl }}" :active="request()->routeIs('motor.quotation') || request()->routeIs('my.quote')" icon="document">
-                View Quote
-            </x-sidebar-link>
-            <div style="height:0.5px;background:rgba(255,255,255,0.07);margin:8px 10px;"></div>
-            <x-sidebar-link href="{{ route('stickers.user-lookup') }}" :active="request()->routeIs('stickers.user-lookup')" icon="ticket">
-                Certificates / Stickers
-            </x-sidebar-link>
-            <div style="height:0.5px;background:rgba(255,255,255,0.07);margin:8px 10px;"></div>
-            <x-sidebar-link href="{{ route('user.help.index') }}" :active="request()->routeIs('user.help*')" icon="help">
-                Help &amp; Support
-            </x-sidebar-link>
+        {{-- ─── Non-admin Links ─── --}}
+        @if(!$isAdmin)
+            <div class="mx-3 my-1 h-px bg-white/[0.12]"></div>
+            <div class="py-1">
+                <a href="{{ route('my.quote') }}"
+                   class="flex items-center gap-2.5 px-3 py-2 rounded-xl text-[13px] font-medium transition-all duration-150 group"
+                   :class="sidebarOpen ? '' : 'justify-center'"
+                   style="{{ (request()->routeIs('motor.quotation') || request()->routeIs('my.quote')) ? $activeStyle : $inactiveStyle }}">
+                    <span class="shrink-0 text-white transition-opacity">
+                        <svg class="w-[18px] h-[18px]" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                    </span>
+                    <span x-show="sidebarOpen" x-cloak class="text-white leading-tight">View Quote</span>
+                </a>
+                <a href="{{ route('stickers.user-lookup') }}"
+                   class="flex items-center gap-2.5 px-3 py-2 rounded-xl text-[13px] font-medium transition-all duration-150 group"
+                   :class="sidebarOpen ? '' : 'justify-center'"
+                   style="{{ ($isActive('stickers.user-lookup')) ? $activeStyle : $inactiveStyle }}">
+                    <span class="shrink-0 text-white transition-opacity">
+                        <svg class="w-[18px] h-[18px]" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z"/></svg>
+                    </span>
+                    <span x-show="sidebarOpen" x-cloak class="text-white leading-tight">Certificates</span>
+                </a>
+                <a href="{{ route('user.help.index') }}"
+                   class="flex items-center gap-2.5 px-3 py-2 rounded-xl text-[13px] font-medium transition-all duration-150 group"
+                   :class="sidebarOpen ? '' : 'justify-center'"
+                   style="{{ ($isActive('user.help*')) ? $activeStyle : $inactiveStyle }}">
+                    <span class="shrink-0 text-white transition-opacity">
+                        <svg class="w-[18px] h-[18px]" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    </span>
+                    <span x-show="sidebarOpen" x-cloak class="text-white leading-tight">Help & Support</span>
+                </a>
+            </div>
         @endif
-
     </nav>
 
-    {{-- Footer --}}
-    <div class="p-3" style="border-top:0.5px solid rgba(255,255,255,0.08);">
-        <div :class="sidebarOpen ? 'block' : 'hidden'">
-            <div style="display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:9px;background:rgba(255,255,255,0.06);">
-                <div style="width:32px;height:32px;border-radius:50%;background:#1756c8;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff;flex-shrink:0;">
+    {{-- ─── Footer / User Card ─── --}}
+    <div class="shrink-0 border-t border-white/[0.12] p-2.5">
+        {{-- Expanded --}}
+        <div x-show="sidebarOpen" x-cloak>
+            <div class="flex items-center gap-2.5 px-2 py-2 rounded-xl" style="background:rgba(255,255,255,0.08);">
+                <div class="w-8 h-8 rounded-full flex items-center justify-center text-[11px] font-bold text-[#005F9E] shrink-0" style="background:#ffffff;">
                     {{ strtoupper(substr(auth()->user()->first_name ?? auth()->user()->name, 0, 1)) }}{{ strtoupper(substr(auth()->user()->last_name ?? '', 0, 1)) }}
                 </div>
-                <div style="flex:1;min-width:0;">
-                    <p style="font-size:12px;font-weight:700;color:#fff;margin:0;truncate;">{{ auth()->user()->name }}</p>
-                    <p style="font-size:10px;color:rgba(255,255,255,0.4);margin:0;font-weight:500;">{{ auth()->user()->getRoleNames()->first() ?? 'User' }}</p>
+                <div class="flex-1 min-w-0">
+                    <p class="text-[12px] font-semibold text-white truncate leading-tight">{{ auth()->user()->name }}</p>
+                    <p class="text-[10px] text-white/75 font-medium leading-tight">{{ auth()->user()->getRoleNames()->first() ?? 'User' }}</p>
                 </div>
-                <div style="display:flex;gap:4px;">
-                    <a href="{{ route('profile.edit') }}" style="width:26px;height:26px;border-radius:6px;background:rgba(255,255,255,0.07);display:flex;align-items:center;justify-content:center;" title="Profile">
-                        <svg style="width:13px;height:13px;color:rgba(255,255,255,0.5)" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+                <div class="flex items-center gap-1 shrink-0">
+                    <a href="{{ route('profile.edit') }}"
+                       class="w-7 h-7 flex items-center justify-center rounded-lg text-white hover:bg-white/[0.14] transition-all"
+                       title="Profile">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
                     </a>
                     <form method="POST" action="{{ route('logout') }}">
                         @csrf
-                        <button type="submit" style="width:26px;height:26px;border-radius:6px;background:rgba(255,255,255,0.07);display:flex;align-items:center;justify-content:center;border:none;cursor:pointer;" title="Log out">
-                            <svg style="width:13px;height:13px;color:rgba(255,255,255,0.5)" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+                        <button type="submit"
+                                class="w-7 h-7 flex items-center justify-center rounded-lg text-white hover:bg-red-500/80 transition-all"
+                                title="Sign out">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
                         </button>
                     </form>
                 </div>
             </div>
         </div>
 
-        <div :class="!sidebarOpen ? 'flex flex-col items-center gap-3' : 'hidden'">
-            <div style="width:32px;height:32px;border-radius:50%;background:#1756c8;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff;">
-                {{ strtoupper(substr(auth()->user()->name, 0, 2)) }}
+        {{-- Collapsed --}}
+        <div x-show="!sidebarOpen" x-cloak class="flex flex-col items-center gap-2 py-1">
+            <div class="w-8 h-8 rounded-full flex items-center justify-center text-[11px] font-bold text-[#005F9E]" style="background:#ffffff;">
+                {{ strtoupper(substr(auth()->user()->first_name ?? auth()->user()->name, 0, 1)) }}{{ strtoupper(substr(auth()->user()->last_name ?? '', 0, 1)) }}
             </div>
             <form method="POST" action="{{ route('logout') }}">
                 @csrf
-                <button type="submit" style="width:32px;height:32px;border-radius:8px;background:rgba(255,255,255,0.07);display:flex;align-items:center;justify-content:center;border:none;cursor:pointer;" title="Log out">
-                    <svg style="width:14px;height:14px;color:rgba(255,255,255,0.5)" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+                <button type="submit"
+                        class="w-8 h-8 flex items-center justify-center rounded-lg text-white hover:bg-red-500/80 transition-all"
+                        title="Sign out">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
                 </button>
             </form>
         </div>

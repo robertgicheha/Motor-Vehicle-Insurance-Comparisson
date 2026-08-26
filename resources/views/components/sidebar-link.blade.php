@@ -22,9 +22,9 @@ $icons = [
 
 <a href="{{ $attributes->get('href') }}"
    {{ $attributes->except('href') }}
-   class="flex items-center gap-2.5 px-3 py-2 rounded-lg font-medium transition-all duration-200 hover:bg-blue-500 hover:text-white dark:text-white dark:hover:bg-blue-800 {{ $active ? 'bg-gray-200 dark:bg-gray-700' : '' }}"
+   class="flex items-center gap-2.5 px-3 py-2 rounded-xl font-medium transition-all duration-150 hover:bg-white/[0.10] text-white {{ $active ? '' : '' }}"
    :class="sidebarOpen ? 'justify-start' : 'justify-center'"
-   style="font-size:11.5px; color:rgba(255,255,255,0.72); {{ $active ? 'background:rgba(0,95,158,0.18); color:#fff;' : '' }}">
-    <span class="flex-shrink-0" style="opacity:{{ $active ? '1' : '0.7' }}">{!! $icons[$icon] ?? $icons['link'] !!}</span>
+   style="font-size:11.5px; color:#ffffff; {{ $active ? 'background:rgba(255,255,255,0.16); box-shadow: inset 0 0 0 1px rgba(255,255,255,0.18);' : '' }}">
+    <span class="flex-shrink-0 text-white">{!! $icons[$icon] ?? $icons['link'] !!}</span>
     <span class="truncate" x-show="sidebarOpen" x-cloak style="line-height:1.2">{{ $slot }}</span>
 </a>

@@ -83,9 +83,21 @@
                            class="w-full px-3 py-1.5 text-xs rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200 focus:ring-2 focus:ring-blue-500 outline-none">
                 </div>
             </form>
-            <div class="flex flex-wrap gap-2">
+            <div class="flex flex-wrap items-center gap-2">
                 <button onclick="generateReport()" class="px-4 py-1.5 text-xs font-semibold bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition">Generate Report</button>
-                <button onclick="exportReport('csv')" id="export-btn" class="px-4 py-1.5 text-xs font-medium border border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition">Export CSV</button>
+                <div class="w-px h-5 bg-gray-200 dark:bg-gray-600 hidden sm:block"></div>
+                <button onclick="exportReport('pdf')" class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-red-600 hover:bg-red-500 text-white rounded-lg transition">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                    PDF
+                </button>
+                <button onclick="exportReport('excel')" class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg transition">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                    Excel
+                </button>
+                <button onclick="exportReport('csv')" class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium border border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m0 0l-4-4m4 4l4-4"/></svg>
+                    CSV
+                </button>
             </div>
         </div>
     </div>
@@ -338,13 +350,18 @@
 
     function exportReport(type) {
         const params = getFormData();
-        let url;
-        if (currentTab === 'stickers') {
-            url = '{{ route('admin.reports.stickers.export-csv') }}';
-        } else {
-            url = '{{ route('admin.reports.export-csv') }}';
-        }
-        window.location.href = url + '?' + params.toString();
+        const endpoints = currentTab === 'stickers'
+            ? {
+                csv:   '{{ route('admin.reports.stickers.export-csv') }}',
+                excel: '{{ route('admin.reports.stickers.export-excel') }}',
+                pdf:   '{{ route('admin.reports.stickers.export-pdf') }}',
+              }
+            : {
+                csv:   '{{ route('admin.reports.export-csv') }}',
+                excel: '{{ route('admin.reports.export-excel') }}',
+                pdf:   '{{ route('admin.reports.export-pdf') }}',
+              };
+        window.location.href = endpoints[type] + '?' + params.toString();
     }
 </script>
 @endpush

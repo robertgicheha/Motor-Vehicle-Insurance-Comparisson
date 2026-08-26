@@ -378,14 +378,14 @@
 
 <section class="page-section">
   <div class="regen-box">
-    <div class="regen-icon">🔍</div>
-    <h3>Retrieve Existing Quote</h3>
-    <p>Already received a quotation number? Enter it below to regenerate your quote.</p>
-    <form method="POST" action="{{ route('motor.lookup.quotation') }}" style="display:contents">
+    <div class="regen-icon">🔁</div>
+    <h3>Regenerate Your Quote</h3>
+    <p>Enter your vehicle registration number to regenerate a previous quote.</p>
+    <form method="POST" action="{{ route('quotations.regenerate') }}" style="display:contents">
       @csrf
       <div class="regen-input-row">
-        <input type="text" name="number" placeholder="e.g. GA-2026/001" required>
-        <button type="submit" class="btn btn-primary">Retrieve →</button>
+        <input type="text" name="registration_number" placeholder="e.g. KDH 724V" required>
+        <button type="submit" class="btn btn-primary">Regenerate →</button>
       </div>
     </form>
   </div>

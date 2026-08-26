@@ -43,6 +43,11 @@ class Quotation extends Model
         return $this->hasMany(QuotationItem::class);
     }
 
+    public function stickers()
+    {
+        return $this->hasMany(Sticker::class);
+    }
+
     public static function generateNumber(?Company $company = null): string
     {
         $prefix = $company ? $company->getInitials() : 'IN';

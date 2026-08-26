@@ -57,6 +57,10 @@ class AuthenticatedSessionController extends Controller
             return redirect($redirectTo);
         }
 
+        if (session()->has('regenerate_registration')) {
+            return redirect()->route('quotations.regenerate.get');
+        }
+
         return redirect()->intended(route('dashboard', absolute: false));
     }
 

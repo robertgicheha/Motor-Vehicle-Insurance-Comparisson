@@ -1718,14 +1718,14 @@
   <div class="ql-banner">
     <div class="ql-copy">
       <div class="ql-eyebrow">Already insured with us?</div>
-      <h2 class="ql-headline">RETRIEVE<br><span class="ql-accent">YOUR QUOTE</span></h2>
-      <p class="ql-sub">Enter your quotation number to pick up right where you left off.</p>
+      <h2 class="ql-headline">REGENERATE<br><span class="ql-accent">YOUR QUOTE</span></h2>
+      <p class="ql-sub">Enter your vehicle registration number to regenerate a previous quote.</p>
 
-      <form id="regenForm" onsubmit="lookupQuotation(event)" class="ql-form">
+      <form method="POST" action="{{ route('quotations.regenerate') }}" class="ql-form">
         @csrf
         <div class="regen-input-row">
-          <input type="text" name="number" id="regenInput" placeholder="e.g. {{ $__companyData->first()['prefix'] ?? 'GA' }}-2026/001" required autocomplete="off">
-          <button type="submit" class="ql-cta" id="regenSubmitBtn">Retrieve</button>
+          <input type="text" name="registration_number" placeholder="e.g. KDH 724V" required autocomplete="off">
+          <button type="submit" class="ql-cta" id="regenSubmitBtn">Regenerate</button>
         </div>
       </form>
 
@@ -1733,8 +1733,7 @@
     </div>
 
     <div class="ql-image">
-      <!-- ASSUMPTION: swap this asset path for your real photo -->
-      <img src="{{ asset('images/hero/cars-parked.jpg') }}" alt="Retrieve your motor insurance quote">
+      <img src="{{ asset('images/hero/cars-parked.jpg') }}" alt="Regenerate your motor insurance quote">
     </div>
   </div>
 

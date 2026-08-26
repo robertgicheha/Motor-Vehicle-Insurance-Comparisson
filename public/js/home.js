@@ -824,33 +824,17 @@ function copyIndQuoteNum(){
 
 // ── REGENERATE QUOTE ──
 function regenQuote(){
-  const val=document.getElementById('regenInput').value.trim();
-  if(!val){showToast('Please enter a quotation number.');return;}
-  if(quoteStore[val]){
-    const q=quoteStore[val];
-    // pre-fill form
-    const d=q.data;
-    document.getElementById('f-salutation').value=d.salutation||'';
-    document.getElementById('f-first').value=d.first||'';
-    document.getElementById('f-middle').value=d.middle||'';
-    document.getElementById('f-last').value=d.last||'';
-    document.getElementById('f-phone').value=d.phone||'';
-    document.getElementById('f-email').value=d.email||'';
-    document.getElementById('f-reg').value=d.reg||'';
-    document.getElementById('f-chassis').value=d.chassis||'';
-    document.getElementById('f-make').value=d.make||'';
-    document.getElementById('f-model').value=d.model||'';
-    document.getElementById('f-body').value=d.body||'';
-    document.getElementById('f-year').value=d.year||'';
-    document.getElementById('f-color').value=d.color||'';
-    document.getElementById('f-value').value=d.value||'';
-    document.getElementById('regen-result').textContent='✓ Quote found! Form has been pre-filled. Scroll up to review and re-generate.';
-    document.getElementById('regen-result').style.color='green';
-    openIndividualQuote(q.company,val);
-  } else {
-    document.getElementById('regen-result').textContent='Quote number not found. Please check and try again.';
-    document.getElementById('regen-result').style.color='var(--red)';
+  var form = document.getElementById('regenForm');
+  if (form) {
+    form.submit();
+    return;
   }
+  var inputs = document.querySelectorAll('input[name="registration_number"]');
+  if (inputs.length > 0) {
+    inputs[0].closest('form').submit();
+    return;
+  }
+  showToast('Please enter a registration number.');
 }
 
 // ── TOAST ──

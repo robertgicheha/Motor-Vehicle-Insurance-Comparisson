@@ -8,14 +8,25 @@
                 <h1 class="mt-0.5 text-xl font-bold text-white">Platform Health</h1>
                 <p class="mt-0.5 text-xs text-slate-400">Monitor server, database, site and API health status.</p>
             </div>
-            <form action="{{ route('admin.health.run') }}" method="POST">
-                @csrf
-                <button type="submit"
-                        class="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold bg-blue-500 hover:bg-blue-400 text-white rounded-lg transition">
+            <div class="flex items-center gap-2">
+                <label class="flex items-center gap-1.5 text-[10px] text-slate-300 cursor-pointer select-none">
+                    <input type="checkbox" id="autoRefresh" class="w-3.5 h-3.5 rounded border-slate-500 text-blue-500 focus:ring-blue-500">
+                    Auto-refresh (30s)
+                </label>
+                <button type="button" id="refreshHealth"
+                        class="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold border border-white/20 text-white/80 rounded-lg hover:bg-white/10 transition">
                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
-                    Run Checks
+                    Refresh
                 </button>
-            </form>
+                <form action="{{ route('admin.health.run') }}" method="POST">
+                    @csrf
+                    <button type="submit"
+                            class="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold bg-blue-500 hover:bg-blue-400 text-white rounded-lg transition">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                        Run Checks
+                    </button>
+                </form>
+            </div>
         </div>
     </div>
 
@@ -95,4 +106,43 @@
     </div>
     @endif
 </div>
+
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const autoRefresh = document.getElementById('autoRefresh');
+    const refreshBtn = document.getElementById('refreshHealth');
+    let timer = null;
+    const csrfToken = document.querySelector('meta[name="csrf-token"]');
+
+    function refreshNow() {
+        refreshBtn.disabled = true;
+        refreshBtn.innerHTML = '<svg class="w-3.5 h-3.5 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg> Refreshing...';
+        fetch(window.location.href, { headers: { 'X-Requested-With': 'XMLHttpRequest' }, cache: 'no-store' })
+            .then(() => window.location.reload())
+            .catch(() => window.location.reload());
+    }
+
+    function toggleAuto(enable) {
+        if (enable && !timer) {
+            timer = setInterval(refreshNow, 30000);
+        } else if (!enable && timer) {
+            clearInterval(timer);
+            timer = null;
+        }
+    }
+
+    if (refreshBtn) refreshBtn.addEventListener('click', refreshNow);
+    if (autoRefresh) {
+        const saved = localStorage.getItem('health_auto_refresh') === '1';
+        autoRefresh.checked = saved;
+        toggleAuto(saved);
+        autoRefresh.addEventListener('change', () => {
+            localStorage.setItem('health_auto_refresh', autoRefresh.checked ? '1' : '0');
+            toggleAuto(autoRefresh.checked);
+        });
+    }
+});
+</script>
+@endpush
 </x-app-layout>

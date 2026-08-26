@@ -70,20 +70,28 @@
                 <div class="px-5 py-3 flex items-start gap-3 {{ $notification->read_at ? '' : 'bg-blue-50/50 dark:bg-blue-900/10' }}">
                     <span class="w-2 h-2 rounded-full mt-1.5 shrink-0 {{ $notification->read_at ? 'bg-gray-300 dark:bg-gray-600' : 'bg-blue-500' }}"></span>
                     <div class="flex-1 min-w-0">
-                        <p class="text-xs text-gray-800 dark:text-white font-medium">{{ $notification->data['message'] ?? 'Notification' }}</p>
+                        <a href="{{ route('admin.notifications.show', $notification->id) }}"
+                           class="inline-flex items-start gap-1.5 group">
+                            <p class="text-xs text-gray-800 dark:text-white font-medium group-hover:text-blue-600 dark:group-hover:text-blue-400 transition">{{ $notification->data['message'] ?? 'Notification' }}</p>
+                            <svg class="w-3 h-3 text-gray-300 dark:text-gray-600 group-hover:text-blue-400 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"/></svg>
+                        </a>
                         <p class="text-[10px] text-gray-400 mt-0.5">{{ $notification->created_at->diffForHumans() }}</p>
                     </div>
                     <div class="flex items-center gap-1 shrink-0">
                         @if($notification->read_at)
-                            <a href="{{ route('admin.notifications.mark-unread', $notification->id) }}"
-                               class="p-1.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded transition" title="Mark as unread">
-                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
-                            </a>
+                            <form action="{{ route('admin.notifications.mark-unread', $notification->id) }}" method="POST" class="inline">
+                                @csrf
+                                <button type="submit" class="p-1.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded transition" title="Mark as unread">
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+                                </button>
+                            </form>
                         @else
-                            <a href="{{ route('admin.notifications.read', $notification->id) }}"
-                               class="p-1.5 text-blue-600 hover:text-blue-800 rounded transition" title="Mark as read">
-                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-                            </a>
+                            <form action="{{ route('admin.notifications.read', $notification->id) }}" method="POST" class="inline">
+                                @csrf
+                                <button type="submit" class="p-1.5 text-blue-600 hover:text-blue-800 rounded transition" title="Mark as read">
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                                </button>
+                            </form>
                         @endif
                         <form action="{{ route('admin.notifications.destroy', $notification->id) }}" method="POST" class="inline" onsubmit="return confirm('Delete this notification?')">
                             @csrf @method('DELETE')

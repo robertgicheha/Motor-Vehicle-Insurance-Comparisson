@@ -9,6 +9,11 @@
                 <p class="mt-0.5 text-xs text-slate-400">View system audit and activity logs</p>
             </div>
             <div class="flex items-center gap-2 shrink-0">
+                <button type="button" id="refreshAudit"
+                        class="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-medium rounded-lg transition border border-white/20 text-white/80 hover:bg-white/10">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                    Refresh
+                </button>
                 <a href="{{ route('admin.audit.index') }}"
                    class="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-medium rounded-lg transition {{ request()->routeIs('admin.audit.index') ? 'bg-blue-500 text-white' : 'border border-white/20 text-white/80 hover:bg-white/10' }}">
                     Audit Logs
@@ -27,24 +32,45 @@
                 <p class="kpi-value mt-1">{{ method_exists($logs, 'total') ? $logs->total() : $logs->count() }}</p>
                 <span class="kpi-delta neutral mt-1.5 inline-block">Audit trail entries</span>
             </a>
-            <a href="{{ request()->routeIs('admin.audit.activity') ? route('admin.audit.activity', ['level' => 'info']) : route('admin.audit.index', ['level' => 'info']) }}" class="kpi-card p-4 block hover:opacity-80 transition">
+            @if(request()->routeIs('admin.audit.activity'))
+            <a href="{{ route('admin.audit.activity', ['level' => 'info']) }}" class="kpi-card p-4 block hover:opacity-80 transition">
                 <div class="accent-bar" style="background:linear-gradient(90deg,#34d399,#6ee7b7)"></div>
                 <p class="kpi-eyebrow">Info</p>
-                <p class="kpi-value mt-1">{{ isset($infoCount) ? $infoCount : 0 }}</p>
+                <p class="kpi-value mt-1">{{ $infoCount }}</p>
                 <span class="kpi-delta up mt-1.5 inline-block">Information logs</span>
             </a>
-            <a href="{{ request()->routeIs('admin.audit.activity') ? route('admin.audit.activity', ['level' => 'warning']) : route('admin.audit.index', ['level' => 'warning']) }}" class="kpi-card p-4 block hover:opacity-80 transition">
+            <a href="{{ route('admin.audit.activity', ['level' => 'warning']) }}" class="kpi-card p-4 block hover:opacity-80 transition">
                 <div class="accent-bar" style="background:linear-gradient(90deg,#fbbf24,#fcd34d)"></div>
                 <p class="kpi-eyebrow">Warnings</p>
-                <p class="kpi-value mt-1">{{ isset($warningCount) ? $warningCount : 0 }}</p>
+                <p class="kpi-value mt-1">{{ $warningCount }}</p>
                 <span class="kpi-delta neutral mt-1.5 inline-block">Warning entries</span>
             </a>
-            <a href="{{ request()->routeIs('admin.audit.activity') ? route('admin.audit.activity', ['level' => 'error']) : route('admin.audit.index', ['level' => 'error']) }}" class="kpi-card p-4 block hover:opacity-80 transition">
+            <a href="{{ route('admin.audit.activity', ['level' => 'error']) }}" class="kpi-card p-4 block hover:opacity-80 transition">
                 <div class="accent-bar" style="background:linear-gradient(90deg,#fb7185,#fda4af)"></div>
                 <p class="kpi-eyebrow">Errors</p>
-                <p class="kpi-value mt-1">{{ isset($errorCount) ? $errorCount : 0 }}</p>
+                <p class="kpi-value mt-1">{{ $errorCount }}</p>
                 <span class="kpi-delta down mt-1.5 inline-block">Error entries</span>
             </a>
+            @else
+            <div class="kpi-card p-4">
+                <div class="accent-bar" style="background:linear-gradient(90deg,#818cf8,#a5b4fc)"></div>
+                <p class="kpi-eyebrow">Recent</p>
+                <p class="kpi-value mt-1 text-[11px]">{{ $logs->first()?->created_at->diffForHumans() ?? 'N/A' }}</p>
+                <span class="kpi-delta neutral mt-1.5 inline-block">Latest audit entry</span>
+            </div>
+            <div class="kpi-card p-4">
+                <div class="accent-bar" style="background:linear-gradient(90deg,#f59e0b,#fbbf24)"></div>
+                <p class="kpi-eyebrow">Models Tracked</p>
+                <p class="kpi-value mt-1">{{ \App\Models\AuditLog::query()->distinct('model')->count('model') }}</p>
+                <span class="kpi-delta neutral mt-1.5 inline-block">Entities under audit</span>
+            </div>
+            <div class="kpi-card p-4">
+                <div class="accent-bar" style="background:linear-gradient(90deg,#22c55e,#4ade80)"></div>
+                <p class="kpi-eyebrow">Logging Active</p>
+                <p class="kpi-value mt-1 text-lg">ON</p>
+                <span class="kpi-delta up mt-1.5 inline-block">Audit trail enabled</span>
+            </div>
+            @endif
         </div>
     </div>
 
@@ -123,4 +149,20 @@
         @endif
     </div>
 </div>
+
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const refreshBtn = document.getElementById('refreshAudit');
+    if (!refreshBtn) return;
+    refreshBtn.addEventListener('click', function () {
+        refreshBtn.disabled = true;
+        refreshBtn.innerHTML = '<svg class="w-3.5 h-3.5 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg> Refreshing...';
+        fetch(window.location.href, { headers: { 'X-Requested-With': 'XMLHttpRequest' }, cache: 'no-store' })
+            .then(() => window.location.reload())
+            .catch(() => window.location.reload());
+    });
+});
+</script>
+@endpush
 </x-app-layout>

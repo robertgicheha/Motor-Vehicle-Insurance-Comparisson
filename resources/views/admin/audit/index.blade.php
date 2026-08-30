@@ -1,5 +1,5 @@
 <x-app-layout>
-<div class="space-y-6 pt-10 fade-in">
+<div class="space-y-6 pt-10 fade-in" x-data="{ open: false, selected: null }">
 
     <div class="rounded-2xl bg-micblue px-6 py-7 shadow-sm">
         <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
@@ -21,6 +21,10 @@
                 <a href="{{ route('admin.audit.activity') }}"
                    class="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-medium rounded-lg transition {{ request()->routeIs('admin.audit.activity') ? 'bg-blue-500 text-white' : 'border border-white/20 text-white/80 hover:bg-white/10' }}">
                     Activity Logs
+                </a>
+                <a href="{{ route('admin.audit.story') }}"
+                   class="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-medium rounded-lg transition {{ request()->routeIs('admin.audit.story') ? 'bg-blue-500 text-white' : 'border border-white/20 text-white/80 hover:bg-white/10' }}">
+                    User Story
                 </a>
             </div>
         </div>
@@ -119,7 +123,7 @@
                 </thead>
                 <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
                     @forelse($logs as $log)
-                        <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/30">
+                        <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/30 cursor-pointer" @click="selected = {{ Illuminate\Support\Js::from($log) }}; open = true">
                             <td class="px-5 py-2.5 font-medium text-gray-800 dark:text-white">{{ $log->user?->name ?? 'System' }}</td>
                             <td class="px-5 py-2.5">
                                 <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium
@@ -147,6 +151,61 @@
         @if(method_exists($logs, 'hasPages') && $logs->hasPages())
             <div class="px-5 py-3 border-t border-gray-100 dark:border-gray-700">{{ $logs->links() }}</div>
         @endif
+    </div>
+
+    {{-- ─── LOG DETAIL MODAL ───────────────────────────────────────────── --}}
+    <div x-show="open" x-cloak @keydown.escape.window="open = false"
+         class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50" @click.self="open = false">
+        <div x-show="open" x-transition class="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 w-full max-w-lg max-h-[85vh] overflow-y-auto">
+            <div class="px-5 py-4 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between">
+                <h3 class="text-xs font-bold text-gray-800 dark:text-white">Log Entry Details</h3>
+                <button @click="open = false" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+            </div>
+            <div class="p-5 space-y-3 text-xs" x-show="selected">
+                <div class="flex justify-between gap-3">
+                    <span class="text-gray-400 shrink-0">User</span>
+                    <span class="font-semibold text-gray-800 dark:text-white text-right" x-text="selected?.user?.name ?? 'System'"></span>
+                </div>
+                <div class="flex justify-between gap-3">
+                    <span class="text-gray-400 shrink-0">Date</span>
+                    <span class="font-medium text-gray-800 dark:text-white text-right" x-text="selected?.created_at ? new Date(selected.created_at).toLocaleDateString('en-GB') : ''"></span>
+                </div>
+                <div class="flex justify-between gap-3">
+                    <span class="text-gray-400 shrink-0">Time</span>
+                    <span class="font-medium text-gray-800 dark:text-white text-right" x-text="selected?.created_at ? new Date(selected.created_at).toLocaleTimeString() : ''"></span>
+                </div>
+                <div class="flex justify-between gap-3">
+                    <span class="text-gray-400 shrink-0">Activity</span>
+                    <span class="font-medium text-gray-800 dark:text-white text-right" x-text="selected?.action"></span>
+                </div>
+                <div class="flex justify-between gap-3" x-show="selected?.description">
+                    <span class="text-gray-400 shrink-0">Description</span>
+                    <span class="font-medium text-gray-800 dark:text-white text-right" x-text="selected?.description"></span>
+                </div>
+                <div class="flex justify-between gap-3" x-show="selected?.model">
+                    <span class="text-gray-400 shrink-0">Model</span>
+                    <span class="font-medium text-gray-800 dark:text-white text-right" x-text="(selected?.model || '') + (selected?.model_id ? ' #' + selected.model_id : '')"></span>
+                </div>
+                <div class="flex justify-between gap-3">
+                    <span class="text-gray-400 shrink-0">IP Address</span>
+                    <span class="font-medium text-gray-800 dark:text-white text-right" x-text="selected?.ip_address ?? 'N/A'"></span>
+                </div>
+                <div x-show="selected?.user_agent">
+                    <span class="text-gray-400 block mb-1">User Agent</span>
+                    <span class="font-medium text-gray-800 dark:text-white break-all text-[11px]" x-text="selected?.user_agent"></span>
+                </div>
+                <div x-show="selected?.old_values" class="border-t border-gray-100 dark:border-gray-700 pt-3">
+                    <span class="text-gray-400 block mb-1">Before</span>
+                    <pre class="bg-gray-50 dark:bg-gray-900 rounded-lg p-2.5 text-[10px] overflow-x-auto" x-text="JSON.stringify(selected?.old_values, null, 2)"></pre>
+                </div>
+                <div x-show="selected?.new_values" class="pt-1">
+                    <span class="text-gray-400 block mb-1">After</span>
+                    <pre class="bg-gray-50 dark:bg-gray-900 rounded-lg p-2.5 text-[10px] overflow-x-auto" x-text="JSON.stringify(selected?.new_values, null, 2)"></pre>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 

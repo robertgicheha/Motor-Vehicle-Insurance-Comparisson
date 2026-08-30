@@ -34,7 +34,6 @@ class StickerAdminController extends Controller
                 return [
                     'name' => $c->name,
                     'count' => $c->stickers_count,
-                    'downloads' => Sticker::where('company_id', $c->id)->sum('download_count'),
                 ];
             });
 
@@ -44,12 +43,43 @@ class StickerAdminController extends Controller
             ->limit(10)
             ->get();
 
-        return view('admin.stickers.index', compact('stickers', 'stats', 'byCompany', 'recentEmails'));
+        $trend = $this->buildTrend();
+
+        return view('admin.stickers.index', compact('stickers', 'stats', 'byCompany', 'recentEmails', 'trend'));
+    }
+
+    /**
+     * Zero-filled daily sticker count for the last 14 days, for the trend chart.
+     */
+    protected function buildTrend(): array
+    {
+        $rows = Sticker::selectRaw('DATE(created_at) as day, COUNT(*) as count')
+            ->where('created_at', '>=', now()->subDays(13)->startOfDay())
+            ->groupBy('day')
+            ->orderBy('day')
+            ->get()
+            ->keyBy('day');
+
+        $labels = [];
+        $counts = [];
+        for ($i = 13; $i >= 0; $i--) {
+            $day = now()->subDays($i);
+            $labels[] = $day->format('d M');
+            $counts[] = (int) ($rows[$day->toDateString()]->count ?? 0);
+        }
+
+        return ['labels' => $labels, 'counts' => $counts];
     }
 
     public function tracker(Request $request)
     {
+        $view = $request->get('view', 'all');
+
         $query = Sticker::with(['company', 'issuedBy'])->latest();
+
+        if ($view === 'mine') {
+            $query->where('issued_by', auth()->id());
+        }
 
         if ($request->filled('status')) {
             $query->where('status', $request->status);
@@ -63,8 +93,9 @@ class StickerAdminController extends Controller
             $search = trim($request->search);
             $query->where(function ($q) use ($search) {
                 $q->where('sticker_number', 'like', "%{$search}%")
+                  ->orWhere('underwriter_sticker_no', 'like', "%{$search}%")
                   ->orWhere('customer_name', 'like', "%{$search}%")
-                  ->orWhere('vehicle_registration', 'like', "%{$search}%");
+                  ->orWhereLikeCI('vehicle_registration', $search);
             });
         }
 
@@ -72,7 +103,18 @@ class StickerAdminController extends Controller
         $companies = Company::active()->get();
         $statuses = ['pending' => 'Pending', 'issued' => 'Issued', 'completed' => 'Completed'];
 
-        return view('admin.stickers.tracker', compact('stickers', 'companies', 'statuses'));
+        $byCompany = Company::active()
+            ->withCount(['stickers' => fn ($q) => $view === 'mine' ? $q->where('issued_by', auth()->id()) : $q])
+            ->get()
+            ->filter(fn ($c) => $c->stickers_count > 0)
+            ->map(fn ($c) => ['name' => $c->name, 'count' => $c->stickers_count])
+            ->sortByDesc('count')
+            ->values();
+
+        $myCount = Sticker::where('issued_by', auth()->id())->count();
+        $allCount = Sticker::count();
+
+        return view('admin.stickers.tracker', compact('stickers', 'companies', 'statuses', 'view', 'byCompany', 'myCount', 'allCount'));
     }
 
     public function updateStickerForm(Request $request)
@@ -93,12 +135,12 @@ class StickerAdminController extends Controller
 
         $search = trim($request->search);
         $sticker = Sticker::with(['company', 'issuedBy', 'quotation'])
-            ->where('sticker_number', $search)
-            ->orWhereRaw('LOWER(sticker_number) = ?', [strtolower($search)])
+            ->whereRaw('LOWER(sticker_number) = ?', [strtolower($search)])
+            ->orWhereRaw('LOWER(underwriter_sticker_no) = ?', [strtolower($search)])
             ->first();
 
         if (!$sticker) {
-            return response()->json(['success' => false, 'error' => 'Sticker not found.']);
+            return response()->json(['success' => false, 'error' => 'Sticker not found. Search by Sticker ID (ours) or Sticker Number (from the underwriter).']);
         }
 
         $documents = CertificateDocument::where('sticker_id', $sticker->id)->get();
@@ -108,6 +150,7 @@ class StickerAdminController extends Controller
             'sticker' => [
                 'id' => $sticker->id,
                 'sticker_number' => $sticker->sticker_number,
+                'underwriter_sticker_no' => $sticker->underwriter_sticker_no,
                 'customer_name' => $sticker->customer_name,
                 'vehicle_registration' => $sticker->vehicle_registration,
                 'car_make' => $sticker->car_make,
@@ -130,6 +173,7 @@ class StickerAdminController extends Controller
     {
         $request->validate([
             'sticker_id' => 'required|exists:stickers,id',
+            'underwriter_sticker_no' => 'required|string|max:100',
         ]);
 
         $sticker = Sticker::findOrFail($request->sticker_id);
@@ -145,6 +189,7 @@ class StickerAdminController extends Controller
         $oldStatus = $sticker->status;
         $sticker->update([
             'status' => 'completed',
+            'underwriter_sticker_no' => $request->underwriter_sticker_no,
             'generated_at' => now(),
             'completed_by' => $user->id,
         ]);

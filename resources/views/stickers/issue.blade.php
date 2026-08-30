@@ -5,8 +5,8 @@
         <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
             <div>
                 <p class="text-[10px] font-semibold uppercase tracking-widest text-blue-400">Sticker Issuance</p>
-                <h1 class="mt-0.5 text-xl font-bold text-white">Issue Certificate</h1>
-                <p class="mt-0.5 text-xs text-slate-400">Search for a quotation, upload KYC documents, and issue a certificate to the underwriter</p>
+                <h1 class="mt-0.5 text-xl font-bold text-white">Issue Sticker</h1>
+                <p class="mt-0.5 text-xs text-slate-400">Search for a quotation, upload KYC documents, and issue a sticker to the underwriter</p>
             </div>
             <div class="flex items-center gap-2 shrink-0">
                 <a href="{{ route('stickers.user-lookup') }}"
@@ -39,7 +39,7 @@
                      :class="step === 3 ? 'bg-white text-blue-700' : 'bg-white/20 text-white/60'">
                     3
                 </div>
-                <span class="text-[11px] font-semibold text-white">Issue Certificate</span>
+                <span class="text-[11px] font-semibold text-white">Issue Sticker</span>
             </div>
         </div>
     </div>
@@ -340,7 +340,7 @@
                                 <span class="font-medium text-gray-800 dark:text-white">KES <span x-text="Number(selectedQuotation?.premium || 0).toLocaleString()"></span></span>
                             </div>
                             <div x-show="selectedQuotation?.pvt_premium > 0" class="flex justify-between text-[11px] mb-1">
-                                <span class="text-gray-500 dark:text-gray-400">PVT</span>
+                                <span class="text-gray-500 dark:text-gray-400">PVT(Political Violence &amp; Terrorism Extension)</span>
                                 <span class="font-medium text-gray-800 dark:text-white">KES <span x-text="Number(selectedQuotation?.pvt_premium || 0).toLocaleString()"></span></span>
                             </div>
                             <div class="flex justify-between text-[11px] border-t border-blue-200 dark:border-blue-700 pt-1 mt-1">
@@ -395,7 +395,7 @@ function certificateIssue() {
         selectedQuotation: {!! $quotation ? json_encode([
             'id' => $quotation->id,
             'quotation_number' => $quotation->quotation_number,
-            'customer_name' => $quotation->user->name,
+            'customer_name' => $quotation->customer_name,
             'company' => $quotation->company->name,
             'company_id' => $quotation->company_id,
             'car_make' => $quotation->car_make,
@@ -616,7 +616,7 @@ function certificateIssue() {
                 const data = await response.json();
 
                 if (data.success) {
-                    if (typeof showToastSuccess === 'function') showToastSuccess(data.message || 'Certificate issued!');
+                    if (typeof showToastSuccess === 'function') showToastSuccess(data.message || 'Sticker issued!');
                     setTimeout(() => { window.location.href = data.redirect_url; }, 800);
                 } else {
                     if (typeof showToastError === 'function') showToastError(data.error || 'Failed to issue.');

@@ -6,9 +6,13 @@ use App\Models\User;
 
 class UsersExport
 {
-    public function download($filename = 'users.xlsx')
+    public function download($filename = 'users.xlsx', bool $usersOnly = false)
     {
-        $users = User::with('roles')->get();
+        $query = User::with('roles');
+        if ($usersOnly) {
+            $query->whereHas('roles', fn($q) => $q->where('name', 'user'));
+        }
+        $users = $query->get();
 
         $writer = new \OpenSpout\Writer\XLSX\Writer();
         $filePath = storage_path('app/' . $filename);

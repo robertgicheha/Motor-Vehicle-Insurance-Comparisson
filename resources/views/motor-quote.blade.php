@@ -9,6 +9,7 @@
                 $rate = $c->rates->where('vehicle_type', $vehicleType)->firstWhere('item_name', 'Premium Rate');
                 $pvtRate = $c->rates->where('vehicle_type', $vehicleType)->firstWhere('item_name', 'PVT Rate');
                 $pllRate = $c->rates->where('vehicle_type', $vehicleType)->firstWhere('item_name', 'PLL Per Person');
+                $rateAbove = $c->rates->where('vehicle_type', $vehicleType)->firstWhere('item_name', 'Premium Rate Above 2.5M');
                 $stats = $__companyStats->get($c->id);
                 return [
                     'slug' => $c->slug,
@@ -21,6 +22,8 @@
                     'pvtRate' => $pvtRate ? (float) $pvtRate->percentage / 100 : 0,
                     'pvtMinValue' => $pvtRate ? (float) $pvtRate->min_value : 0,
                     'pllPerPerson' => $pllRate ? (float) $pllRate->value : 0,
+                    'rateAbove2_5M' => $rateAbove ? (float) $rateAbove->percentage / 100 : 0,
+                    'minPremiumAbove2_5M' => $rateAbove ? (float) $rateAbove->min_premium : 0,
                     'color' => $companyColors[$i % count($companyColors)],
                     'prefix' => $c->getInitials(),
                     'logoFallback' => $c->logoUrl(),
@@ -80,7 +83,7 @@
         <div class="flip-card-inner">
           <div class="flip-card-front">
             <div class="flip-card-icon">
-              <img src="{{ asset('images/hero/vehicle.jpg') }}" alt="Private car">
+              <img src="{{ asset('images/hero/vehicle.jpg') }}" alt="Private car" width="1920" height="1280">
             </div>
             <div class="vt-title">Private Car Owner</div>
             <div class="vt-desc">I own a personal / private motor vehicle and need comprehensive insurance.</div>
@@ -107,7 +110,7 @@
         <div class="flip-card-inner">
           <div class="flip-card-front">
             <div class="flip-card-icon">
-              <img src="{{ asset('images/hero/family-car.jpg') }}" alt="PSV vehicle">
+              <img src="{{ asset('images/hero/family-car.jpg') }}" alt="PSV vehicle" width="1920" height="1080">
             </div>
             <div class="vt-title">Public Service Vehicle (PSV) Owner</div>
             <div class="vt-desc">I own a matatu, bus, taxi or other public service vehicle and need PSV insurance.</div>
@@ -209,6 +212,10 @@
         <div class="form-group">
           <label>Chassis / Frame Number</label>
           <input type="text" id="f-chassis" placeholder="e.g. WVWZZZ1KZ9W123456">
+        </div>
+        <div class="form-group">
+          <label>Engine No</label>
+          <input type="text" id="f-engine" placeholder="e.g. CBA1234567">
         </div>
         <div class="form-group">
           <label>Make of Vehicle <span class="req">*</span></label>

@@ -38,7 +38,7 @@
         </div>
 
         <div class="body-content">
-            <h2>Dear {{ $quotation->user?->full_name ?? 'Valued Customer' }},</h2>
+            <h2>Dear {{ $quotation->customer_name }},</h2>
 
             <p>Thank you for choosing <strong>{{ $quotation->company->name }}</strong>. Your comprehensive motor insurance quotation has been successfully generated. Please find a summary of your quotation below.</p>
 

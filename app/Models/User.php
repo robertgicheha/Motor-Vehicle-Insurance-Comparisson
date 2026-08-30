@@ -6,6 +6,7 @@ use Database\Factories\UserFactory;
 
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Spatie\Permission\Traits\HasRoles;
@@ -13,7 +14,7 @@ use Spatie\Permission\Traits\HasRoles;
 class User extends Authenticatable
 {
     /** @use HasFactory<UserFactory> */
-    use HasFactory, Notifiable, HasRoles;
+    use HasFactory, Notifiable, HasRoles, SoftDeletes;
 
     protected $fillable = ['first_name', 'last_name', 'name', 'email', 'password', 'mobile', 'gender', 'is_active', 'profile_completed', 'google_id', 'avatar', 'last_online_at', 'pending_email', 'email_verify_token'];
 
@@ -27,7 +28,13 @@ class User extends Authenticatable
             'is_active' => 'boolean',
             'profile_completed' => 'boolean',
             'last_online_at' => 'datetime',
+            'deleted_at' => 'datetime',
         ];
+    }
+
+    public function deletedBy()
+    {
+        return $this->belongsTo(User::class, 'deleted_by');
     }
 
     public function quotations()

@@ -6,13 +6,24 @@
     $isActive = fn(string $pattern) => request()->routeIs($pattern);
 
     $lastViewed = session('quotations_last_viewed_at');
-    $quoteCount = $lastViewed
-        ? \App\Models\Quotation::where('created_at', '>', $lastViewed)->count()
-        : \App\Models\Quotation::count();
-    $claimCount = \App\Models\Claim::where(function ($q) {
-        $q->where('user_id', auth()->id())->orWhere('on_behalf_of_user_id', auth()->id());
-    })->count();
-    $pendingStickerCount = $isAdmin ? \App\Models\Sticker::where('status', 'issued')->count() : 0;
+    $sidebarCounts = \Illuminate\Support\Facades\Cache::remember(
+        'sidebar_counts_' . auth()->id() . '_' . ($lastViewed ?: 'none'),
+        30,
+        function () use ($lastViewed, $isAdmin) {
+            return [
+                'quotes' => $lastViewed
+                    ? \App\Models\Quotation::where('created_at', '>', $lastViewed)->count()
+                    : \App\Models\Quotation::count(),
+                'claims' => \App\Models\Claim::where(function ($q) {
+                    $q->where('user_id', auth()->id())->orWhere('on_behalf_of_user_id', auth()->id());
+                })->count(),
+                'pendingStickers' => $isAdmin ? \App\Models\Sticker::where('status', 'issued')->count() : 0,
+            ];
+        }
+    );
+    $quoteCount = $sidebarCounts['quotes'];
+    $claimCount = $sidebarCounts['claims'];
+    $pendingStickerCount = $sidebarCounts['pendingStickers'];
 
     // Shared style strings so every toggle button behaves identically
     $activeStyle   = 'background:rgba(255,255,255,0.16); color:#ffffff; box-shadow: inset 0 0 0 1px rgba(255,255,255,0.18);';
@@ -49,8 +60,11 @@
             @if($isAdmin && ($isActive('admin.reports*') || $isActive('admin.analytics*') || $isActive('admin.audit*')))
                 this.open.insights = true;
             @endif
-            @if($isAdmin && ($isActive('admin.settings*') || $isActive('admin.notifications*') || $isActive('admin.rate-settings*') || $isActive('admin.help*') || $isActive('admin.media*') || $isActive('admin.health*') || $isActive('admin.email-settings*')))
+            @if($isSuperAdmin && ($isActive('admin.settings*') || $isActive('admin.notifications*') || $isActive('admin.rate-settings*') || $isActive('admin.help*') || $isActive('admin.media*') || $isActive('admin.health*') || $isActive('admin.email-settings*')))
                 this.open.system = true;
+            @endif
+            @if($isAdmin && !$isSuperAdmin && ($isActive('admin.settings*') || $isActive('admin.help*')))
+                this.open.settings = true;
             @endif
         },
         toggle(key) {
@@ -69,10 +83,10 @@
     {{-- Logo --}}
     <div class="flex items-center shrink-0" :class="sidebarOpen ? 'px-4 py-4' : 'px-0 py-4 justify-center'">
         <a href="{{ route('dashboard') }}" class="block" :class="sidebarOpen ? '' : 'flex justify-center'">
-            <img src="{{ asset('images/MIC-Global-Risks_logo_no_background.png') }}"
+            <img src="{{ asset('images/MIC-Global-Risks_logo.png') }}"
                  alt="MIC Global Risks"
                  class="object-contain transition-all duration-300"
-                 :class="sidebarOpen ? 'h-8 w-auto max-w-[140px]' : 'h-7 w-auto max-w-[36px]'">
+                 :class="sidebarOpen ? 'h-8 w-auto max-w-[140px]' : 'h-7 w-auto max-w-[36px]'" width="311" height="58">
         </a>
     </div>
 
@@ -109,7 +123,7 @@
                 Quotations
             </p>
             @can('view quotations')
-                <button @click.prevent.stop="toggle('quotations')"
+                <a href="{{ route('quotations.index') }}" @click.prevent.stop="toggle('quotations')"
                         class="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-[13px] font-medium transition-all duration-150 group"
                         :class="sidebarOpen ? 'justify-start' : 'justify-center'"
                         style="{{ ($isActive('quotations*') || $isActive('my.quotations') || $isActive('recent.quotations')) ? $activeStyle : $inactiveStyle }}">
@@ -120,7 +134,7 @@
                     <span x-show="sidebarOpen" x-cloak
                           class="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-white/[0.18] text-white">{{ $quoteCount }}</span>
                     <svg x-show="sidebarOpen" x-cloak class="w-3 h-3 shrink-0 text-white transition-transform duration-200" :class="isOpen('quotations') ? 'rotate-180' : ''" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
-                </button>
+                </a>
                 <div x-show="isOpen('quotations') && sidebarOpen" x-cloak
                      x-transition:enter="transition ease-out duration-150"
                      x-transition:enter-start="opacity-0 -translate-y-1"
@@ -164,7 +178,7 @@
             <p x-show="sidebarOpen" x-cloak class="px-3 pt-2 pb-1.5 text-[9px] font-bold uppercase tracking-[0.15em] text-white/70">
                 Claims
             </p>
-            <button @click.prevent.stop="toggle('claims')"
+            <a href="{{ $isAdmin ? route('admin.claims.index') : route('claims.index') }}" @click.prevent.stop="toggle('claims')"
                     class="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-[13px] font-medium transition-all duration-150 group"
                     :class="sidebarOpen ? 'justify-start' : 'justify-center'"
                     style="{{ ($isActive('claims*') || $isActive('claims.mine')) ? $activeStyle : $inactiveStyle }}">
@@ -175,7 +189,7 @@
                 <span x-show="sidebarOpen" x-cloak
                       class="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-white/[0.18] text-white">{{ $claimCount }}</span>
                 <svg x-show="sidebarOpen" x-cloak class="w-3 h-3 shrink-0 text-white transition-transform duration-200" :class="isOpen('claims') ? 'rotate-180' : ''" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
-            </button>
+            </a>
                 <div x-show="isOpen('claims') && sidebarOpen" x-cloak
                      x-transition:enter="transition ease-out duration-150"
                      x-transition:enter-start="opacity-0 -translate-y-1"
@@ -211,23 +225,24 @@
         </div>
 
         @if($isAdmin)
+            @if($isSuperAdmin)
             <div class="mx-3 my-1 h-px bg-white/[0.12]"></div>
 
-            {{-- ─── Companies ─── --}}
+            {{-- ─── Underwriters ─── --}}
             <div class="py-1">
                 <p x-show="sidebarOpen" x-cloak class="px-3 pt-2 pb-1.5 text-[9px] font-bold uppercase tracking-[0.15em] text-white/70">
-                    Companies
+                    Underwriters
                 </p>
-                <button @click.prevent.stop="toggle('companies')"
+                <a href="{{ route('admin.companies.index') }}" @click.prevent.stop="toggle('companies')"
                         class="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-[13px] font-medium transition-all duration-150 group"
                         :class="sidebarOpen ? 'justify-start' : 'justify-center'"
                         style="{{ ($isActive('admin.companies*') || $isActive('admin.compare-all*')) ? $activeStyle : $inactiveStyle }}">
                     <span class="shrink-0 text-white transition-opacity">
                         <svg class="w-[18px] h-[18px]" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
                     </span>
-                    <span x-show="sidebarOpen" x-cloak class="flex-1 text-left text-white leading-tight">Companies</span>
+                    <span x-show="sidebarOpen" x-cloak class="flex-1 text-left text-white leading-tight">Underwriters</span>
                     <svg x-show="sidebarOpen" x-cloak class="w-3 h-3 shrink-0 text-white transition-transform duration-200" :class="isOpen('companies') ? 'rotate-180' : ''" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
-                </button>
+                </a>
                 <div x-show="isOpen('companies') && sidebarOpen" x-cloak
                      x-transition:enter="transition ease-out duration-150"
                      x-transition:enter-start="opacity-0 -translate-y-1"
@@ -244,7 +259,7 @@
                     <a href="{{ route('admin.companies.create') }}"
                        class="sidebar-sub-link flex items-center gap-2 pl-[42px] pr-3 py-1.5 rounded-lg text-[12px] text-white transition-all duration-150
                               {{ $isActive('admin.companies.create') ? 'bg-white/[0.16]' : 'hover:bg-white/[0.10]' }}">
-                        Add Company
+                        Add Underwriter
                     </a>
                     <a href="{{ route('admin.compare-all.index') }}"
                        class="sidebar-sub-link flex items-center gap-2 pl-[42px] pr-3 py-1.5 rounded-lg text-[12px] text-white transition-all duration-150
@@ -253,6 +268,7 @@
                     </a>
                 </div>
             </div>
+            @endif
 
             <div class="mx-3 my-1 h-px bg-white/[0.12]"></div>
 
@@ -262,7 +278,7 @@
                     Administration
                 </p>
 
-                <button @click.prevent.stop="toggle('users')"
+                <a href="{{ route('admin.users.index') }}" @click.prevent.stop="toggle('users')"
                         class="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-[13px] font-medium transition-all duration-150 group"
                         :class="sidebarOpen ? 'justify-start' : 'justify-center'"
                         style="{{ ($isActive('admin.users*') || $isActive('admin.roles*') || $isActive('admin.stickers*')) ? $activeStyle : $inactiveStyle }}">
@@ -271,7 +287,7 @@
                     </span>
                     <span x-show="sidebarOpen" x-cloak class="flex-1 text-left text-white leading-tight">Users & Roles</span>
                     <svg x-show="sidebarOpen" x-cloak class="w-3 h-3 shrink-0 text-white transition-transform duration-200" :class="isOpen('users') ? 'rotate-180' : ''" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
-                </button>
+                </a>
                 <div x-show="isOpen('users') && sidebarOpen" x-cloak
                      x-transition:enter="transition ease-out duration-150"
                      x-transition:enter-start="opacity-0 -translate-y-1"
@@ -301,13 +317,13 @@
 
             <div class="mx-3 my-1 h-px bg-white/[0.12]"></div>
 
-            {{-- ─── Insurance Certificates ─── --}}
+            {{-- ─── Insurance Sticker ─── --}}
             <div class="py-1">
                 <p x-show="sidebarOpen" x-cloak class="px-3 pt-2 pb-1.5 text-[9px] font-bold uppercase tracking-[0.15em] text-white/70">
                     Sticker Issuance
                 </p>
 
-                <button @click.prevent.stop="toggle('certificates')"
+                <a href="{{ route('stickers.issue') }}" @click.prevent.stop="toggle('certificates')"
                         class="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-[13px] font-medium transition-all duration-150 group"
                         :class="sidebarOpen ? 'justify-start' : 'justify-center'"
                         style="{{ ($isActive('stickers.issue*') || $isActive('stickers.*') || $isActive('admin.stickers*') || $isActive('stickers.user-lookup')) ? $activeStyle : $inactiveStyle }}">
@@ -316,7 +332,7 @@
                     </span>
                     <span x-show="sidebarOpen" x-cloak class="flex-1 text-left text-white leading-tight">Stickers</span>
                     <svg x-show="sidebarOpen" x-cloak class="w-3 h-3 shrink-0 text-white transition-transform duration-200" :class="isOpen('certificates') ? 'rotate-180' : ''" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
-                </button>
+                </a>
                 <div x-show="isOpen('certificates') && sidebarOpen" x-cloak
                      x-transition:enter="transition ease-out duration-150"
                      x-transition:enter-start="opacity-0 -translate-y-1"
@@ -373,7 +389,7 @@
                 <p x-show="sidebarOpen" x-cloak class="px-3 pt-2 pb-1.5 text-[9px] font-bold uppercase tracking-[0.15em] text-white/70">
                     Insights
                 </p>
-                <button @click.prevent.stop="toggle('insights')"
+                <a href="{{ route('admin.reports.index') }}" @click.prevent.stop="toggle('insights')"
                         class="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-[13px] font-medium transition-all duration-150 group"
                         :class="sidebarOpen ? 'justify-start' : 'justify-center'"
                         style="{{ ($isActive('admin.reports*') || $isActive('admin.analytics*') || $isActive('admin.audit*')) ? $activeStyle : $inactiveStyle }}">
@@ -382,7 +398,7 @@
                     </span>
                     <span x-show="sidebarOpen" x-cloak class="flex-1 text-left text-white leading-tight">Insights</span>
                     <svg x-show="sidebarOpen" x-cloak class="w-3 h-3 shrink-0 text-white transition-transform duration-200" :class="isOpen('insights') ? 'rotate-180' : ''" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
-                </button>
+                </a>
                 <div x-show="isOpen('insights') && sidebarOpen" x-cloak
                      x-transition:enter="transition ease-out duration-150"
                      x-transition:enter-start="opacity-0 -translate-y-1"
@@ -412,12 +428,13 @@
 
             <div class="mx-3 my-1 h-px bg-white/[0.12]"></div>
 
+            @if($isSuperAdmin)
             {{-- ─── System ─── --}}
             <div class="py-1">
                 <p x-show="sidebarOpen" x-cloak class="px-3 pt-2 pb-1.5 text-[9px] font-bold uppercase tracking-[0.15em] text-white/70">
                     System
                 </p>
-                <button @click.prevent.stop="toggle('system')"
+                <a href="{{ route('admin.rate-settings.index') }}" @click.prevent.stop="toggle('system')"
                         class="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-[13px] font-medium transition-all duration-150 group"
                         :class="sidebarOpen ? 'justify-start' : 'justify-center'"
                         style="{{ ($isActive('admin.settings*') || $isActive('admin.notifications*') || $isActive('admin.rate-settings*') || $isActive('admin.help*') || $isActive('admin.media*') || $isActive('admin.health*') || $isActive('admin.email-settings*')) ? $activeStyle : $inactiveStyle }}">
@@ -431,7 +448,7 @@
                               class="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-red-500 text-white">{{ $unread }}</span>
                     @endif
                     <svg x-show="sidebarOpen" x-cloak class="w-3 h-3 shrink-0 text-white transition-transform duration-200" :class="isOpen('system') ? 'rotate-180' : ''" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
-                </button>
+                </a>
                 <div x-show="isOpen('system') && sidebarOpen" x-cloak
                      x-transition:enter="transition ease-out duration-150"
                      x-transition:enter-start="opacity-0 -translate-y-1"
@@ -471,7 +488,7 @@
                               {{ $isActive('admin.stickers.settings') ? 'bg-white/[0.16]' : 'hover:bg-white/[0.10]' }}">
                         Sticker Settings
                     </a>
-                    
+
                     <a href="{{ route('admin.media.index') }}"
                        class="sidebar-sub-link flex items-center gap-2 pl-[42px] pr-3 py-1.5 rounded-lg text-[12px] text-white transition-all duration-150
                               {{ $isActive('admin.media*') ? 'bg-white/[0.16]' : 'hover:bg-white/[0.10]' }}">
@@ -484,12 +501,52 @@
                     </a>
                 </div>
             </div>
+            @else
+            {{-- ─── Settings (admin role — trimmed) ─── --}}
+            <div class="py-1">
+                <p x-show="sidebarOpen" x-cloak class="px-3 pt-2 pb-1.5 text-[9px] font-bold uppercase tracking-[0.15em] text-white/70">
+                    Settings
+                </p>
+                <a href="{{ route('admin.settings.index') }}" @click.prevent.stop="toggle('settings')"
+                        class="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-[13px] font-medium transition-all duration-150 group"
+                        :class="sidebarOpen ? 'justify-start' : 'justify-center'"
+                        style="{{ ($isActive('admin.settings*') || $isActive('admin.help*')) ? $activeStyle : $inactiveStyle }}">
+                    <span class="shrink-0 text-white transition-opacity">
+                        <svg class="w-[18px] h-[18px]" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                    </span>
+                    <span x-show="sidebarOpen" x-cloak class="flex-1 text-left text-white leading-tight">Settings</span>
+                    <svg x-show="sidebarOpen" x-cloak class="w-3 h-3 shrink-0 text-white transition-transform duration-200" :class="isOpen('settings') ? 'rotate-180' : ''" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+                </a>
+                <div x-show="isOpen('settings') && sidebarOpen" x-cloak
+                     x-transition:enter="transition ease-out duration-150"
+                     x-transition:enter-start="opacity-0 -translate-y-1"
+                     x-transition:enter-end="opacity-100 translate-y-0"
+                     x-transition:leave="transition ease-in duration-100"
+                     x-transition:leave-start="opacity-100 translate-y-0"
+                     x-transition:leave-end="opacity-0 -translate-y-1"
+                     class="mt-0.5 space-y-0.5">
+                    <a href="{{ route('admin.settings.index') }}"
+                       class="sidebar-sub-link flex items-center gap-2 pl-[42px] pr-3 py-1.5 rounded-lg text-[12px] text-white transition-all duration-150
+                              {{ $isActive('admin.settings.index') ? 'bg-white/[0.16]' : 'hover:bg-white/[0.10]' }}">
+                        Settings
+                    </a>
+                    <a href="{{ route('admin.help.index') }}"
+                       class="sidebar-sub-link flex items-center gap-2 pl-[42px] pr-3 py-1.5 rounded-lg text-[12px] text-white transition-all duration-150
+                              {{ $isActive('admin.help*') ? 'bg-white/[0.16]' : 'hover:bg-white/[0.10]' }}">
+                        Help & Support
+                    </a>
+                </div>
+            </div>
+            @endif
         @endif
 
         {{-- ─── Non-admin Links ─── --}}
         @if(!$isAdmin)
             <div class="mx-3 my-1 h-px bg-white/[0.12]"></div>
             <div class="py-1">
+                  <p x-show="sidebarOpen" x-cloak class="px-3 pt-2 pb-1.5 text-[9px] font-bold uppercase tracking-[0.15em] text-white/70">
+                  My Quotes
+                </p>
                 <a href="{{ route('my.quote') }}"
                    class="flex items-center gap-2.5 px-3 py-2 rounded-xl text-[13px] font-medium transition-all duration-150 group"
                    :class="sidebarOpen ? '' : 'justify-center'"
@@ -499,15 +556,74 @@
                     </span>
                     <span x-show="sidebarOpen" x-cloak class="text-white leading-tight">View Quote</span>
                 </a>
-                <a href="{{ route('stickers.user-lookup') }}"
+                  {{-- ─── Insurance Sticker ─── --}}
+            <div class="py-1">
+                <p x-show="sidebarOpen" x-cloak class="px-3 pt-2 pb-1.5 text-[9px] font-bold uppercase tracking-[0.15em] text-white/70">
+                    Sticker Issuance
+                </p>
+
+                <a href="{{ route('stickers.issue') }}" @click.prevent.stop="toggle('certificates')"
+                        class="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-[13px] font-medium transition-all duration-150 group"
+                        :class="sidebarOpen ? 'justify-start' : 'justify-center'"
+                        style="{{ ($isActive('stickers.issue*') || $isActive('stickers.my-stickers*') || $isActive('stickers.my-updates*') || $isActive('stickers.user-lookup')) ? $activeStyle : $inactiveStyle }}">
+                    <span class="shrink-0 text-white transition-opacity">
+                        <svg class="w-[18px] h-[18px]" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                    </span>
+                    <span x-show="sidebarOpen" x-cloak class="flex-1 text-left text-white leading-tight">Stickers</span>
+                    <svg x-show="sidebarOpen" x-cloak class="w-3 h-3 shrink-0 text-white transition-transform duration-200" :class="isOpen('certificates') ? 'rotate-180' : ''" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+                </a>
+                <div x-show="isOpen('certificates') && sidebarOpen" x-cloak
+                     x-transition:enter="transition ease-out duration-150"
+                     x-transition:enter-start="opacity-0 -translate-y-1"
+                     x-transition:enter-end="opacity-100 translate-y-0"
+                     x-transition:leave="transition ease-in duration-100"
+                     x-transition:leave-start="opacity-100 translate-y-0"
+                     x-transition:leave-end="opacity-0 -translate-y-1"
+                     class="mt-0.5 space-y-0.5">
+                     <a href="{{ route('stickers.issue') }}"
+                       class="sidebar-sub-link flex items-center gap-2 pl-[42px] pr-3 py-1.5 rounded-lg text-[12px] text-white transition-all duration-150
+                              {{ $isActive('stickers.issue') ? 'bg-white/[0.16]' : 'hover:bg-white/[0.10]' }}">
+                        Create New Sticker
+                    </a>
+
+                     <a href="{{ route('stickers.my-updates') }}"
+                       class="sidebar-sub-link flex items-center gap-2 pl-[42px] pr-3 py-1.5 rounded-lg text-[12px] text-white transition-all duration-150
+                              {{ $isActive('stickers.my-updates*') ? 'bg-white/[0.16]' : 'hover:bg-white/[0.10]' }}">
+                        Update Stickers
+                    </a>
+
+                    <a href="{{ route('stickers.my-stickers') }}"
+                       class="sidebar-sub-link flex items-center gap-2 pl-[42px] pr-3 py-1.5 rounded-lg text-[12px] text-white transition-all duration-150
+                              {{ $isActive('stickers.my-stickers*') ? 'bg-white/[0.16]' : 'hover:bg-white/[0.10]' }}">
+                        View All Stickers
+                    </a>
+                    <a href="{{ route('stickers.user-lookup') }}"
+                       class="sidebar-sub-link flex items-center gap-2 pl-[42px] pr-3 py-1.5 rounded-lg text-[12px] text-white transition-all duration-150
+                              {{ $isActive('stickers.user-lookup') ? 'bg-white/[0.16]' : 'hover:bg-white/[0.10]' }}">
+                        Sticker Tracker
+                    </a>
+                </div>
+            </div>
+
+            <div class="mx-3 my-1 h-px bg-white/[0.12]"></div>
+
+
+                <p x-show="sidebarOpen" x-cloak class="px-3 pt-2 pb-1.5 text-[9px] font-bold uppercase tracking-[0.15em] text-white/70">
+                Settings
+                </p>
+
+             <a href="{{ route('profile.edit') }}"
                    class="flex items-center gap-2.5 px-3 py-2 rounded-xl text-[13px] font-medium transition-all duration-150 group"
                    :class="sidebarOpen ? '' : 'justify-center'"
-                   style="{{ ($isActive('stickers.user-lookup')) ? $activeStyle : $inactiveStyle }}">
+                   style="{{ ($isActive('profile.edit')) ? $activeStyle : $inactiveStyle }}">
                     <span class="shrink-0 text-white transition-opacity">
-                        <svg class="w-[18px] h-[18px]" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z"/></svg>
+                        <svg class="w-[18px] h-[18px]" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                     </span>
-                    <span x-show="sidebarOpen" x-cloak class="text-white leading-tight">Certificates</span>
+                    <span x-show="sidebarOpen" x-cloak class="text-white leading-tight">
+                        Settings
+                    </span>
                 </a>
+
                 <a href="{{ route('user.help.index') }}"
                    class="flex items-center gap-2.5 px-3 py-2 rounded-xl text-[13px] font-medium transition-all duration-150 group"
                    :class="sidebarOpen ? '' : 'justify-center'"

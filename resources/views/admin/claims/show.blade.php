@@ -9,12 +9,6 @@
                     @php
                         $statusColor = match($claim->status) {
                             \App\Models\Claim::STATUS_REPORTED => 'bg-gray-500/20 text-gray-300',
-                            \App\Models\Claim::STATUS_DOCUMENTS_PENDING => 'bg-amber-500/20 text-amber-300',
-                            \App\Models\Claim::STATUS_UNDER_REVIEW => 'bg-blue-500/20 text-blue-300',
-                            \App\Models\Claim::STATUS_SETTLEMENT => 'bg-purple-500/20 text-purple-300',
-                            \App\Models\Claim::STATUS_UNDER_INVESTIGATION => 'bg-orange-500/20 text-orange-300',
-                            \App\Models\Claim::STATUS_SETTLED => 'bg-emerald-500/20 text-emerald-300',
-                            \App\Models\Claim::STATUS_DECLINED => 'bg-red-500/20 text-red-300',
                             default => 'bg-gray-500/20 text-gray-300',
                         };
                     @endphp
@@ -159,40 +153,21 @@
                         $currentStatus = $claim->status;
                         $statusOrder = [
                             \App\Models\Claim::STATUS_REPORTED,
-                            \App\Models\Claim::STATUS_DOCUMENTS_PENDING,
-                            \App\Models\Claim::STATUS_UNDER_REVIEW,
-                            \App\Models\Claim::STATUS_SETTLEMENT,
-                            \App\Models\Claim::STATUS_UNDER_INVESTIGATION,
-                            \App\Models\Claim::STATUS_SETTLED,
-                            \App\Models\Claim::STATUS_DECLINED,
                         ];
                         $statusLabels = [
                             \App\Models\Claim::STATUS_REPORTED => 'Claim is Reported',
-                            \App\Models\Claim::STATUS_DOCUMENTS_PENDING => 'Documents - Pending',
-                            \App\Models\Claim::STATUS_UNDER_REVIEW => 'Under Review',
-                            \App\Models\Claim::STATUS_SETTLEMENT => 'Settlement - Awaiting Offer',
-                            \App\Models\Claim::STATUS_UNDER_INVESTIGATION => 'Under Investigation',
-                            \App\Models\Claim::STATUS_SETTLED => 'Settlement - Settled',
-                            \App\Models\Claim::STATUS_DECLINED => 'Declined',
                         ];
                         $statusIcons = [
                             \App\Models\Claim::STATUS_REPORTED => '📢',
-                            \App\Models\Claim::STATUS_DOCUMENTS_PENDING => '📁',
-                            \App\Models\Claim::STATUS_UNDER_REVIEW => '📋',
-                            \App\Models\Claim::STATUS_SETTLEMENT => '💬',
-                            \App\Models\Claim::STATUS_UNDER_INVESTIGATION => '🔍',
-                            \App\Models\Claim::STATUS_SETTLED => '✅',
-                            \App\Models\Claim::STATUS_DECLINED => '❌',
                         ];
                         $currentIndex = array_search($currentStatus, $statusOrder);
                     @endphp
 
                     @foreach($statusOrder as $index => $status)
                         @php
-                            $isCompleted = $currentIndex > $index || in_array($currentStatus, [\App\Models\Claim::STATUS_SETTLED, \App\Models\Claim::STATUS_DECLINED]);
+                            $isCompleted = $currentIndex > $index;
                             $isCurrent = $currentStatus === $status;
-                            $isSkipped = $currentStatus === \App\Models\Claim::STATUS_DECLINED && in_array($status, [\App\Models\Claim::STATUS_SETTLEMENT, \App\Models\Claim::STATUS_UNDER_INVESTIGATION, \App\Models\Claim::STATUS_UNDER_REVIEW, \App\Models\Claim::STATUS_DOCUMENTS_PENDING]);
-                            $isSkipped = $currentStatus === \App\Models\Claim::STATUS_SETTLED && in_array($status, [\App\Models\Claim::STATUS_UNDER_INVESTIGATION, \App\Models\Claim::STATUS_DOCUMENTS_PENDING, \App\Models\Claim::STATUS_REPORTED]);
+                            $isSkipped = false;
                         @endphp
                         <div class="flex items-start gap-3">
                             <div class="w-8 h-8 rounded-full flex items-center justify-center text-sm

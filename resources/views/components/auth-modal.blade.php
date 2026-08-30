@@ -233,7 +233,7 @@
 
     <!-- Right: Image -->
     <div class="auth-modal-image-side">
-      <img src="{{ asset('images/hero/vehicle.jpg') }}" alt="Vehicle">
+      <img src="{{ asset('images/hero/vehicle.jpg') }}" alt="Vehicle" width="1920" height="1280">
     </div>
   </div>
 </div>

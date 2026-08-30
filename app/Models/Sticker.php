@@ -7,9 +7,9 @@ use Illuminate\Database\Eloquent\Model;
 class Sticker extends Model
 {
     protected $fillable = [
-        'company_id', 'quotation_id', 'issued_by', 'sticker_number', 'customer_name',
+        'company_id', 'quotation_id', 'issued_by', 'sticker_number', 'underwriter_sticker_no', 'customer_name',
         'customer_email', 'customer_phone', 'vehicle_registration',
-        'car_make', 'car_model', 'car_year', 'car_valuation',
+        'car_make', 'car_model', 'car_year', 'chassis_number', 'engine_number', 'color', 'car_valuation',
         'premium', 'premium_rate', 'cover_type', 'status',
         'created_via', 'breakdown', 'generated_at', 'completed_by',
         'download_count', 'last_downloaded_at',
@@ -103,12 +103,15 @@ class Sticker extends Model
         return 'pending_response';
     }
 
+    /**
+     * The Sticker ID — our own internal identifier (e.g. STK-001), distinct
+     * from the underwriter_sticker_no, which is the real number a company
+     * assigns and is only known once their reply comes back.
+     */
     public static function generateNumber(): string
     {
-        $prefix = 'STK';
-        $date = now()->format('Ymd');
-        $last = static::whereDate('created_at', today())->count() + 1;
-        return $prefix . $date . str_pad($last, 4, '0', STR_PAD_LEFT);
+        $seq = static::count() + 1;
+        return 'STK-' . str_pad($seq, 3, '0', STR_PAD_LEFT);
     }
 
     public function scopeActive($query)

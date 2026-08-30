@@ -239,7 +239,7 @@ function previewUpload(input) {
             reader.onload = function(e) {
                 const div = document.createElement('div');
                 div.className = 'aspect-square rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-700 border border-gray-200 dark:border-gray-600';
-                div.innerHTML = '<img src="' + e.target.result + '" class="w-full h-full object-cover">';
+                div.innerHTML = '<img src="' + e.target.result + '" alt="Preview" class="w-full h-full object-cover">';
                 list.appendChild(div);
             };
             reader.readAsDataURL(file);

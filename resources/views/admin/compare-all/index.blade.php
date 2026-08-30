@@ -89,7 +89,7 @@
         const drop = document.getElementById('logo-drop');
         const reader = new FileReader();
         reader.onload = (e) => {
-            drop.innerHTML = `<img src="${e.target.result}" class="h-full w-full object-cover">`;
+            drop.innerHTML = `<img src="${e.target.result}" alt="Logo preview" class="h-full w-full object-cover">`;
         };
         reader.readAsDataURL(file);
     });

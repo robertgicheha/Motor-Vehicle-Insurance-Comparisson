@@ -35,35 +35,36 @@
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
                         <div>
                             <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">From Email Address</label>
-                            <input type="email" name="from_address" value="{{ config('mail.from.address') }}"
+                            <input type="email" name="from_address" value="{{ $emailConfig['sticker_email_from_address'] ?? config('mail.from.address') }}"
                                    class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-800 dark:text-white focus:ring-2 focus:ring-blue-500">
-                            <p class="text-[10px] text-gray-400 mt-1">Outbound emails will be sent from this address</p>
+                            <p class="text-[10px] text-gray-400 mt-1">Outbound emails will be sent from this address (e.g. a noreply@ address)</p>
                         </div>
                         <div>
                             <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">From Name</label>
-                            <input type="text" name="from_name" value="{{ config('mail.from.name') }}"
+                            <input type="text" name="from_name" value="{{ $emailConfig['sticker_email_from_name'] ?? config('mail.from.name') }}"
                                    class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-800 dark:text-white focus:ring-2 focus:ring-blue-500">
                         </div>
                         <div>
                             <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Reply-To Address</label>
-                            <input type="email" name="reply_to" value="{{ config('mail.from.address') }}"
+                            <input type="email" name="reply_to" value="{{ $emailConfig['sticker_email_reply_to'] ?? config('mail.from.address') }}"
                                    class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-800 dark:text-white focus:ring-2 focus:ring-blue-500">
                             <p class="text-[10px] text-gray-400 mt-1">Underwriters should reply to this address</p>
                         </div>
                         <div>
                             <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">CC Address (MIC)</label>
-                            <input type="email" name="cc_address" value="{{ config('mail.from.address') }}"
+                            <input type="email" name="cc_address" value="{{ $emailConfig['sticker_email_cc'] ?? config('mail.from.address') }}"
                                    class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-800 dark:text-white focus:ring-2 focus:ring-blue-500">
+                            <p class="text-[10px] text-gray-400 mt-1">Used when a company has no CC address of its own set</p>
                         </div>
                         <div class="md:col-span-2">
                             <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Subject Template</label>
-                            <input type="text" name="subject_template" value="{!! 'Certificate Issuance Request - {sticker_number}' !!}"
+                            <input type="text" name="subject_template" value="{{ $emailConfig['sticker_email_subject_template'] ?? 'Sticker Issuance Request - {sticker_number}' }}"
                                    class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-800 dark:text-white focus:ring-2 focus:ring-blue-500">
                             <p class="text-[10px] text-gray-400 mt-1">Available variables: {!! '{'.'{sticker_number}'.'}' !!}, {!! '{'.'{customer_name}'.'}' !!}, {!! '{'.'{company}'.'}' !!}, {!! '{'.'{registration}'.'}' !!}</p>
                         </div>
                         <div>
                             <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Turnaround Time (minutes)</label>
-                            <input type="number" name="turnaround_minutes" value="30" min="5" max="1440"
+                            <input type="number" name="turnaround_minutes" value="{{ $emailConfig['sticker_turnaround_minutes'] ?? 30 }}" min="5" max="1440"
                                    class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-800 dark:text-white focus:ring-2 focus:ring-blue-500">
                             <p class="text-[10px] text-gray-400 mt-1">Expected response time from underwriter</p>
                         </div>
@@ -79,15 +80,15 @@
                 <div class="space-y-4">
                     <div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-lg p-4">
                         <p class="text-xs text-blue-700 dark:text-blue-300">
-                            <strong>Note:</strong> Email templates are managed through the <a href="{{ route('admin.email-settings.index') }}" class="underline">Email Templates</a> section. The certificate issuance template uses the key <code>certificate_issued</code>.
+                            <strong>Note:</strong> Email templates are managed through the <a href="{{ route('admin.email-settings.index') }}" class="underline">Email Templates</a> section. The sticker issuance template uses the key <code>certificate_issued</code>.
                         </p>
                     </div>
                     <div class="border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden">
                         <div class="px-5 py-4 border-b border-gray-100 dark:border-gray-700">
-                            <h3 class="text-xs font-semibold text-gray-800 dark:text-white">Available Variables for Certificate Issuance Template</h3>
+                            <h3 class="text-xs font-semibold text-gray-800 dark:text-white">Available Variables for Sticker Issuance Template</h3>
                         </div>
                         <div class="p-5 grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
-                            <div class="bg-gray-50 dark:bg-gray-700/50 rounded-lg px-3 py-2"><code class="text-blue-600">{!! '{'.'{sticker_number}'.'}' !!}</code><p class="text-gray-400 text-[10px] mt-0.5">Certificate number</p></div>
+                            <div class="bg-gray-50 dark:bg-gray-700/50 rounded-lg px-3 py-2"><code class="text-blue-600">{!! '{'.'{sticker_number}'.'}' !!}</code><p class="text-gray-400 text-[10px] mt-0.5">Sticker ID</p></div>
                             <div class="bg-gray-50 dark:bg-gray-700/50 rounded-lg px-3 py-2"><code class="text-blue-600">{!! '{'.'{customer_name}'.'}' !!}</code><p class="text-gray-400 text-[10px] mt-0.5">Customer full name</p></div>
                             <div class="bg-gray-50 dark:bg-gray-700/50 rounded-lg px-3 py-2"><code class="text-blue-600">{!! '{'.'{company}'.'}' !!}</code><p class="text-gray-400 text-[10px] mt-0.5">Insurance company</p></div>
                             <div class="bg-gray-50 dark:bg-gray-700/50 rounded-lg px-3 py-2"><code class="text-blue-600">{!! '{'.'{registration}'.'}' !!}</code><p class="text-gray-400 text-[10px] mt-0.5">Vehicle registration</p></div>

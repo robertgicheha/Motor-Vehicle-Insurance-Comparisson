@@ -7,6 +7,7 @@ use App\Models\Sticker;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
+use Illuminate\Mail\Mailables\Address;
 use Illuminate\Mail\Mailables\Attachment;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
@@ -18,32 +19,37 @@ class CertificateIssuedMail extends Mailable
 
     public Sticker $sticker;
     public array $kycPaths;
+    public ?string $ccAddress;
+    public ?string $fromAddress;
+    public ?string $fromName;
+    public ?string $toOverride;
 
-    public function __construct(Sticker $sticker, array $kycPaths = [])
+    public function __construct(Sticker $sticker, array $kycPaths = [], ?string $ccAddress = null, ?string $fromAddress = null, ?string $fromName = null, ?string $toOverride = null)
     {
         $this->sticker = $sticker;
         $this->kycPaths = $kycPaths;
+        $this->ccAddress = $ccAddress;
+        $this->fromAddress = $fromAddress;
+        $this->fromName = $fromName;
+        $this->toOverride = $toOverride;
     }
 
     public function envelope(): Envelope
     {
-        $subject = $this->envelopeSubject($this->template('certificate_issued'), 'Certificate Issuance - ' . $this->sticker->sticker_number, $this->variables());
+        $subject = $this->envelopeSubject($this->template('certificate_issued'), 'Sticker Issuance - ' . $this->sticker->sticker_number, $this->variables());
 
-        $ccAddresses = array_filter([
+        $ccAddresses = array_unique(array_filter([
+            $this->ccAddress,
             config('services.sticker.mic_cc_email'),
-            config('mail.from.address'),
-        ]);
+        ]));
 
-        $toAddress = $this->sticker->underwriter_email;
-        $ccAddresses = array_filter([
-            config('services.sticker.mic_cc_email'),
-            config('mail.from.address'),
-        ]);
+        $toAddress = $this->toOverride ?: $this->sticker->underwriter_email;
 
         return new Envelope(
             subject: $subject,
+            from: $this->fromAddress ? new Address($this->fromAddress, $this->fromName ?: config('mail.from.name')) : null,
             to: $toAddress ? [$toAddress] : [],
-            cc: array_unique($ccAddresses),
+            cc: $ccAddresses,
         );
     }
 

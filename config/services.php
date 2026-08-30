@@ -46,8 +46,8 @@ return [
     ],
 
     'recaptcha' => [
-        'site_key' => env('RECAPTCHA_SITE_KEY', '6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI'),
-        'secret_key' => env('RECAPTCHA_SECRET_KEY', '6LeIxAcTAAAAAGG-vFI1TnRWxMZNFuojJ4WifJWe'),
+        'site_key' => env('RECAPTCHA_SITE_KEY'),
+        'secret_key' => env('RECAPTCHA_SECRET_KEY'),
     ],
 
     'clamav' => [
@@ -63,6 +63,22 @@ return [
     'sticker' => [
         'turnaround_minutes' => (int) env('STICKER_TURNAROUND_MINUTES', 30),
         'mic_cc_email' => env('MIC_CC_EMAIL', config('mail.from.address')),
+    ],
+
+    'mailtrap' => [
+        'api_token' => env('MAILTRAP_API_TOKEN', ''),
+    ],
+
+    'nav' => [
+        'enabled' => env('NAV_MAIL_ENABLED', false),
+        'mail_wsdl' => env('NAV_MAIL_WSDL', ''),
+        'mail_function' => env('NAV_MAIL_FUNCTION', 'SendMail'),
+        'ntlm_domain' => env('NAV_NTLM_DOMAIN', ''),
+        'ntlm_username' => env('NAV_NTLM_USERNAME', ''),
+        'ntlm_password' => env('NAV_NTLM_PASSWORD', ''),
+        'function_certificate_email' => env('NAV_FUNCTION_CERTIFICATE_EMAIL', 'SendCertificateEmail'),
+        'function_quotation_email' => env('NAV_FUNCTION_QUOTATION_EMAIL', 'SendQuotationEmail'),
+        'function_claim_email' => env('NAV_FUNCTION_CLAIM_EMAIL', 'SendClaimEmail'),
     ],
 
 ];

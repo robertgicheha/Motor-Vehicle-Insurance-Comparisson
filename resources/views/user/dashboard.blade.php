@@ -45,7 +45,7 @@
                 <div class="accent-bar" style="background:linear-gradient(90deg,#818cf8,#a5b4fc)"></div>
                 <p class="kpi-eyebrow">Stickers</p>
                 <p class="kpi-value mt-1">{{ $stickersCount }}</p>
-                <span class="kpi-delta up mt-1.5 inline-block">Certificates issued</span>
+                <span class="kpi-delta up mt-1.5 inline-block">Stickers issued</span>
             </a>
             <a href="{{ route('profile.edit') }}" class="kpi-card p-4 block hover:opacity-80 transition">
                 <div class="accent-bar" style="background:linear-gradient(90deg,#fb7185,#fda4af)"></div>
@@ -110,7 +110,7 @@
 
     {{-- ─── PROFILE COMPLETION ALERT ─────────────────────────────────────── --}}
     @if(!auth()->user()->profile_completed)
-    <div class="rounded-2xl bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700 px-5 py-4 flex items-center justify-between gap-4 fade-in">
+    <div id="profile-alert-banner" class="rounded-2xl bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700 px-5 py-4 flex items-center justify-between gap-4 fade-in">
         <div class="flex items-center gap-3">
             <div class="w-10 h-10 rounded-full bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center shrink-0">
                 <svg class="w-5 h-5 text-amber-600 dark:text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -122,11 +122,32 @@
                 <p class="text-xs text-amber-700 dark:text-amber-400 mt-0.5">Your profile is incomplete. Please add your phone number and other details to finish setting up your account.</p>
             </div>
         </div>
-        <a href="{{ route('profile.edit') }}" class="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold bg-amber-500 hover:bg-amber-600 text-white rounded-lg transition shrink-0">
-            Complete Profile
-            <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
-        </a>
+        <div class="flex items-center gap-2 shrink-0">
+            <a href="{{ route('profile.edit') }}" class="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold bg-amber-500 hover:bg-amber-600 text-white rounded-lg transition">
+                Complete Profile
+                <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+            </a>
+            <button type="button" onclick="dismissProfileAlert()" title="Dismiss" class="w-8 h-8 flex items-center justify-center rounded-lg text-amber-600 dark:text-amber-400 hover:bg-amber-100 dark:hover:bg-amber-900/40 transition">
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+        </div>
     </div>
+    <script>
+        (function() {
+            var banner = document.getElementById('profile-alert-banner');
+            if (!banner) return;
+            try {
+                if (sessionStorage.getItem('profile_alert_dismissed') === '1') {
+                    banner.style.display = 'none';
+                }
+            } catch (e) {}
+        })();
+        function dismissProfileAlert() {
+            var banner = document.getElementById('profile-alert-banner');
+            if (banner) banner.style.display = 'none';
+            try { sessionStorage.setItem('profile_alert_dismissed', '1'); } catch (e) {}
+        }
+    </script>
     @endif
 
     {{-- ─── TWO-COLUMN GRID ─────────────────────────────────────────────── --}}
@@ -161,7 +182,7 @@
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
-                            @forelse($recentQuotations ?? $quotations->take(5) as $q)
+                            @forelse(($recentQuotations ?? collect())->take(5) as $q)
                                 <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/30">
                                     <td class="px-5 py-2.5">
                                         <a href="{{ route('quotations.show', $q) }}" class="font-medium text-blue-600 hover:text-blue-800">{{ $q->quotation_number }}</a>
@@ -169,7 +190,7 @@
                                     <td class="px-5 py-2.5 font-medium text-gray-800 dark:text-white">{{ $q->company->name }}</td>
                                     <td class="px-5 py-2.5 text-gray-500 dark:text-gray-400">{{ $q->car_make }} {{ $q->car_model }} ({{ $q->car_year }})</td>
                                     <td class="px-5 py-2.5 text-right text-gray-500 dark:text-gray-400">{{ number_format($q->car_valuation, 0) }}</td>
-                                    <td class="px-5 py-2.5 text-right font-medium text-gray-800 dark:text-white">{{ number_format($q->total_premium, 0) }}</td>
+                                    <td class="px-5 py-2.5 text-right font-medium text-gray-800 dark:text-white">{{ number_format($q->total_premium, 2) }}</td>
                                     <td class="px-5 py-2.5 text-center">
                                         <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">
                                             {{ ucfirst($q->status) }}
@@ -354,7 +375,7 @@
                             <svg class="w-4 h-4 text-amber-600 dark:text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z"/></svg>
                         </div>
                         <div>
-                            <div class="text-xs font-semibold text-gray-800 dark:text-white">Issue Certificate</div>
+                            <div class="text-xs font-semibold text-gray-800 dark:text-white">Issue Sticker</div>
                             <div class="text-[10px] text-gray-400">Upload KYC & issue sticker</div>
                         </div>
                     </a>
@@ -414,7 +435,7 @@
                     modalDate: '',
                     modalQuotes: [],
                     quotationDates: {{ json_encode($quotationDates->map(fn($d) => ['date' => $d['date'], 'count' => $d['count']])->values()) }},
-                    allQuotationData: {{ json_encode($quotationDates) }},
+                    allQuotationData: {{ json_encode($quotationDates->values()) }},
                     daysInMonth() { return new Date(this.year, this.month + 1, 0).getDate(); },
                     firstDay() { return new Date(this.year, this.month, 1).getDay(); },
                     monthName() { return new Date(this.year, this.month).toLocaleString('default', { month: 'long' }); },
@@ -455,11 +476,11 @@
                     closeModal() { this.showModal = false; }
                 }">
                     <div class="flex items-center justify-between mb-2">
-                        <button @click="prevMonth()" class="p-0.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition">
+                        <button @click="prevMonth()" aria-label="Previous month" class="p-0.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition">
                             <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
                         </button>
                         <span class="text-[11px] font-semibold text-gray-800 dark:text-white" x-text="monthName() + ' ' + year"></span>
-                        <button @click="nextMonth()" class="p-0.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition">
+                        <button @click="nextMonth()" aria-label="Next month" class="p-0.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition">
                             <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
                         </button>
                     </div>
@@ -508,7 +529,7 @@
                                         <p class="text-[10px] font-semibold uppercase tracking-widest text-gray-400">Quotations</p>
                                         <h3 class="text-sm font-bold text-gray-800 dark:text-white mt-0.5" x-text="modalDate"></h3>
                                     </div>
-                                    <button @click="closeModal()" class="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition">
+                                    <button @click="closeModal()" aria-label="Close" class="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition">
                                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
                                     </button>
                                 </div>
@@ -715,7 +736,7 @@
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
-                    @forelse($quotations->take(5) as $q)
+                    @forelse(($recentQuotations ?? collect())->take(5) as $q)
                         <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/30">
                             <td class="px-5 py-2.5">
                                 <a href="{{ route('quotations.show', $q) }}" class="font-medium text-blue-600 hover:text-blue-800">{{ $q->quotation_number }}</a>
@@ -723,7 +744,7 @@
                             <td class="px-5 py-2.5 font-medium text-gray-800 dark:text-white">{{ $q->company->name }}</td>
                             <td class="px-5 py-2.5 text-gray-500 dark:text-gray-400">{{ $q->car_make }} {{ $q->car_model }} ({{ $q->car_year }})</td>
                             <td class="px-5 py-2.5 text-right text-gray-500 dark:text-gray-400">{{ number_format($q->car_valuation, 0) }}</td>
-                            <td class="px-5 py-2.5 text-right font-medium text-gray-800 dark:text-white">{{ number_format($q->total_premium, 0) }}</td>
+                            <td class="px-5 py-2.5 text-right font-medium text-gray-800 dark:text-white">{{ number_format($q->total_premium, 2) }}</td>
                             <td class="px-5 py-2.5 text-center">
                                 <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">
                                     {{ ucfirst($q->status) }}
@@ -814,6 +835,10 @@ window.MIC_QUOTE_COMPANY_DATA_PSV = @json($quoteCompanyDataPsv ?? []);
   if ((hasPending || pendingCompany) && pendingData) {
     try {
       var data = JSON.parse(pendingData);
+      if (pendingCompany === 'ALL') {
+        window.location.href = '{{ route("quotations.compare-all") }}';
+        return;
+      }
       var company = (window.MIC_COMPANIES || []).find(function(c) { return c.slug === pendingCompany; });
       if (!company) { console.warn('Company not found:', pendingCompany); return; }
 
@@ -851,22 +876,43 @@ window.MIC_QUOTE_COMPANY_DATA_PSV = @json($quoteCompanyDataPsv ?? []);
           car_valuation: Number(data.value) || 0,
           vehicle_type: data.vehicleType || '',
           num_passengers: Number(data.numPassengers) || 1,
+          salutation: data.salutation || '',
+          first_name: data.firstName || data.first || '',
+          last_name: data.lastName || data.last || '',
+          phone: data.phone || '',
+          email: data.email || '',
+          chassis_number: data.chassis || '',
+          engine_number: data.engine || '',
+          body_type: data.body || '',
+          color: data.color || '',
         }),
       })
-      .then(function(r) { return r.json(); })
-      .then(function(res) {
-        if (res.success) {
-          showDashboardToast('Your Quotation has been successfully generated. <a href=\'/my-quote\' style=\'color:#fff;font-weight:700;text-decoration:underline\'>Click here to view it</a>', 'success');
+      .then(function(r) { return r.json().then(function(json) { return { ok: r.ok, json: json }; }); })
+      .then(function(result) {
+        var res = result.json;
+        if (result.ok && res.success) {
+          var quoteUrl = '/quotations/' + res.quotation.id + '?generated=1';
+          showDashboardToast('Your Quotation has been successfully generated. <a href=\'' + quoteUrl + '\' style=\'color:#fff;font-weight:700;text-decoration:underline\'>Click here to view it</a>', 'success');
           document.getElementById('pq-quote-num').textContent = res.quotation.quotation_number;
-          document.getElementById('pq-view-link').href = '/my-quote';
+          document.getElementById('pq-view-link').href = quoteUrl;
 
           sessionStorage.removeItem('pending_quote_company');
           sessionStorage.removeItem('micQuoteData');
           sessionStorage.removeItem('auth_redirect');
 
           setTimeout(function() {
-            window.location.href = '/dashboard';
+            window.location.href = quoteUrl;
           }, 4000);
+        } else {
+          // Validation/other failure — surface it instead of failing silently
+          // (fetch only rejects on network errors, not 4xx/5xx responses) and
+          // keep micQuoteData in sessionStorage so nothing the guest entered
+          // is lost; they can retry from the Quick Quote form below.
+          var firstError = res.errors ? Object.values(res.errors)[0] : null;
+          var msg = (firstError && firstError[0]) || res.message || 'We could not automatically save your quotation. Please use Quick Quote below to try again.';
+          console.warn('Failed to save quotation:', msg);
+          showDashboardToast(msg, 'error');
+          renderPendingQuoteFromSession(pendingCompany, data, company);
         }
       })
       .catch(function(e) {
@@ -879,6 +925,13 @@ window.MIC_QUOTE_COMPANY_DATA_PSV = @json($quoteCompanyDataPsv ?? []);
 
   function showDashboardToast(message, type) {
     type = type || 'success';
+    // Delegate to the shared toast component's manager (window._toastManager)
+    // instead of building a second, independent toast UI — having both fire
+    // at once is what produced two success toasts on the same page load.
+    if (window._toastManager) {
+      window._toastManager.addToast(message, type);
+      return;
+    }
     var container = document.createElement('div');
     container.id = 'pending-toast-container';
     container.style.cssText = 'position:fixed;top:20px;right:20px;z-index:9999;display:flex;flex-direction:column;gap:8px';
@@ -973,7 +1026,11 @@ function userWeather() {
         pollTimer: null,
         coords: null,
         init() {
-            this.detectLocation();
+            // Geolocation prompt disabled: the browser's native permission dialog
+            // steals input focus on page load, which made the first click anywhere
+            // on the page (including sidebar navigation) appear to do nothing.
+            // Server-rendered weather above is shown immediately instead.
+            this.fetchWeather();
             this.pollTimer = setInterval(() => this.fetchWeather(), 300000);
         },
         detectLocation() {
@@ -995,7 +1052,7 @@ function userWeather() {
             if (this.coords) {
                 url += '?lat=' + this.coords.lat + '&lon=' + this.coords.lon;
             }
-            fetch(url)
+            fetch(url, { headers: { 'Accept': 'application/json' } })
                 .then(r => r.json())
                 .then(w => {
                     this.temp = w.temperature;
@@ -1021,22 +1078,24 @@ document.addEventListener('DOMContentLoaded', function () {
     var ucc = document.getElementById('userCompanyChart');
     if (ucc) {
         new Chart(ucc, {
-            type: 'doughnut',
+            type: 'bar',
             data: {
                 labels: {!! json_encode($quotationsByCompany->keys()) !!},
                 datasets: [{
                     data: {!! json_encode($quotationsByCompany->values()) !!},
-                    backgroundColor: ['#1756c8','#7c3aed','#0f7a65','#d4860e','#c0392b','#0f7a65'],
-                    borderWidth: 2,
-                    borderColor: '#fff',
+                    backgroundColor: '#1756c8',
+                    borderRadius: 6,
+                    borderWidth: 0,
+                    maxBarThickness: 36,
                 }]
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: true,
-                cutout: '60%',
-                plugins: {
-                    legend: { position: 'bottom', labels: { boxWidth: 10, padding: 8, font: { size: 10 }, color: '#9ca3af' } }
+                plugins: { legend: { display: false } },
+                scales: {
+                    y: { beginAtZero: true, grid: { color: 'rgba(0,0,0,0.04)' }, ticks: { color: '#9ca3af', precision: 0 } },
+                    x: { grid: { display: false }, ticks: { color: '#9ca3af' } }
                 },
                 onClick: function(e, item) {
                     if (item.length > 0) {
@@ -1128,3 +1187,4 @@ document.addEventListener('DOMContentLoaded', function () {
 </script>
 @endpush
 </x-app-layout>
+

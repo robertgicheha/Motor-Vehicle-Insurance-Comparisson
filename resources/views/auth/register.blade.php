@@ -13,7 +13,8 @@
 
     <form method="POST" action="{{ route('register') }}" class="space-y-5" id="registerForm" onsubmit="showRegisterSpinner()">
         @csrf
-        
+        <input type="hidden" name="g-recaptcha-response" id="g-recaptcha-response">
+
         <div class="grid grid-cols-2 gap-4">
             <div>
                 <label for="first_name" class="block text-sm font-medium text-gray-700">First Name <span class="text-red-500">*</span></label>
@@ -120,5 +121,17 @@
         document.getElementById('registerBtnSpinner').style.display = 'inline-flex';
         document.getElementById('registerBtn').disabled = true;
     }
+
+    document.getElementById('registerForm').addEventListener('submit', function (e) {
+        if (typeof grecaptcha === 'undefined' || !window.mvipRecaptchaSiteKey) return;
+        e.preventDefault();
+        var form = this;
+        grecaptcha.ready(function () {
+            grecaptcha.execute(window.mvipRecaptchaSiteKey, { action: 'register' }).then(function (token) {
+                document.getElementById('g-recaptcha-response').value = token;
+                form.submit();
+            });
+        });
+    });
     </script>
 </x-auth-layout>

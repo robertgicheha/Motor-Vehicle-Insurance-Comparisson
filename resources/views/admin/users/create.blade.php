@@ -47,7 +47,7 @@
     <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
         <div class="px-5 py-4 border-b border-gray-100 dark:border-gray-700">
             <h2 class="text-xs font-semibold text-gray-800 dark:text-white">Account Details</h2>
-            <p class="text-[10px] text-gray-400 mt-0.5">All fields marked with * are required. Password will be auto-generated.</p>
+            <p class="text-[10px] text-gray-400 mt-0.5">All fields marked with * are required. A password is auto-generated below — edit it if needed.</p>
         </div>
 
         <form action="{{ route('admin.users.store') }}" method="POST" class="p-5">
@@ -91,6 +91,31 @@
                         @endforeach
                     </select>
                 </div>
+                <div class="md:col-span-2">
+                    <label class="block text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Password *</label>
+                    <div class="flex items-center gap-2">
+                        <input type="text" id="password-field" name="password" required autocomplete="off"
+                               class="flex-1 px-3 py-2 text-xs font-mono rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none">
+                        <button type="button" onclick="generatePassword()"
+                                class="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 rounded-lg transition whitespace-nowrap">
+                            <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                            Generate
+                        </button>
+                        <button type="button" onclick="copyFieldPassword()"
+                                class="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 rounded-lg transition whitespace-nowrap">
+                            <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+                            Copy
+                        </button>
+                    </div>
+                    <p class="text-[10px] text-gray-400 mt-1">Auto-generated — you can edit it, or click Generate for a new one. The user can change it later from their profile.</p>
+                </div>
+                <div class="md:col-span-2 flex items-center gap-2">
+                    <input type="checkbox" id="email_credentials" name="email_credentials" value="1" checked
+                           class="rounded border-gray-300 dark:border-gray-600 text-blue-500 focus:ring-blue-500">
+                    <label for="email_credentials" class="text-xs text-gray-600 dark:text-gray-300">
+                        Email login credentials to this user immediately after creation
+                    </label>
+                </div>
             </div>
 
             <div class="mt-5 flex items-center gap-2">
@@ -109,6 +134,48 @@
 </div>
 
 <script>
+function generateStrongPassword(length = 12) {
+    var upper = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    var lower = 'abcdefghijklmnopqrstuvwxyz';
+    var numbers = '0123456789';
+    var symbols = '!@#$%^&*()_+-=[]{}|;:,.<>?';
+    var all = upper + lower + numbers + symbols;
+    var pick = function (chars) { return chars[Math.floor(Math.random() * chars.length)]; };
+
+    var chars = [pick(upper), pick(lower), pick(numbers), pick(symbols)];
+    for (var i = 4; i < length; i++) {
+        chars.push(pick(all));
+    }
+    for (var j = chars.length - 1; j > 0; j--) {
+        var k = Math.floor(Math.random() * (j + 1));
+        var tmp = chars[j]; chars[j] = chars[k]; chars[k] = tmp;
+    }
+    return chars.join('');
+}
+
+function generatePassword() {
+    document.getElementById('password-field').value = generateStrongPassword();
+}
+
+function copyFieldPassword() {
+    var field = document.getElementById('password-field');
+    if (!field.value) { return; }
+    navigator.clipboard.writeText(field.value).then(function() {
+        alert('Password copied to clipboard!');
+    }).catch(function() {
+        field.select();
+        document.execCommand('copy');
+        alert('Password copied to clipboard!');
+    });
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    var field = document.getElementById('password-field');
+    if (field && !field.value) {
+        field.value = generateStrongPassword();
+    }
+});
+
 function copyPassword() {
     var password = document.getElementById('generated-password').textContent;
     navigator.clipboard.writeText(password).then(function() {

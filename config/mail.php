@@ -40,13 +40,25 @@ return [
         'smtp' => [
             'transport' => 'smtp',
             'scheme' => env('MAIL_SCHEME'),
-            'url' => env('MAIL_URL'),
+            // Must be null (not an empty string) when unset: Laravel's
+            // MailManager::getConfig() treats isset($config['url']) as "a
+            // DSN was given" and, on that branch, overwrites 'transport'
+            // with the (here, absent) 'driver' key — silently turning every
+            // mailer using this block into an unresolvable one. A blank
+            // MAIL_URL= line in .env is exactly the isset()-true, value-''
+            // case that trips this.
+            'url' => env('MAIL_URL') ?: null,
             'host' => env('MAIL_HOST', '127.0.0.1'),
             'port' => env('MAIL_PORT', 2525),
             'username' => env('MAIL_USERNAME'),
             'password' => env('MAIL_PASSWORD'),
             'timeout' => null,
-            'local_domain' => env('MAIL_EHLO_DOMAIN', parse_url((string) env('APP_URL', 'http://localhost'), PHP_URL_HOST)),
+            // Same empty-string-vs-null trap as 'url' above: env('X', $default)
+            // only falls back to $default when X is truly absent, not when
+            // it's present-but-blank (MAIL_EHLO_DOMAIN= in .env) — and an
+            // empty HELO/EHLO hostname gets a hard "501 Syntax" rejection
+            // from Mailtrap's SMTP server.
+            'local_domain' => env('MAIL_EHLO_DOMAIN') ?: parse_url((string) env('APP_URL', 'http://localhost'), PHP_URL_HOST),
         ],
 
         'ses' => [
@@ -77,6 +89,14 @@ return [
 
         'array' => [
             'transport' => 'array',
+        ],
+
+        'nav' => [
+            'transport' => 'nav',
+        ],
+
+        'mailtrap' => [
+            'transport' => 'mailtrap',
         ],
 
         'failover' => [

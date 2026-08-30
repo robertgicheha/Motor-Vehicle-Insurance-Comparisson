@@ -61,7 +61,7 @@ class UsersImport
                     'profile_completed' => true,
                 ]);
 
-                $user->assignRole('user');
+                $user->syncRoles(['user']);
                 $this->imported++;
             }
         }

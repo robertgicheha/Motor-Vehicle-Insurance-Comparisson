@@ -1,7 +1,4 @@
 <x-app-layout>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
-    <script src="{{ asset('js/dashboard-charts.js') }}"></script>
-
     <div class="db-root fade-in">
       <div class="db-layout">
       <div class="db-main-content">
@@ -10,7 +7,7 @@
       <div class="db-top-bar">
         <div class="db-greeting">
           <h1>{{ $greeting }}, {{ auth()->user()->first_name ?: auth()->user()->name }}!</h1>
-          <p>Admin Dashboard &mdash; Motor Insurance Portal</p>
+          <p>Super Admin Dashboard &mdash; Motor Insurance Portal</p>
         </div>
         <div class="db-weather" x-data="weatherWidget()" x-init="init()">
           <span style="font-size:36px;line-height:1;display:flex;align-items:center;" x-html="emoji">🌤️</span>
@@ -58,57 +55,100 @@
       </div>
       @endif
 
+      {{-- ─── STICKER NUMBER REMINDER ALERT ──────────────────────────────── --}}
+      @if(($stickerNumberReminders ?? collect())->count() > 0)
+      <div class="flex items-center justify-between gap-4 px-5 py-4 mb-4 rounded-2xl bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700 fade-in" id="sticker-number-reminder-banner">
+          <div class="flex items-center gap-3">
+              <div class="w-10 h-10 rounded-full bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center shrink-0">
+                  <svg class="w-5 h-5 text-amber-600 dark:text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                  </svg>
+              </div>
+              <div>
+                  <p class="text-sm font-semibold text-amber-800 dark:text-amber-300">
+                      {{ $stickerNumberReminders->count() }} sticker{{ $stickerNumberReminders->count() > 1 ? 's' : '' }} awaiting the underwriter's sticker number
+                  </p>
+                  <p class="text-xs text-amber-700 dark:text-amber-400 mt-0.5">Download the underwriter's reply attachment, find the sticker number, and enter it under Update Stickers to mark completion.</p>
+              </div>
+          </div>
+          <a href="{{ route('admin.stickers.update-form') }}" class="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold bg-amber-500 hover:bg-amber-600 text-white rounded-lg transition shrink-0">
+              Update Stickers
+              <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+          </a>
+      </div>
+      <script>
+      document.addEventListener('DOMContentLoaded', function () {
+          if (window._toastManager) {
+              window._toastManager.addToast(
+                  {{ Illuminate\Support\Js::from($stickerNumberReminders->count() . ' sticker' . ($stickerNumberReminders->count() > 1 ? 's' : '') . ' awaiting the underwriter\'s sticker number.') }},
+                  'warning'
+              );
+          }
+      });
+      </script>
+      @endif
+
+      @php
+        $trendBadge = function ($pct, $label) {
+            $up = $pct >= 0;
+            $svgPath = $up
+                ? '<path d="M3 17l6 -6l4 4l8 -8" /><path d="M14 7l7 0l0 7" />'
+                : '<path d="M3 7l6 6l4 -4l8 8" /><path d="M21 10l0 7l-7 0" />';
+            $icon = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-3 h-3 inline">' . $svgPath . '</svg>';
+            return '<div class="db-kpi-trend ' . ($up ? 'trend-up' : 'trend-down') . '">' . $icon . ' ' . ($up ? '+' : '') . number_format($pct, 1) . '% ' . $label . '</div>';
+        };
+      @endphp
       <div class="db-section-label">Key Metrics</div>
       <div class="db-kpi-grid">
         <a href="{{ route('admin.users.index') }}" class="db-kpi" style="--accent:#1756c8;--icon-bg:#e8f0fc;cursor:pointer;text-decoration:none;">
-          <div class="db-kpi-icon"><i class="ti ti-users" aria-hidden="true"></i></div>
+          <div class="db-kpi-icon"><x-icon name="users" class="w-4 h-4" aria-hidden="true" /></div>
           <div class="db-kpi-label">Total Users</div>
           <div class="db-kpi-value">{{ $totalUsers }}</div>
-          <div class="db-kpi-trend trend-up"><i class="ti ti-trending-up" style="font-size:12px"></i> +8% this month</div>
+          {!! $trendBadge($trends['users'], 'this month') !!}
         </a>
 
         <a href="{{ route('admin.companies.index') }}" class="db-kpi" style="--accent:#7c3aed;--icon-bg:#ede9fe;cursor:pointer;text-decoration:none;">
-        <div class="db-kpi-icon"><i class="ti ti-building" aria-hidden="true"></i></div>
+        <div class="db-kpi-icon"><x-icon name="building" class="w-4 h-4" aria-hidden="true" /></div>
         <div class="db-kpi-label">Total Companies</div>
         <div class="db-kpi-value">{{ $totalCompanies }}</div>
-        <div class="db-kpi-trend trend-up"><i class="ti ti-trending-up" style="font-size:12px"></i> +3% this week</div>
+        {!! $trendBadge($trends['companies'], 'this week') !!}
       </a>
-      
+
         <a href="{{ route('quotations.index') }}" class="db-kpi" style="--accent:#7c3aed;--icon-bg:#ede9fe;cursor:pointer;text-decoration:none;">
-          <div class="db-kpi-icon"><i class="ti ti-file-description" aria-hidden="true"></i></div>
+          <div class="db-kpi-icon"><x-icon name="file-description" class="w-4 h-4" aria-hidden="true" /></div>
           <div class="db-kpi-label">Total Quotations</div>
           <div class="db-kpi-value">{{ $totalQuotations }}</div>
-          <div class="db-kpi-trend trend-up"><i class="ti ti-trending-up" style="font-size:12px"></i> +12% vs last month</div>
+          {!! $trendBadge($trends['quotations'], 'vs last month') !!}
         </a>
         <a href="{{ route('quotations.index') }}" class="db-kpi" style="--accent:#d4860e;--icon-bg:#fef3c7;cursor:pointer;text-decoration:none;">
-          <div class="db-kpi-icon"><i class="ti ti-coins" aria-hidden="true"></i></div>
+          <div class="db-kpi-icon"><x-icon name="coins" class="w-4 h-4" aria-hidden="true" /></div>
           <div class="db-kpi-label">Total Premium (KES)</div>
           <div class="db-kpi-value" style="font-size:20px">{{ number_format($totalPremium) }}</div>
-          <div class="db-kpi-trend trend-up"><i class="ti ti-trending-up" style="font-size:12px"></i> +5.3% growth</div>
+          {!! $trendBadge($trends['premium'], 'growth') !!}
         </a>
       </div>
 
       <div class="db-kpi-grid" style="margin-top:14px">
         <a href="{{ route('quotations.index') }}" class="db-kpi" style="--accent:#c0392b;--icon-bg:#fdeaea;cursor:pointer;text-decoration:none;">
-          <div class="db-kpi-icon"><i class="ti ti-car" aria-hidden="true"></i></div>
+          <div class="db-kpi-icon"><x-icon name="car" class="w-4 h-4" aria-hidden="true" /></div>
           <div class="db-kpi-label">Vehicles Insured</div>
-          <div class="db-kpi-value">{{ $totalQuotations }}</div>
-          <div class="db-kpi-sub">Across all policies</div>
+          <div class="db-kpi-value">{{ $vehiclesInsured }}</div>
+          <div class="db-kpi-sub">Vehicles with an issued sticker</div>
         </a>
         <a href="{{ route('admin.stickers.index') }}" class="db-kpi" style="--accent:#0f7a65;--icon-bg:#e1f5ee;cursor:pointer;text-decoration:none;">
-          <div class="db-kpi-icon"><i class="ti ti-ticket" aria-hidden="true"></i></div>
+          <div class="db-kpi-icon"><x-icon name="ticket" class="w-4 h-4" aria-hidden="true" /></div>
           <div class="db-kpi-label">Stickers Issued</div>
-          <div class="db-kpi-value">{{ $totalQuotations }}</div>
-          <div class="db-kpi-trend trend-neutral"><i class="ti ti-minus" style="font-size:12px"></i> Stable</div>
+          <div class="db-kpi-value">{{ $totalStickersIssued }}</div>
+          <div class="db-kpi-sub">Total sticker records</div>
         </a>
         <a href="{{ route('admin.users.index') }}" class="db-kpi" style="--accent:#1756c8;--icon-bg:#e8f0fc;cursor:pointer;text-decoration:none;">
-          <div class="db-kpi-icon"><i class="ti ti-mail-forward" aria-hidden="true"></i></div>
+          <div class="db-kpi-icon"><x-icon name="mail-forward" class="w-4 h-4" aria-hidden="true" /></div>
           <div class="db-kpi-label">Emails Dispatched</div>
-          <div class="db-kpi-value">{{ $totalQuotations }}</div>
-          <div class="db-kpi-sub">PDFs attached</div>
+          <div class="db-kpi-value">{{ $totalEmailsDispatched }}</div>
+          <div class="db-kpi-sub">To underwriters</div>
         </a>
         <div class="db-kpi" style="--accent:#0f7a65;--icon-bg:#e1f5ee">
-          <div class="db-kpi-icon"><i class="ti ti-wifi" aria-hidden="true"></i></div>
+          <div class="db-kpi-icon"><x-icon name="wifi" class="w-4 h-4" aria-hidden="true" /></div>
           <div class="db-kpi-label">Online Now</div>
           <div class="db-kpi-value">{{ $onlineUsers }}</div>
           <div class="db-kpi-sub">Active sessions</div>
@@ -136,120 +176,120 @@
         </a>
       </div>
 
-      <div class="db-section-label">Quick Quote</div>
-      <div style="margin-bottom:8px">@include('dashboard.partials.quick-quote')</div>
+      {{-- <div class="db-section-label">Quick Quote</div>
+      <div style="margin-bottom:8px">@include('dashboard.partials.quick-quote')</div> --}}
 
       <div class="db-section-label">Quick Actions</div>
       <div class="db-kpi-grid" style="margin-top:0">
         <a href="{{ route('admin.users.create') }}" class="db-kpi" style="--accent:#1756c8;--icon-bg:#e8f0fc;cursor:pointer;text-decoration:none;display:flex;flex-direction:column;">
-          <div class="db-kpi-icon"><i class="ti ti-user-plus" aria-hidden="true"></i></div>
+          <div class="db-kpi-icon"><x-icon name="user-plus" class="w-4 h-4" aria-hidden="true" /></div>
           <div class="db-kpi-label" style="margin-bottom:0">Add User</div>
           <div class="db-kpi-sub">Create a new user account</div>
         </a>
         <a href="{{ route('admin.reports.index') }}" class="db-kpi" style="--accent:#0f7a65;--icon-bg:#e1f5ee;cursor:pointer;text-decoration:none;display:flex;flex-direction:column;">
-          <div class="db-kpi-icon"><i class="ti ti-report" aria-hidden="true"></i></div>
+          <div class="db-kpi-icon"><x-icon name="report" class="w-4 h-4" aria-hidden="true" /></div>
           <div class="db-kpi-label" style="margin-bottom:0">Generate Reports</div>
           <div class="db-kpi-sub">Export quotation data</div>
         </a>
         <a href="{{ route('admin.companies.create') }}" class="db-kpi" style="--accent:#d4860e;--icon-bg:#fef3c7;cursor:pointer;text-decoration:none;display:flex;flex-direction:column;">
-          <div class="db-kpi-icon"><i class="ti ti-building-plus" aria-hidden="true"></i></div>
-          <div class="db-kpi-label" style="margin-bottom:0">Add Company</div>
-          <div class="db-kpi-sub">Register a new insurer</div>
+          <div class="db-kpi-icon"><x-icon name="building-plus" class="w-4 h-4" aria-hidden="true" /></div>
+          <div class="db-kpi-label" style="margin-bottom:0">Add Underwriter</div>
+          <div class="db-kpi-sub">Register a new underwriter</div>
         </a>
         <a href="{{ route('quotations.index') }}" class="db-kpi" style="--accent:#7c3aed;--icon-bg:#ede9fe;cursor:pointer;text-decoration:none;display:flex;flex-direction:column;">
-          <div class="db-kpi-icon"><i class="ti ti-file-description" aria-hidden="true"></i></div>
+          <div class="db-kpi-icon"><x-icon name="file-description" class="w-4 h-4" aria-hidden="true" /></div>
           <div class="db-kpi-label" style="margin-bottom:0">View Quotations</div>
           <div class="db-kpi-sub">Browse all quotations</div>
         </a>
         <a href="{{ route('stickers.issue') }}" class="db-kpi" style="--accent:#c0392b;--icon-bg:#fdeaea;cursor:pointer;text-decoration:none;display:flex;flex-direction:column;">
-          <div class="db-kpi-icon"><i class="ti ti-ticket" aria-hidden="true"></i></div>
-          <div class="db-kpi-label" style="margin-bottom:0">Issue Certificate</div>
+          <div class="db-kpi-icon"><x-icon name="ticket" class="w-4 h-4" aria-hidden="true" /></div>
+          <div class="db-kpi-label" style="margin-bottom:0">Issue Sticker</div>
           <div class="db-kpi-sub">KYC upload & sticker issuance</div>
         </a>
         <a href="{{ route('admin.email-settings.index') }}" class="db-kpi" style="--accent:#c0392b;--icon-bg:#fdeaea;cursor:pointer;text-decoration:none;display:flex;flex-direction:column;">
-          <div class="db-kpi-icon"><i class="ti ti-mail-forward" aria-hidden="true"></i></div>
+          <div class="db-kpi-icon"><x-icon name="mail-forward" class="w-4 h-4" aria-hidden="true" /></div>
           <div class="db-kpi-label" style="margin-bottom:0">Email Templates</div>
           <div class="db-kpi-sub">Edit inbound / outbound emails</div>
         </a>
         <a href="{{ route('admin.settings.index') }}" class="db-kpi" style="--accent:#1756c8;--icon-bg:#e8f0fc;cursor:pointer;text-decoration:none;display:flex;flex-direction:column;">
-          <div class="db-kpi-icon"><i class="ti ti-settings" aria-hidden="true"></i></div>
+          <div class="db-kpi-icon"><x-icon name="settings" class="w-4 h-4" aria-hidden="true" /></div>
           <div class="db-kpi-label" style="margin-bottom:0">Mail Settings</div>
           <div class="db-kpi-sub">SMTP &amp; delivery configuration</div>
         </a>
       </div>
 
       <div class="db-section-label">Analytics</div>
-<div class="db-chart-grid-3col">
-  <div class="db-card">
-    <div class="db-card-header"><span><span class="dot"></span>Quotations by Company</span></div>
-    <canvas id="companyChart" height="200"></canvas>
-  </div>
-  <div class="db-card">
-    <div class="db-card-header"><span><span class="dot"></span>Monthly Trend</span></div>
-    <canvas id="monthlyChart" height="200"></canvas>
-  </div>
-  <div class="db-card">
-    <div class="db-card-header"><span><span class="dot"></span>Total Distribution of Quotations</span></div>
-    <canvas id="distributionChart" height="200"></canvas>
-  </div>
-  <div class="db-card">
-    <div class="db-card-header"><span><span class="dot"></span>Most Subscribed Premium</span></div>
-    <canvas id="premiumChart" height="200"></canvas>
-  </div>
-  <div class="db-card">
-    <div class="db-card-header"><span><span class="dot"></span>Recent Quotations</span></div>
-    <div class="db-table-wrap">
-      <table class="db-table">
-        <thead>
-          <tr>
-            <th>#</th>
-            <th>User</th>
-            <th>Company</th>
-            <th>Vehicle</th>
-            <th>Premium (KES)</th>
-            <th>Status</th>
-            <th>Date</th>
-          </tr>
-        </thead>
-        <tbody>
-          @forelse($recentQuotations as $q)
-          <tr>
-            <td><a href="{{ route('quotations.show', $q) }}" style="color:#1756c8;font-weight:700">{{ $q->quotation_number }}</a></td>
-            <td>{{ $q->user->name }}</td>
-            <td>{{ $q->company->name }}</td>
-            <td>{{ $q->car_make }} {{ $q->car_model }}</td>
-            <td>{{ number_format($q->total_premium) }}</td>
-            <td>
-              <span class="db-badge badge-active">{{ ucfirst($q->status) }}</span>
-            </td>
-            <td>{{ $q->created_at->format('d M Y') }}</td>
-          </tr>
-          @empty
-          <tr>
-            <td colspan="7" style="padding:32px;text-align:center;color:#7a8baa;font-size:12px">No quotations yet.</td>
-          </tr>
-          @endforelse
-        </tbody>
-      </table>
-    </div>
-  </div>
-  <div class="db-card">
-    <div class="db-card-header"><span><span class="dot"></span>Companies Breakdown</span></div>
-    <div class="db-company-grid">
-      @foreach($companies as $company)
-      <div class="db-company-card">
-        <div class="db-company-name">{{ $company->name }}</div>
-        <div class="db-company-label">Total Quotations</div>
-        <div class="db-company-count">{{ $company->quotations_count }}</div>
-        <div class="db-progress">
-          @php $maxCount = $companies->max('quotations_count') ?: 1; @endphp
-          <div class="db-progress-fill" style="width:{{ ($company->quotations_count / $maxCount) * 100 }}%"></div>
+      <div class="db-chart-grid-3col">
+        <div class="db-card">
+          <div class="db-card-header"><span><span class="dot"></span>Quotations by Company</span></div>
+          <canvas id="companyChart" height="200"></canvas>
+        </div>
+        <div class="db-card">
+          <div class="db-card-header"><span><span class="dot"></span>Monthly Trend</span></div>
+          <canvas id="monthlyChart" height="200"></canvas>
+        </div>
+        <div class="db-card">
+          <div class="db-card-header"><span><span class="dot"></span>Total Distribution of Quotations</span></div>
+          <canvas id="distributionChart" height="200"></canvas>
+        </div>
+        <div class="db-card">
+          <div class="db-card-header"><span><span class="dot"></span>Most Subscribed Premium</span></div>
+          <canvas id="premiumChart" height="200"></canvas>
+        </div>
+        <div class="db-card">
+          <div class="db-card-header"><span><span class="dot"></span>Recent Quotations</span></div>
+          <div class="db-table-wrap">
+            <table class="db-table">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>User</th>
+                  <th>Company</th>
+                  <th>Vehicle</th>
+                  <th>Premium (KES)</th>
+                  <th>Status</th>
+                  <th>Date</th>
+                </tr>
+              </thead>
+              <tbody>
+                @forelse($recentQuotations as $q)
+                <tr>
+                  <td><a href="{{ route('quotations.show', $q) }}" style="color:#1756c8;font-weight:700">{{ $q->quotation_number }}</a></td>
+                  <td>{{ $q->customer_name }}</td>
+                  <td>{{ $q->company->name }}</td>
+                  <td>{{ $q->car_make }} {{ $q->car_model }}</td>
+                  <td>{{ number_format($q->total_premium) }}</td>
+                  <td>
+                    <span class="db-badge badge-active">{{ ucfirst($q->status) }}</span>
+                  </td>
+                  <td>{{ $q->created_at->format('d M Y') }}</td>
+                </tr>
+                @empty
+                <tr>
+                  <td colspan="7" style="padding:32px;text-align:center;color:#7a8baa;font-size:12px">No quotations yet.</td>
+                </tr>
+                @endforelse
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div class="db-card">
+          <div class="db-card-header"><span><span class="dot"></span>Companies Breakdown</span></div>
+          <div class="db-company-grid">
+            @foreach($companies as $company)
+            <div class="db-company-card">
+              <div class="db-company-name">{{ $company->name }}</div>
+              <div class="db-company-label">Total Quotations</div>
+              <div class="db-company-count">{{ $company->quotations_count }}</div>
+              <div class="db-progress">
+                @php $maxCount = $companies->max('quotations_count') ?: 1; @endphp
+                <div class="db-progress-fill" style="width:{{ ($company->quotations_count / $maxCount) * 100 }}%"></div>
+              </div>
+            </div>
+            @endforeach
+          </div>
         </div>
       </div>
-      @endforeach
-    </div>
-  </div>
-</div>
 
       <div class="db-section-label">
         Activity &amp; Alerts
@@ -258,14 +298,14 @@
             <input type="checkbox" id="dbActivityAutoRefresh" style="accent-color:#1756c8"> Auto-refresh (30s)
           </label>
           <button type="button" id="dbActivityRefresh" style="border:1px solid #d5deeb;background:#fff;border-radius:6px;padding:2px 10px;font-size:11px;font-weight:600;color:#1756c8;cursor:pointer;">
-            <i class="ti ti-refresh" style="font-size:12px"></i> Refresh
+            <x-icon name="refresh" class="w-3 h-3 inline" /> Refresh
           </button>
         </span>
       </div>
       <div class="db-chart-grid">
         <div class="db-card">
           <div class="db-card-header"><span><span class="dot"></span>System Activity</span></div>
-          <div class="db-activity-list">
+          <div class="db-activity-list" id="db-system-activity-list">
             @forelse($allActivities as $a)
             @php
               $descLower = strtolower($a->description ?? $a->action);
@@ -296,10 +336,10 @@
         </div>
         <div class="db-card" style="background-color: #d0d0d0;">
           <div class="db-card-header text-micblue"><span><span class="dot"></span>My Activity</span></div>
-          <div class="db-activity-list">
+          <div class="db-activity-list" id="db-my-activity-list">
             @forelse($myActivities as $a)
             <div class="db-activity-item">
-              <div class="db-activity-dot" text style="background:gray"></div>
+              <div class="db-activity-dot" style="background:gray"></div>
               <div>
                 <div class="db-activity-text ">{{ $a->description ?? $a->action }}</div>
                 <div class="db-activity-time ">{{ $a->created_at->diffForHumans() }}</div>
@@ -330,7 +370,7 @@
             modalDate: '',
             modalQuotes: [],
             quotationDates: {{ json_encode($quotationDates->map(fn($d) => ['date' => $d['date'], 'count' => $d['count']])->values()) }},
-            allQuotationData: {{ json_encode($quotationDates) }},
+            allQuotationData: {{ json_encode($quotationDates->values()) }},
             daysInMonth() { return new Date(this.year, this.month + 1, 0).getDate(); },
             firstDay() { return new Date(this.year, this.month, 1).getDay(); },
             monthName() { return new Date(this.year, this.month).toLocaleString('default', { month: 'long' }); },
@@ -373,11 +413,11 @@
             closeModal() { this.showModal = false; }
           }">
             <div class="flex items-center justify-between mb-2">
-              <button @click="prevMonth()" class="p-0.5 text-gray-400 hover:text-gray-600 transition" style="background:none;border:none;cursor:pointer">
+              <button @click="prevMonth()" aria-label="Previous month" class="p-0.5 text-gray-400 hover:text-gray-600 transition" style="background:none;border:none;cursor:pointer">
                 <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
               </button>
               <span class="text-[11px] font-semibold text-gray-800" x-text="monthName() + ' ' + year"></span>
-              <button @click="nextMonth()" class="p-0.5 text-gray-400 hover:text-gray-600 transition" style="background:none;border:none;cursor:pointer">
+              <button @click="nextMonth()" aria-label="Next month" class="p-0.5 text-gray-400 hover:text-gray-600 transition" style="background:none;border:none;cursor:pointer">
                 <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
               </button>
             </div>
@@ -424,7 +464,7 @@
                       <p class="text-[10px] font-semibold uppercase tracking-widest text-gray-400">Quotations</p>
                       <h3 class="text-sm font-bold text-gray-800 dark:text-white mt-0.5" x-text="modalDate"></h3>
                     </div>
-                    <button @click="closeModal()" class="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition">
+                    <button @click="closeModal()" aria-label="Close" class="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition">
                       <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
                     </button>
                   </div>
@@ -545,7 +585,7 @@
             @forelse($recentQuotations as $q)
             <tr>
               <td><a href="{{ route('quotations.show', $q) }}" style="color:#1756c8;font-weight:700">{{ $q->quotation_number }}</a></td>
-              <td>{{ $q->user->name }}</td>
+              <td>{{ $q->customer_name }}</td>
               <td>{{ $q->company->name }}</td>
               <td>{{ $q->car_make }} {{ $q->car_model }}</td>
               <td>{{ number_format($q->total_premium) }}</td>
@@ -566,16 +606,24 @@
       <!-- ── ACTION BAR ── -->
       <div class="db-section-label">Quotation Tools</div>
       <div class="action-bar">
-        <span class="action-bar-label">Actions</span>
-        <a href="{{ route('quotations.index') }}?export=pdf" class="action-btn action-btn-download">
+        <span class="action-bar-label">Quotation</span>
+        <select id="db-quote-tools-select" style="border:1px solid #d5deeb;border-radius:6px;padding:4px 8px;font-size:11px;color:#1a2540;background:#fff;min-width:220px">
+          <option value="">— Select a quotation —</option>
+          @foreach($recentQuotations ?? [] as $rq)
+          <option value="{{ $rq->id }}" data-download="{{ route('quotations.download.pdf', $rq) }}" data-show="{{ route('quotations.show', $rq) }}">
+            {{ $rq->quotation_number }} — {{ $rq->customer_name }}
+          </option>
+          @endforeach
+        </select>
+        <a href="#" id="db-quote-tools-download" class="action-btn action-btn-download" onclick="return this.href!=='#'" target="_blank">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
           Download
         </a>
-        <button onclick="window.print()" class="action-btn action-btn-print">
+        <a href="#" id="db-quote-tools-print" class="action-btn action-btn-print" onclick="return this.href!=='#'" target="_blank">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
           Print
-        </button>
-        <button @click="$el.closest('.db-root').querySelector('.pdf-preview').classList.toggle('open')" class="action-btn action-btn-preview">
+        </a>
+        <button id="db-quote-tools-preview-btn" @click="$el.closest('.db-root').querySelector('.pdf-preview').classList.toggle('open')" class="action-btn action-btn-preview">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
           Preview
         </button>
@@ -584,11 +632,35 @@
       <!-- ── PDF PREVIEW ── -->
       <div class="pdf-preview">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
-          <div style="font-size:11px;font-weight:700;color:#1a2540">PDF Preview</div>
+          <div style="font-size:11px;font-weight:700;color:#1a2540">Quotation Preview</div>
           <button @click="$el.closest('.pdf-preview').classList.remove('open')" style="background:none;border:none;font-size:16px;color:#7a8baa;cursor:pointer">&times;</button>
         </div>
-        <iframe srcdoc="<p style='font-family:system-ui;padding:40px;text-align:center;color:#7a8baa'>Select a quotation to preview</p>"></iframe>
+        <iframe id="db-quote-tools-iframe" srcdoc="<p style='font-family:system-ui;padding:40px;text-align:center;color:#7a8baa'>Select a quotation above to preview it here.</p>"></iframe>
       </div>
+      <script>
+      document.addEventListener('DOMContentLoaded', function () {
+        var select = document.getElementById('db-quote-tools-select');
+        var downloadBtn = document.getElementById('db-quote-tools-download');
+        var printBtn = document.getElementById('db-quote-tools-print');
+        var iframe = document.getElementById('db-quote-tools-iframe');
+        if (!select) return;
+        select.addEventListener('change', function () {
+          var opt = select.options[select.selectedIndex];
+          var downloadUrl = opt ? opt.dataset.download : null;
+          var showUrl = opt ? opt.dataset.show : null;
+          if (downloadUrl) {
+            downloadBtn.href = downloadUrl;
+            printBtn.href = downloadUrl;
+          } else {
+            downloadBtn.href = '#';
+            printBtn.href = '#';
+          }
+          if (iframe) {
+            iframe.src = showUrl || 'about:blank';
+          }
+        });
+      });
+      </script>
 
       <!-- ── COMPARISON GRID ── -->
       <div class="db-section-label">Compare Insurance Companies</div>
@@ -604,8 +676,8 @@
             @endif
           </div>
           <div class="compare-card-name">{{ $company->name }}</div>
-          <div class="compare-card-rate">{{ $company->rate ?? $defaultRate ?? 6.5 }}% rate</div>
-          <div class="compare-card-premium">KES {{ number_format($totalPremium > 0 ? $totalPremium / max($companies->count(), 1) : 0) }}</div>
+          <div class="compare-card-rate">{{ $company->display_rate ?? '—' }}% rate</div>
+          <div class="compare-card-premium">KES {{ number_format($company->avg_premium ?? 0) }}</div>
           <a href="{{ route('quotations.index') }}?company={{ urlencode($company->name) }}" class="compare-card-btn">View Quotes</a>
         </div>
         @endforeach
@@ -628,8 +700,8 @@
             <tr>
               <td style="font-weight:700;color:#1a2540">{{ $company->name }}</td>
               <td>{{ $company->quotations_count }}</td>
-              <td>KES {{ number_format($company->quotations_count > 0 ? $totalPremium / max($totalQuotations, 1) : 0) }}</td>
-              <td>{{ $company->rate ?? $defaultRate ?? 6.5 }}%</td>
+              <td>KES {{ number_format($company->avg_premium ?? 0) }}</td>
+              <td>{{ $company->display_rate ?? '—' }}%</td>
               <td><span class="db-badge badge-active">Active</span></td>
             </tr>
             @endforeach
@@ -654,28 +726,28 @@
     {{-- <div class="db-right-sidebar">
       <a href="{{ route('quotations.index') }}" class="cta-card-link">
         <div class="cta-card">
-          <div class="cta-card-icon" style="background:#e8f0fc;color:#1756c8"><i class="ti ti-file-description"></i></div>
+          <div class="cta-card-icon" style="background:#e8f0fc;color:#1756c8"><x-icon name="file-description" class="w-5 h-5" /></div>
           <div class="cta-card-title">All Quotations</div>
           <div class="cta-card-desc">Browse, filter, and manage all quotations</div>
         </div>
       </a>
       <a href="{{ route('admin.reports.index') }}" class="cta-card-link">
         <div class="cta-card">
-          <div class="cta-card-icon" style="background:#e1f5ee;color:#0f7a65"><i class="ti ti-report"></i></div>
+          <div class="cta-card-icon" style="background:#e1f5ee;color:#0f7a65"><x-icon name="report" class="w-5 h-5" /></div>
           <div class="cta-card-title">Reports</div>
           <div class="cta-card-desc">Export and analyze quotation data</div>
         </div>
       </a>
       <a href="{{ route('admin.audit.index') }}" class="cta-card-link">
         <div class="cta-card">
-          <div class="cta-card-icon" style="background:#fef3c7;color:#d4860e"><i class="ti ti-shield"></i></div>
+          <div class="cta-card-icon" style="background:#fef3c7;color:#d4860e"><x-icon name="shield" class="w-5 h-5" /></div>
           <div class="cta-card-title">Audit Log</div>
           <div class="cta-card-desc">Monitor system activity and changes</div>
         </div>
       </a>
       <a href="{{ route('admin.settings.index') }}" class="cta-card-link">
         <div class="cta-card">
-          <div class="cta-card-icon" style="background:#fdeaea;color:#c0392b"><i class="ti ti-settings"></i></div>
+          <div class="cta-card-icon" style="background:#fdeaea;color:#c0392b"><x-icon name="settings" class="w-5 h-5" /></div>
           <div class="cta-card-title">Settings</div>
           <div class="cta-card-desc">Configure system preferences</div>
         </div>
@@ -688,10 +760,10 @@
       <div class="db-kpi-grid" style="margin-top:0">
         @php
             $healthChecks = $healthChecks ?? collect();
-            $healthTypes = ['database' => 'Database', 'site' => 'Website', 'server' => 'Server', 'sticker_api' => 'Sticker API'];
-            $healthIcons = ['database' => 'ti-database', 'site' => 'ti-globe', 'server' => 'ti-server', 'sticker_api' => 'ti-api'];
+            $healthTypes = ['database' => 'Database', 'site' => 'Website', 'server' => 'Server', 'email_server' => 'Email Server'];
+            $healthIcons = ['database' => 'database', 'site' => 'globe', 'server' => 'server', 'email_server' => 'mail'];
         @endphp
-        @foreach(['database', 'site', 'server', 'sticker_api'] as $type)
+        @foreach(['database', 'site', 'server', 'email_server'] as $type)
           @php
             $check = $healthChecks->firstWhere('type', $type);
             $isUp = $check && $check->status === 'up';
@@ -701,7 +773,7 @@
             $label = $healthTypes[$type] ?? ucfirst($type);
           @endphp
           <a href="{{ route('admin.health.index') }}" class="db-kpi" style="--accent:{{ $accentColor }};--icon-bg:{{ $iconBg }};cursor:pointer;text-decoration:none;display:flex;flex-direction:column;">
-            <div class="db-kpi-icon"><i class="ti {{ $healthIcons[$type] }}" aria-hidden="true"></i></div>
+            <div class="db-kpi-icon"><x-icon :name="$healthIcons[$type]" class="w-4 h-4" aria-hidden="true" /></div>
             <div class="db-kpi-label">{{ $label }}</div>
             <div class="db-kpi-value" style="font-size:16px">{{ $check ? ucfirst($check->status) : 'Unknown' }}</div>
             <div class="db-kpi-sub" style="font-size:9px">{{ $check ? $check->message : 'Not checked' }}</div>
@@ -710,7 +782,6 @@
       </div>
 
     @push('scripts')
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
     <script src="{{ asset('js/dashboard-quote.js') }}"></script>
     <script>
     function weatherWidget() {
@@ -730,7 +801,11 @@
             pollTimer: null,
             coords: null,
             init() {
-                this.detectLocation();
+                // Geolocation prompt disabled: the browser's native permission dialog
+                // steals input focus on page load, which made the first click anywhere
+                // on the page (including sidebar navigation) appear to do nothing.
+                // Server-rendered weather above is shown immediately instead.
+                this.fetchWeather();
                 this.pollTimer = setInterval(() => this.fetchWeather(), 300000);
             },
             detectLocation() {
@@ -749,7 +824,7 @@
                 if (this.coords) {
                     url += '?lat=' + this.coords.lat + '&lon=' + this.coords.lon;
                 }
-                fetch(url)
+                fetch(url, { headers: { 'Accept': 'application/json' } })
                     .then(r => r.json())
                     .then(w => {
                         this.temp = w.temperature;
@@ -783,25 +858,30 @@
     Chart.defaults.font.family = "'Montserrat', sans-serif";
     Chart.defaults.font.size = 11;
 
+    var minimalGrid = { color: 'rgba(0,0,0,0.04)' };
+    var minimalTicks = { color: '#7a8baa' };
+
     var companyChart = new Chart(document.getElementById('companyChart'), {
-      type: 'doughnut',
+      type: 'bar',
       data: {
         labels: {!! json_encode($quotationsByCompany->keys()) !!},
         datasets: [{
           label: 'Quotations',
           data: {!! json_encode($quotationsByCompany->values()) !!},
-          backgroundColor: ['#1756c8','#7c3aed','#0f7a65','#d4860e','#c0392b','#0f7a65'],
-          borderWidth: 2,
-          borderColor: '#fff',
+          backgroundColor: '#1756c8',
+          borderRadius: 6,
+          borderWidth: 0,
+          maxBarThickness: 36,
         }]
       },
       options: {
         responsive: true,
         maintainAspectRatio: true,
-        aspectRatio: 1.2,
-        cutout: '55%',
-        plugins: {
-          legend: { position: 'bottom', labels: { boxWidth: 10, padding: 8, font: { size: 10 }, color: '#7a8baa' } }
+        aspectRatio: 1.6,
+        plugins: { legend: { display: false } },
+        scales: {
+          y: { beginAtZero: true, grid: minimalGrid, ticks: { ...minimalTicks, precision: 0 } },
+          x: { grid: { display: false }, ticks: minimalTicks }
         },
         onClick: function(e, item) {
           if (item.length > 0) {
@@ -813,20 +893,16 @@
     });
 
     var monthlyChart = new Chart(document.getElementById('monthlyChart'), {
-      type: 'line',
+      type: 'bar',
       data: {
         labels: {!! json_encode($monthlyQuotations->pluck('month')) !!},
         datasets: [{
           label: 'Quotations',
           data: {!! json_encode($monthlyQuotations->pluck('total')) !!},
-          borderColor: '#1756c8',
-          backgroundColor: 'rgba(23,86,200,0.08)',
-          fill: true,
-          tension: 0.4,
-          pointBackgroundColor: '#1756c8',
-          pointBorderColor: '#fff',
-          pointBorderWidth: 2,
-          pointRadius: 4,
+          backgroundColor: '#1756c8',
+          borderRadius: 6,
+          borderWidth: 0,
+          maxBarThickness: 36,
         }]
       },
       options: {
@@ -835,8 +911,8 @@
         aspectRatio: 1.8,
         plugins: { legend: { display: false } },
         scales: {
-          y: { beginAtZero: true, grid: { color: 'rgba(0,0,0,0.04)' }, ticks: { color: '#7a8baa' } },
-          x: { grid: { display: false }, ticks: { color: '#7a8baa' } }
+          y: { beginAtZero: true, grid: minimalGrid, ticks: { ...minimalTicks, precision: 0 } },
+          x: { grid: { display: false }, ticks: minimalTicks }
         },
         onClick: function() {
           window.location.href = '{{ route("quotations.index") }}';
@@ -845,66 +921,86 @@
     });
 
     var distributionChart = new Chart(document.getElementById('distributionChart'), {
-  type: 'bar',
-  data: {
-    labels: ['Generated', 'Completed'],
-    datasets: [{
-      label: 'Quotations',
-      data: [
-        {{ $statusDistribution['generated'] ?? 0 }},
-        {{ $statusDistribution['completed'] ?? 0 }}
-      ],
-      backgroundColor: ['#1756c8', '#0f7a65'],
-      borderRadius: 6,
-      borderWidth: 0,
-    }]
-  },
-  options: {
-    responsive: true,
-    maintainAspectRatio: true,
-    aspectRatio: 1.8,
-    plugins: {
-      legend: { display: false }
-    },
-    scales: {
-      y: { beginAtZero: true, grid: { color: 'rgba(0,0,0,0.04)' }, ticks: { color: '#7a8baa' } },
-      x: { grid: { display: false }, ticks: { color: '#7a8baa' } }
-    }
-  }
-});
-
-var premiumChart = new Chart(document.getElementById('premiumChart'), {
-  type: 'line',
-  data: {
-    labels: {!! json_encode($premiumTrend->pluck('month')) !!},
-    datasets: [{
-      label: 'Avg Premium (KES)',
-      data: {!! json_encode($premiumTrend->pluck('avg_premium')) !!},
-      borderColor: '#7c3aed',
-      backgroundColor: 'rgba(124,58,237,0.08)',
-      fill: true,
-      tension: 0.4,
-      pointBackgroundColor: '#7c3aed',
-      pointBorderColor: '#fff',
-      pointBorderWidth: 2,
-      pointRadius: 4,
-    }]
-  },
-  options: {
-    responsive: true,
-    maintainAspectRatio: true,
-    aspectRatio: 1.8,
-    plugins: { legend: { display: false } },
-    scales: {
-      y: {
-        beginAtZero: false,
-        grid: { color: 'rgba(0,0,0,0.04)' },
-        ticks: { color: '#7a8baa', callback: v => 'KES ' + Number(v).toLocaleString() }
+      type: 'bar',
+      data: {
+        labels: {!! json_encode(($statusDistribution ?? collect())->keys()->map(fn($s) => ucfirst($s))) !!},
+        datasets: [{
+          label: 'Quotations',
+          data: {!! json_encode(($statusDistribution ?? collect())->values()) !!},
+          backgroundColor: ['#1756c8', '#0f7a65', '#d4860e', '#7c3aed'],
+          borderRadius: 6,
+          borderWidth: 0,
+          maxBarThickness: 48,
+        }]
       },
-      x: { grid: { display: false }, ticks: { color: '#7a8baa' } }
+      options: {
+        responsive: true,
+        maintainAspectRatio: true,
+        aspectRatio: 1.8,
+        plugins: { legend: { display: false } },
+        scales: {
+          y: { beginAtZero: true, grid: minimalGrid, ticks: { ...minimalTicks, precision: 0 } },
+          x: { grid: { display: false }, ticks: minimalTicks }
+        }
+      }
+    });
+
+    var premiumChart = new Chart(document.getElementById('premiumChart'), {
+      type: 'bar',
+      data: {
+        labels: {!! json_encode($premiumTrend->pluck('month')) !!},
+        datasets: [{
+          label: 'Avg Premium (KES)',
+          data: {!! json_encode($premiumTrend->pluck('avg_premium')) !!},
+          backgroundColor: '#7c3aed',
+          borderRadius: 6,
+          borderWidth: 0,
+          maxBarThickness: 36,
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: true,
+        aspectRatio: 1.8,
+        plugins: { legend: { display: false } },
+        scales: {
+          y: {
+            beginAtZero: true,
+            grid: minimalGrid,
+            ticks: { color: '#7a8baa', callback: v => 'KES ' + Number(v).toLocaleString() }
+          },
+          x: { grid: { display: false }, ticks: minimalTicks }
+        }
+      }
+    });
+
+    function renderActivityList(container, activities) {
+      if (!container) return;
+      if (!activities.length) {
+        container.innerHTML = '<div class="db-activity-item"><div class="db-activity-dot" style="background:#7a8baa"></div><div><div class="db-activity-text">No activity recorded yet.</div><div class="db-activity-time">System</div></div></div>';
+        return;
+      }
+      container.innerHTML = activities.map(function (a) {
+        return '<div class="db-activity-item">' +
+          '<div class="db-activity-dot" style="background:' + a.dot_color + '"></div>' +
+          '<div>' +
+            '<div class="db-activity-text"></div>' +
+            '<div class="db-activity-time"></div>' +
+          '</div>' +
+        '</div>';
+      }).join('');
+      var items = container.querySelectorAll('.db-activity-item');
+      activities.forEach(function (a, i) {
+        items[i].querySelector('.db-activity-text').textContent = a.text;
+        items[i].querySelector('.db-activity-time').textContent = a.time + ' · ' + a.user;
+      });
     }
-  }
-});
+
+    function fetchActivityFeed(scope, containerId) {
+      return fetch('{{ route("dashboard.activity-feed") }}?scope=' + scope, { headers: { 'Accept': 'application/json' } })
+        .then(function (r) { return r.json(); })
+        .then(function (res) { renderActivityList(document.getElementById(containerId), res.activities || []); });
+    }
 
     document.addEventListener('DOMContentLoaded', function () {
       var btn = document.getElementById('dbActivityRefresh');
@@ -913,9 +1009,15 @@ var premiumChart = new Chart(document.getElementById('premiumChart'), {
       var saved = localStorage.getItem('db_activity_auto_refresh');
       if (auto && saved === '1') auto.checked = true;
       var timer = null;
+      function doRefresh() {
+        return Promise.all([
+          fetchActivityFeed('system', 'db-system-activity-list'),
+          fetchActivityFeed('mine', 'db-my-activity-list'),
+        ]);
+      }
       function schedule() {
         if (timer) clearInterval(timer);
-        if (auto && auto.checked) timer = setInterval(function () { window.location.reload(); }, 30000);
+        if (auto && auto.checked) timer = setInterval(doRefresh, 30000);
       }
       if (auto) {
         auto.addEventListener('change', function () {
@@ -925,8 +1027,12 @@ var premiumChart = new Chart(document.getElementById('premiumChart'), {
       }
       btn.addEventListener('click', function () {
         btn.disabled = true;
-        btn.innerHTML = '<i class="ti ti-loader" style="font-size:12px;display:inline-block"></i> Refreshing...';
-        window.location.reload();
+        var original = btn.innerHTML;
+        btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:12px;height:12px;display:inline-block;vertical-align:middle"><path d="M12 6l0 -3" /><path d="M16.25 7.75l2.15 -2.15" /><path d="M18 12l3 0" /><path d="M16.25 16.25l2.15 2.15" /><path d="M12 18l0 3" /><path d="M7.75 16.25l-2.15 2.15" /><path d="M6 12l-3 0" /><path d="M7.75 7.75l-2.15 -2.15" /></svg> Refreshing...';
+        doRefresh().finally(function () {
+          btn.disabled = false;
+          btn.innerHTML = original;
+        });
       });
       schedule();
     });

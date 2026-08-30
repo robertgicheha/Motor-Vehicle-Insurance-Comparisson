@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Claim;
+use App\Models\ClaimEmailLog;
 use App\Models\User;
 use App\Notifications\ClaimStatusChanged;
 use Illuminate\Http\Request;
@@ -19,7 +20,7 @@ class ClaimController extends Controller
         }
 
         if ($request->filled('registration_number')) {
-            $query->where('registration_number', 'like', '%' . $request->registration_number . '%');
+            $query->whereLikeCI('registration_number', $request->registration_number);
         }
 
         if ($request->filled('claim_number')) {
@@ -31,12 +32,6 @@ class ClaimController extends Controller
         $stats = [
             'total' => Claim::count(),
             'reported' => Claim::where('status', Claim::STATUS_REPORTED)->count(),
-            'documents_pending' => Claim::where('status', Claim::STATUS_DOCUMENTS_PENDING)->count(),
-            'under_review' => Claim::where('status', Claim::STATUS_UNDER_REVIEW)->count(),
-            'settlement' => Claim::where('status', Claim::STATUS_SETTLEMENT)->count(),
-            'under_investigation' => Claim::where('status', Claim::STATUS_UNDER_INVESTIGATION)->count(),
-            'settled' => Claim::where('status', Claim::STATUS_SETTLED)->count(),
-            'declined' => Claim::where('status', Claim::STATUS_DECLINED)->count(),
         ];
 
         return view('admin.claims.index', compact('claims', 'stats'));
@@ -70,20 +65,6 @@ class ClaimController extends Controller
             'admin_notes' => $request->admin_notes,
         ];
 
-        if ($newStatus === Claim::STATUS_UNDER_REVIEW) {
-            $updateData['reviewed_at'] = now();
-        }
-
-        if ($newStatus === Claim::STATUS_SETTLED) {
-            $updateData['settled_at'] = now();
-            $updateData['settlement_amount'] = $request->settlement_amount;
-            $updateData['settlement_notes'] = $request->settlement_notes;
-        }
-
-        if ($newStatus === Claim::STATUS_DECLINED) {
-            $updateData['declined_at'] = now();
-        }
-
         $claim->update($updateData);
 
         if ($claim->user) {
@@ -99,5 +80,24 @@ class ClaimController extends Controller
         }
 
         return back()->with('success', 'Claim status updated to ' . Claim::statuses()[$newStatus] . '.');
+    }
+
+    public function emailLogs(Request $request)
+    {
+        $query = ClaimEmailLog::with(['claim', 'triggeredBy']);
+
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+
+        $logs = $query->latest()->paginate(25)->withQueryString();
+
+        $stats = [
+            'total' => ClaimEmailLog::count(),
+            'sent' => ClaimEmailLog::where('status', 'sent')->count(),
+            'failed' => ClaimEmailLog::where('status', 'failed')->count(),
+        ];
+
+        return view('admin.claims.email-logs', compact('logs', 'stats'));
     }
 }

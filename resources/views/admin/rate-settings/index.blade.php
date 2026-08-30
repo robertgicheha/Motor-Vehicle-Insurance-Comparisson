@@ -46,7 +46,7 @@
                 <div class="flex items-center gap-3">
                     @php $__cl = $company->logoUrl(); @endphp
                     @if($__cl)
-                        <img src="{{ $__cl }}" class="w-8 h-8 rounded-lg object-cover border border-gray-100 dark:border-gray-700">
+                        <img src="{{ $__cl }}" alt="{{ $company->name }} logo" class="w-8 h-8 rounded-lg object-cover border border-gray-100 dark:border-gray-700">
                     @else
                         <div class="w-8 h-8 rounded-lg bg-micblue flex items-center justify-center text-blue-400 font-bold text-xs">{{ substr($company->name, 0, 1) }}</div>
                     @endif

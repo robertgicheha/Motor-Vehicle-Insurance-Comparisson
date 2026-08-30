@@ -235,20 +235,22 @@ window.MIC_QUOTATION_SLUG  = {{ $selectedCompany ? json_encode($selectedCompany-
 
 @php
     $_quotationDbData = $userQuotation ? [
-        'firstName' => $userQuotation->user->first_name ?? '',
-        'lastName'  => $userQuotation->user->last_name ?? '',
-        'salutation' => '',
-        'phone'     => $userQuotation->user->mobile ?? '',
-        'email'     => $userQuotation->user->email ?? '',
+        'firstName' => $userQuotation->customer_first_name ?? '',
+        'lastName'  => $userQuotation->customer_last_name ?? '',
+        'salutation' => $userQuotation->customer_salutation ?? '',
+        'phone'     => $userQuotation->customer_phone ?? '',
+        'email'     => $userQuotation->customer_email ?? '',
         'reg'       => $userQuotation->car_registration ?? '',
-        'chassis'   => '',
+        'chassis'   => $userQuotation->chassis_number ?? '',
         'make'      => $userQuotation->car_make ?? '',
         'model'     => $userQuotation->car_model ?? '',
-        'body'      => '',
+        'body'      => $userQuotation->body_type ?? '',
         'year'      => $userQuotation->car_year ?? '',
-        'color'     => '',
+        'color'     => $userQuotation->color ?? '',
         'value'     => (float)($userQuotation->car_valuation ?? 0),
         'quoteNum'  => $userQuotation->quotation_number ?? '',
+        'numPassengers' => (int)($userQuotation->num_passengers ?? 1),
+        'vehicleType'   => $userQuotation->vehicle_type ?? 'private',
     ] : null;
 @endphp
 <script>
@@ -266,8 +268,8 @@ function openAuthModal(tab) {
   document.getElementById('authModal').style.display = 'flex';
   document.body.style.overflow = 'hidden';
   if (tab && window.Alpine) {
-    var el = document.querySelector('[x-data]');
-    if (el && el.__x) el.__x.$data.tab = tab;
+    var el = document.getElementById('authModal');
+    if (el) { try { window.Alpine.$data(el).tab = tab; } catch(e) {} }
   }
 }
 

@@ -41,11 +41,11 @@
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
         <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-5" style="max-width:380px">
             <h3 class="text-xs font-semibold text-gray-800 dark:text-white mb-3">Quotations by Company</h3>
-            <canvas id="companyChart" style="max-height:200px;cursor:pointer"></canvas>
+            <canvas id="analyticsCompanyChart" style="max-height:200px;cursor:pointer"></canvas>
         </div>
         <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-5">
             <h3 class="text-xs font-semibold text-gray-800 dark:text-white mb-3">Monthly Quotation Trend</h3>
-            <canvas id="monthlyChart" height="200" style="max-height:200px"></canvas>
+            <canvas id="analyticsMonthlyChart" height="200" style="max-height:200px"></canvas>
         </div>
     </div>
 
@@ -99,7 +99,6 @@
 </div>
 
 @push('scripts')
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
 <script>
 // Auto-refresh analytics every 30 seconds for real-time data
 var analyticsPollTimer = setInterval(function() {
@@ -113,7 +112,7 @@ document.addEventListener('visibilitychange', function() {
 const colors = ['#1756c8','#7c3aed','#0f7a65','#d4860e','#c0392b'];
 var companyLabels = {!! json_encode($companyBreakdown->keys()) !!};
 var companyData = {!! json_encode($companyBreakdown->values()) !!};
-new Chart(document.getElementById('companyChart'), {
+new Chart(document.getElementById('analyticsCompanyChart'), {
     type: 'doughnut',
     data: {
         labels: companyLabels,
@@ -136,7 +135,7 @@ new Chart(document.getElementById('companyChart'), {
     }
 });
 
-new Chart(document.getElementById('monthlyChart'), {
+new Chart(document.getElementById('analyticsMonthlyChart'), {
     type: 'line',
     data: {
         labels: {!! json_encode($monthlyQuotations->pluck('month')) !!},

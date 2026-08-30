@@ -14,9 +14,29 @@ use App\Exports\UsersExport;
 
 class UserController extends Controller
 {
+    /**
+     * Admins (not super-admins) never see, edit, deactivate, or delete an
+     * admin/super-admin account — only accounts with the plain "user" role.
+     */
+    protected function assertCanManage(User $target): void
+    {
+        $actor = auth()->user();
+        if ($actor->hasRole('admin') && !$actor->hasRole('super-admin')
+            && ($target->hasRole('admin') || $target->hasRole('super-admin'))) {
+            abort(403);
+        }
+    }
+
     public function index(Request $request)
     {
+        $actor = auth()->user();
+        $isSuperAdmin = $actor->hasRole('super-admin');
+
         $query = User::query();
+
+        if (!$isSuperAdmin) {
+            $query->whereHas('roles', fn($q) => $q->where('name', 'user'));
+        }
 
         if ($request->search) {
             $query->where(function ($q) use ($request) {
@@ -41,11 +61,16 @@ class UserController extends Controller
         }
 
         $users = $query->with('roles')->latest()->paginate(15);
-        $totalUsers = User::count();
-        $onlineUsers = User::where('last_online_at', '>=', now()->subMinutes(5))->count();
-        $maleCount = User::where('gender', 'male')->count();
-        $femaleCount = User::where('gender', 'female')->count();
-        $roles = Role::all();
+
+        $statsBase = fn() => $isSuperAdmin
+            ? User::query()
+            : User::whereHas('roles', fn($q) => $q->where('name', 'user'));
+
+        $totalUsers = $statsBase()->count();
+        $onlineUsers = $statsBase()->where('last_online_at', '>=', now()->subMinutes(5))->count();
+        $maleCount = $statsBase()->where('gender', 'male')->count();
+        $femaleCount = $statsBase()->where('gender', 'female')->count();
+        $roles = $isSuperAdmin ? Role::all() : Role::where('name', 'user')->get();
 
         return view('admin.users.index', compact('users', 'totalUsers', 'onlineUsers', 'maleCount', 'femaleCount', 'roles'));
     }
@@ -66,6 +91,7 @@ class UserController extends Controller
             'mobile' => 'required|string|max:20',
             'gender' => 'nullable|in:male,female,other',
             'role' => 'required|exists:roles,id',
+            'password' => 'nullable|string|min:8',
         ]);
 
         if ($validator->fails()) {
@@ -78,7 +104,7 @@ class UserController extends Controller
             return back()->with('error', 'You can only create users with the User role.')->withInput();
         }
 
-        $generatedPassword = $this->generateStrongPassword();
+        $generatedPassword = $request->filled('password') ? $request->password : $this->generateStrongPassword();
 
         $user = User::create([
             'first_name' => $request->first_name,
@@ -92,20 +118,34 @@ class UserController extends Controller
             'profile_completed' => true,
         ]);
 
-        $user->assignRole($requestedRole->name);
+        $user->syncRoles([$requestedRole->name]);
 
         session(['last_created_user_id' => $user->id]);
 
         AuditService::log('create', 'User', $user->id, null, $user->toArray());
         AuditService::activity('user_created', "User {$user->name} created by admin");
 
+        $emailStatus = '';
+        if ($request->boolean('email_credentials')) {
+            try {
+                \Mail::to($user->email)->send(new \App\Mail\UserCredentialsMail($user, $generatedPassword));
+                AuditService::activity('credentials_emailed', "Login credentials emailed to new user {$user->name} ({$user->email})");
+                $emailStatus = ' Credentials emailed to ' . $user->email . '.';
+            } catch (\Throwable $e) {
+                AuditService::activity('credentials_email_failed', "Failed to email login credentials to {$user->name} ({$user->email}): {$e->getMessage()}");
+                $emailStatus = ' However, the credentials email failed to send — use "Send via Email" below to retry.';
+            }
+        }
+
         return redirect()->route('admin.users.index')
-            ->with('success', 'User created successfully. Password: ' . $generatedPassword)
+            ->with('success', 'User created successfully.' . $emailStatus)
             ->with('generated_password', $generatedPassword);
     }
 
     public function edit(User $user)
     {
+        $this->assertCanManage($user);
+
         $isAdmin = auth()->user()->hasRole('admin');
         $roles = $isAdmin ? Role::where('name', 'user')->get() : Role::all();
         $user->load('roles');
@@ -114,6 +154,8 @@ class UserController extends Controller
 
     public function update(Request $request, User $user)
     {
+        $this->assertCanManage($user);
+
         $validator = Validator::make($request->all(), [
             'first_name' => 'required|string|max:255',
             'last_name' => 'required|string|max:255',
@@ -156,6 +198,8 @@ class UserController extends Controller
 
     public function toggleStatus(User $user)
     {
+        $this->assertCanManage($user);
+
         $user->update(['is_active' => !$user->is_active]);
 
         AuditService::log($user->is_active ? 'activate' : 'deactivate', 'User', $user->id);
@@ -173,18 +217,51 @@ class UserController extends Controller
             return back()->with('error', 'Cannot delete super admin.');
         }
 
+        $this->assertCanManage($user);
+
+        $actor = auth()->user();
         $userData = $user->toArray();
+        $user->update(['deleted_by' => $actor->id]);
         $user->delete();
 
         AuditService::log('delete', 'User', $user->id, $userData, null);
-        AuditService::activity('user_deleted', "User {$user->name} deleted");
+        AuditService::activity('user_deleted', "User {$user->name} deleted by {$actor->name}");
+
+        foreach (User::role('super-admin')->get() as $superAdmin) {
+            $superAdmin->notify(new \App\Notifications\UserDeleted($user, $actor));
+        }
 
         return redirect()->route('admin.users.index')->with('success', 'User deleted.');
     }
 
+    /**
+     * Soft-deleted users — super-admin only, so they can review and
+     * restore an account an admin removed by mistake.
+     */
+    public function trash()
+    {
+        $users = User::onlyTrashed()->with(['roles', 'deletedBy'])->latest('deleted_at')->paginate(15);
+        return view('admin.users.trash', compact('users'));
+    }
+
+    public function restore($id)
+    {
+        $user = User::onlyTrashed()->findOrFail($id);
+        $user->restore();
+        $user->update(['deleted_by' => null]);
+
+        AuditService::log('restore', 'User', $user->id, null, $user->toArray());
+        AuditService::activity('user_restored', "User {$user->name} restored by " . auth()->user()->name);
+
+        return back()->with('success', 'User restored.');
+    }
+
     public function export()
     {
-        return (new UsersExport)->download('users.xlsx');
+        $actor = auth()->user();
+        $usersOnly = $actor->hasRole('admin') && !$actor->hasRole('super-admin');
+
+        return (new UsersExport)->download('users.xlsx', $usersOnly);
     }
 
     public function import(Request $request)
@@ -244,6 +321,7 @@ class UserController extends Controller
         }
 
         \Mail::to($user->email)->send(new \App\Mail\UserCredentialsMail($user, $request->password));
+        \App\Services\AuditService::activity('credentials_emailed', "Login credentials emailed to new user {$user->name} ({$user->email})");
 
         return back()->with('success', 'Login credentials sent to ' . $user->email);
     }

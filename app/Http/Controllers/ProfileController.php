@@ -74,6 +74,7 @@ class ProfileController extends Controller
             );
 
             Mail::to($request->email)->send(new PendingEmailVerification($user, $verificationUrl));
+            AuditService::activity('email_verification_sent', "Verification link emailed to {$request->email} for pending email change");
 
             return back()->with('profile_success', 'A verification link has been sent to your new email address. Your email will be updated once you verify it.');
         }

@@ -4,9 +4,9 @@
     <div class="rounded-2xl bg-micblue px-6 py-7 shadow-sm">
         <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
             <div>
-                <p class="text-[10px] font-semibold uppercase tracking-widest text-blue-400">Certificates</p>
+                <p class="text-[10px] font-semibold uppercase tracking-widest text-blue-400">Stickers</p>
                 <h1 class="mt-0.5 text-xl font-bold text-white">Update Sticker</h1>
-                <p class="mt-0.5 text-xs text-slate-400">Mark a sticker as completed and generate the certificate PDF</p>
+                <p class="mt-0.5 text-xs text-slate-400">Mark a sticker as completed and generate the sticker PDF</p>
             </div>
         </div>
     </div>
@@ -27,7 +27,7 @@
                 </div>
                 <div class="p-5">
                     <div class="flex items-center gap-3">
-                        <input type="text" x-model="searchQuery" @keyup.enter="searchSticker()" placeholder="e.g. STK202608260001"
+                        <input type="text" x-model="searchQuery" @keyup.enter="searchSticker()" placeholder="e.g. STK-001 (Sticker ID) or the underwriter's Sticker Number"
                                class="flex-1 px-3 py-2.5 text-sm border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
                         <button @click="searchSticker()" :disabled="searching || !searchQuery.trim()"
                             class="inline-flex items-center gap-1.5 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-lg transition-all duration-200 disabled:opacity-50 shadow-sm">
@@ -55,8 +55,12 @@
                 <div class="p-5">
                     <div class="grid grid-cols-2 sm:grid-cols-3 gap-4">
                         <div>
-                            <p class="text-[9px] font-semibold uppercase tracking-wider text-gray-400 mb-0.5">Sticker Number</p>
+                            <p class="text-[9px] font-semibold uppercase tracking-wider text-gray-400 mb-0.5">Sticker ID</p>
                             <p class="text-sm font-bold text-gray-800 dark:text-white" x-text="foundSticker?.sticker_number"></p>
+                        </div>
+                        <div x-show="foundSticker?.underwriter_sticker_no">
+                            <p class="text-[9px] font-semibold uppercase tracking-wider text-gray-400 mb-0.5">Sticker Number</p>
+                            <p class="text-sm font-bold text-gray-800 dark:text-white" x-text="foundSticker?.underwriter_sticker_no"></p>
                         </div>
                         <div>
                             <p class="text-[9px] font-semibold uppercase tracking-wider text-gray-400 mb-0.5">Customer</p>
@@ -103,7 +107,13 @@
                             </div>
                         </div>
                         <div x-show="!foundSticker?.is_completed && foundSticker?.status === 'issued'" class="space-y-3">
-                            <button @click="markCompleted()" :disabled="completing"
+                            <div class="bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-700 rounded-xl p-3">
+                                <label class="block text-[10px] font-semibold text-amber-800 dark:text-amber-400 mb-1">Sticker Number (from the underwriter's reply attachment) <span class="text-red-500">*</span></label>
+                                <input type="text" x-model="underwriterStickerNo" placeholder="Enter the sticker number from the underwriter's document"
+                                       class="w-full px-3 py-2 text-sm border border-amber-300 dark:border-amber-700 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500">
+                                <p class="text-[10px] text-amber-700/80 dark:text-amber-500/80 mt-1">Download the underwriter's attachment and copy the sticker number from it before marking as completed.</p>
+                            </div>
+                            <button @click="markCompleted()" :disabled="completing || !underwriterStickerNo.trim()"
                                 class="w-full inline-flex items-center justify-center px-4 py-3 bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white text-xs font-bold rounded-lg transition-all duration-200 disabled:opacity-50 shadow-md hover:shadow-lg">
                                 <svg x-show="!completing" class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                                 <svg x-show="completing" class="animate-spin w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
@@ -118,7 +128,7 @@
         <div class="lg:col-span-1">
             <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden sticky top-4">
                 <div class="px-5 py-4 border-b border-gray-100 dark:border-gray-700 bg-gradient-to-r from-amber-50 to-transparent dark:from-amber-900/10">
-                    <h2 class="text-xs font-semibold text-gray-800 dark:text-white">Pending Certificates</h2>
+                    <h2 class="text-xs font-semibold text-gray-800 dark:text-white">Pending Stickers</h2>
                     <p class="text-[10px] text-gray-400 mt-0.5">Stickers awaiting completion</p>
                 </div>
                 <div class="p-5">
@@ -140,7 +150,7 @@
                     @else
                         <div class="text-center py-6">
                             <svg class="w-8 h-8 mx-auto text-gray-300 dark:text-gray-600 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                            <p class="text-xs text-gray-400 dark:text-gray-500">No pending certificates</p>
+                            <p class="text-xs text-gray-400 dark:text-gray-500">No pending stickers</p>
                         </div>
                     @endif
                 </div>
@@ -158,6 +168,7 @@ function updateStickerApp() {
         searchError: '',
         foundSticker: null,
         completing: false,
+        underwriterStickerNo: '',
 
         init() {
             this.$on('select-sticker', (stickerNumber) => {
@@ -171,6 +182,7 @@ function updateStickerApp() {
             this.searching = true;
             this.searchError = '';
             this.foundSticker = null;
+            this.underwriterStickerNo = '';
 
             try {
                 const response = await fetch('{{ route("admin.stickers.search") }}', {
@@ -196,7 +208,7 @@ function updateStickerApp() {
         },
 
         async markCompleted() {
-            if (!this.foundSticker) return;
+            if (!this.foundSticker || !this.underwriterStickerNo.trim()) return;
             this.completing = true;
 
             try {
@@ -206,13 +218,14 @@ function updateStickerApp() {
                         'Content-Type': 'application/json',
                         'X-CSRF-TOKEN': '{{ csrf_token() }}',
                     },
-                    body: JSON.stringify({ sticker_id: this.foundSticker.id }),
+                    body: JSON.stringify({ sticker_id: this.foundSticker.id, underwriter_sticker_no: this.underwriterStickerNo.trim() }),
                 });
 
                 const data = await response.json();
                 if (data.success) {
                     this.foundSticker.is_completed = true;
                     this.foundSticker.status = 'completed';
+                    this.foundSticker.underwriter_sticker_no = this.underwriterStickerNo.trim();
                     this.foundSticker.completed_by = '{{ auth()->user()->name }}';
                     this.foundSticker.completed_at = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
                     if (typeof showToastSuccess === 'function') showToastSuccess(data.message);

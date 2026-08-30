@@ -28,6 +28,16 @@
     </div>
     @endif
 
+    <div x-data="{ isNewCustomer: false }" x-init="isNewCustomer = (() => { try { return !!(JSON.parse(sessionStorage.getItem('micQuoteData') || '{}').is_new_customer); } catch(e) { return false; } })()">
+        <div x-show="isNewCustomer" x-cloak class="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700 rounded-2xl px-5 py-3 flex items-center gap-3">
+            <svg class="w-5 h-5 text-amber-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
+            <div class="text-xs">
+                <span class="font-semibold text-amber-700 dark:text-amber-400">Creating quotation for a new customer</span>
+                <span class="text-amber-600 dark:text-amber-300 ml-1">— no account will be created, the details below are saved directly on the quotation.</span>
+            </div>
+        </div>
+    </div>
+
     {{-- ─── PREVIEW CONTENT ───────────────────────────────────────────────── --}}
     <div x-data="previewApp()">
         <div x-show="loading" class="text-center py-20">
@@ -113,6 +123,10 @@
                             <span class="block font-medium text-gray-800 dark:text-white mt-1" x-text="data.chassis || '—'"></span>
                         </div>
                         <div>
+                            <span class="block text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Engine No</span>
+                            <span class="block font-medium text-gray-800 dark:text-white mt-1" x-text="data.engine || '—'"></span>
+                        </div>
+                        <div>
                             <span class="block text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Value (KES)</span>
                             <span class="block font-medium text-gray-800 dark:text-white mt-1" x-text="fmt(parseFloat((data.value || '0').replace(/,/g, '')))"></span>
                         </div>
@@ -132,15 +146,19 @@
                             </div>
                             <div class="flex justify-between py-1.5">
                                 <span class="text-gray-500">Basic Premium Rate</span>
-                                <span class="font-semibold text-gray-800 dark:text-white" x-text="(selectedCompany.rate * 100).toFixed(1) + '%'"></span>
+                                <span class="font-semibold text-gray-800 dark:text-white" x-text="premiumRateDisplay + '%'"></span>
                             </div>
                             <div class="flex justify-between py-1.5 border-t border-dashed border-gray-100 dark:border-gray-700 pt-2">
                                 <span class="font-semibold text-gray-800 dark:text-white">Basic Premium</span>
                                 <span class="font-bold text-gray-800 dark:text-white" x-text="fmt(basePremium)"></span>
                             </div>
                             <div class="flex justify-between py-1.5">
-                                <span class="text-gray-500">PVT Premium</span>
+                                <span class="text-gray-500">PVT(Political Violence &amp; Terrorism Extension)</span>
                                 <span class="font-semibold text-gray-800 dark:text-white" x-text="fmt(pvtPremium)"></span>
+                            </div>
+                            <div class="flex justify-between py-1.5" x-show="pllPremium > 0">
+                                <span class="text-gray-500">PLL Premium (<span x-text="numPassengers"></span> pax)</span>
+                                <span class="font-semibold text-gray-800 dark:text-white" x-text="fmt(pllPremium)"></span>
                             </div>
                             <div class="flex justify-between py-1.5">
                                 <span class="text-gray-500">Levis (0.45%)</span>
@@ -166,17 +184,28 @@
                     <input type="hidden" name="car_model" :value="data.model">
                     <input type="hidden" name="car_year" :value="data.year">
                     <input type="hidden" name="car_registration" :value="data.reg">
+                    <input type="hidden" name="chassis_number" :value="data.chassis">
+                    <input type="hidden" name="engine_number" :value="data.engine">
+                    <input type="hidden" name="body_type" :value="data.body">
+                    <input type="hidden" name="color" :value="data.color">
                     <input type="hidden" name="car_valuation" :value="vehicleValue">
                     <input type="hidden" name="vehicle_type" :value="data.vehicle_type || 'private'">
-                    <input type="hidden" name="num_passengers" value="1">
+                    <input type="hidden" name="num_passengers" :value="data.numPassengers || data.num_passengers || 1">
                     <input type="hidden" name="on_behalf_of" :value="onBehalfOf">
+                    <input type="hidden" name="is_new_customer" :value="data.is_new_customer ? 1 : 0">
+                    <input type="hidden" name="salutation" :value="data.salutation">
+                    <input type="hidden" name="first_name" :value="data.first || data.first_name">
+                    <input type="hidden" name="middle_name" :value="data.middle || data.middle_name">
+                    <input type="hidden" name="last_name" :value="data.last || data.last_name">
+                    <input type="hidden" name="phone" :value="data.phone">
+                    <input type="hidden" name="email" :value="data.email">
                     <input type="hidden" name="company_id" :value="selectedCompany.id">
                     <input type="hidden" name="premium" :value="basePremium">
-                    <input type="hidden" name="pvt_premium" value="0">
+                    <input type="hidden" name="pvt_premium" :value="pvtPremium">
                     <input type="hidden" name="total_premium" :value="totalPremium">
                     <input type="hidden" name="excess_own_damage" value="0">
                     <input type="hidden" name="excess_theft" value="0">
-                    <input type="hidden" name="breakdown" :value="JSON.stringify({basic_premium: basePremium, premium_rate: selectedCompany.rate, pvt_rate: selectedCompany.pvtRate, levis_rate: 0.0045, stamp_duty: 40})">
+                    <input type="hidden" name="breakdown" :value="JSON.stringify({basic_premium: basePremium, pll_premium: pllPremium, premium_rate: selectedCompany.rate, pvt_rate: selectedCompany.pvtRate, levis_rate: 0.0045, levis: levis, stamp_duty: stampDuty, total_premium: totalPremium})">
 
                     <div class="flex items-center justify-between gap-3 bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-5">
                         <a href="{{ route('quotations.create') }}" class="px-5 py-2.5 text-xs font-medium border border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition">
@@ -194,14 +223,16 @@
 </div>
 
 @push('scripts')
+<script src="{{ asset('js/premium-calc.js') }}"></script>
 <script>
-window.MIC_COMPANIES_PREVIEW = @json($companies);
+window.MIC_COMPANIES_PRIVATE_PREVIEW = @json($companiesPrivate);
+window.MIC_COMPANIES_PSV_PREVIEW = @json($companiesPsv);
 
 function previewApp() {
     return {
         loading: true,
         data: null,
-        companies: window.MIC_COMPANIES_PREVIEW || [],
+        serverBreakdown: null,
         urlOnBehalf: new URLSearchParams(window.location.search).get('on_behalf_of') || '',
         init() {
             try {
@@ -214,12 +245,41 @@ function previewApp() {
                 }
             } catch(e) {}
             this.loading = false;
+            this.fetchBreakdown();
+        },
+        fetchBreakdown() {
+            if (!this.data || !this.vehicleValue || !this.selectedCompany.slug) return;
+            fetch('{{ route("quotations.compare-all.calculate") }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content,
+                },
+                body: JSON.stringify({
+                    vehicle_type: this.data.vehicle_type || this.data.vehicleType || 'private',
+                    car_valuation: this.vehicleValue,
+                    num_passengers: this.numPassengers,
+                }),
+            })
+            .then(r => r.json())
+            .then(d => {
+                var match = (d.results || []).find(r => r.company.slug === this.selectedCompany.slug);
+                if (match) this.serverBreakdown = match.breakdown;
+            })
+            .catch(() => {});
         },
         get onBehalfOf() {
             return this.data?.userId || this.urlOnBehalf || '';
         },
         get vehicleValue() {
             return parseFloat((this.data?.value || '0').replace(/,/g, '')) || 0;
+        },
+        get numPassengers() {
+            return Number(this.data?.numPassengers || this.data?.num_passengers) || 1;
+        },
+        get companies() {
+            var type = this.data?.vehicle_type || this.data?.vehicleType || 'private';
+            return type === 'psv' ? (window.MIC_COMPANIES_PSV_PREVIEW || []) : (window.MIC_COMPANIES_PRIVATE_PREVIEW || []);
         },
         get selectedCompany() {
             if (!this.data) return { id: 0, rate: 0, pvtRate: 0, name: '' };
@@ -231,22 +291,31 @@ function previewApp() {
         },
         get personalName() {
             if (!this.data) return '—';
-            return [this.data.salutation, this.data.first, this.data.middle, this.data.last].filter(Boolean).join(' ');
+            var first = this.data.first || this.data.first_name || this.data.firstName || '';
+            var middle = this.data.middle || this.data.middle_name || '';
+            var last = this.data.last || this.data.last_name || this.data.lastName || '';
+            return [this.data.salutation, first, middle, last].filter(Boolean).join(' ');
+        },
+        get premiumRateDisplay() {
+            return this.serverBreakdown ? this.serverBreakdown.premium_rate.toFixed(1) : (this.selectedCompany.rate * 100).toFixed(1);
         },
         get basePremium() {
-            return this.vehicleValue * (this.selectedCompany.rate || 0);
+            return this.serverBreakdown ? this.serverBreakdown.basic_premium : 0;
         },
         get pvtPremium() {
-            return this.vehicleValue * (this.selectedCompany.pvtRate || 0);
+            return this.serverBreakdown ? this.serverBreakdown.pvt_premium : 0;
+        },
+        get pllPremium() {
+            return this.serverBreakdown ? this.serverBreakdown.pll_total : 0;
         },
         get levis() {
-            return this.pvtPremium * 0.0045;
+            return this.serverBreakdown ? this.serverBreakdown.levis : 0;
         },
         get stampDuty() {
-            return 40;
+            return this.serverBreakdown ? this.serverBreakdown.stamp_duty : 0;
         },
         get totalPremium() {
-            return this.basePremium + this.pvtPremium + this.levis + this.stampDuty;
+            return this.serverBreakdown ? this.serverBreakdown.total_premium : 0;
         },
         fmt(n) {
             if (isNaN(n)) return '—';

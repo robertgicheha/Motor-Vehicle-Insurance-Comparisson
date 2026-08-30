@@ -50,7 +50,7 @@ class QuotationMail extends Mailable
     protected function variables(): array
     {
         return [
-            'customer_name' => $this->quotation->user?->full_name ?? 'Valued Customer',
+            'customer_name' => $this->quotation->customer_name,
             'quotation_number' => $this->quotation->quotation_number,
             'company' => $this->quotation->company?->name ?? 'N/A',
             'vehicle' => trim(($this->quotation->car_make ?? '') . ' ' . ($this->quotation->car_model ?? '')),

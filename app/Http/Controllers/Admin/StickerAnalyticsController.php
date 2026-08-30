@@ -19,7 +19,7 @@ class StickerAnalyticsController extends Controller
 
         $total = $stickers->count();
 
-        $byCompany = $stickers->groupBy('company.name')->map(function ($items, $name) {
+        $byCompany = $stickers->groupBy('company.name')->map(function ($items, $name) use ($total) {
             $count = $items->count();
             return [
                 'name' => $name,
@@ -83,7 +83,7 @@ class StickerAnalyticsController extends Controller
             'breached' => Sticker::where('status', 'issued')
                 ->whereNotNull('email_sent_at')
                 ->whereNull('response_received_at')
-                ->whereRaw('TIMESTAMPDIFF(MINUTE, email_sent_at, NOW()) > ?', [config('services.sticker.turnaround_minutes', 30)])
+                ->where('email_sent_at', '<=', now()->subMinutes(config('services.sticker.turnaround_minutes', 30)))
                 ->count(),
         ];
 

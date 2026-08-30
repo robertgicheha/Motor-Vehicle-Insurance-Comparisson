@@ -32,7 +32,7 @@
 
             {{-- Claim For --}}
             {{-- <div>
-                <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Log claim for *</label>
+                <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1" for="claim_for">Log claim for *</label>
                 <select name="claim_for" id="claim_for" class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-800 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
                     <option value="self" {{ old('claim_for') == 'self' ? 'selected' : '' }}>Myself</option>
                     <option value="user" {{ old('claim_for') == 'user' ? 'selected' : '' }}>Another User</option>
@@ -44,7 +44,7 @@
             </div> --}}
 
             {{-- <div id="user-select" class="{{ in_array(old('claim_for'), ['user', 'admin']) ? '' : 'hidden' }}">
-                <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Select User</label>
+                <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1" for="on_behalf_of">Select User</label>
                 <select name="on_behalf_of" id="on_behalf_of" class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-800 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
                     <option value="">Select user...</option>
                     @foreach(($users ?? []) as $u)
@@ -54,7 +54,7 @@
             </div> --}}
 
             {{-- <div id="admin-select" class="{{ old('claim_for') == 'admin' ? '' : 'hidden' }}">
-                <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Select Admin</label>
+                <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1" for="on_behalf_of_admin">Select Admin</label>
                 <select name="on_behalf_of" id="on_behalf_of_admin" class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-800 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
                     <option value="">Select admin...</option>
                     @foreach($admins as $u)
@@ -66,17 +66,17 @@
             {{-- Customer details --}}
             {{-- <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
-                    <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Customer Name <span id="customer-required">*</span></label>
+                    <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1" for="customer_name">Customer Name <span id="customer-required">*</span></label>
                     <input type="text" name="customer_name" id="customer_name" value="{{ old('customer_name', $self['name'] ?? '') }}"
                            class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-800 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
                 </div>
                 <div>
-                    <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Customer Email <span id="customer-email-required">*</span></label>
+                    <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1" for="customer_email">Customer Email <span id="customer-email-required">*</span></label>
                     <input type="email" name="customer_email" id="customer_email" value="{{ old('customer_email', $self['email'] ?? '') }}"
                            class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-800 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
                 </div>
                 <div>
-                    <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Customer Phone <span id="customer-phone-required">*</span></label>
+                    <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1" for="customer_phone">Customer Phone <span id="customer-phone-required">*</span></label>
                     <input type="text" name="customer_phone" id="customer_phone" value="{{ old('customer_phone', $self['phone'] ?? '') }}"
                            class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-800 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
                 </div>
@@ -86,7 +86,7 @@
     {{-- </div> --}}
 
     {{-- Vehicle Search --}}
-    <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden mt-6">
+    <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 mt-6">
         <div class="px-6 py-4 border-b border-gray-100 dark:border-gray-700">
             <h2 class="text-xs font-bold text-gray-800 dark:text-white">Vehicle Lookup</h2>
             <p class="text-[10px] text-gray-400 mt-0.5">Search by registration number to pre-fill details from an existing quotation</p>
@@ -95,7 +95,7 @@
 
             <div class="flex gap-2">
                 <div class="flex-1">
-                    <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Registration Number</label>
+                    <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1" for="registration_number">Registration Number</label>
                     <div class="relative">
                         <input type="text" name="registration_number" id="registration_number" value="{{ old('registration_number') }}" required
                                placeholder="e.g. KBA 001A"
@@ -123,37 +123,37 @@
             <div id="vehicleFields" class="{{ old('registration_number') ? '' : 'hidden' }}">
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div>
-                        <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Vehicle Make</label>
+                        <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1" for="vehicle_make">Vehicle Make</label>
                         <input type="text" name="vehicle_make" id="vehicle_make" value="{{ old('vehicle_make') }}"
                                class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-800 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
                     </div>
                     <div>
-                        <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Vehicle Model</label>
+                        <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1" for="vehicle_model">Vehicle Model</label>
                         <input type="text" name="vehicle_model" id="vehicle_model" value="{{ old('vehicle_model') }}"
                                class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-800 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
                     </div>
                     <div>
-                        <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Year of Manufacture</label>
+                        <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1" for="vehicle_year">Year of Manufacture</label>
                         <input type="number" name="vehicle_year" id="vehicle_year" value="{{ old('vehicle_year') }}" min="1990" max="2030"
                                class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-800 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
                     </div>
                     <div>
-                        <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Color</label>
+                        <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1" for="vehicle_color">Color</label>
                         <input type="text" name="vehicle_color" id="vehicle_color" value="{{ old('vehicle_color') }}"
                                class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-800 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
                     </div>
                     <div>
-                        <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Engine Number</label>
+                        <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1" for="engine_number">Engine Number</label>
                         <input type="text" name="engine_number" id="engine_number" value="{{ old('engine_number') }}"
                                class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-800 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
                     </div>
                     <div>
-                        <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Chassis Number</label>
+                        <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1" for="chassis_number">Chassis Number</label>
                         <input type="text" name="chassis_number" id="chassis_number" value="{{ old('chassis_number') }}"
                                class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-800 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
                     </div>
                     <div>
-                        <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Type of Cover</label>
+                        <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1" for="cover_type">Type of Cover</label>
                         <select name="cover_type" id="cover_type" class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-800 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
                             <option value="">Select cover type...</option>
                             <option value="private" {{ old('cover_type') == 'private' ? 'selected' : '' }}>Private</option>
@@ -161,13 +161,13 @@
                         </select>
                     </div>
                     <div>
-                        <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Insurance Company</label>
+                        <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1" for="insurance_company">Insurance Company</label>
                         <input type="text" name="insurance_company" id="insurance_company" value="{{ old('insurance_company') }}" readonly
                                placeholder="Auto-filled from quotation"
                                class="w-full px-3 py-2 text-sm border border-gray-200 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-500 dark:text-gray-400 cursor-not-allowed">
                     </div>
                     <div>
-                        <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Vehicle Valuation (KES)</label>
+                        <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1" for="vehicle_valuation">Vehicle Valuation (KES)</label>
                         <input type="number" name="vehicle_valuation" id="vehicle_valuation" value="{{ old('vehicle_valuation') }}" min="0" step="0.01"
                                class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-800 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
                     </div>
@@ -201,8 +201,8 @@
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                    <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Incident Date *</label>
-                    <input type="date" name="incident_date" value="{{ old('incident_date') }}" required
+                    <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1" for="incident_date">Incident Date *</label>
+                    <input type="date" name="incident_date" id="incident_date" value="{{ old('incident_date') }}" required
                            class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-800 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
                 </div>
             </div>
@@ -233,8 +233,8 @@
 
 
             <div>
-                <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Incident Statement *</label>
-                <textarea name="incident_description" rows="4" required
+                <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1" for="incident_description">Incident Statement *</label>
+                <textarea name="incident_description" id="incident_description" rows="4" required
                           placeholder="Describe the incident in detail..."
                           class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-800 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500">{{ old('incident_description') }}</textarea>
             </div>
@@ -321,9 +321,12 @@ function setCustomerRequired(required) {
 }
 
 function fillCustomer(name, email, phone) {
-    document.getElementById('customer_name').value = name || '';
-    document.getElementById('customer_email').value = email || '';
-    document.getElementById('customer_phone').value = phone || '';
+    var nameEl = document.getElementById('customer_name');
+    var emailEl = document.getElementById('customer_email');
+    var phoneEl = document.getElementById('customer_phone');
+    if (nameEl) nameEl.value = name || '';
+    if (emailEl) emailEl.value = email || '';
+    if (phoneEl) phoneEl.value = phone || '';
 }
 
 function getSelectedUserData() {
@@ -337,9 +340,12 @@ function getSelectedUserData() {
 }
 
 function updateClaimForUI() {
-    var claimFor = document.getElementById('claim_for').value;
+    var claimForEl = document.getElementById('claim_for');
+    if (!claimForEl) return;
+    var claimFor = claimForEl.value;
     var userSelect = document.getElementById('user-select');
     var adminSelect = document.getElementById('admin-select');
+    if (!userSelect || !adminSelect) return;
 
     userSelect.classList.add('hidden');
     adminSelect.classList.add('hidden');
@@ -383,20 +389,24 @@ var statusEl = document.getElementById('vehicleStatus');
 var vehicleFields = document.getElementById('vehicleFields');
 var suggestionsDropdown = document.getElementById('suggestionsDropdown');
 var searchTimeout = null;
+var suggestionsRequestId = 0;
 
 function fetchSuggestions(query) {
-    clearTimeout(suggestionsDropdown);
+    clearTimeout(searchTimeout);
     if (query.length < 2) {
+        suggestionsRequestId++;
         suggestionsDropdown.classList.add('hidden');
         suggestionsDropdown.innerHTML = '';
         return;
     }
     searchTimeout = setTimeout(function() {
+        var requestId = ++suggestionsRequestId;
         fetch('{{ route("claims.suggest-vehicles") }}?q=' + encodeURIComponent(query), {
             headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
         })
         .then(function(r) { return r.json(); })
         .then(function(data) {
+            if (requestId !== suggestionsRequestId) return;
             if (data.suggestions && data.suggestions.length > 0) {
                 suggestionsDropdown.innerHTML = data.suggestions.map(function(s) {
                     var regex = new RegExp('(' + query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ')', 'gi');
@@ -465,6 +475,7 @@ function searchVehicle(reg) {
             document.getElementById('vehicle_make').value = data.vehicle.make || '';
             document.getElementById('vehicle_model').value = data.vehicle.model || '';
             document.getElementById('vehicle_year').value = data.vehicle.year || '';
+            document.getElementById('vehicle_color').value = data.vehicle.color || '';
             document.getElementById('vehicle_valuation').value = data.vehicle.valuation || '';
             document.getElementById('cover_type').value = data.vehicle.cover_type || '';
             document.getElementById('insurance_company').value = data.company_name || '';
@@ -491,13 +502,12 @@ function searchVehicle(reg) {
     });
 }
 
-var ALL_COMPANIES = @json($companies->map(fn($c) => ['id' => $c->id, 'name' => $c->name, 'slug' => $c->slug, 'logo' => $c->logoUrl(), 'claims_email' => $c->claims_email]));
+var ALL_COMPANIES = @json($companiesForJs);
 
 var COMPANY_LOGO_MAP = {
     'GA': '{{ asset("images/GA Insurance.png") }}',
     'SANLAM': '{{ asset("images/Sanlam-Allianz.png") }}',
-    'DEFINITE': '{{ asset("images/definite.png") }}',
-    'BRITAM': '{{ asset("images/britam.png") }}',
+    'BRITAM': '{{ asset("images/britam_logo.png") }}',
 };
 
 function getCompanyLogo(company) {
@@ -587,7 +597,7 @@ resetBtn.addEventListener('click', function() {
 });
 
 // --- Select All Documents ---
-document.getElementById('selectAllDocs').addEventListener('click', function() {
+document.getElementById('selectAllDocs')?.addEventListener('click', function() {
     var checkboxes = document.querySelectorAll('[data-doc-check]');
     var allChecked = Array.from(checkboxes).every(function(cb) { return cb.checked; });
     checkboxes.forEach(function(cb) { cb.checked = !allChecked; });
@@ -597,6 +607,7 @@ document.getElementById('selectAllDocs').addEventListener('click', function() {
 function updateOtherDocsSection() {
     var otherChecked = document.querySelector('[data-doc-check][value="other"]');
     var section = document.getElementById('otherDocsSection');
+    if (!section) return;
     if (otherChecked && otherChecked.checked) {
         section.classList.remove('hidden');
     } else {
@@ -623,9 +634,9 @@ function createOtherDocRow(value) {
     docsList.appendChild(div);
 }
 
-addBtn.addEventListener('click', function() { createOtherDocRow(''); });
+addBtn?.addEventListener('click', function() { createOtherDocRow(''); });
 
-docsList.addEventListener('click', function(e) {
+docsList?.addEventListener('click', function(e) {
     if (e.target.closest('.removeOtherDoc')) {
         e.target.closest('.other-doc-row').remove();
     }

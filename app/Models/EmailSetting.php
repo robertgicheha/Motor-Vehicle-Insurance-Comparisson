@@ -8,6 +8,7 @@ class EmailSetting extends Model
 {
     protected $fillable = [
         'key',
+        'value',
         'subject',
         'body',
         'type',

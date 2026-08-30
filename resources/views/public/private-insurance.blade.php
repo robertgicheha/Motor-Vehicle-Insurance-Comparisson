@@ -240,6 +240,10 @@
           <input type="text" id="f-chassis" placeholder="e.g. WVWZZZ1KZ9W123456">
         </div>
         <div class="form-group">
+          <label>Engine No</label>
+          <input type="text" id="f-engine" placeholder="e.g. CBA1234567">
+        </div>
+        <div class="form-group">
           <label>Make of Vehicle <span class="req">*</span></label>
           <div class="vehicle-search-wrap">
             <input type="text" id="f-make" placeholder="Search vehicle make..." autocomplete="off">

@@ -17,6 +17,7 @@ use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 
 class QuotationController extends Controller
 {
@@ -74,7 +75,10 @@ class QuotationController extends Controller
 
     public function updateStatus(Request $request, Quotation $quotation)
     {
-        $this->authorizeView($quotation);
+        $user = auth()->user();
+        if (!$user->hasRole('super-admin') && !$user->hasRole('admin')) {
+            abort(403);
+        }
 
         $request->validate(['status' => 'required|string|in:generated,completed']);
 
@@ -92,7 +96,7 @@ class QuotationController extends Controller
             $admin->notify(new QuotationStatusChanged($quotation, $oldStatus, $request->status));
         }
         try {
-            $quotation->user->notify(new QuotationStatusChanged($quotation, $oldStatus, $request->status));
+            $quotation->user?->notify(new QuotationStatusChanged($quotation, $oldStatus, $request->status));
         } catch (\Exception $e) {
             \Illuminate\Support\Facades\Log::warning("Failed to notify quotation owner: " . $e->getMessage());
         }
@@ -224,19 +228,20 @@ class QuotationController extends Controller
         $latest = $profileUser->quotations()->latest()->first();
 
         return [
-            'salutation'   => '',
+            'salutation'   => $latest->salutation ?? '',
             'first_name'   => $profileUser->first_name ?? '',
-            'middle_name'  => '',
+            'middle_name'  => $latest->middle_name ?? '',
             'last_name'    => $profileUser->last_name ?? '',
             'phone'        => $profileUser->mobile ?? '',
             'email'        => $profileUser->email ?? '',
             'reg'          => $latest->car_registration ?? '',
-            'chassis'      => '',
+            'chassis'      => $latest->chassis_number ?? '',
+            'engine'       => $latest->engine_number ?? '',
             'make'         => $latest->car_make ?? '',
             'model'        => $latest->car_model ?? '',
-            'body'         => '',
+            'body'         => $latest->body_type ?? '',
             'year'         => $latest->car_year ?? '',
-            'color'        => '',
+            'color'        => $latest->color ?? '',
             'value'        => $latest ? (string) $latest->car_valuation : '',
             'vehicle_type' => $latest->vehicle_type ?? 'private',
         ];
@@ -310,8 +315,19 @@ class QuotationController extends Controller
             'excess_own_damage' => 'nullable|numeric',
             'excess_theft' => 'nullable|numeric',
             'on_behalf_of' => 'nullable|exists:users,id',
+            'is_new_customer' => 'sometimes|boolean',
             'vehicle_type' => 'sometimes|string|in:psv,private',
             'num_passengers' => 'sometimes|integer|min:1',
+            'salutation' => 'nullable|string|max:20',
+            'first_name' => ['nullable', 'string', 'max:255', Rule::requiredIf($request->boolean('is_new_customer'))],
+            'middle_name' => 'nullable|string|max:255',
+            'last_name' => ['nullable', 'string', 'max:255', Rule::requiredIf($request->boolean('is_new_customer'))],
+            'phone' => 'nullable|string|max:50',
+            'email' => ['nullable', 'email', 'max:255', Rule::requiredIf($request->boolean('is_new_customer'))],
+            'chassis_number' => 'nullable|string|max:100',
+            'engine_number' => 'nullable|string|max:100',
+            'body_type' => 'nullable|string|max:100',
+            'color' => 'nullable|string|max:50',
         ]);
 
         if ($validator->fails()) {
@@ -319,30 +335,57 @@ class QuotationController extends Controller
         }
 
         $isAdmin = auth()->user()->hasRole('super-admin') || auth()->user()->hasRole('admin');
-        $targetUserId = $isAdmin && $request->filled('on_behalf_of')
-            ? (int) $request->on_behalf_of
-            : auth()->id();
+        $isNewCustomer = $request->boolean('is_new_customer');
+        $targetUserId = $isNewCustomer
+            ? null
+            : ($isAdmin && $request->filled('on_behalf_of') ? (int) $request->on_behalf_of : auth()->id());
 
         $company = \App\Models\Company::find($request->company_id);
-        $quotation = DB::transaction(function () use ($request, $company, $targetUserId) {
+        $targetUserForSnapshot = User::find($targetUserId);
+
+        // Recompute the premium server-side via PremiumCalculationService — never trust the
+        // client-submitted premium/total_premium/breakdown fields, which come from a JS preview
+        // calculation that can drift from the backend formula (e.g. the 2.5M valuation tier) and
+        // can be tampered with in the browser before submit.
+        $breakdown = $this->premiumCalculator->calculate(
+            $company,
+            $request->car_valuation,
+            $request->input('vehicle_type', 'psv'),
+            true,
+            $request->input('num_passengers', 1),
+            true,
+            false
+        );
+
+        $quotation = DB::transaction(function () use ($request, $company, $targetUserId, $targetUserForSnapshot, $breakdown) {
             $quotation = Quotation::create([
                 'user_id' => $targetUserId,
+                'salutation' => $request->salutation,
+                'first_name' => $request->filled('first_name') ? $request->first_name : ($targetUserForSnapshot->first_name ?? null),
+                'middle_name' => $request->middle_name,
+                'last_name' => $request->filled('last_name') ? $request->last_name : ($targetUserForSnapshot->last_name ?? null),
+                'phone' => $request->filled('phone') ? $request->phone : ($targetUserForSnapshot->mobile ?? null),
+                'email' => $request->filled('email') ? $request->email : ($targetUserForSnapshot->email ?? null),
                 'company_id' => $request->company_id,
                 'quotation_number' => Quotation::generateNumber($company),
                 'car_make' => $request->car_make,
                 'car_model' => $request->car_model,
                 'car_year' => $request->car_year,
                 'car_registration' => $request->car_registration,
+                'chassis_number' => $request->chassis_number,
+                'engine_number' => $request->engine_number,
+                'body_type' => $request->body_type,
+                'color' => $request->color,
                 'car_valuation' => $request->car_valuation,
                 'vehicle_type' => $request->input('vehicle_type', 'psv'),
                 'num_passengers' => $request->input('num_passengers', 1),
-                'premium' => $request->premium,
-                'pvt_premium' => $request->pvt_premium ?? 0,
-                'total_premium' => $request->total_premium,
-                'excess_own_damage' => $request->excess_own_damage,
-                'excess_theft' => $request->excess_theft,
+                'premium' => $breakdown['basic_premium'],
+                'pvt_premium' => $breakdown['pvt_premium'],
+                'total_premium' => $breakdown['total_premium'],
+                'excess_own_damage' => $breakdown['excess_own_damage'],
+                'excess_theft' => $breakdown['excess_theft'],
                 'status' => 'generated',
-                'breakdown' => $request->breakdown ?? [],
+                'breakdown' => $breakdown,
             ]);
 
             AuditService::log('create', 'Quotation', $quotation->id, null, $quotation->toArray());
@@ -352,9 +395,11 @@ class QuotationController extends Controller
         });
 
         $targetUser = User::find($targetUserId);
-        if ($targetUser && $targetUser->email) {
+        $recipientEmail = $targetUser->email ?? $quotation->customer_email;
+        if ($recipientEmail) {
             try {
-                Mail::to($targetUser->email)->send(new QuotationMail($quotation));
+                $mailable = new QuotationMail($quotation);
+                Mail::to($recipientEmail)->send($mailable);
             } catch (\Exception $e) {
                 \Illuminate\Support\Facades\Log::warning("Failed to send quotation email: " . $e->getMessage());
             }
@@ -365,7 +410,7 @@ class QuotationController extends Controller
             $admin->notify(new QuotationStatusChanged($quotation, 'new', 'generated'));
         }
         try {
-            $quotation->user->notify(new QuotationStatusChanged($quotation, 'new', 'generated'));
+            $quotation->user?->notify(new QuotationStatusChanged($quotation, 'new', 'generated'));
         } catch (\Exception $e) {
             \Illuminate\Support\Facades\Log::warning("Failed to notify quotation owner: " . $e->getMessage());
         }
@@ -374,10 +419,12 @@ class QuotationController extends Controller
             ->with('success', 'Quotation generated successfully!');
     }
 
-    public function show(Quotation $quotation)
+    public function show(Request $request, Quotation $quotation)
     {
         $this->authorizeView($quotation);
         $quotation->load(['user', 'company', 'items', 'stickers']);
+
+        $showSuccess = $request->query('generated') === '1';
 
         $recentQuotations = collect();
         if (!auth()->user()->hasRole('super-admin') && !auth()->user()->hasRole('admin')) {
@@ -388,7 +435,77 @@ class QuotationController extends Controller
                 ->get();
         }
 
-        return view('quotations.show', compact('quotation', 'recentQuotations'));
+        $breakdown = $this->quotationBreakdown($quotation);
+        $rateCategories = $this->quotationRateCategories($quotation);
+
+        return view('quotations.show', compact('quotation', 'recentQuotations', 'showSuccess', 'breakdown', 'rateCategories'));
+    }
+
+    /**
+     * Group a quotation's company rate settings into the standard quotation
+     * document sections, pulled as-is from the Rate Settings so the web page
+     * and PDF always show the same underwriter-configured benefits/limits.
+     */
+    protected function quotationRateCategories(Quotation $quotation): array
+    {
+        $company = $quotation->company;
+        if (!$company) {
+            return [];
+        }
+
+        $rates = $company->rates()
+            ->where('vehicle_type', $quotation->vehicle_type ?? 'private')
+            ->get()
+            ->groupBy('category');
+
+        // Any rate item whose notes literally say it isn't covered is dropped —
+        // it's noise, not information the customer needs to see.
+        $notCovered = fn($r) => $r->notes && stripos($r->notes, 'no cover') !== false;
+
+        return [
+            'BENEFITS / COVER LIMITS' => $rates->get('Cover Limits', collect())
+                ->merge($rates->get('Extras', collect()))
+                ->reject(fn($r) => $r->item_name === 'Geographical Area')
+                ->reject($notCovered),
+            'THIRD PARTY LIMITS OF LIABILITY' => $rates->get('Third Party Limits', collect())->reject($notCovered),
+            'POLICY EXCESSES' => $rates->get('Excess', collect())->reject($notCovered),
+            'SPECIAL CONDITIONS' => $rates->get('Additional Cover', collect())->reject($notCovered),
+            'ADDITIONAL INFO' => $rates->get('Optional Benefits', collect())
+                ->merge($rates->get('Premium Rate', collect())->whereIn('item_name', ['Max Age New Business', 'Minimum Sum Insured']))
+                ->reject($notCovered),
+        ];
+    }
+
+    /**
+     * Recompute a quotation's premium breakdown fresh from the current
+     * company rate settings, so the detail page always reflects the real
+     * backend calculation rather than a value frozen at creation time.
+     */
+    protected function quotationBreakdown(Quotation $quotation): array
+    {
+        $company = $quotation->company;
+        if (!$company) {
+            return [];
+        }
+
+        $breakdown = $this->premiumCalculator->calculate(
+            $company,
+            (float) $quotation->car_valuation,
+            $quotation->vehicle_type ?? 'private',
+            true,
+            $quotation->num_passengers ?? 1,
+            true,
+            false
+        );
+
+        $geoRate = Rate::where('company_id', $company->id)
+            ->where('vehicle_type', $quotation->vehicle_type ?? 'private')
+            ->where('item_name', 'Geographical Area')
+            ->first();
+        $breakdown['geo_limit'] = $geoRate?->notes
+            ?: ($geoRate?->value ? 'KES ' . number_format($geoRate->value, 0) : 'Kenya');
+
+        return $breakdown;
     }
 
     public function downloadPdf(Quotation $quotation)
@@ -400,8 +517,19 @@ class QuotationController extends Controller
         return $pdf->download($filename);
     }
 
+    public function previewPdf(Quotation $quotation)
+    {
+        $this->authorizeView($quotation);
+        $quotation->load(['user', 'company']);
+        $pdf = Pdf::loadView('pdf.quotation', ['quotation' => $quotation]);
+        $filename = 'quotation-' . str_replace(['/', '\\'], '-', $quotation->quotation_number) . '.pdf';
+        return $pdf->stream($filename);
+    }
+
     public function publicDownloadPdf(Quotation $quotation)
     {
+        $this->authorizeView($quotation);
+
         $quotation->load(['user', 'company']);
         $pdf = Pdf::loadView('pdf.quotation', ['quotation' => $quotation]);
         $filename = 'quotation-' . str_replace(['/', '\\'], '-', $quotation->quotation_number) . '.pdf';
@@ -456,7 +584,10 @@ class QuotationController extends Controller
             ->take(10)
             ->get();
 
-        return view('quotations.show', compact('quotation', 'showSuccess', 'recentQuotations'));
+        $breakdown = $this->quotationBreakdown($quotation);
+        $rateCategories = $this->quotationRateCategories($quotation);
+
+        return view('quotations.show', compact('quotation', 'showSuccess', 'recentQuotations', 'breakdown', 'rateCategories'));
     }
 
     public function myQuotations()
@@ -495,17 +626,34 @@ class QuotationController extends Controller
 
     public function preview(Request $request)
     {
-        $companies = Company::active()->with('rates')->get()->map(function ($c) {
-            $rate = $c->rates->firstWhere('item_name', 'Premium Rate');
-            $iraLevy = $c->rates->firstWhere('item_name', 'IRA Levy');
-            return [
-                'id' => $c->id,
-                'slug' => $c->slug,
-                'name' => $c->name,
-                'rate' => $rate ? (float) $rate->percentage / 100 : 0,
-                'taxRate' => $iraLevy ? (float) $iraLevy->percentage / 100 : 0.005,
-            ];
-        })->values();
+        $companies = Company::active()->with('rates')->get();
+
+        $buildCompanyData = function ($companies, $vehicleType) {
+            return $companies->filter(fn($c) => in_array($c->company_type, ['both', $vehicleType]))
+                ->values()
+                ->map(function ($c) use ($vehicleType) {
+                    $rate = $c->rates->where('vehicle_type', $vehicleType)->firstWhere('item_name', 'Premium Rate');
+                    $pvtRate = $c->rates->where('vehicle_type', $vehicleType)->firstWhere('item_name', 'PVT Rate');
+                    $pllRate = $c->rates->where('vehicle_type', $vehicleType)->firstWhere('item_name', 'PLL Per Person');
+                    $rateAbove = $c->rates->where('vehicle_type', $vehicleType)->firstWhere('item_name', 'Premium Rate Above 2.5M');
+                    return [
+                        'id' => $c->id,
+                        'slug' => $c->slug,
+                        'name' => $c->name,
+                        'rate' => $rate ? (float) $rate->percentage / 100 : 0,
+                        'minPremium' => $rate ? (float) $rate->min_premium : 0,
+                        'isPvtInclusive' => $rate ? (bool) $rate->is_pvt_inclusive : false,
+                        'pvtRate' => $pvtRate ? (float) $pvtRate->percentage / 100 : 0,
+                        'pvtMinValue' => $pvtRate ? (float) $pvtRate->min_value : 0,
+                        'pllPerPerson' => $pllRate ? (float) $pllRate->value : 0,
+                        'rateAbove2_5M' => $rateAbove ? (float) $rateAbove->percentage / 100 : 0,
+                        'minPremiumAbove2_5M' => $rateAbove ? (float) $rateAbove->min_premium : 0,
+                    ];
+                });
+        };
+
+        $companiesPrivate = $buildCompanyData($companies, 'private');
+        $companiesPsv = $buildCompanyData($companies, 'psv');
 
         $targetUser = null;
         $isAdmin = auth()->user()->hasRole('super-admin') || auth()->user()->hasRole('admin');
@@ -513,7 +661,75 @@ class QuotationController extends Controller
             $targetUser = User::find($request->on_behalf_of);
         }
 
-        return view('quotations.preview', compact('companies', 'targetUser'));
+        return view('quotations.preview', compact('companiesPrivate', 'companiesPsv', 'targetUser'));
+    }
+
+    /**
+     * "Compare All" page — shown when the user picks Compare All while
+     * generating a quote. Reads the vehicle/personal details already
+     * collected client-side (sessionStorage) and, via compareAllCalculate(),
+     * computes each matching company's premium using the real backend
+     * PremiumCalculationService, not a client-side formula.
+     */
+    public function compareAll(Request $request)
+    {
+        $targetUser = null;
+        $isAdmin = auth()->user()->hasRole('super-admin') || auth()->user()->hasRole('admin');
+        if ($isAdmin && $request->filled('on_behalf_of')) {
+            $targetUser = User::find($request->on_behalf_of);
+        }
+
+        return view('quotations.comparisson-show', compact('targetUser'));
+    }
+
+    public function compareAllCalculate(Request $request)
+    {
+        $request->validate([
+            'vehicle_type' => 'required|string|in:psv,private',
+            'car_valuation' => 'required|numeric|min:0',
+            'num_passengers' => 'sometimes|integer|min:1',
+        ]);
+
+        $vehicleType = $request->vehicle_type;
+        $valuation = (float) $request->car_valuation;
+        $numPassengers = $request->input('num_passengers', 1);
+
+        $companies = Company::active()
+            ->with('rates')
+            ->get()
+            ->filter(fn($c) => in_array($c->company_type, ['both', $vehicleType]))
+            ->values();
+
+        $results = $companies->map(function ($company) use ($vehicleType, $valuation, $numPassengers) {
+            $breakdown = $this->premiumCalculator->calculate(
+                $company,
+                $valuation,
+                $vehicleType,
+                true,
+                $numPassengers,
+                true,
+                false
+            );
+
+            $geoRate = Rate::where('company_id', $company->id)
+                ->where('vehicle_type', $vehicleType)
+                ->where('item_name', 'Geographical Area')
+                ->first();
+            $breakdown['geo_limit'] = $geoRate?->notes
+                ?: ($geoRate?->value ? 'KES ' . number_format($geoRate->value, 0) : 'Kenya');
+
+            return [
+                'company' => [
+                    'id' => $company->id,
+                    'slug' => $company->slug,
+                    'name' => $company->name,
+                    'logo' => $company->logoUrl(),
+                ],
+                'breakdown' => $breakdown,
+            ];
+        })->values();
+
+        return response()->json(['results' => $results]);
     }
 
     public function regenerate(Request $request)
@@ -532,7 +748,7 @@ class QuotationController extends Controller
             return redirect()->route('home')->with('error', 'Invalid request.');
         }
 
-        $existingQuotation = Quotation::where('car_registration', $registrationNumber)
+        $existingQuotation = Quotation::whereEqualsCI('car_registration', $registrationNumber)
             ->with(['company', 'items'])
             ->latest()
             ->first();
@@ -552,12 +768,22 @@ class QuotationController extends Controller
             $company = $existingQuotation->company;
             $quotation = Quotation::create([
                 'user_id' => $user->id,
+                'salutation' => $existingQuotation->salutation,
+                'first_name' => $existingQuotation->first_name,
+                'middle_name' => $existingQuotation->middle_name,
+                'last_name' => $existingQuotation->last_name,
+                'phone' => $existingQuotation->phone,
+                'email' => $existingQuotation->email,
                 'company_id' => $company->id,
                 'quotation_number' => Quotation::generateNumber($company),
                 'car_make' => $existingQuotation->car_make,
                 'car_model' => $existingQuotation->car_model,
                 'car_year' => $existingQuotation->car_year,
                 'car_registration' => $existingQuotation->car_registration,
+                'chassis_number' => $existingQuotation->chassis_number,
+                'engine_number' => $existingQuotation->engine_number,
+                'body_type' => $existingQuotation->body_type,
+                'color' => $existingQuotation->color,
                 'car_valuation' => $existingQuotation->car_valuation,
                 'vehicle_type' => $existingQuotation->vehicle_type,
                 'num_passengers' => $existingQuotation->num_passengers,

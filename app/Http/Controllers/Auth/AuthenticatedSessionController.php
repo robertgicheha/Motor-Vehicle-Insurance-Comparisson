@@ -61,7 +61,13 @@ class AuthenticatedSessionController extends Controller
             return redirect()->route('quotations.regenerate.get');
         }
 
-        return redirect()->intended(route('dashboard', absolute: false));
+        // Deliberately not using redirect()->intended() here: a stale 'url.intended'
+        // session value left behind by an unauthenticated background poll (e.g. the
+        // dashboard's weather/activity-feed fetch() firing after the session expired)
+        // would otherwise send a freshly logged-in user to that JSON endpoint instead
+        // of the dashboard. The app already has an explicit redirect_to mechanism
+        // above for legitimate post-login destinations.
+        return redirect()->route('dashboard');
     }
 
     /**
@@ -69,6 +75,11 @@ class AuthenticatedSessionController extends Controller
      */
     public function destroy(Request $request): RedirectResponse
     {
+        if ($user = auth()->user()) {
+            \App\Services\AuditService::log('logout', 'User', $user->id, null, null, $user->id);
+            \App\Services\AuditService::activity('logout', "User {$user->name} logged out", 'info', $user->id);
+        }
+
         Auth::guard('web')->logout();
 
         $request->session()->invalidate();
@@ -105,17 +116,15 @@ class AuthenticatedSessionController extends Controller
             HealthCheck::create(['type' => 'server', 'status' => 'down', 'message' => $e->getMessage(), 'checked_at' => now()]);
         }
         try {
-            $apiUrl = config('services.sticker_api.url');
-            if ($apiUrl) {
+            $wsdl = config('services.nav.mail_wsdl');
+            if ($wsdl) {
                 $start = microtime(true);
-                $client = new \Illuminate\Http\Client\Factory;
-                $response = $client->timeout(10)->get($apiUrl);
+                $result = app(\App\Services\Nav\NavMailService::class)->testConnection();
                 $time = round((microtime(true) - $start) * 1000);
-                $status = $response->successful() ? 'up' : ($response->serverError() ? 'down' : 'degraded');
-                HealthCheck::create(['type' => 'sticker_api', 'status' => $status, 'message' => "{$response->status()} in {$time}ms", 'checked_at' => now()]);
+                HealthCheck::create(['type' => 'email_server', 'status' => $result['success'] ? 'up' : 'down', 'message' => $result['success'] ? "NTLM auth OK in {$time}ms" : $result['message'], 'checked_at' => now()]);
             }
         } catch (\Exception $e) {
-            HealthCheck::create(['type' => 'sticker_api', 'status' => 'down', 'message' => $e->getMessage(), 'checked_at' => now()]);
+            HealthCheck::create(['type' => 'email_server', 'status' => 'down', 'message' => $e->getMessage(), 'checked_at' => now()]);
         }
     }
 }

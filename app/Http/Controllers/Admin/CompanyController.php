@@ -36,6 +36,14 @@ class CompanyController extends Controller
             'is_active' => 'boolean',
             'company_type' => 'required|in:private,psv,both',
             'logo' => 'nullable|image|mimes:png,jpg,jpeg,svg,webp|max:2048',
+            'claims_email' => 'nullable|email|max:255',
+            'claims_name' => 'nullable|string|max:255',
+            'claims_phone' => 'nullable|string|max:50',
+            'cc_claims_email' => 'nullable|email|max:255',
+            'underwriter_email' => 'nullable|email|max:255',
+            'underwriter_name' => 'nullable|string|max:255',
+            'underwriter_phone' => 'nullable|string|max:50',
+            'sticker_notification_emails' => 'nullable|email|max:255',
         ]);
 
         if ($validator->fails()) {
@@ -48,6 +56,14 @@ class CompanyController extends Controller
             'description' => $request->description,
             'is_active' => $request->boolean('is_active', true),
             'company_type' => $request->company_type,
+            'claims_email' => $request->claims_email,
+            'claims_name' => $request->claims_name,
+            'claims_phone' => $request->claims_phone,
+            'cc_claims_email' => $request->cc_claims_email,
+            'underwriter_email' => $request->underwriter_email,
+            'underwriter_name' => $request->underwriter_name,
+            'underwriter_phone' => $request->underwriter_phone,
+            'sticker_notification_emails' => $request->sticker_notification_emails,
         ];
 
         if (auth()->user()->hasRole('admin')) {
@@ -94,6 +110,14 @@ class CompanyController extends Controller
             'is_active' => 'boolean',
             'company_type' => 'required|in:private,psv,both',
             'logo' => 'nullable|image|mimes:png,jpg,jpeg,svg,webp|max:2048',
+            'claims_email' => 'nullable|email|max:255',
+            'claims_name' => 'nullable|string|max:255',
+            'claims_phone' => 'nullable|string|max:50',
+            'cc_claims_email' => 'nullable|email|max:255',
+            'underwriter_email' => 'nullable|email|max:255',
+            'underwriter_name' => 'nullable|string|max:255',
+            'underwriter_phone' => 'nullable|string|max:50',
+            'sticker_notification_emails' => 'nullable|email|max:255',
         ]);
 
         if ($validator->fails()) {
@@ -106,6 +130,14 @@ class CompanyController extends Controller
             'description' => $request->description,
             'is_active' => $request->boolean('is_active', true),
             'company_type' => $request->company_type,
+            'claims_email' => $request->claims_email,
+            'claims_name' => $request->claims_name,
+            'claims_phone' => $request->claims_phone,
+            'cc_claims_email' => $request->cc_claims_email,
+            'underwriter_email' => $request->underwriter_email,
+            'underwriter_name' => $request->underwriter_name,
+            'underwriter_phone' => $request->underwriter_phone,
+            'sticker_notification_emails' => $request->sticker_notification_emails,
         ];
 
         if (auth()->user()->hasRole('admin')) {

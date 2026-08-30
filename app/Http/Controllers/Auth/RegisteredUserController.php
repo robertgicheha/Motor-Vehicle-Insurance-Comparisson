@@ -51,7 +51,13 @@ class RegisteredUserController extends Controller
             'is_active' => true,
         ]);
 
-        $user->assignRole('user');
+        // syncRoles (not assignRole): guarantees a self-registered account ends up
+        // with exactly the 'user' role and nothing else, even if a stray role pivot
+        // row somehow already existed for this id.
+        $user->syncRoles(['user']);
+
+        \App\Services\AuditService::log('create', 'User', $user->id, null, ['email' => $user->email, 'method' => 'self_registration'], $user->id);
+        \App\Services\AuditService::activity('user_registered', "New user {$user->name} ({$user->email}) registered", 'info', $user->id);
 
         event(new Registered($user));
 

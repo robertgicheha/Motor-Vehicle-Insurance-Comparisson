@@ -229,7 +229,7 @@ class ReportController extends Controller
             foreach ($quotations as $q) {
                 fputcsv($handle, [
                     $q->quotation_number,
-                    $q->user->name,
+                    $q->customer_name,
                     $q->company->name,
                     $q->car_make,
                     $q->car_model,
@@ -287,7 +287,7 @@ class ReportController extends Controller
         foreach ($quotations as $q) {
             $writer->addRow(\OpenSpout\Common\Entity\Row::fromValues([
                 $q->quotation_number,
-                $q->user->name,
+                $q->customer_name,
                 $q->company->name,
                 $q->car_make,
                 $q->car_model,

@@ -2,104 +2,175 @@
 <html>
 <head>
     <meta charset="utf-8">
-    <title>Insurance Sticker {{ $sticker->sticker_number }}</title>
+    <title>Sticker {{ $sticker->sticker_number }}</title>
     <style>
-        body { font-family: 'DejaVu Sans', sans-serif; font-size: 10px; color: #1a1a2e; margin: 0; padding: 0; }
-        .sticker { width: 210mm; min-height: 297mm; padding: 0; position: relative; }
-        .header-bar { background: #004f8c; color: white; padding: 12px 20px; }
-        .header-bar h1 { margin: 0; font-size: 14px; }
-        .header-bar p { margin: 2px 0 0; opacity: 0.85; font-size: 10px; }
-        .content { padding: 15px 20px; }
-        .field { margin-bottom: 6px; }
-        .field-label { font-size: 8px; text-transform: uppercase; color: #64748b; letter-spacing: 0.5px; }
-        .field-value { font-size: 12px; font-weight: bold; color: #1a1a2e; }
-        .grid-2 { display: flex; flex-wrap: wrap; }
-        .grid-2 .col { width: 48%; margin-right: 2%; }
-        .divider { border: none; border-top: 2px dashed #cbd5e1; margin: 12px 0; }
-        .footer-bar { position: absolute; bottom: 0; left: 0; right: 0; background: #f8fafc; border-top: 1px solid #e2e8f0; padding: 8px 20px; font-size: 7px; color: #94a3b8; text-align: center; }
-        .badge { display: inline-block; padding: 2px 8px; border-radius: 3px; font-size: 8px; font-weight: bold; background: #dcfce7; color: #166534; }
-        .company-name { font-size: 16px; font-weight: bold; color: #004f8c; }
-        .sticker-number { font-size: 8px; color: #94a3b8; }
-        .qr-placeholder { width: 60px; height: 60px; border: 1px dashed #cbd5e1; display: flex; align-items: center; justify-content: center; font-size: 7px; color: #94a3b8; text-align: center; float: right; margin-left: 10px; }
+        body { font-family: 'DejaVu Sans', sans-serif; font-size: 11px; color: #1a1a2e; margin: 0; padding: 0; }
+        .letterhead {
+            display: flex; justify-content: space-between; align-items: stretch; min-height: 90px;
+        }
+        .lh-left {
+            display: flex; align-items: center; padding: 20px 28px; min-width: 220px;
+        }
+        .lh-left img { max-height: 44px; max-width: 160px; object-fit: contain; }
+        .lh-left .lh-name { font-size: 22px; font-weight: 800; color: #fff; letter-spacing: .01em; display: none; }
+        .lh-right { flex: 1; display: flex; align-items: center; justify-content: flex-end; padding: 18px 28px; text-align: right; }
+        .lh-right p { font-size: 12px; line-height: 1.75; color: rgba(255,255,255,.92); margin: 0; }
+        .pdf-body { padding: 28px 36px; }
+        .pdf-body h2 { font-size: 15px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; margin-bottom: 6px; }
+        .pdf-body .pdf-date { font-size: 12px; color: #6b7280; margin-bottom: 20px; }
+        .pdf-body p { font-size: 13px; line-height: 1.7; margin-bottom: 16px; }
+        .pdf-body table { width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 13px; }
+        .pdf-body table th { background: #f0f4fa; padding: 8px 12px; text-align: left; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; border: 1px solid #dde3ed; }
+        .pdf-body table td { padding: 9px 12px; border: 1px solid #dde3ed; }
+        .pdf-footer-text {
+            padding: 20px 36px; background: #f8f9fb; border-top: 1px solid #dde3ed;
+            font-size: 11px; color: #6b7280; line-height: 1.8;
+        }
+        .section-title { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: #0066B3; margin: 24px 0 10px; padding-bottom: 8px; border-bottom: 1.5px solid #e8f2fa; }
+        .total-row { background: #004f8c; color: white; font-weight: bold; }
+        .total-row td { padding: 10px 12px; font-size: 14px; }
+        .badge { display: inline-block; padding: 3px 10px; border-radius: 4px; font-size: 10px; font-weight: bold; background: #dcfce7; color: #166534; }
     </style>
 </head>
 <body>
-    <div class="sticker">
-        <div class="header-bar">
-            <div style="display:flex;justify-content:space-between;align-items:center">
-                <div>
-                    <h1>Motor Insurance Certificate</h1>
-                    <p>{{ $sticker->company->name }}</p>
-                </div>
-                <div style="text-align:right">
-                    <span class="badge">{{ strtoupper($sticker->cover_type) }}</span>
-                </div>
-            </div>
-        </div>
+    @php
+        $company = $sticker->company;
+        $slug = strtoupper($company->slug ?? '');
+        $companyMeta = [
+            'GA' => [
+                'color' => '#005baa',
+                'address' => 'GA Insurance Ltd, GA Building, Hospital Road, Upper Hill, P.O. Box 42166 - 00100 Nairobi',
+                'website' => 'www.gainsurance.co.ke',
+                'img' => asset('images/GA Insurance.png'),
+            ],
+            'BRITAM' => [
+                'color' => '#0071bc',
+                'address' => 'Britam General Insurance Company (Kenya) Limited, Britam Centre, Junction of Mara and Ragati Road, Upper Hill, P.O. BOX 30375 - 0100 Nairobi',
+                'website' => 'www.britam.com',
+                'img' => asset('images/britam_logo.png'),
+            ],
+            'SANLAM' => [
+                'color' => '#1d3c6e',
+                'address' => 'Sanlam Allianz Insurance Company Limited, Sanlam Tower, Hospital Road, Upper Hill, P.O. Box 30522 - 00100 Nairobi',
+                'website' => 'www.sanlam.co.ke',
+                'img' => asset('images/Sanlam-Allianz.png'),
+            ],
+        ];
+        $meta = $companyMeta[$slug] ?? ['color' => '#0066B3', 'address' => '', 'website' => 'www.micglobalrisks.com', 'img' => $company->logoUrl()];
+        $now = now()->format('d F Y, h:i A');
+    @endphp
 
-        <div class="content">
-            <div style="text-align:center;margin-bottom:12px">
-                <div class="company-name">{{ $sticker->company->name }}</div>
-                <div class="sticker-number">Sticker #{{ $sticker->sticker_number }}</div>
-            </div>
-
-            <hr class="divider">
-
-            <div class="grid-2">
-                <div class="col">
-                    <div class="field">
-                        <div class="field-label">Customer Name</div>
-                        <div class="field-value">{{ $sticker->customer_name }}</div>
-                    </div>
-                    <div class="field">
-                        <div class="field-label">Vehicle</div>
-                        <div class="field-value">{{ $sticker->car_make }} {{ $sticker->car_model }} ({{ $sticker->car_year }})</div>
-                    </div>
-                    <div class="field">
-                        <div class="field-label">Registration</div>
-                        <div class="field-value">{{ $sticker->vehicle_registration ?? 'N/A' }}</div>
-                    </div>
-                </div>
-                <div class="col">
-                    <div class="field">
-                        <div class="field-label">Vehicle Valuation</div>
-                        <div class="field-value">KES {{ number_format($sticker->car_valuation, 2) }}</div>
-                    </div>
-                    <div class="field">
-                        <div class="field-label">Premium Paid</div>
-                        <div class="field-value">KES {{ number_format($sticker->premium, 2) }}</div>
-                    </div>
-                    <div class="field">
-                        <div class="field-label">Rate</div>
-                        <div class="field-value">{{ $sticker->premium_rate }}%</div>
-                    </div>
-                </div>
-            </div>
-
-            <hr class="divider">
-
-            <div style="font-size:9px;color:#475569">
-                <p><strong>Cover:</strong> This certificate confirms that the above-named vehicle is covered under a {{ $sticker->cover_type }} motor insurance policy with {{ $sticker->company->name }}.</p>
-                <p><strong>Validity:</strong> Subject to policy terms and conditions. This certificate is valid for the period specified in the policy schedule.</p>
-                <p><strong>Generated:</strong> {{ $sticker->generated_at?->format('d M Y h:i A') ?? $sticker->created_at->format('d M Y h:i A') }}</p>
-            </div>
-
-            @if($sticker->breakdown)
-                <hr class="divider">
-                <table style="width:100%;border-collapse:collapse;font-size:9px">
-                    <thead><tr style="background:#f1f5f9"><th style="padding:4px 8px;text-align:left">Item</th><th style="padding:4px 8px;text-align:right">Amount (KES)</th></tr></thead>
-                    <tbody>
-                        @foreach($sticker->breakdown as $key => $value)
-                            <tr><td style="padding:3px 8px;border-bottom:1px solid #e2e8f0">{{ ucwords(str_replace('_', ' ', $key)) }}</td><td style="padding:3px 8px;border-bottom:1px solid #e2e8f0;text-align:right">{{ is_numeric($value) ? number_format($value, 2) : $value }}</td></tr>
-                        @endforeach
-                    </tbody>
-                </table>
+    {{-- LETTERHEAD BANNER --}}
+    <div class="letterhead" style="background:{{ $meta['color'] }}">
+        <div class="lh-left">
+            @php $__logoPath = $company->logo ? public_path('storage/' . $company->logo) : (isset(\App\Models\Company::hardcodedLogoMap()[$company->slug]) ? public_path(\App\Models\Company::hardcodedLogoMap()[$company->slug]) : ''); @endphp
+            @if($__logoPath && file_exists($__logoPath))
+                <img src="{{ $__logoPath }}" alt="{{ $company->name }}" onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
+            @else
+                <img src="{{ $meta['img'] ?? '' }}" alt="{{ $company->name }}" onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
             @endif
+            <span class="lh-name">{{ $company->name }}</span>
         </div>
+        <div class="lh-right">
+            <p>{{ $meta['address'] }}<br>Website: {{ $meta['website'] }}</p>
+        </div>
+    </div>
 
-        <div class="footer-bar">
-            MIC Global Risks Insurance (Kenya) Limited | www.micglobalrisks.com | Sticker {{ $sticker->sticker_number }}
-        </div>
+    {{-- BODY --}}
+    <div class="pdf-body">
+        <p style="margin-top:4px">{{ $now }}</p>
+        <p>Dear {{ $sticker->customer_name }},</p>
+        <h2>MOTOR INSURANCE STICKER</h2>
+        <p class="pdf-date">
+            Sticker ID: <strong>{{ $sticker->sticker_number }}</strong>
+            @if($sticker->underwriter_sticker_no)
+                &nbsp;&middot;&nbsp; Sticker Number: <strong>{{ $sticker->underwriter_sticker_no }}</strong>
+            @endif
+            &nbsp;&middot;&nbsp; <span class="badge">{{ strtoupper($sticker->cover_type ?? '') }}</span>
+        </p>
+        <p>This document confirms that the vehicle described below is covered under a {{ $sticker->cover_type }} motor insurance policy with {{ $company->name }}.</p>
+
+        <div class="section-title">CUSTOMER DETAILS</div>
+        <table>
+            <thead>
+                <tr><th>Customer Name</th><th>Phone</th><th>Email</th></tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>{{ $sticker->customer_name }}</td>
+                    <td>{{ $sticker->customer_phone ?? '—' }}</td>
+                    <td>{{ $sticker->customer_email ?? '—' }}</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <div class="section-title">VEHICLE DETAILS</div>
+        <table>
+            <thead>
+                <tr><th>Registration No</th><th>Chassis No</th><th>Engine No</th><th>Make</th><th>Model</th></tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>{{ $sticker->vehicle_registration ?? 'N/A' }}</td>
+                    <td>{{ $sticker->chassis_number ?? 'N/A' }}</td>
+                    <td>{{ $sticker->engine_number ?? 'N/A' }}</td>
+                    <td>{{ $sticker->car_make }}</td>
+                    <td>{{ $sticker->car_model }}</td>
+                </tr>
+            </tbody>
+        </table>
+        <table>
+            <thead>
+                <tr><th>Year of Manufacture</th><th>Color</th><th style="text-align:right">Valuation (KES)</th></tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>{{ $sticker->car_year }}</td>
+                    <td>{{ $sticker->color ?? 'N/A' }}</td>
+                    <td style="text-align:right">{{ number_format($sticker->car_valuation, 2) }}</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <div class="section-title">PREMIUM DETAILS</div>
+        <table>
+            <thead><tr><th>Description</th><th style="text-align:right">Rate</th><th style="text-align:right">Amount (KES)</th></tr></thead>
+            <tbody>
+                <tr><td>Vehicle Valuation</td><td style="text-align:right">—</td><td style="text-align:right">{{ number_format($sticker->car_valuation, 2) }}</td></tr>
+                <tr><td>Premium</td><td style="text-align:right">{{ $sticker->premium_rate ? number_format($sticker->premium_rate, 2) . '%' : '—' }}</td><td style="text-align:right">{{ number_format($sticker->premium, 2) }}</td></tr>
+            </tbody>
+            <tfoot>
+                <tr class="total-row"><td>Total Premium</td><td style="text-align:right">—</td><td style="text-align:right">{{ number_format($sticker->premium, 2) }}</td></tr>
+            </tfoot>
+        </table>
+
+        @if($sticker->breakdown && count($sticker->breakdown) > 0)
+        <div class="section-title">PREMIUM BREAKDOWN</div>
+        <table>
+            <thead><tr><th>Component</th><th style="text-align:right">Amount (KES)</th></tr></thead>
+            <tbody>
+                @foreach($sticker->breakdown as $key => $value)
+                    <tr>
+                        <td>{{ ucwords(str_replace('_', ' ', $key)) }}</td>
+                        <td style="text-align:right">{{ is_numeric($value) ? number_format($value, 2) : $value }}</td>
+                    </tr>
+                @endforeach
+            </tbody>
+        </table>
+        @endif
+
+        <p style="font-size:10px;color:#64748b;margin-top:15px">
+            This sticker must be displayed on the vehicle windscreen at all times. Subject to standard policy terms and conditions.
+        </p>
+        <p style="font-size:10px;color:#64748b">
+            Generated: {{ $sticker->generated_at?->format('d M Y h:i A') ?? $sticker->created_at->format('d M Y h:i A') }}
+        </p>
+    </div>
+
+    {{-- FOOTER --}}
+    <div class="pdf-footer-text">
+        KENYA | UGANDA | TANZANIA<br>
+        Sticker ID {{ $sticker->sticker_number }} &mdash; MIC Global Risks Insurance (Kenya) Limited | This is a computer-generated document.
     </div>
 </body>
 </html>

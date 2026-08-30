@@ -76,7 +76,7 @@
                                 <p class="text-[10px] text-gray-400">{{ $q->car_year }}</p>
                             </td>
                             <td class="px-5 py-2.5 text-right text-gray-500 dark:text-gray-400 font-mono">{{ number_format($q->car_valuation, 0) }}</td>
-                            <td class="px-5 py-2.5 text-right font-bold text-gray-800 dark:text-white font-mono">{{ number_format($q->total_premium, 0) }}</td>
+                            <td class="px-5 py-2.5 text-right font-bold text-gray-800 dark:text-white font-mono">{{ number_format($q->total_premium, 2) }}</td>
                             <td class="px-5 py-2.5 text-center">
                                 @php
                                     $statusColors = [

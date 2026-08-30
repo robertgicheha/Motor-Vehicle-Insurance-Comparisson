@@ -46,7 +46,9 @@ class SocialiteController extends Controller
                 'is_active' => true,
                 'email_verified_at' => now(),
             ]);
-            $user->assignRole('user');
+            // syncRoles (not assignRole): guarantees a freshly created Google account
+            // ends up with exactly the 'user' role and nothing else.
+            $user->syncRoles(['user']);
 
             $admins = User::role(['super-admin', 'admin'])->get();
             if ($admins->isNotEmpty()) {

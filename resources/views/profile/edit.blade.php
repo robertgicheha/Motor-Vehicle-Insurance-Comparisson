@@ -153,7 +153,7 @@
                     <div class="flex items-center gap-4">
                         <div class="w-16 h-16 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center overflow-hidden border border-gray-200 dark:border-gray-600 relative">
                             @if($user->avatar && file_exists(public_path($user->avatar)))
-                                <img src="{{ asset($user->avatar) }}" alt="" class="w-full h-full object-cover" id="avatarPreview">
+                                <img src="{{ asset($user->avatar) }}" alt="{{ $user->name }}" class="w-full h-full object-cover" id="avatarPreview">
                             @else
                                 <svg class="w-8 h-8 text-gray-400" id="avatarPreviewIcon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
                                 <img src="" alt="" class="w-full h-full object-cover hidden" id="avatarPreview">
@@ -325,26 +325,26 @@
 
     </div>
 
-{{-- ─── CROP MODAL ────────────────────────────────────────────────────── --}}
-<div id="cropModal" class="fixed inset-0 z-50 flex items-center justify-center hidden bg-black/60" x-cloak>
-    <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-xl w-full max-w-lg mx-4 overflow-hidden">
-        <div class="px-5 py-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
-            <h3 class="text-sm font-semibold text-gray-900 dark:text-white">Crop Image</h3>
-            <button onclick="closeCropModal()" class="text-gray-400 hover:text-gray-600">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-            </button>
-        </div>
-        <div class="p-5">
-            <div class="w-full max-h-80 overflow-hidden">
-                <img id="cropImage" src="" alt="Crop" class="max-w-full">
+    {{-- ─── CROP MODAL ────────────────────────────────────────────────────── --}}
+    <div id="cropModal" class="fixed inset-0 z-50 flex items-center justify-center hidden bg-black/60" x-cloak>
+        <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-xl w-full max-w-lg mx-4 overflow-hidden">
+            <div class="px-5 py-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
+                <h3 class="text-sm font-semibold text-gray-900 dark:text-white">Crop Image</h3>
+                <button onclick="closeCropModal()" class="text-gray-400 hover:text-gray-600">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+            </div>
+            <div class="p-5">
+                <div class="w-full max-h-80 overflow-hidden">
+                    <img id="cropImage" src="" alt="Crop" class="max-w-full">
+                </div>
+            </div>
+            <div class="px-5 py-4 border-t border-gray-200 dark:border-gray-700 flex items-center justify-end gap-2">
+                <button onclick="closeCropModal()" class="px-4 py-2 text-xs font-medium text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition">Cancel</button>
+                <button onclick="applyCrop()" class="px-4 py-2 text-xs font-semibold bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition">Apply Crop</button>
             </div>
         </div>
-        <div class="px-5 py-4 border-t border-gray-200 dark:border-gray-700 flex items-center justify-end gap-2">
-            <button onclick="closeCropModal()" class="px-4 py-2 text-xs font-medium text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition">Cancel</button>
-            <button onclick="applyCrop()" class="px-4 py-2 text-xs font-semibold bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition">Apply Crop</button>
-        </div>
     </div>
-</div>
 
 <link href="https://cdn.jsdelivr.net/npm/cropperjs@1.6.1/dist/cropper.min.css" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/cropperjs@1.6.1/dist/cropper.min.js"></script>

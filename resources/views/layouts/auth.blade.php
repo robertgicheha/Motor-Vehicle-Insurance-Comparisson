@@ -18,7 +18,7 @@
         <div class="flex flex-col justify-center w-full lg:w-[40%] px-8 sm:px-16 xl:px-24">
             <div class="mb-10 text-center">
                 <a href="{{ route('home') }}" class="flex flex-col items-center justify-center gap-3">
-                    <img src="{{ asset('images/MarshMIC.png') }}" alt="MIC Global Risks" class="mx-auto mb-3" style="height:56px;width:auto">
+                    <img src="{{ asset('images/MarshMIC.png') }}" alt="MIC Global Risks" class="mx-auto mb-3" style="height:56px;width:auto" width="1683" height="143">
                     <span>Motor Vehicle Insurance Portal</span>
                 </a>
             </div>
@@ -35,7 +35,7 @@
         <div class="hidden lg:block lg:w-[60%] relative bg-slate-800">
             <img src="{{ asset('images/hero/vehicle.jpg') }}"
                  alt="Team working"
-                 class="absolute inset-0 object-cover w-full h-full opacity-40 mix-blend-overlay">
+                 class="absolute inset-0 object-cover w-full h-full opacity-40 mix-blend-overlay" width="1920" height="1280">
         </div>
     </div>
 </body>

@@ -28,37 +28,41 @@
     <div class="p-6">
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
-                <label class="block text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">First Name <span class="text-rose-500">*</span></label>
+                <label class="block text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1" for="dash-f-first">First Name <span class="text-rose-500">*</span></label>
                 <input type="text" id="dash-f-first" value="{{ auth()->user()->first_name ?? '' }}" class="w-full px-3 py-2 text-xs rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none" placeholder="e.g. John">
             </div>
             <div>
-                <label class="block text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Last Name <span class="text-rose-500">*</span></label>
+                <label class="block text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1" for="dash-f-last">Last Name <span class="text-rose-500">*</span></label>
                 <input type="text" id="dash-f-last" value="{{ auth()->user()->last_name ?? '' }}" class="w-full px-3 py-2 text-xs rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none" placeholder="e.g. Doe">
             </div>
             <div>
-                <label class="block text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Phone <span class="text-rose-500">*</span></label>
+                <label class="block text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1" for="dash-f-phone">Phone <span class="text-rose-500">*</span></label>
                 <input type="tel" id="dash-f-phone" value="{{ auth()->user()->mobile ?? '' }}" class="w-full px-3 py-2 text-xs rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none" placeholder="07 XX XXX XXX">
             </div>
             <div>
-                <label class="block text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Email <span class="text-rose-500">*</span></label>
+                <label class="block text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1" for="dash-f-email">Email <span class="text-rose-500">*</span></label>
                 <input type="email" id="dash-f-email" value="{{ auth()->user()->email ?? '' }}" class="w-full px-3 py-2 text-xs rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none" placeholder="email@example.com">
             </div>
             <div>
-                <label class="block text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Registration No <span class="text-rose-500">*</span></label>
+                <label class="block text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1" for="dash-f-reg">Registration No <span class="text-rose-500">*</span></label>
                 <input type="text" id="dash-f-reg" class="w-full px-3 py-2 text-xs rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none" placeholder="e.g. KDH 724V">
             </div>
+            <div>
+                <label class="block text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1" for="dash-f-engine">Engine No</label>
+                <input type="text" id="dash-f-engine" class="w-full px-3 py-2 text-xs rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none" placeholder="e.g. CBA1234567">
+            </div>
             <div class="relative">
-                <label class="block text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Make <span class="text-rose-500">*</span></label>
+                <label class="block text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1" for="dash-f-make">Make <span class="text-rose-500">*</span></label>
                 <input type="text" id="dash-f-make" autocomplete="off" class="w-full px-3 py-2 text-xs rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none" placeholder="e.g. Toyota">
                 <div id="dash-f-make-dropdown" class="dash-search-dropdown absolute z-20 mt-1 w-full max-h-52 overflow-y-auto bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg hidden"></div>
             </div>
             <div class="relative">
-                <label class="block text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Model <span class="text-rose-500">*</span></label>
+                <label class="block text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1" for="dash-f-model">Model <span class="text-rose-500">*</span></label>
                 <input type="text" id="dash-f-model" autocomplete="off" class="w-full px-3 py-2 text-xs rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none" placeholder="e.g. Corolla">
                 <div id="dash-f-model-dropdown" class="dash-search-dropdown absolute z-20 mt-1 w-full max-h-52 overflow-y-auto bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg hidden"></div>
             </div>
             <div>
-                <label class="block text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Year <span class="text-rose-500">*</span></label>
+                <label class="block text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1" for="dash-f-year">Year <span class="text-rose-500">*</span></label>
                 <select id="dash-f-year" class="w-full px-3 py-2 text-xs rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none">
                     <option value="">Select year...</option>
                     @for($y = date('Y'); $y >= 1990; $y--)
@@ -67,11 +71,11 @@
                 </select>
             </div>
             <div>
-                <label class="block text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Value (KES) <span class="text-rose-500">*</span></label>
+                <label class="block text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1" for="dash-f-value">Value (KES) <span class="text-rose-500">*</span></label>
                 <input type="text" id="dash-f-value" class="w-full px-3 py-2 text-xs rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none" placeholder="e.g. 800,000">
             </div>
             <div id="dash-f-pax-wrap" style="display:none">
-                <label class="block text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Passengers <span class="text-rose-500">*</span></label>
+                <label class="block text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1" for="dash-f-pax">Passengers <span class="text-rose-500">*</span></label>
                 <input type="number" id="dash-f-pax" value="1" min="1" class="w-full px-3 py-2 text-xs rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none">
             </div>
         </div>
@@ -92,4 +96,5 @@ window.MIC_COMPANIES = @json($_qqData);
 window.MIC_QUOTE_COMPANIES = @json(($quoteCompanies ?? collect())->values());
 window.MIC_QUOTE_COMPANY_DATA_PRIVATE = @json($quoteCompanyDataPrivate ?? []);
 window.MIC_QUOTE_COMPANY_DATA_PSV = @json($quoteCompanyDataPsv ?? []);
+window.MIC_COMPARE_ALL_CALCULATE_URL = @json(route('quotations.compare-all.calculate'));
 </script>

@@ -5,15 +5,15 @@
     <div class="rounded-2xl bg-micblue px-6 py-7 shadow-sm">
         <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
             <div>
-                <p class="text-[10px] font-semibold uppercase tracking-widest text-blue-400">Insurer Directory</p>
+                <p class="text-[10px] font-semibold uppercase tracking-widest text-blue-400">Underwriter Directory</p>
                 <h1 class="mt-0.5 text-xl font-bold text-white">{{ $company->name }} &mdash; Rates</h1>
-                <p class="mt-0.5 text-xs text-slate-400">Manage insurance rates, cover limits, excesses and additional coverages</p>
+                <p class="mt-0.5 text-xs text-slate-400">Manage Underwriter rates, cover limits, excesses and additional coverages</p>
             </div>
             <div class="flex items-center gap-2 shrink-0">
                 <a href="{{ route('admin.companies.index') }}"
                    class="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-medium border border-white/20 text-white/80 rounded-lg hover:bg-white/10 transition">
                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
-                    Back to Companies
+                    Back to Underwriters
                 </a>
             </div>
         </div>
@@ -282,7 +282,7 @@
 
                         <div class="bg-gray-50 dark:bg-gray-700/30 rounded-xl p-4">
                             <h4 class="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">Expected Format</h4>
-                            <p class="text-[10px] text-gray-500 dark:text-gray-400 mb-2">First row: company names as column headers (starting column B). First column: rate item labels. Cells: rate values.</p>
+                            <p class="text-[10px] text-gray-500 dark:text-gray-400 mb-2">First row: underwriter names as column headers (starting column B). First column: rate item labels. Cells: rate values.</p>
                             <div class="overflow-x-auto">
                                 <table class="w-full text-[10px]">
                                     <thead>
@@ -309,7 +309,7 @@
                                     </tbody>
                                 </table>
                             </div>
-                            <p class="mt-2 text-[10px] text-gray-500 dark:text-gray-400">Companies are created if they don't exist. Rate categories are auto-detected from item names.</p>
+                            <p class="mt-2 text-[10px] text-gray-500 dark:text-gray-400">Underwriters are created if they don't exist. Rate categories are auto-detected from item names.</p>
                         </div>
 
                         <button type="submit"

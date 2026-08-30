@@ -26,8 +26,8 @@
         </div>
     </div>
 
-    {{-- ─── ADMIN: USER SELECTOR ─────────────────────────────────────────── --}}
-    @if(auth()->user()->hasRole('super-admin') || auth()->user()->hasRole('admin'))
+    {{-- ─── USER SELECTOR ─────────────────────────────────────────── --}}
+    @php $isAdminUser = auth()->user()->hasRole('super-admin') || auth()->user()->hasRole('admin'); @endphp
     <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
         <div class="px-6 py-4">
             <div class="flex flex-col sm:flex-row sm:items-center gap-3">
@@ -39,14 +39,22 @@
                                class="accent-blue-600">
                         <span class="text-xs text-gray-700 dark:text-gray-300">Myself ({{ auth()->user()->name }})</span>
                     </label>
+                    @if($isAdminUser)
                     <label class="flex items-center gap-2 cursor-pointer">
                         <input type="radio" name="generate_for" value="other" onchange="toggleUserSelector('other')"
                                {{ request('on_behalf_of') ? 'checked' : '' }}
                                class="accent-blue-600">
                         <span class="text-xs text-gray-700 dark:text-gray-300">Another user</span>
                     </label>
+                    @endif
+                    <label class="flex items-center gap-2 cursor-pointer">
+                        <input type="radio" name="generate_for" value="new" onchange="toggleUserSelector('new')"
+                               class="accent-blue-600">
+                        <span class="text-xs text-gray-700 dark:text-gray-300">New Customer</span>
+                    </label>
                 </div>
             </div>
+            @if($isAdminUser)
             <div id="user-selector-dropdown" class="mt-3 {{ request('on_behalf_of') ? '' : 'hidden' }}">
                 <select id="f-on-behalf-of" onchange="onUserSelected(this.value)"
                         class="w-full max-w-xs px-3 py-2 text-xs rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none">
@@ -62,10 +70,16 @@
                     @endforeach
                 </select>
             </div>
+            @endif
+            <div id="new-customer-note" class="mt-3 hidden">
+                <p class="text-[11px] text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 rounded-lg px-3 py-2">
+                    This customer isn't a registered user. Fill in their name, phone and email in the Personal Details step below — the quotation will be saved against those details directly, with no account created.
+                </p>
+            </div>
+            <input type="hidden" id="f-is-new-customer" value="">
         </div>
     </div>
     <div class="h-4"></div>
-    @endif
 
     {{-- ─── VEHICLE TYPE SELECTOR ─────────────────────────────────────────--}}
     <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
@@ -138,7 +152,7 @@
             </div>
             <div class="grid grid-cols-3 gap-4">
                 <div>
-                    <label class="block text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Salutation <span class="text-rose-500">*</span></label>
+                    <label class="block text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1" for="f-salutation">Salutation <span class="text-rose-500">*</span></label>
                     <select id="f-salutation" class="w-full px-3 py-2 text-xs rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none">
                         <option value="">Select...</option>
                         <option {{ $prefill['salutation'] === 'Mr.' ? 'selected' : '' }}>Mr.</option>
@@ -149,23 +163,23 @@
                     </select>
                 </div>
                 <div>
-                    <label class="block text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">First Name <span class="text-rose-500">*</span></label>
+                    <label class="block text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1" for="f-first">First Name <span class="text-rose-500">*</span></label>
                     <input type="text" id="f-first" value="{{ $prefill['first_name'] }}" class="w-full px-3 py-2 text-xs rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none" placeholder="e.g. John">
                 </div>
                 <div>
-                    <label class="block text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Middle Name</label>
+                    <label class="block text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1" for="f-middle">Middle Name</label>
                     <input type="text" id="f-middle" value="{{ $prefill['middle_name'] }}" class="w-full px-3 py-2 text-xs rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Optional">
                 </div>
                 <div>
-                    <label class="block text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Last Name <span class="text-rose-500">*</span></label>
+                    <label class="block text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1" for="f-last">Last Name <span class="text-rose-500">*</span></label>
                     <input type="text" id="f-last" value="{{ $prefill['last_name'] }}" class="w-full px-3 py-2 text-xs rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none" placeholder="e.g. Doe">
                 </div>
                 <div>
-                    <label class="block text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Phone Number <span class="text-rose-500">*</span></label>
+                    <label class="block text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1" for="f-phone">Phone Number <span class="text-rose-500">*</span></label>
                     <input type="tel" id="f-phone" value="{{ $prefill['phone'] }}" class="w-full px-3 py-2 text-xs rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none" placeholder="07 XX XXX XXX">
                 </div>
                 <div>
-                    <label class="block text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Email Address <span class="text-rose-500">*</span></label>
+                    <label class="block text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1" for="f-email">Email Address <span class="text-rose-500">*</span></label>
                     <input type="email" id="f-email" value="{{ $prefill['email'] }}" class="w-full px-3 py-2 text-xs rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none" placeholder="email@example.com">
                 </div>
             </div>
@@ -183,12 +197,21 @@
             </div>
             <div class="grid grid-cols-2 gap-4">
                 <div>
-                    <label class="block text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Registration Number <span class="text-rose-500">*</span></label>
+                    <label class="block text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1" for="f-reg">Registration Number <span class="text-rose-500">*</span></label>
                     <input type="text" id="f-reg" value="{{ $prefill['reg'] }}" class="w-full px-3 py-2 text-xs rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none" placeholder="e.g. KDH 724V">
                 </div>
+                <div id="f-pax-group" style="display:{{ ($prefill['vehicle_type'] ?? 'private') === 'psv' ? 'block' : 'none' }}">
+                    <label class="block text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1" for="f-pax">Number of Passengers (Pax) <span class="text-rose-500">*</span></label>
+                    <input type="number" id="f-pax" min="1" value="1" class="w-full px-3 py-2 text-xs rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none" placeholder="e.g. 14">
+                    <p class="text-[10px] text-gray-400 mt-1">Used to calculate Passenger Legal Liability (PLL)</p>
+                </div>
                 <div>
-                    <label class="block text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Chassis / Frame Number</label>
+                    <label class="block text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1" for="f-chassis">Chassis / Frame Number</label>
                     <input type="text" id="f-chassis" value="{{ $prefill['chassis'] }}" class="w-full px-3 py-2 text-xs rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none" placeholder="e.g. WVWZZZ1KZ9W123456">
+                </div>
+                <div>
+                    <label class="block text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1" for="f-engine">Engine No</label>
+                    <input type="text" id="f-engine" value="{{ $prefill['engine'] }}" class="w-full px-3 py-2 text-xs rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none" placeholder="e.g. CBA1234567">
                 </div>
                 <div>
                     <label class="block text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Make of Vehicle <span class="text-rose-500">*</span></label>
@@ -209,7 +232,7 @@
                     <input type="text" id="f-model-other" class="w-full px-3 py-2 text-xs rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none mt-1.5" placeholder="Type your vehicle model..." style="display:none">
                 </div>
                 <div>
-                    <label class="block text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Body Type</label>
+                    <label class="block text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1" for="f-body">Body Type</label>
                     <select id="f-body" class="w-full px-3 py-2 text-xs rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none">
                         <option value="">Select body type...</option>
                         <option {{ $prefill['body'] === 'Saloon' ? 'selected' : '' }}>Saloon</option>
@@ -223,11 +246,11 @@
                     </select>
                 </div>
                 <div>
-                    <label class="block text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Year of Manufacture <span class="text-rose-500">*</span></label>
+                    <label class="block text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1" for="f-year">Year of Manufacture <span class="text-rose-500">*</span></label>
                     <select id="f-year" class="w-full px-3 py-2 text-xs rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none"></select>
                 </div>
                 <div>
-                    <label class="block text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Color</label>
+                    <label class="block text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1" for="f-color">Color</label>
                     <select id="f-color" class="w-full px-3 py-2 text-xs rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none" onchange="toggleOtherColor(this)">
                         <option value="">Select color...</option>
                         <option {{ $prefill['color'] === 'White' ? 'selected' : '' }}>White</option>
@@ -289,7 +312,7 @@
                             <div class="text-xs font-extrabold" style="color:{{ $colors[$colorIdx] }};display:none">{{ $company->getInitials() }}</div>
                         </div>
                         <div class="text-[10px] font-bold uppercase tracking-wider" style="color:{{ $colors[$colorIdx] }}">{{ $company->name }}</div>
-                        <div class="text-[10px] text-gray-400">@ {{ $rateVal * 100 }}%</div>
+                        <div class="text-[10px] text-gray-400" id="rate-{{ $company->slug }}">@ {{ $rateVal * 100 }}%</div>
                         <div class="text-base font-extrabold premium-amount" style="color:{{ $colors[$colorIdx] }}" id="prev-{{ $company->slug }}">—</div>
                         <div class="w-full text-[10px] font-bold text-white rounded-md py-1.5 mt-1" style="background:{{ $colors[$colorIdx] }}">View Quote →</div>
                     </div>
@@ -351,13 +374,33 @@
 // ── Admin: user selector toggle ──
 function toggleUserSelector(val) {
     var dd = document.getElementById('user-selector-dropdown');
+    var note = document.getElementById('new-customer-note');
     var hidden = document.getElementById('f-user-id');
+    var isNewCustomer = document.getElementById('f-is-new-customer');
+
+    if (dd) dd.classList.add('hidden');
+    note.classList.add('hidden');
+
     if (val === 'self') {
-        dd.classList.add('hidden');
         if (hidden) hidden.value = '';
-    } else {
-        dd.classList.remove('hidden');
-        document.getElementById('f-on-behalf-of').focus();
+        if (isNewCustomer) isNewCustomer.value = '';
+    } else if (val === 'other') {
+        if (dd) dd.classList.remove('hidden');
+        if (isNewCustomer) isNewCustomer.value = '';
+        var onBehalfSelect = document.getElementById('f-on-behalf-of');
+        if (onBehalfSelect) onBehalfSelect.focus();
+    } else if (val === 'new') {
+        note.classList.remove('hidden');
+        if (hidden) hidden.value = '';
+        if (isNewCustomer) isNewCustomer.value = '1';
+        var onBehalfHidden = document.getElementById('f-on-behalf-of-hidden');
+        if (onBehalfHidden) onBehalfHidden.value = '';
+        ['f-salutation', 'f-first', 'f-middle', 'f-last', 'f-phone', 'f-email'].forEach(function(id) {
+            var el = document.getElementById(id);
+            if (el) el.value = '';
+        });
+        var firstEl = document.getElementById('f-first');
+        if (firstEl) firstEl.focus();
     }
 }
 
@@ -365,6 +408,8 @@ function toggleUserSelector(val) {
 function selectVehicleType(type) {
     var hidden = document.getElementById('f-vehicle-type');
     if (hidden) hidden.value = type;
+    var paxGroup = document.getElementById('f-pax-group');
+    if (paxGroup) paxGroup.style.display = type === 'psv' ? 'block' : 'none';
     ['private', 'psv'].forEach(function (t) {
         var card = document.getElementById('vt-card-' + t);
         if (!card) return;
@@ -376,6 +421,7 @@ function selectVehicleType(type) {
         card.classList.toggle('dark:border-gray-700', !active);
     });
     document.getElementById('vehicle-type-select').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    updatePremiumPreview();
 }
 
 function onUserSelected(userId) {
@@ -483,8 +529,11 @@ function toggleOtherColor(sel) {
     else { box.style.display = 'none'; box.value = ''; }
 }
 
-// ── Premium preview ──
+// ── Premium preview (real backend PremiumCalculationService via AJAX) ──
 function fmt(n) { return 'KES ' + n.toLocaleString('en-KE', {minimumFractionDigits:0, maximumFractionDigits:0}); }
+
+var _premiumPreviewDebounce = null;
+var _premiumPreviewRequestId = 0;
 
 function updatePremiumPreview() {
     var raw = (document.getElementById('f-value').value || '').replace(/,/g, '');
@@ -496,26 +545,61 @@ function updatePremiumPreview() {
     if (val < 1) {
         empty.style.display = '';
         preview.style.display = 'none';
+        summary.style.display = 'none';
         return;
     }
     empty.style.display = 'none';
     preview.style.display = '';
 
-    var cards = document.querySelectorAll('#companyCardsContainer > div[data-slug]');
-    cards.forEach(function(card) {
-        var slug = card.dataset.slug;
-        var rate = parseFloat(card.dataset.rate) || 0.035;
-        var amt = val * rate;
-        var el = document.getElementById('prev-' + slug);
-        if (el) el.textContent = fmt(amt);
-        if (amt < lowest) { lowest = amt; lowestEl = el; }
-        if (amt > highest) { highest = amt; highestEl = el; }
-    });
+    clearTimeout(_premiumPreviewDebounce);
+    _premiumPreviewDebounce = setTimeout(function() { fetchPremiumPreview(val); }, 350);
+}
 
-    document.getElementById('sum-value').textContent   = fmt(val);
-    document.getElementById('sum-lowest').textContent  = fmt(lowest !== Infinity ? lowest : 0);
-    document.getElementById('sum-highest').textContent = fmt(highest !== -Infinity ? highest : 0);
-    summary.style.display = '';
+function fetchPremiumPreview(val) {
+    var vehicleType = (document.getElementById('f-vehicle-type') || {}).value || 'private';
+    var numPassengers = parseInt((document.getElementById('f-pax') || {}).value, 10) || 1;
+    var requestId = ++_premiumPreviewRequestId;
+    var cards = document.querySelectorAll('#companyCardsContainer > div[data-slug]');
+
+    fetch('{{ route("quotations.compare-all.calculate") }}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content,
+        },
+        body: JSON.stringify({ vehicle_type: vehicleType, car_valuation: val, num_passengers: numPassengers }),
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+        if (requestId !== _premiumPreviewRequestId) return; // a newer request superseded this one
+        var results = data.results || [];
+        var bySlug = {};
+        results.forEach(function(r) { bySlug[r.company.slug] = r.breakdown; });
+
+        var lowest = Infinity, highest = -Infinity;
+        cards.forEach(function(card) {
+            var slug = card.dataset.slug;
+            var breakdown = bySlug[slug];
+            if (!breakdown) { card.style.display = 'none'; return; }
+            card.style.display = '';
+            var amt = breakdown.total_premium;
+            var el = document.getElementById('prev-' + slug);
+            var rateEl = document.getElementById('rate-' + slug);
+            if (el) el.textContent = fmt(amt);
+            if (rateEl) rateEl.textContent = '@ ' + breakdown.premium_rate + '%';
+            if (amt < lowest) lowest = amt;
+            if (amt > highest) highest = amt;
+        });
+
+        var countEl = document.getElementById('compare-all-count');
+        if (countEl) countEl.textContent = results.length + ' Quotes';
+
+        document.getElementById('sum-value').textContent   = fmt(val);
+        document.getElementById('sum-lowest').textContent  = fmt(lowest !== Infinity ? lowest : 0);
+        document.getElementById('sum-highest').textContent = fmt(highest !== -Infinity ? highest : 0);
+        document.getElementById('qf-summary').style.display = '';
+    })
+    .catch(function() {});
 }
 
 // ── Open quote page ──
@@ -543,6 +627,7 @@ function openQuotePage(insurer) {
         email      : document.getElementById('f-email').value,
         reg        : document.getElementById('f-reg').value,
         chassis    : document.getElementById('f-chassis').value,
+        engine     : document.getElementById('f-engine').value,
         make       : make,
         model      : model,
         body       : document.getElementById('f-body').value,
@@ -550,14 +635,17 @@ function openQuotePage(insurer) {
         color      : color,
         value      : rawValue,
         vehicle_type : (document.getElementById('f-vehicle-type') || {}).value || 'private',
+        num_passengers : parseInt((document.getElementById('f-pax') || {}).value) || 1,
         _signed    : document.getElementById('f-signed').value,
         userId: userId,
+        is_new_customer: (document.getElementById('f-is-new-customer') || {}).value === '1',
     };
     sessionStorage.setItem('micQuoteData', JSON.stringify(data));
     clearDraft();
     var params = '?insurer=' + insurer;
     if (userId) params += '&on_behalf_of=' + userId;
-    window.location.href = "{{ route('quotations.preview') }}" + params;
+    var destination = insurer === 'ALL' ? "{{ route('quotations.compare-all') }}" : "{{ route('quotations.preview') }}";
+    window.location.href = destination + params;
 }
 
 // ── VEHICLE SEARCH ──
@@ -662,6 +750,12 @@ function openQuotePage(insurer) {
     if (document.getElementById('f-make')) initVehicleSearch();
 })();
 
+// ── Passengers (PLL) affects premium preview for PSV ──
+(function() {
+    var paxInput = document.getElementById('f-pax');
+    if (paxInput) paxInput.addEventListener('input', updatePremiumPreview);
+})();
+
 // ── VALUE FORMATTING & VALIDATION ──
 (function() {
     var valInput = document.getElementById('f-value');
@@ -701,9 +795,9 @@ function openQuotePage(insurer) {
     var STORAGE_KEY = 'micQuoteDraft';
     var fields = [
         'f-salutation', 'f-first', 'f-middle', 'f-last', 'f-phone', 'f-email',
-        'f-reg', 'f-chassis', 'f-make', 'f-make-value', 'f-make-other',
+        'f-reg', 'f-chassis', 'f-engine', 'f-make', 'f-make-value', 'f-make-other',
         'f-model', 'f-model-value', 'f-model-other', 'f-body',
-        'f-year', 'f-color', 'f-color-other', 'f-value', 'f-signed', 'f-vehicle-type'
+        'f-year', 'f-color', 'f-color-other', 'f-value', 'f-signed', 'f-vehicle-type', 'f-pax'
     ];
 
     function saveDraft() {

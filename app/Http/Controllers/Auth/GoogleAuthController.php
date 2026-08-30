@@ -47,7 +47,9 @@ class GoogleAuthController extends Controller
                 'email_verified_at' => now(),
                 'profile_completed' => false,
             ]);
-            $user->assignRole('user');
+            // syncRoles (not assignRole): guarantees a freshly created Google account
+            // ends up with exactly the 'user' role and nothing else.
+            $user->syncRoles(['user']);
 
             $admins = User::role(['super-admin', 'admin'])->get();
             if ($admins->isNotEmpty()) {

@@ -28,14 +28,14 @@
 <body>
     <div class="wrapper">
         <div class="header">
-            <h1>Certificate Issuance Request</h1>
+            <h1>Sticker Issuance Request</h1>
             <p>{{ $sticker->sticker_number }}</p>
         </div>
 
         <div class="body-content">
             <h2>Dear Underwriter,</h2>
 
-            <p>A new motor insurance certificate has been requested and the KYC documents have been uploaded and verified. Please find the details below and respond to this email thread within 30 minutes with the Sticker Certificate and Policy Document attached.</p>
+            <p>A new motor insurance sticker has been requested and the KYC documents have been uploaded and verified. Please find the details below and respond to this email thread within 30 minutes with the Sticker and Policy Document attached.</p>
 
             @if($admin_notes)
             <div class="alert-box">
@@ -50,7 +50,7 @@
             </div>
 
             <table class="details-table">
-                <tr><td>Certificate Number</td><td>{{ $sticker->sticker_number }}</td></tr>
+                <tr><td>Sticker ID</td><td>{{ $sticker->sticker_number }}</td></tr>
                 <tr><td>Insurance Company</td><td>{{ $sticker->company->name }}</td></tr>
                 <tr><td>Customer Name</td><td>{{ $sticker->customer_name }}</td></tr>
                 <tr><td>Vehicle</td><td>{{ $sticker->car_make }} {{ $sticker->car_model }} ({{ $sticker->car_year }})</td></tr>
@@ -83,12 +83,12 @@
                 <li>Copy of KRA PIN (Scanned)</li>
                 <li>Copy of Logbook (Scanned)</li>
             </ul>
-            <p>Please find these documents attached to this email. Respond to this thread with the Sticker Certificate and Policy Document within the 30-minute turnaround time.</p>
+            <p>Please find these documents attached to this email. Respond to this thread with the Sticker and Policy Document within the 30-minute turnaround time.</p>
         </div>
 
         <div class="footer">
             <p><strong>MIC Global Risks Insurance (Kenya) Limited</strong></p>
-            <p>www.micglobalrisks.com | This is an automated certificate issuance notification.</p>
+            <p>www.micglobalrisks.com | This is an automated sticker issuance notification.</p>
         </div>
     </div>
 </body>

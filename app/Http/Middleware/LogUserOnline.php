@@ -11,7 +11,10 @@ class LogUserOnline
     public function handle(Request $request, Closure $next): Response
     {
         if (auth()->check()) {
-            auth()->user()->update(['last_online_at' => now()]);
+            $user = auth()->user();
+            if (!$user->last_online_at || $user->last_online_at->lt(now()->subMinute())) {
+                $user->update(['last_online_at' => now()]);
+            }
         }
         return $next($request);
     }

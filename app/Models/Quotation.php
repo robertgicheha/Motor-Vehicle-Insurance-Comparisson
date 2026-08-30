@@ -10,8 +10,10 @@ class Quotation extends Model
     use SoftDeletes;
 
     protected $fillable = [
-        'user_id', 'company_id', 'quotation_number', 'car_make', 'car_model',
-        'car_year', 'car_registration', 'car_valuation', 'vehicle_type', 'num_passengers', 'premium', 'pvt_premium',
+        'user_id', 'salutation', 'first_name', 'middle_name', 'last_name', 'phone', 'email',
+        'company_id', 'quotation_number', 'car_make', 'car_model',
+        'car_year', 'car_registration', 'chassis_number', 'engine_number', 'body_type', 'color',
+        'car_valuation', 'vehicle_type', 'num_passengers', 'premium', 'pvt_premium',
         'total_premium', 'excess_own_damage', 'excess_theft', 'status', 'breakdown'
     ];
 
@@ -46,6 +48,47 @@ class Quotation extends Model
     public function stickers()
     {
         return $this->hasMany(Sticker::class);
+    }
+
+    /**
+     * Customer display name — prefers the quotation's own snapshot (covers
+     * guest quotations with no user_id, and "on behalf of" typed-in names
+     * that may differ from the linked user's current profile), falling
+     * back to the linked user for older rows saved before the snapshot
+     * columns existed.
+     */
+    public function getCustomerNameAttribute(): string
+    {
+        $snapshot = collect([$this->salutation, $this->first_name, $this->middle_name, $this->last_name])
+            ->filter()
+            ->implode(' ');
+
+        return $snapshot ?: ($this->user?->name ?? 'Valued Customer');
+    }
+
+    public function getCustomerSalutationAttribute(): ?string
+    {
+        return $this->salutation;
+    }
+
+    public function getCustomerFirstNameAttribute(): ?string
+    {
+        return $this->first_name ?: $this->user?->first_name;
+    }
+
+    public function getCustomerLastNameAttribute(): ?string
+    {
+        return $this->last_name ?: $this->user?->last_name;
+    }
+
+    public function getCustomerEmailAttribute(): ?string
+    {
+        return $this->email ?: $this->user?->email;
+    }
+
+    public function getCustomerPhoneAttribute(): ?string
+    {
+        return $this->phone ?: $this->user?->mobile;
     }
 
     public static function generateNumber(?Company $company = null): string

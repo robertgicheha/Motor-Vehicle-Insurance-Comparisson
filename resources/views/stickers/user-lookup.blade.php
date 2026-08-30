@@ -34,8 +34,8 @@
     <div class="rounded-2xl bg-micblue px-6 py-7 shadow-sm">
         <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
             <div>
-                <p class="text-[10px] font-semibold uppercase tracking-widest text-blue-400">Certificates</p>
-                <h1 class="mt-0.5 text-xl font-bold text-white">Certificate Tracker</h1>
+                <p class="text-[10px] font-semibold uppercase tracking-widest text-blue-400">Stickers</p>
+                <h1 class="mt-0.5 text-xl font-bold text-white">Sticker Tracker</h1>
                 <p class="mt-0.5 text-xs text-slate-400">Search by quotation number, customer name, or vehicle registration</p>
             </div>
         </div>
@@ -156,9 +156,220 @@
             <a :href="`/stickers/issue?quotation_id=${result.id}`"
                class="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition">
                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-                Issue Certificate
+                Issue Sticker
             </a>
         </div>
     </div>
+
+    {{-- Individual Report --}}
+    <div>
+        <div class="flex items-center justify-between mb-3">
+            <div>
+                <h2 class="text-xs font-bold text-gray-800 dark:text-white">Individual Report</h2>
+                <p class="text-[10px] text-gray-400 mt-0.5">Your sticker issuance activity</p>
+            </div>
+        </div>
+
+        {{-- Stat Cards --}}
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-5">
+            <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-4">
+                <p class="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Total Stickers</p>
+                <p class="text-xl font-extrabold text-gray-900 dark:text-white mt-1">{{ $individualStats['total'] }}</p>
+            </div>
+            <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-4">
+                <p class="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Pending</p>
+                <p class="text-xl font-extrabold text-amber-600 dark:text-amber-400 mt-1">{{ $individualStats['pending'] }}</p>
+            </div>
+            <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-4">
+                <p class="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Completed</p>
+                <p class="text-xl font-extrabold text-emerald-600 dark:text-emerald-400 mt-1">{{ $individualStats['completed'] }}</p>
+            </div>
+            <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-4">
+                <p class="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Total Premium</p>
+                <p class="text-lg font-extrabold text-blue-600 dark:text-blue-400 mt-1">KES {{ number_format($individualStats['total_premium'], 0) }}</p>
+            </div>
+        </div>
+
+        {{-- Charts --}}
+        @if($individualStats['total'] > 0)
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-5">
+            <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-5">
+                <p class="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-3">Monthly Activity</p>
+                <div style="height:180px"><canvas id="individualMonthlyChart"></canvas></div>
+            </div>
+            <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-5">
+                <p class="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-3">By Insurance Company</p>
+                <div style="height:180px"><canvas id="individualCompanyChart"></canvas></div>
+            </div>
+        </div>
+        @endif
+    </div>
+
+    <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+        <div class="px-5 py-4 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between">
+            <div>
+                <h2 class="text-xs font-semibold text-gray-800 dark:text-white">Recent Activity</h2>
+                <p class="text-[10px] text-gray-400 mt-0.5">Stickers you have issued — most recent 20</p>
+            </div>
+            <span class="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-semibold bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">
+                {{ $individualReports->count() }} record{{ $individualReports->count() === 1 ? '' : 's' }}
+            </span>
+        </div>
+
+        @if($individualReports->isEmpty())
+            <div class="px-5 py-10 text-center">
+                <p class="text-xs text-gray-400">You haven't issued any stickers yet.</p>
+            </div>
+        @else
+            <div class="overflow-x-auto">
+                <table class="w-full text-xs">
+                    <thead>
+                        <tr class="border-b border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/20">
+                            <th class="px-5 py-2.5 text-left font-semibold text-gray-400 uppercase tracking-wider text-[10px]">Requisition No</th>
+                            <th class="px-5 py-2.5 text-left font-semibold text-gray-400 uppercase tracking-wider text-[10px]">Quotation No</th>
+                            <th class="px-5 py-2.5 text-left font-semibold text-gray-400 uppercase tracking-wider text-[10px]">Company</th>
+                            <th class="px-5 py-2.5 text-left font-semibold text-gray-400 uppercase tracking-wider text-[10px]">Registration</th>
+                            <th class="px-5 py-2.5 text-right font-semibold text-gray-400 uppercase tracking-wider text-[10px]">Premium</th>
+                            <th class="px-5 py-2.5 text-left font-semibold text-gray-400 uppercase tracking-wider text-[10px]">Status</th>
+                            <th class="px-5 py-2.5 text-left font-semibold text-gray-400 uppercase tracking-wider text-[10px]">Date</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
+                        @foreach($individualReports as $sticker)
+                            <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/20 transition">
+                                <td class="px-5 py-2.5 font-semibold text-gray-800 dark:text-white whitespace-nowrap">{{ $sticker->sticker_number }}</td>
+                                <td class="px-5 py-2.5 text-gray-600 dark:text-gray-300 whitespace-nowrap">{{ $sticker->quotation->quotation_number ?? '—' }}</td>
+                                <td class="px-5 py-2.5 text-gray-600 dark:text-gray-300 whitespace-nowrap">{{ $sticker->company->name ?? '—' }}</td>
+                                <td class="px-5 py-2.5 text-gray-600 dark:text-gray-300 whitespace-nowrap">{{ $sticker->vehicle_registration ?? 'N/A' }}</td>
+                                <td class="px-5 py-2.5 text-right font-semibold text-gray-800 dark:text-white whitespace-nowrap">KES {{ number_format($sticker->premium ?? 0, 2) }}</td>
+                                <td class="px-5 py-2.5 whitespace-nowrap">
+                                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium
+                                        {{ $sticker->status === 'completed' ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400' : 'bg-amber-50 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400' }}">
+                                        <span class="w-1 h-1 rounded-full {{ $sticker->status === 'completed' ? 'bg-emerald-500' : 'bg-amber-500' }}"></span>
+                                        {{ $sticker->status === 'completed' ? 'Completed' : 'Pending' }}
+                                    </span>
+                                </td>
+                                <td class="px-5 py-2.5 text-gray-500 dark:text-gray-400 whitespace-nowrap">{{ $sticker->created_at?->format('d M Y') }}</td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+        @endif
+    </div>
+
+    {{-- Group Reports (admin/super-admin only) --}}
+    @if($isAdmin)
+        <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+            <div class="px-5 py-4 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between">
+                <div>
+                    <h2 class="text-xs font-semibold text-gray-800 dark:text-white">Group Report</h2>
+                    <p class="text-[10px] text-gray-400 mt-0.5">Sticker activity across all staff</p>
+                </div>
+                <span class="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-semibold bg-indigo-50 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400">
+                    {{ $groupReports->count() }} staff
+                </span>
+            </div>
+
+            @if($groupReports->isEmpty())
+                <div class="px-5 py-10 text-center">
+                    <p class="text-xs text-gray-400">No sticker activity recorded yet.</p>
+                </div>
+            @else
+                <div class="divide-y divide-gray-100 dark:divide-gray-700">
+                    @foreach($groupReports as $row)
+                        @php
+                            $rate = $row['total'] > 0 ? round(($row['completed'] / $row['total']) * 100) : 0;
+                        @endphp
+                        <div class="px-5 py-3.5 flex items-center gap-4">
+                            <span class="w-6 h-6 rounded-full bg-gradient-to-br from-indigo-500 to-blue-600 flex items-center justify-center text-white text-[9px] font-bold shrink-0">
+                                {{ strtoupper(substr($row['user']->name ?? '?', 0, 1)) }}
+                            </span>
+                            <div class="min-w-0 w-40 shrink-0">
+                                <p class="text-xs font-semibold text-gray-800 dark:text-white truncate">{{ $row['user']->name ?? 'Unknown' }}</p>
+                                <p class="text-[10px] text-gray-400 truncate">{{ $row['latest_at'] ? \Illuminate\Support\Carbon::parse($row['latest_at'])->diffForHumans() : '—' }}</p>
+                            </div>
+                            <div class="flex-1 min-w-[80px]">
+                                <div class="flex items-center justify-between text-[10px] text-gray-400 mb-1">
+                                    <span>{{ $row['completed'] }} of {{ $row['total'] }} completed</span>
+                                    <span class="font-semibold text-gray-600 dark:text-gray-300">{{ $rate }}%</span>
+                                </div>
+                                <div class="h-1.5 rounded-full bg-gray-100 dark:bg-gray-700 overflow-hidden">
+                                    <div class="h-full rounded-full bg-emerald-500" style="width: {{ $rate }}%"></div>
+                                </div>
+                            </div>
+                            <div class="text-right shrink-0 w-16">
+                                <p class="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Total</p>
+                                <p class="text-xs font-bold text-gray-800 dark:text-white">{{ $row['total'] }}</p>
+                            </div>
+                            <div class="text-right shrink-0 w-16">
+                                <p class="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Pending</p>
+                                <p class="text-xs font-bold text-amber-600 dark:text-amber-400">{{ $row['pending'] }}</p>
+                            </div>
+                            <div class="text-right shrink-0 w-28">
+                                <p class="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Premium</p>
+                                <p class="text-xs font-bold text-blue-600 dark:text-blue-400">KES {{ number_format($row['total_premium'] ?? 0, 2) }}</p>
+                            </div>
+                        </div>
+                    @endforeach
+                </div>
+            @endif
+        </div>
+    @endif
 </div>
+
+@if($individualStats['total'] > 0)
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    if (typeof Chart === 'undefined') return;
+
+    var monthlyLabels = @json($individualMonthly->keys());
+    var monthlyValues = @json($individualMonthly->values());
+    var monthlyEl = document.getElementById('individualMonthlyChart');
+    if (monthlyEl) {
+        new Chart(monthlyEl, {
+            type: 'bar',
+            data: {
+                labels: monthlyLabels,
+                datasets: [{ data: monthlyValues, backgroundColor: '#1756c8', borderRadius: 6, maxBarThickness: 40 }],
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    x: { grid: { display: false } },
+                    y: { beginAtZero: true, ticks: { precision: 0 }, grid: { color: '#eef1f6' } },
+                },
+            },
+        });
+    }
+
+    var companyLabels = @json($individualByCompany->keys());
+    var companyValues = @json($individualByCompany->values());
+    var companyEl = document.getElementById('individualCompanyChart');
+    if (companyEl) {
+        new Chart(companyEl, {
+            type: 'bar',
+            data: {
+                labels: companyLabels,
+                datasets: [{ data: companyValues, backgroundColor: '#0f7a65', borderRadius: 6, maxBarThickness: 40 }],
+            },
+            options: {
+                indexAxis: 'y',
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    x: { beginAtZero: true, ticks: { precision: 0 }, grid: { color: '#eef1f6' } },
+                    y: { grid: { display: false } },
+                },
+            },
+        });
+    }
+});
+</script>
+@endpush
+@endif
 </x-app-layout>

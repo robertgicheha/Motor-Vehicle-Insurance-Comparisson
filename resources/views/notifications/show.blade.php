@@ -39,7 +39,7 @@
             @if(!empty($notification->data['icon']) || !empty($notification->data['color']))
                 <div class="flex items-center gap-3 mb-5">
                     <span class="w-9 h-9 rounded-lg flex items-center justify-center text-white text-sm" style="background:{{ $notification->data['color'] ?? '#1756c8' }}">
-                        <i class="ti ti-{{ $notification->data['icon'] ?? 'bell' }}"></i>
+                        <x-icon :name="$notification->data['icon'] ?? 'bell'" class="w-4 h-4" />
                     </span>
                     <div>
                         <p class="text-xs font-semibold text-gray-800 dark:text-white">{{ $notification->data['title'] ?? '' }}</p>

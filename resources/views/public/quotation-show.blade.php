@@ -13,7 +13,7 @@
     <a href="#">About Us</a><a href="#">Contact Us</a><a href="#">Affiliates</a><a href="#">Careers</a>
   </div>
   <div class="nav-main">
-    <a href="{{ url('/') }}"><img src="{{ asset('img/MIC-Global-Risks_logo.png') }}" alt="MIC Global Risks" class="nav-logo"></a>
+    <a href="{{ url('/') }}"><img src="{{ asset('images/MIC-Global-Risks_logo.png') }}" alt="MIC Global Risks" class="nav-logo" width="311" height="58"></a>
     <div class="nav-links">
       <a href="{{ url('/motor-quote') }}">Motor Quote</a>
       <a href="{{ route('stickers.create') }}">Certificates</a>
@@ -30,6 +30,9 @@
         ->where('vehicle_type', $quotation->vehicle_type ?? 'private')
         ->get()
         ->groupBy('category');
+    // Any rate item whose notes literally say it isn't covered is dropped —
+    // it's noise, not information the customer needs to see.
+    $notCovered = fn($r) => $r->notes && stripos($r->notes, 'no cover') !== false;
 @endphp
 
 <section class="page-hero">
@@ -78,24 +81,30 @@
       <div class="summary-row"><span>Basic Premium ({{ ($breakdown['premium_rate'] ?? 6.5) }}%)</span><span>KES {{ number_format($quotation->premium, 2) }}</span></div>
       @php
         $_pvtRate = $breakdown['pvt_rate'] ?? 0;
-        $_levisRate = $breakdown['levis_rate'] ?? 0.0045;
         $_stampDuty = $breakdown['stamp_duty'] ?? 40;
         $_pvtPremium = $quotation->pvt_premium ?? 0;
         $_pllPerPerson = $breakdown['pll_per_person'] ?? 0;
         $_numPassengers = $quotation->num_passengers ?? 1;
         $_pllTotal = $_pllPerPerson * $_numPassengers;
-        $_levisAmount = ($quotation->premium + $_pvtPremium + $_pllTotal) * $_levisRate;
+        $_trainingLevyRate = $breakdown['training_levy_rate'] ?? 0.2;
+        $_trainingLevy = $breakdown['training_levy'] ?? (($quotation->premium + $_pvtPremium + $_pllTotal) * ($_trainingLevyRate / 100));
+        $_policyHolderFundRate = $breakdown['policy_holder_fund_rate'] ?? 0.25;
+        $_policyHolderFund = $breakdown['policy_holder_fund'] ?? (($quotation->premium + $_pvtPremium + $_pllTotal) * ($_policyHolderFundRate / 100));
+        $_excessOD = $breakdown['excess_own_damage'] ?? $quotation->excess_own_damage ?? 0;
+        $_excessTheftAmt = $breakdown['excess_theft'] ?? $quotation->excess_theft ?? 0;
         $_maxAgeRate = $companyRates->get('Premium Rate')->firstWhere('item_name', 'Max Age New Business');
         $_excessProtector = $companyRates->get('Additional Cover') ? $companyRates->get('Additional Cover')->firstWhere('item_name', 'Excess Protector') : null;
+        if ($_excessProtector && $notCovered($_excessProtector)) { $_excessProtector = null; }
         $_minSumInsured = $quotation->vehicle_type === 'private' ? $quotation->company->min_sum_insured_private : $quotation->company->min_sum_insured_psv;
         $_minSumInsuredRate = $companyRates->get('Premium Rate')->firstWhere('item_name', 'Minimum Sum Insured');
         $_geoArea = $companyRates->get('Cover Limits') ? $companyRates->get('Cover Limits')->firstWhere('item_name', 'Geographical Area') : null;
       @endphp
-      <div class="summary-row"><span>PVT Premium ({{ number_format($_pvtRate * 100, 2) }}%)</span><span>KES {{ number_format($_pvtPremium, 2) }}</span></div>
+      <div class="summary-row"><span>PVT(Political Violence &amp; Terrorism Extension) ({{ number_format($_pvtRate, 2) }}%)</span><span>KES {{ number_format($_pvtPremium, 2) }}</span></div>
       @if($_pllPerPerson > 0)
       <div class="summary-row"><span>PLL Premium (KES {{ number_format($_pllPerPerson, 0) }} × {{ $_numPassengers }} pax)</span><span>KES {{ number_format($_pllTotal, 2) }}</span></div>
       @endif
-      <div class="summary-row"><span>Levis ({{ number_format($_levisRate * 100, 2) }}%)</span><span>KES {{ number_format($_levisAmount, 2) }}</span></div>
+      <div class="summary-row"><span>Training Levy ({{ number_format($_trainingLevyRate, 2) }}%)</span><span>KES {{ number_format($_trainingLevy, 2) }}</span></div>
+      <div class="summary-row"><span>Policy Holder Fund ({{ number_format($_policyHolderFundRate, 2) }}%)</span><span>KES {{ number_format($_policyHolderFund, 2) }}</span></div>
       <div class="summary-row"><span>Stamp Duty</span><span>KES {{ number_format($_stampDuty, 2) }}</span></div>
       <div class="summary-row" style="border-top:2px solid var(--blue);margin-top:6px;padding-top:8px">
         <span style="font-weight:800;color:var(--blue)">Total Premium</span>
@@ -110,18 +119,15 @@
       <tbody>
         <tr><td>Estimated Vehicle Value</td><td>{{ number_format($quotation->car_valuation, 2) }}</td></tr>
         <tr><td>Basic Annual Premium ({{ $breakdown['premium_rate'] ?? 6.5 }}%)</td><td>{{ number_format($quotation->premium, 2) }}</td></tr>
-        <tr><td>PVT Premium ({{ number_format($_pvtRate * 100, 2) }}%)</td><td>{{ number_format($_pvtPremium, 2) }}</td></tr>
+        <tr><td>PVT(Political Violence &amp; Terrorism Extension) ({{ number_format($_pvtRate, 2) }}%)</td><td>{{ number_format($_pvtPremium, 2) }}</td></tr>
         @if($_pllPerPerson > 0)
         <tr><td>PLL Premium (KES {{ number_format($_pllPerPerson, 0) }} × {{ $_numPassengers }} pax)</td><td>{{ number_format($_pllTotal, 2) }}</td></tr>
         @endif
-        <tr><td>Levis ({{ number_format($_levisRate * 100, 2) }}%)</td><td>{{ number_format($_levisAmount, 2) }}</td></tr>
+        <tr><td>Training Levy ({{ number_format($_trainingLevyRate, 2) }}%)</td><td>{{ number_format($_trainingLevy, 2) }}</td></tr>
+        <tr><td>Policy Holder Fund ({{ number_format($_policyHolderFundRate, 2) }}%)</td><td>{{ number_format($_policyHolderFund, 2) }}</td></tr>
         <tr><td>Stamp Duty</td><td>{{ number_format($_stampDuty, 2) }}</td></tr>
-        @if($quotation->excess_own_damage)
-          <tr><td>Excess - Own Damage</td><td>{{ number_format($quotation->excess_own_damage, 2) }}</td></tr>
-        @endif
-        @if($quotation->excess_theft)
-          <tr><td>Excess - Theft</td><td>{{ number_format($quotation->excess_theft, 2) }}</td></tr>
-        @endif
+        <tr><td>Excess - Own Damage</td><td>{{ $_excessOD > 0 ? number_format($_excessOD, 2) : 'Not Applicable' }}</td></tr>
+        <tr><td>Excess - Theft</td><td>{{ $_excessTheftAmt > 0 ? number_format($_excessTheftAmt, 2) : 'Not Applicable' }}</td></tr>
       </tbody>
       <tfoot>
         <tr><td>Total Premium</td><td>{{ number_format($quotation->total_premium, 2) }}</td></tr>
@@ -135,7 +141,7 @@
     <table style="width:100%;border-collapse:collapse;font-size:13px">
       <thead><tr style="background:#f8fafc"><th style="padding:8px 12px;text-align:left;border-bottom:2px solid var(--border);font-size:11px">Benefit</th><th style="padding:8px 12px;text-align:right;border-bottom:2px solid var(--border);font-size:11px">Limit (KES)</th></tr></thead>
       <tbody>
-      @foreach($companyRates->get('Cover Limits') as $r)
+      @foreach($companyRates->get('Cover Limits')->reject($notCovered) as $r)
         <tr><td style="padding:6px 12px;border-bottom:1px solid #eee">{{ $r->item_name }}</td><td style="padding:6px 12px;text-align:right;border-bottom:1px solid #eee">{{ $r->value > 0 ? 'KES ' . number_format($r->value, 0) : ($r->notes ?? '—') }}</td></tr>
       @endforeach
       </tbody>
@@ -149,7 +155,7 @@
     <table style="width:100%;border-collapse:collapse;font-size:13px">
       <thead><tr style="background:#f8fafc"><th style="padding:8px 12px;text-align:left;border-bottom:2px solid var(--border);font-size:11px">Extra</th><th style="padding:8px 12px;text-align:right;border-bottom:2px solid var(--border);font-size:11px">Limit (KES)</th><th style="padding:8px 12px;text-align:left;border-bottom:2px solid var(--border);font-size:11px">Notes</th></tr></thead>
       <tbody>
-      @foreach($companyRates->get('Extras') as $r)
+      @foreach($companyRates->get('Extras')->reject($notCovered) as $r)
         <tr><td style="padding:6px 12px;border-bottom:1px solid #eee">{{ $r->item_name }}</td><td style="padding:6px 12px;text-align:right;border-bottom:1px solid #eee">{{ $r->value > 0 ? 'KES ' . number_format($r->value, 0) : '—' }}</td><td style="padding:6px 12px;border-bottom:1px solid #eee;font-size:11px;color:#64748b">{{ $r->notes ?? '' }}</td></tr>
       @endforeach
       </tbody>
@@ -163,7 +169,7 @@
     <table style="width:100%;border-collapse:collapse;font-size:13px">
       <thead><tr style="background:#f8fafc"><th style="padding:8px 12px;text-align:left;border-bottom:2px solid var(--border);font-size:11px">Cover</th><th style="padding:8px 12px;text-align:right;border-bottom:2px solid var(--border);font-size:11px">Limit (KES)</th></tr></thead>
       <tbody>
-      @foreach($companyRates->get('Third Party Limits') as $r)
+      @foreach($companyRates->get('Third Party Limits')->reject($notCovered) as $r)
         <tr><td style="padding:6px 12px;border-bottom:1px solid #eee">{{ $r->item_name }}</td><td style="padding:6px 12px;text-align:right;border-bottom:1px solid #eee">{{ $r->value > 0 ? 'KES ' . number_format($r->value, 0) : ($r->notes ?? '—') }}</td></tr>
       @endforeach
       </tbody>
@@ -177,8 +183,8 @@
     <table style="width:100%;border-collapse:collapse;font-size:13px">
       <thead><tr style="background:#f8fafc"><th style="padding:8px 12px;text-align:left;border-bottom:2px solid var(--border);font-size:11px">Excess Type</th><th style="padding:8px 12px;text-align:right;border-bottom:2px solid var(--border);font-size:11px">Excess Amount</th></tr></thead>
       <tbody>
-      @foreach($companyRates->get('Excess') as $r)
-        <tr><td style="padding:6px 12px;border-bottom:1px solid #eee">{{ $r->item_name }}</td><td style="padding:6px 12px;text-align:right;border-bottom:1px solid #eee">{{ $r->notes ? substr($r->notes, 0, 60) : '—' }}</td></tr>
+      @foreach($companyRates->get('Excess')->reject($notCovered) as $r)
+        <tr><td style="padding:6px 12px;border-bottom:1px solid #eee">{{ $r->item_name }}</td><td style="padding:6px 12px;text-align:right;border-bottom:1px solid #eee">{{ $r->notes ? substr($r->notes, 0, 60) : 'Not Applicable' }}</td></tr>
       @endforeach
       </tbody>
     </table>
@@ -187,12 +193,12 @@
 
   @if($companyRates->has('Additional Cover'))
   <div class="summary-card" style="margin-top:20px">
-    <h4 style="margin-bottom:12px">Special Conditions / Additional Cover</h4>
+    <h4 style="margin-bottom:12px">Special Conditions</h4>
     <table style="width:100%;border-collapse:collapse;font-size:13px">
-      <thead><tr style="background:#f8fafc"><th style="padding:8px 12px;text-align:left;border-bottom:2px solid var(--border);font-size:11px">Condition</th><th style="padding:8px 12px;text-align:left;border-bottom:2px solid var(--border);font-size:11px">Status / Details</th></tr></thead>
+      <thead><tr style="background:#f8fafc"><th style="padding:8px 12px;text-align:left;border-bottom:2px solid var(--border);font-size:11px">Condition</th><th style="padding:8px 12px;text-align:right;border-bottom:2px solid var(--border);font-size:11px">Status / Details</th></tr></thead>
       <tbody>
-      @foreach($companyRates->get('Additional Cover') as $r)
-        <tr><td style="padding:6px 12px;border-bottom:1px solid #eee">{{ $r->item_name }}</td><td style="padding:6px 12px;border-bottom:1px solid #eee;font-size:12px">{{ $r->notes ?? '—' }}</td></tr>
+      @foreach($companyRates->get('Additional Cover')->reject($notCovered) as $r)
+        <tr><td style="padding:6px 12px;border-bottom:1px solid #eee">{{ $r->item_name }}</td><td style="padding:6px 12px;text-align:right;border-bottom:1px solid #eee;font-size:12px">{{ $r->notes ?? '—' }}</td></tr>
       @endforeach
       </tbody>
     </table>
@@ -205,7 +211,7 @@
     <table style="width:100%;border-collapse:collapse;font-size:13px">
       <thead><tr style="background:#f8fafc"><th style="padding:8px 12px;text-align:left;border-bottom:2px solid var(--border);font-size:11px">Benefit</th><th style="padding:8px 12px;text-align:right;border-bottom:2px solid var(--border);font-size:11px">Premium (KES)</th></tr></thead>
       <tbody>
-      @foreach($companyRates->get('Optional Benefits') as $r)
+      @foreach($companyRates->get('Optional Benefits')->reject($notCovered) as $r)
         <tr><td style="padding:6px 12px;border-bottom:1px solid #eee">{{ $r->item_name }}</td><td style="padding:6px 12px;text-align:right;border-bottom:1px solid #eee">{{ $r->value > 0 ? 'KES ' . number_format($r->value, 0) : '—' }}</td></tr>
       @endforeach
       </tbody>
@@ -217,13 +223,13 @@
     <h4>Additional Info</h4>
     <table style="width:100%;border-collapse:collapse;font-size:13px">
       <tbody>
-        <tr><td style="padding:6px 12px;border-bottom:1px solid #eee;font-weight:500">Minimum Sum Insured</td><td style="padding:6px 12px;border-bottom:1px solid #eee">{{ $_minSumInsured ? 'KES ' . number_format($_minSumInsured, 0) : ($_minSumInsuredRate?->notes ?? '—') }}</td></tr>
-        <tr><td style="padding:6px 12px;border-bottom:1px solid #eee;font-weight:500">Max Age New Business</td><td style="padding:6px 12px;border-bottom:1px solid #eee">{{ $_maxAgeRate ? $_maxAgeRate->value . ' years' : '—' }}</td></tr>
+        <tr><td style="padding:6px 12px;border-bottom:1px solid #eee;font-weight:500">Minimum Sum Insured</td><td style="padding:6px 12px;text-align:right;border-bottom:1px solid #eee">{{ $_minSumInsured ? 'KES ' . number_format($_minSumInsured, 0) : ($_minSumInsuredRate?->notes ?? '—') }}</td></tr>
+        <tr><td style="padding:6px 12px;border-bottom:1px solid #eee;font-weight:500">Max Age New Business</td><td style="padding:6px 12px;text-align:right;border-bottom:1px solid #eee">{{ $_maxAgeRate ? number_format($_maxAgeRate->value, 0) . ' Years' : '—' }}</td></tr>
         @if($_excessProtector)
-        <tr><td style="padding:6px 12px;border-bottom:1px solid #eee;font-weight:500">Excess Protector</td><td style="padding:6px 12px;border-bottom:1px solid #eee;font-size:12px">{{ $_excessProtector->notes ?? '—' }}</td></tr>
+        <tr><td style="padding:6px 12px;border-bottom:1px solid #eee;font-weight:500">Excess Protector</td><td style="padding:6px 12px;text-align:right;border-bottom:1px solid #eee;font-size:12px">{{ $_excessProtector->notes ?? '—' }}</td></tr>
         @endif
         @if($_geoArea)
-        <tr><td style="padding:6px 12px;border-bottom:1px solid #eee;font-weight:500">Geographical Area</td><td style="padding:6px 12px;border-bottom:1px solid #eee;font-size:12px">{{ $_geoArea->notes ?? ($_geoArea->value > 0 ? 'KES ' . number_format($_geoArea->value, 0) : '—') }}</td></tr>
+        <tr><td style="padding:6px 12px;border-bottom:1px solid #eee;font-weight:500">Geographical Area</td><td style="padding:6px 12px;text-align:right;border-bottom:1px solid #eee;font-size:12px">{{ $_geoArea->notes ?? ($_geoArea->value > 0 ? 'KES ' . number_format($_geoArea->value, 0) : '—') }}</td></tr>
         @endif
       </tbody>
     </table>
@@ -258,7 +264,7 @@
 <footer>
   <div class="footer-top">
     <div class="footer-brand">
-      <img src="{{ asset('img/MIC-Global-Risks_logo_no_background.png') }}" alt="MIC Global Risks">
+      <img src="{{ asset('images/MIC-Global-Risks_logo_no_background.png') }}" alt="MIC Global Risks" width="621" height="116">
       <p>Your trusted insurance intermediary — connecting you to Kenya's leading insurers with transparency, speed and expertise.</p>
     </div>
     <div class="footer-col">

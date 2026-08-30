@@ -1,5 +1,5 @@
 <x-app-layout>
-<div class="space-y-6 pt-10 fade-in">
+<div class="max-w-7xl mx-auto space-y-6 pt-10 fade-in">
 
     <div class="rounded-2xl bg-micblue px-6 py-7 shadow-sm">
         <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
@@ -22,7 +22,7 @@
                 <div class="accent-bar"></div>
                 <p class="kpi-eyebrow">Total Generated</p>
                 <p class="kpi-value mt-1">{{ number_format($stats['total']) }}</p>
-                <span class="kpi-delta neutral mt-1.5 inline-block">All certificates</span>
+                <span class="kpi-delta neutral mt-1.5 inline-block">All stickers</span>
             </a>
             <a href="{{ route('admin.stickers.index') }}" class="kpi-card p-4 block hover:opacity-80 transition">
                 <div class="accent-bar" style="background:linear-gradient(90deg,#34d399,#6ee7b7)"></div>
@@ -60,6 +60,74 @@
                 <p class="kpi-value mt-1">{{ number_format($stats['pending_responses'] ?? 0) }}</p>
                 <span class="kpi-delta neutral mt-1.5 inline-block">Awaiting underwriter</span>
             </a>
+        </div>
+    </div>
+
+    {{-- ─── REPORTS & DATA VISUALIZATION ─────────────────────────────── --}}
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+        <div class="lg:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-6">
+            <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+                <div class="px-5 py-4 border-b border-gray-100 dark:border-gray-700">
+                    <h2 class="text-xs font-semibold text-gray-800 dark:text-white">Stickers &mdash; Last 14 Days</h2>
+                    <p class="text-[10px] text-gray-400 mt-0.5">Daily generation trend</p>
+                </div>
+                <div class="p-4">
+                    <canvas id="stickerTrendChart" height="180"></canvas>
+                </div>
+            </div>
+
+            <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+                <div class="px-5 py-4 border-b border-gray-100 dark:border-gray-700">
+                    <h2 class="text-xs font-semibold text-gray-800 dark:text-white">Share by Company</h2>
+                    <p class="text-[10px] text-gray-400 mt-0.5">Stickers generated</p>
+                </div>
+                <div class="p-4">
+                    <canvas id="stickerCompanyChart" height="180"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+            <div class="px-5 py-4 border-b border-gray-100 dark:border-gray-700">
+                <h2 class="text-xs font-semibold text-gray-800 dark:text-white">Generate Report</h2>
+                <p class="text-[10px] text-gray-400 mt-0.5">Filter and export sticker data</p>
+            </div>
+            <form method="GET" id="stickerReportForm" class="p-5 space-y-3">
+                <div>
+                    <label class="block text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Company</label>
+                    <select name="company_id" class="w-full px-3 py-2 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-800 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                        <option value="">All Companies</option>
+                        @foreach(\App\Models\Company::active()->get() as $company)
+                            <option value="{{ $company->id }}">{{ $company->name }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="block text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">From</label>
+                        <input type="date" name="date_from" class="w-full px-3 py-2 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-800 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">To</label>
+                        <input type="date" name="date_to" class="w-full px-3 py-2 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-800 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                    </div>
+                </div>
+                <div class="grid grid-cols-3 gap-2 pt-1">
+                    <button type="submit" formaction="{{ route('admin.reports.stickers.export-csv') }}"
+                            class="px-2 py-2 text-[11px] font-semibold border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg transition">
+                        CSV
+                    </button>
+                    <button type="submit" formaction="{{ route('admin.reports.stickers.export-excel') }}"
+                            class="px-2 py-2 text-[11px] font-semibold border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg transition">
+                        Excel
+                    </button>
+                    <button type="submit" formaction="{{ route('admin.reports.stickers.export-pdf') }}"
+                            class="px-2 py-2 text-[11px] font-semibold border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg transition">
+                        PDF
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
 
@@ -115,66 +183,48 @@
     @endif
 
     <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
-            <div class="px-5 py-4 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between">
-                <div>
-                    <h2 class="text-xs font-semibold text-gray-800 dark:text-white">Performance by Company</h2>
-                    <p class="text-[10px] text-gray-400 mt-0.5">Generated &amp; Downloads</p>
-                </div>
+        <div class="px-5 py-4 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between">
+            <div>
+                <h2 class="text-xs font-semibold text-gray-800 dark:text-white">Performance by Company</h2>
+                <p class="text-[10px] text-gray-400 mt-0.5">Generated</p>
             </div>
-            <div class="px-5 py-4">
-                <table class="w-full text-xs">
-                    <thead>
-                        <tr class="bg-gray-50 dark:bg-gray-700/40">
-                            <th class="px-4 py-2.5 text-left font-semibold text-gray-400 uppercase tracking-wider text-[10px]">Company</th>
-                            <th class="px-4 py-2.5 text-right font-semibold text-gray-400 uppercase tracking-wider text-[10px]">Generated</th>
-                            <th class="px-4 py-2.5 text-right font-semibold text-gray-400 uppercase tracking-wider text-[10px]">Downloads</th>
-                            <th class="px-4 py-2.5 text-right font-semibold text-gray-400 uppercase tracking-wider text-[10px]">Download Rate</th>
-                            <th class="px-4 py-2.5 text-right font-semibold text-gray-400 uppercase tracking-wider text-[10px]">Share</th>
+        </div>
+        <div class="px-5 py-4">
+            <table class="w-full text-xs">
+                <thead>
+                    <tr class="bg-gray-50 dark:bg-gray-700/40">
+                        <th class="px-4 py-2.5 text-left font-semibold text-gray-400 uppercase tracking-wider text-[10px]">Company</th>
+                        <th class="px-4 py-2.5 text-right font-semibold text-gray-400 uppercase tracking-wider text-[10px]">Generated</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
+                    @php $maxCount = $byCompany->max('count'); @endphp
+                    @foreach($byCompany as $item)
+                        @php
+                            $count = $item['count'];
+                            $barWidth = $maxCount > 0 ? ($count / $maxCount) * 100 : 0;
+                        @endphp
+                        <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/30">
+                            <td class="px-4 py-2.5 font-medium text-gray-800 dark:text-white">{{ $item['name'] }}</td>
+                            <td class="px-4 py-2.5">
+                                <div class="flex items-center justify-end gap-2">
+                                    <span class="font-semibold text-gray-800 dark:text-white">{{ $count }}</span>
+                                    <div class="w-20 h-2 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
+                                        <div class="h-full bg-blue-600 rounded-full" style="width:{{ $barWidth }}%"></div>
+                                    </div>
+                                </div>
+                            </td>
                         </tr>
-                    </thead>
-                    <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
-                        @php $maxCount = $byCompany->max('count'); $maxDownloads = $byCompany->max('downloads'); @endphp
-                        @foreach($byCompany as $item)
-                            @php
-                                $count = $item['count'];
-                                $downloads = $item['downloads'];
-                                $rate = $count > 0 ? round(($downloads / $count) * 100, 1) : 0;
-                                $share = $stats['total'] > 0 ? round(($count / $stats['total']) * 100, 1) : 0;
-                                $barWidth = $maxCount > 0 ? ($count / $maxCount) * 100 : 0;
-                                $dlBarWidth = $maxDownloads > 0 ? ($downloads / $maxDownloads) * 100 : 0;
-                            @endphp
-                            <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/30">
-                                <td class="px-4 py-2.5 font-medium text-gray-800 dark:text-white">{{ $item['name'] }}</td>
-                                <td class="px-4 py-2.5">
-                                    <div class="flex items-center justify-end gap-2">
-                                        <span class="font-semibold text-gray-800 dark:text-white">{{ $count }}</span>
-                                        <div class="w-20 h-2 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
-                                            <div class="h-full bg-blue-600 rounded-full" style="width:{{ $barWidth }}%"></div>
-                                        </div>
-                                    </div>
-                                </td>
-                                <td class="px-4 py-2.5">
-                                    <div class="flex items-center justify-end gap-2">
-                                        <span class="font-semibold text-gray-800 dark:text-white">{{ $downloads }}</span>
-                                        <div class="w-20 h-2 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
-                                            <div class="h-full bg-green-500 rounded-full" style="width:{{ $dlBarWidth }}%"></div>
-                                        </div>
-                                    </div>
-                                </td>
-                                <td class="px-4 py-2.5 text-right font-semibold text-gray-800 dark:text-white">{{ $rate }}%</td>
-                                <td class="px-4 py-2.5 text-right font-semibold text-gray-800 dark:text-white">{{ $share }}%</td>
-                            </tr>
-                        @endforeach
-                    </tbody>
-                </table>
-            </div>
+                    @endforeach
+                </tbody>
+            </table>
         </div>
     </div>
 
     <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
         <div class="px-5 py-4 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between">
             <div>
-                <h2 class="text-xs font-semibold text-gray-800 dark:text-white">All Certificates</h2>
+                <h2 class="text-xs font-semibold text-gray-800 dark:text-white">All Stickers</h2>
                 <p class="text-[10px] text-gray-400 mt-0.5">{{ $stickers->total() }} total</p>
             </div>
         </div>
@@ -189,7 +239,6 @@
                         <th class="px-5 py-2.5 text-right font-semibold text-gray-400 uppercase tracking-wider text-[10px]">Premium</th>
                         <th class="px-5 py-2.5 text-center font-semibold text-gray-400 uppercase tracking-wider text-[10px]">Status</th>
                         <th class="px-5 py-2.5 text-center font-semibold text-gray-400 uppercase tracking-wider text-[10px]">Email Status</th>
-                        <th class="px-5 py-2.5 text-center font-semibold text-gray-400 uppercase tracking-wider text-[10px]">Downloads</th>
                         <th class="px-5 py-2.5 text-center font-semibold text-gray-400 uppercase tracking-wider text-[10px]">Via</th>
                         <th class="px-5 py-2.5 text-left font-semibold text-gray-400 uppercase tracking-wider text-[10px]">Date</th>
                         <th class="px-5 py-2.5 text-right font-semibold text-gray-400 uppercase tracking-wider text-[10px]">Actions</th>
@@ -197,6 +246,21 @@
                 </thead>
                 <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
                     @forelse($stickers as $sticker)
+                        @php
+                            // A sticker only reads as "Pending" once an underwriter email has actually
+                            // gone out — before that it's still in the documents/intake stage.
+                            $hasBeenEmailed = !is_null($sticker->email_sent_at);
+                            $displayStatus = match(true) {
+                                $sticker->status === 'completed' => 'Completed',
+                                $hasBeenEmailed => 'Pending',
+                                default => 'Awaiting Documents',
+                            };
+                            $displayColor = match(true) {
+                                $sticker->status === 'completed' => 'bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400',
+                                $hasBeenEmailed => 'bg-amber-50 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
+                                default => 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400',
+                            };
+                        @endphp
                         <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/30">
                             <td class="px-5 py-2.5 font-mono text-[10px] font-bold text-gray-800 dark:text-white">{{ $sticker->sticker_number }}</td>
                             <td class="px-5 py-2.5 text-gray-500 dark:text-gray-400">{{ $sticker->customer_name }}</td>
@@ -204,8 +268,8 @@
                             <td class="px-5 py-2.5 font-medium text-gray-800 dark:text-white">{{ $sticker->company->name }}</td>
                             <td class="px-5 py-2.5 text-right font-semibold text-gray-800 dark:text-white">KES {{ number_format($sticker->premium) }}</td>
                             <td class="px-5 py-2.5 text-center">
-                                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium {{ $sticker->status === 'completed' ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400' : ($sticker->status === 'issued' ? 'bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400' : ($sticker->status === 'pending' ? 'bg-amber-50 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400' : 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400')) }}">
-                                    {{ ucfirst($sticker->status) }}
+                                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium {{ $displayColor }}">
+                                    {{ $displayStatus }}
                                 </span>
                             </td>
                             <td class="px-5 py-2.5 text-center">
@@ -228,12 +292,6 @@
                                 @endif
                             </td>
                             <td class="px-5 py-2.5 text-center">
-                                <span class="font-semibold text-gray-800 dark:text-white">{{ $sticker->download_count }}</span>
-                                @if($sticker->last_downloaded_at)
-                                    <span class="block text-[10px] text-gray-400">{{ $sticker->last_downloaded_at->format('d M') }}</span>
-                                @endif
-                            </td>
-                            <td class="px-5 py-2.5 text-center">
                                 <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400">
                                     {{ strtoupper($sticker->created_via) }}
                                 </span>
@@ -244,7 +302,7 @@
                             </td>
                         </tr>
                     @empty
-                        <tr><td colspan="11" class="px-5 py-10 text-center text-xs text-gray-400">No certificates generated yet.</td></tr>
+                        <tr><td colspan="10" class="px-5 py-10 text-center text-xs text-gray-400">No stickers generated yet.</td></tr>
                     @endforelse
                 </tbody>
             </table>
@@ -254,4 +312,56 @@
         @endif
     </div>
 </div>
+
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    if (typeof Chart === 'undefined') return;
+
+    const trend = @json($trend);
+    const byCompany = @json($byCompany);
+
+    Chart.defaults.font.family = "'Inter', -apple-system, BlinkMacSystemFont, sans-serif";
+    Chart.defaults.font.size = 11;
+    Chart.defaults.color = '#7a8baa';
+
+    new Chart(document.getElementById('stickerTrendChart'), {
+        type: 'line',
+        data: {
+            labels: trend.labels,
+            datasets: [{
+                label: 'Stickers',
+                data: trend.counts,
+                borderColor: '#1756c8',
+                backgroundColor: 'rgba(23,86,200,0.1)',
+                fill: true,
+                tension: 0.35,
+                pointRadius: 2,
+            }],
+        },
+        options: {
+            plugins: { legend: { display: false } },
+            scales: { y: { beginAtZero: true, ticks: { precision: 0 } } },
+        },
+    });
+
+    new Chart(document.getElementById('stickerCompanyChart'), {
+        type: 'bar',
+        data: {
+            labels: byCompany.map(c => c.name),
+            datasets: [{
+                label: 'Stickers',
+                data: byCompany.map(c => c.count),
+                backgroundColor: '#1756c8',
+                borderRadius: 4,
+            }],
+        },
+        options: {
+            plugins: { legend: { display: false } },
+            scales: { y: { beginAtZero: true, ticks: { precision: 0 } } },
+        },
+    });
+});
+</script>
+@endpush
 </x-app-layout>

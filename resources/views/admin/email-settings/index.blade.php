@@ -154,7 +154,7 @@
                                     <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1.5">Letterhead</label>
                                     <div class="grid grid-cols-2 gap-3">
                                         <div class="col-span-2">
-                                            <label class="block text-[10px] font-medium text-gray-400 mb-1">Company Name</label>
+                                            <label class="block text-[10px] font-medium text-gray-400 mb-1">Underwriter Name</label>
                                             <input type="text" name="letterhead_company" value="{{ old('letterhead_company', $setting->letterhead_company) }}"
                                                    class="lh-company w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-800 dark:text-white focus:ring-2 focus:ring-blue-500">
                                         </div>

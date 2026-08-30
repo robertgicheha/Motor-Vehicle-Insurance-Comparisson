@@ -18,6 +18,8 @@ use Illuminate\Support\Facades\DB;
 
 class DashboardController extends Controller
 {
+    protected WeatherService $weatherService;
+
     public function __construct(WeatherService $weatherService)
     {
         $this->weatherService = $weatherService;
@@ -63,7 +65,15 @@ class DashboardController extends Controller
         });
         $data['companyColorMap'] = $companyColorMap;
 
-        $activeCompanies = Company::active()->withCount('quotations')->get();
+        $activeCompanies = Company::active()->withCount('quotations')->with('rates')->get();
+        $avgPremiumByCompany = Quotation::select('company_id', DB::raw('AVG(total_premium) as avg_premium'))
+            ->groupBy('company_id')
+            ->pluck('avg_premium', 'company_id');
+        $activeCompanies->each(function ($c) use ($avgPremiumByCompany) {
+            $rate = $c->rates->where('vehicle_type', 'private')->firstWhere('item_name', 'Premium Rate');
+            $c->display_rate = $rate ? round((float) $rate->percentage, 2) : null;
+            $c->avg_premium = round((float) ($avgPremiumByCompany[$c->id] ?? 0), 0);
+        });
         $data['companies'] = $activeCompanies;
         $data['totalCompanies'] = $activeCompanies->count();
         $data['quotationsByCompany'] = $activeCompanies->pluck('quotations_count', 'name');
@@ -90,6 +100,10 @@ class DashboardController extends Controller
         $data['monthQuotations'] = $quotationStats->month_count;
         $data['totalPremium'] = $quotationStats->total_premium ?? 0;
 
+        $data['statusDistribution'] = Quotation::select('status', DB::raw('count(*) as total'))
+            ->groupBy('status')
+            ->pluck('total', 'status');
+
         $userStats = User::selectRaw("
             COUNT(*) as total,
             SUM(CASE WHEN is_active = 1 THEN 1 ELSE 0 END) as active_count,
@@ -99,6 +113,38 @@ class DashboardController extends Controller
         $data['totalUsers'] = $userStats->total;
         $data['activeUsers'] = $userStats->active_count;
         $data['onlineUsers'] = $userStats->online_count;
+
+        $data['totalStickersIssued'] = Sticker::count();
+        $data['totalEmailsDispatched'] = Sticker::whereNotNull('email_sent_at')->count();
+        $data['vehiclesInsured'] = Sticker::whereNotNull('quotation_id')->distinct('quotation_id')->count('quotation_id');
+
+        $prevMonthStart = now()->subMonthNoOverflow()->startOfMonth();
+        $prevMonthEnd = now()->subMonthNoOverflow()->endOfMonth();
+        $prevWeekStart = now()->subWeek()->startOfWeek();
+        $prevWeekEnd = now()->subWeek()->endOfWeek();
+
+        $pctChange = fn($current, $previous) => $previous > 0
+            ? round((($current - $previous) / $previous) * 100, 1)
+            : ($current > 0 ? 100.0 : 0.0);
+
+        $data['trends'] = [
+            'users' => $pctChange(
+                User::where('created_at', '>=', $monthStart)->where('created_at', '<=', $monthEnd)->count(),
+                User::whereBetween('created_at', [$prevMonthStart, $prevMonthEnd])->count()
+            ),
+            'companies' => $pctChange(
+                Company::where('created_at', '>=', $weekStart)->count(),
+                Company::whereBetween('created_at', [$prevWeekStart, $prevWeekEnd])->count()
+            ),
+            'quotations' => $pctChange(
+                $quotationStats->month_count,
+                Quotation::whereBetween('created_at', [$prevMonthStart, $prevMonthEnd])->count()
+            ),
+            'premium' => $pctChange(
+                Quotation::where('created_at', '>=', $monthStart)->where('created_at', '<=', $monthEnd)->sum('total_premium'),
+                Quotation::whereBetween('created_at', [$prevMonthStart, $prevMonthEnd])->sum('total_premium')
+            ),
+        ];
 
         $data['recentQuotations'] = Quotation::with(['user:id,name', 'company:id,name'])
             ->latest()
@@ -131,7 +177,7 @@ class DashboardController extends Controller
                 'items' => $items->map(fn($q) => [
                     'id' => $q->id,
                     'quotation_number' => $q->quotation_number,
-                    'user_name' => $q->user->name ?? 'Unknown',
+                    'user_name' => $q->customer_name,
                     'car' => $q->car_make . ' ' . $q->car_model,
                     'premium' => $q->total_premium,
                     'company' => $q->company->name ?? 'Unknown',
@@ -155,11 +201,17 @@ class DashboardController extends Controller
             ->orderBy('sort_key')
             ->get();
 
-        $data['allActivities'] = ActivityLog::with('user:id,name,avatar')->latest()->take(20)->get();
+        $data['allActivities'] = ActivityLog::with('user:id,name,avatar')->latest()->take(10)->get();
         $data['myActivities'] = ActivityLog::where('user_id', $user->id)->latest()->take(10)->get();
 
         $data['unreadNotifications'] = $user->unreadNotifications()->latest()->take(5)->get();
         $data['unreadCount'] = $user->unreadNotifications()->count();
+
+        $data['stickerNumberReminders'] = $user->unreadNotifications()
+            ->where('type', \App\Notifications\StickerCompletedReminder::class)
+            ->latest()
+            ->take(5)
+            ->get();
 
         $data['recentAlerts'] = AuditLog::with('user:id,name')->latest()->take(5)->get();
 
@@ -200,9 +252,59 @@ class DashboardController extends Controller
         $data['recentUsers'] = User::latest()->take(5)->get();
         $data['recentClaims'] = Claim::latest()->take(5)->get();
 
+        // Platform-wide equivalents of the user-dashboard metrics this view
+        // mirrors, plus this admin's own personal activity/claims.
+        $data['weeklyQuotations'] = $data['weekQuotations'];
+        $data['stickersCount'] = $data['totalStickersIssued'];
+        $data['recentActivities'] = $data['myActivities'];
+        $data['recentNotifications'] = $data['unreadNotifications'];
+
+        $filledFields = collect([$user->first_name, $user->last_name, $user->email, $user->mobile, $user->gender, $user->avatar])->filter(fn($v) => !is_null($v) && $v !== '')->count();
+        $data['profileCompletion'] = round(($filledFields / 6) * 100);
+
+        $adminClaimQuery = fn($q) => $q->where('user_id', $user->id)->orWhere('on_behalf_of_user_id', $user->id);
+        $data['myClaimsCount'] = Claim::where($adminClaimQuery)->count();
+        $data['recentMyClaims'] = Claim::with(['user:id,name', 'onBehalfOfUser:id,name'])
+            ->where($adminClaimQuery)
+            ->latest()
+            ->take(4)
+            ->get();
+
+        $data['quotationStatusBreakdown'] = $data['statusDistribution'];
+        $data['companyQuotationCounts'] = $data['quotationsByCompany'];
+        $data['quotationsByMonth'] = $data['monthlyQuotations']
+            ->mapWithKeys(fn($m) => [
+                \Carbon\Carbon::createFromFormat('Y-m', $m->month)->format('M Y') => $m->total,
+            ]);
+
+        $companyPremiumSums = Quotation::select('company_id', DB::raw('SUM(total_premium) as total'))
+            ->groupBy('company_id')
+            ->pluck('total', 'company_id');
+        $data['companyPremiumTotals'] = $activeCompanies
+            ->filter(fn($c) => $c->quotations_count > 0)
+            ->mapWithKeys(fn($c) => [$c->name => (float) ($companyPremiumSums[$c->id] ?? 0)]);
+
+        $totalPlatformQuotations = $data['totalQuotations'];
+        $data['companyComparison'] = $activeCompanies
+            ->filter(fn($c) => $c->quotations_count > 0)
+            ->map(fn($c) => [
+                'company' => $c->name,
+                'total_quotations' => $c->quotations_count,
+                'total_premium' => (float) ($companyPremiumSums[$c->id] ?? 0),
+                'avg_premium' => $c->quotations_count > 0
+                    ? ($companyPremiumSums[$c->id] ?? 0) / $c->quotations_count
+                    : 0,
+                'market_share' => $totalPlatformQuotations > 0
+                    ? ($c->quotations_count / $totalPlatformQuotations) * 100
+                    : 0,
+            ])
+            ->sortByDesc('total_quotations')
+            ->values()
+            ->all();
+
         $data = array_merge($data, $this->quoteData());
 
-        return view($isSuperAdmin ? 'dashboard.super-admin' : 'dashboard.admin', $data);
+        return view($isSuperAdmin ? 'admin.dashboard.super-admin' : 'admin.dashboard.admin', $data);
     }
 
     protected function quoteData(): array
@@ -214,6 +316,7 @@ class DashboardController extends Controller
                 $rate = $c->rates->where('vehicle_type', $vehicleType)->firstWhere('item_name', 'Premium Rate');
                 $pvtRate = $c->rates->where('vehicle_type', $vehicleType)->firstWhere('item_name', 'PVT Rate');
                 $pllRate = $c->rates->where('vehicle_type', $vehicleType)->firstWhere('item_name', 'PLL Per Person');
+                $rateAbove = $c->rates->where('vehicle_type', $vehicleType)->firstWhere('item_name', 'Premium Rate Above 2.5M');
                 $maxAgeRate = $c->rates->where('vehicle_type', $vehicleType)->firstWhere('item_name', 'Max Age New Business');
                 $excessProtectorRate = $c->rates->where('vehicle_type', $vehicleType)->firstWhere('item_name', 'Excess Protector');
                 $geoAreaRate = $c->rates->where('vehicle_type', $vehicleType)->firstWhere('item_name', 'Geographical Area');
@@ -230,6 +333,8 @@ class DashboardController extends Controller
                     'pvtRate' => $pvtRate ? (float) $pvtRate->percentage / 100 : 0,
                     'pvtMinValue' => $pvtRate ? (float) $pvtRate->min_value : 0,
                     'pllPerPerson' => $pllRate ? (float) $pllRate->value : 0,
+                    'rateAbove2_5M' => $rateAbove ? (float) $rateAbove->percentage / 100 : 0,
+                    'minPremiumAbove2_5M' => $rateAbove ? (float) $rateAbove->min_premium : 0,
                     'maxAge' => $maxAgeRate ? (int) $maxAgeRate->value : 99,
                     'minSumInsured' => $minSumInsured,
                     'minSumInsuredText' => $minSumInsured ? 'KES ' . number_format($minSumInsured, 0) : ($minSumInsuredRate?->notes ?? '—'),
@@ -276,7 +381,7 @@ class DashboardController extends Controller
         };
         $data['myClaimsCount'] = Claim::where($claimQuery)->count();
         $data['myOpenClaimsCount'] = Claim::where($claimQuery)
-            ->whereIn('status', ['reported', 'documents_pending', 'under_review', 'settlement', 'under_investigation'])
+            ->whereIn('status', ['reported'])
             ->count();
 
         $data['recentMyClaims'] = Claim::with(['user:id,name', 'onBehalfOfUser:id,name'])
@@ -374,7 +479,7 @@ class DashboardController extends Controller
             ->values()
             ->all();
 
-        return view('dashboard.user', $data);
+        return view('user.dashboard', $data);
     }
 
     public function weatherJson(Request $request)
@@ -393,5 +498,42 @@ class DashboardController extends Controller
         }
 
         return response()->json($weather);
+    }
+
+    public function activityFeed(Request $request)
+    {
+        $scope = $request->query('scope', 'system');
+        $user = auth()->user();
+        $isAdmin = $user->hasRole('super-admin') || $user->hasRole('admin');
+
+        // Only admins may see system-wide activity across all users — anyone
+        // else is silently limited to their own, regardless of what they ask for.
+        if (!$isAdmin) {
+            $scope = 'mine';
+        }
+
+        $query = ActivityLog::with('user:id,name');
+
+        if ($scope === 'mine') {
+            $query->where('user_id', $user->id);
+        }
+
+        $activities = $query->latest()->take(10)->get()->map(function ($a) {
+            $descLower = strtolower($a->description ?? $a->action);
+            $dotColor = str_contains($descLower, 'quotation') ? '#1756c8'
+                : (str_contains($descLower, 'sticker') ? '#0f7a65'
+                : (str_contains($descLower, 'user') ? '#7c3aed'
+                : (str_contains($descLower, 'claim') ? '#d4860e'
+                : '#c0392b')));
+
+            return [
+                'text' => $a->description ?? $a->action,
+                'time' => $a->created_at->diffForHumans(),
+                'user' => $a->user->name ?? 'System',
+                'dot_color' => $dotColor,
+            ];
+        });
+
+        return response()->json(['activities' => $activities]);
     }
 }

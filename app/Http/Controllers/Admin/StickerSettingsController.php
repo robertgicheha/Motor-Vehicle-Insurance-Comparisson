@@ -28,7 +28,12 @@ class StickerSettingsController extends Controller
             'pending_responses' => Sticker::where('status', 'issued')->whereNull('response_received_at')->count(),
         ];
 
-        return view('admin.stickers.settings', compact('companies', 'recentLogs', 'stats', 'tab'));
+        $emailConfig = \App\Models\EmailSetting::whereIn('key', [
+            'sticker_email_from_address', 'sticker_email_from_name', 'sticker_email_reply_to',
+            'sticker_email_subject_template', 'sticker_email_cc', 'sticker_turnaround_minutes',
+        ])->pluck('value', 'key');
+
+        return view('admin.stickers.settings', compact('companies', 'recentLogs', 'stats', 'tab', 'emailConfig'));
     }
 
     public function emailSettings(Request $request)
@@ -48,7 +53,12 @@ class StickerSettingsController extends Controller
             'pending_responses' => Sticker::where('status', 'issued')->whereNull('response_received_at')->count(),
         ];
 
-        return view('admin.stickers.email-settings', compact('companies', 'recentLogs', 'stats', 'tab'));
+        $emailConfig = \App\Models\EmailSetting::whereIn('key', [
+            'sticker_email_from_address', 'sticker_email_from_name', 'sticker_email_reply_to',
+            'sticker_email_subject_template', 'sticker_email_cc', 'sticker_turnaround_minutes',
+        ])->pluck('value', 'key');
+
+        return view('admin.stickers.email-settings', compact('companies', 'recentLogs', 'stats', 'tab', 'emailConfig'));
     }
 
     public function updateEmailConfig(Request $request)
@@ -117,7 +127,7 @@ class StickerSettingsController extends Controller
             'type' => 'inbound_from_underwriter',
             'recipient' => config('mail.from.address'),
             'sender' => $sticker->underwriter_email,
-            'subject' => 'Re: Certificate Issuance Request - ' . $sticker->sticker_number,
+            'subject' => 'Re: Sticker Issuance Request - ' . $sticker->sticker_number,
             'status' => 'received',
             'attachments' => $data['response_document_path'] ?? null,
             'metadata' => ['response_status' => $validated['response_status']],

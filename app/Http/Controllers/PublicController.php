@@ -36,6 +36,7 @@ class PublicController extends Controller
             $rate = $c->rates->where('vehicle_type', $vehicleType)->firstWhere('item_name', 'Premium Rate');
             $pvtRate = $c->rates->where('vehicle_type', $vehicleType)->firstWhere('item_name', 'PVT Rate');
             $pllRate = $c->rates->where('vehicle_type', $vehicleType)->firstWhere('item_name', 'PLL Per Person');
+            $rateAbove = $c->rates->where('vehicle_type', $vehicleType)->firstWhere('item_name', 'Premium Rate Above 2.5M');
             return [
                 'slug' => $c->slug,
                 'name' => $c->name,
@@ -47,6 +48,8 @@ class PublicController extends Controller
                 'pvtRate' => $pvtRate ? (float) $pvtRate->percentage / 100 : 0,
                 'pvtMinValue' => $pvtRate ? (float) $pvtRate->min_value : 0,
                 'pllPerPerson' => $pllRate ? (float) $pllRate->value : 0,
+                'rateAbove2_5M' => $rateAbove ? (float) $rateAbove->percentage / 100 : 0,
+                'minPremiumAbove2_5M' => $rateAbove ? (float) $rateAbove->min_premium : 0,
                 'color' => $companyColors[$i % count($companyColors)],
                 'prefix' => $c->getInitials(),
             ];
@@ -68,6 +71,7 @@ class PublicController extends Controller
             $rate = $c->rates->where('vehicle_type', $vehicleType)->firstWhere('item_name', 'Premium Rate');
             $pvtRate = $c->rates->where('vehicle_type', $vehicleType)->firstWhere('item_name', 'PVT Rate');
             $pllRate = $c->rates->where('vehicle_type', $vehicleType)->firstWhere('item_name', 'PLL Per Person');
+            $rateAbove = $c->rates->where('vehicle_type', $vehicleType)->firstWhere('item_name', 'Premium Rate Above 2.5M');
             return [
                 'slug' => $c->slug,
                 'name' => $c->name,
@@ -79,6 +83,8 @@ class PublicController extends Controller
                 'pvtRate' => $pvtRate ? (float) $pvtRate->percentage / 100 : 0,
                 'pvtMinValue' => $pvtRate ? (float) $pvtRate->min_value : 0,
                 'pllPerPerson' => $pllRate ? (float) $pllRate->value : 0,
+                'rateAbove2_5M' => $rateAbove ? (float) $rateAbove->percentage / 100 : 0,
+                'minPremiumAbove2_5M' => $rateAbove ? (float) $rateAbove->min_premium : 0,
                 'color' => $companyColors[$i % count($companyColors)],
                 'prefix' => $c->getInitials(),
             ];
@@ -93,7 +99,7 @@ class PublicController extends Controller
 
     public function quotation(?string $company = null)
     {
-        $vehicleType = request()->query('vehicle_type', 'psv');
+        $vehicleType = request()->query('vehicle_type', 'private');
         $numPassengers = request()->query('num_passengers', 1);
         $companies = Company::active()->with('rates')->get();
         $selectedCompany = null;
@@ -110,6 +116,7 @@ class PublicController extends Controller
             $rate = $c->rates->where('vehicle_type', $vehicleType)->firstWhere('item_name', 'Premium Rate');
             $pvtRate = $c->rates->where('vehicle_type', $vehicleType)->firstWhere('item_name', 'PVT Rate');
             $pllRate = $c->rates->where('vehicle_type', $vehicleType)->firstWhere('item_name', 'PLL Per Person');
+            $rateAbove = $c->rates->where('vehicle_type', $vehicleType)->firstWhere('item_name', 'Premium Rate Above 2.5M');
             $maxAgeRate = $c->rates->where('vehicle_type', $vehicleType)->firstWhere('item_name', 'Max Age New Business');
             $excessProtectorRate = $c->rates->where('vehicle_type', $vehicleType)->firstWhere('item_name', 'Excess Protector');
             $geoAreaRate = $c->rates->where('vehicle_type', $vehicleType)->firstWhere('item_name', 'Geographical Area');
@@ -126,6 +133,8 @@ class PublicController extends Controller
                 'pvtRate' => $pvtRate ? (float) $pvtRate->percentage / 100 : 0,
                 'pvtMinValue' => $pvtRate ? (float) $pvtRate->min_value : 0,
                 'pllPerPerson' => $pllRate ? (float) $pllRate->value : 0,
+                'rateAbove2_5M' => $rateAbove ? (float) $rateAbove->percentage / 100 : 0,
+                'minPremiumAbove2_5M' => $rateAbove ? (float) $rateAbove->min_premium : 0,
                 'maxAge' => $maxAgeRate ? (int) $maxAgeRate->value : 99,
                 'minSumInsured' => $minSumInsured,
                 'minSumInsuredText' => $minSumInsured ? 'KES ' . number_format($minSumInsured, 0) : ($minSumInsuredRate?->notes ?? '—'),
@@ -144,12 +153,17 @@ class PublicController extends Controller
         // Uses the same asset() pattern as $hardcodedLogos above.
         $__compareAllLogoUrl = asset('images/compare-all-logo.png');
 
+        // On the "Compare All" page (no single company selected), fall back to the
+        // user's most recent quotation of any company so the Customer & Vehicle
+        // summary isn't blank for a logged-in user with nothing in sessionStorage —
+        // e.g. landing here fresh rather than via the quote wizard.
         $userQuotation = null;
-        if (auth()->check() && $selectedCompany) {
-            $userQuotation = auth()->user()->quotations()
-                ->where('company_id', $selectedCompany->id)
-                ->latest()
-                ->first();
+        if (auth()->check()) {
+            $quotationQuery = auth()->user()->quotations();
+            if ($selectedCompany) {
+                $quotationQuery->where('company_id', $selectedCompany->id);
+            }
+            $userQuotation = $quotationQuery->latest()->first();
         }
 
         $iraLevyRate = $selectedCompany?->rates->firstWhere('item_name', 'IRA Levy');
@@ -238,8 +252,10 @@ class PublicController extends Controller
 
         try {
             Mail::to($request->email)->send(new QuotationMail($quotation));
+            \App\Services\AuditService::activity('quotation_emailed', "Quotation {$quotation->quotation_number} emailed to {$request->email}");
             return back()->with('success', 'Quotation sent to ' . $request->email);
         } catch (\Exception $e) {
+            \App\Services\AuditService::activity('quotation_email_failed', "Failed to email quotation {$quotation->quotation_number} to {$request->email}: {$e->getMessage()}", 'error');
             return back()->with('error', 'Failed to send email. Please try again.');
         }
     }
@@ -257,8 +273,10 @@ class PublicController extends Controller
 
         try {
             Mail::to($request->email)->send(new StickerMail($sticker));
+            \App\Services\AuditService::activity('sticker_emailed', "Certificate {$sticker->sticker_number} emailed to {$request->email}");
             return back()->with('success', 'Certificate sent to ' . $request->email);
         } catch (\Exception $e) {
+            \App\Services\AuditService::activity('sticker_email_failed', "Failed to email certificate {$sticker->sticker_number} to {$request->email}: {$e->getMessage()}", 'error');
             return back()->with('error', 'Failed to send email. Please try again.');
         }
     }
@@ -271,13 +289,23 @@ class PublicController extends Controller
             'car_model' => 'required|string|max:255',
             'car_year' => 'required|integer',
             'car_registration' => 'nullable|string|max:50',
+            'color' => 'nullable|string|max:50',
             'car_valuation' => 'required|numeric|min:0',
             'vehicle_type' => 'sometimes|string|in:psv,private',
             'num_passengers' => 'sometimes|integer|min:1',
+            'salutation' => 'nullable|string|max:20',
+            'first_name' => 'nullable|string|max:255',
+            'middle_name' => 'nullable|string|max:255',
+            'last_name' => 'nullable|string|max:255',
+            'phone' => 'nullable|string|max:50',
+            'email' => 'nullable|email|max:255',
+            'chassis_number' => 'nullable|string|max:100',
+            'engine_number' => 'nullable|string|max:100',
+            'body_type' => 'nullable|string|max:100',
         ]);
 
         $company = Company::where('slug', $request->company_slug)->firstOrFail();
-        $vehicleType = $request->input('vehicle_type', 'psv');
+        $vehicleType = $request->input('vehicle_type', 'private');
         $numPassengers = $request->input('num_passengers', 1);
 
         $calculator = app(\App\Services\PremiumCalculationService::class);
@@ -291,13 +319,24 @@ class PublicController extends Controller
             false
         );
 
-        $quotation = auth()->user()->quotations()->create([
+        $user = auth()->user();
+        $quotation = $user->quotations()->create([
+            'salutation' => $request->salutation,
+            'first_name' => $request->filled('first_name') ? $request->first_name : $user->first_name,
+            'middle_name' => $request->middle_name,
+            'last_name' => $request->filled('last_name') ? $request->last_name : $user->last_name,
+            'phone' => $request->filled('phone') ? $request->phone : $user->mobile,
+            'email' => $request->filled('email') ? $request->email : $user->email,
             'company_id' => $company->id,
             'quotation_number' => Quotation::generateNumber($company),
             'car_make' => $request->car_make,
             'car_model' => $request->car_model,
             'car_year' => $request->car_year,
             'car_registration' => $request->car_registration,
+            'chassis_number' => $request->chassis_number,
+            'engine_number' => $request->engine_number,
+            'body_type' => $request->body_type,
+            'color' => $request->color,
             'car_valuation' => $request->car_valuation,
             'vehicle_type' => $vehicleType,
             'num_passengers' => $numPassengers,
@@ -329,7 +368,7 @@ class PublicController extends Controller
         }
 
         $quotations = Quotation::where('quotation_number', 'like', "%{$q}%")
-            ->orWhere('car_registration', 'like', "%{$q}%")
+            ->orWhereLikeCI('car_registration', $q)
             ->orWhere('car_make', 'like', "%{$q}%")
             ->orWhere('car_model', 'like', "%{$q}%")
             ->limit(5)
@@ -337,7 +376,7 @@ class PublicController extends Controller
 
         $stickers = Sticker::where('sticker_number', 'like', "%{$q}%")
             ->orWhere('customer_name', 'like', "%{$q}%")
-            ->orWhere('vehicle_registration', 'like', "%{$q}%")
+            ->orWhereLikeCI('vehicle_registration', $q)
             ->orWhere('car_make', 'like', "%{$q}%")
             ->orWhere('car_model', 'like', "%{$q}%")
             ->limit(5)
@@ -375,6 +414,7 @@ class PublicController extends Controller
                 $rate = $c->rates->where('vehicle_type', $vehicleType)->firstWhere('item_name', 'Premium Rate');
                 $pvtRate = $c->rates->where('vehicle_type', $vehicleType)->firstWhere('item_name', 'PVT Rate');
                 $pllRate = $c->rates->where('vehicle_type', $vehicleType)->firstWhere('item_name', 'PLL Per Person');
+            $rateAbove = $c->rates->where('vehicle_type', $vehicleType)->firstWhere('item_name', 'Premium Rate Above 2.5M');
                 return [
                     'slug' => $c->slug,
                     'name' => $c->name,
@@ -386,6 +426,8 @@ class PublicController extends Controller
                     'pvtRate' => $pvtRate ? (float) $pvtRate->percentage / 100 : 0,
                     'pvtMinValue' => $pvtRate ? (float) $pvtRate->min_value : 0,
                     'pllPerPerson' => $pllRate ? (float) $pllRate->value : 0,
+                'rateAbove2_5M' => $rateAbove ? (float) $rateAbove->percentage / 100 : 0,
+                'minPremiumAbove2_5M' => $rateAbove ? (float) $rateAbove->min_premium : 0,
                     'color' => $companyColors[$i % count($companyColors)],
                     'prefix' => $c->getInitials(),
                 ];
@@ -488,6 +530,7 @@ class PublicController extends Controller
                 $rate = $c->rates->where('vehicle_type', $vehicleType)->firstWhere('item_name', 'Premium Rate');
                 $pvtRate = $c->rates->where('vehicle_type', $vehicleType)->firstWhere('item_name', 'PVT Rate');
                 $pllRate = $c->rates->where('vehicle_type', $vehicleType)->firstWhere('item_name', 'PLL Per Person');
+            $rateAbove = $c->rates->where('vehicle_type', $vehicleType)->firstWhere('item_name', 'Premium Rate Above 2.5M');
                 return [
                     'slug' => $c->slug,
                     'name' => $c->name,
@@ -499,6 +542,8 @@ class PublicController extends Controller
                     'pvtRate' => $pvtRate ? (float) $pvtRate->percentage / 100 : 0,
                     'pvtMinValue' => $pvtRate ? (float) $pvtRate->min_value : 0,
                     'pllPerPerson' => $pllRate ? (float) $pllRate->value : 0,
+                'rateAbove2_5M' => $rateAbove ? (float) $rateAbove->percentage / 100 : 0,
+                'minPremiumAbove2_5M' => $rateAbove ? (float) $rateAbove->min_premium : 0,
                     'color' => $companyColors[$i % count($companyColors)],
                     'prefix' => $c->getInitials(),
                 ];
@@ -538,6 +583,7 @@ class PublicController extends Controller
                 $rate = $c->rates->where('vehicle_type', $vehicleType)->firstWhere('item_name', 'Premium Rate');
                 $pvtRate = $c->rates->where('vehicle_type', $vehicleType)->firstWhere('item_name', 'PVT Rate');
                 $pllRate = $c->rates->where('vehicle_type', $vehicleType)->firstWhere('item_name', 'PLL Per Person');
+            $rateAbove = $c->rates->where('vehicle_type', $vehicleType)->firstWhere('item_name', 'Premium Rate Above 2.5M');
                 return [
                     'slug' => $c->slug,
                     'name' => $c->name,
@@ -549,6 +595,8 @@ class PublicController extends Controller
                     'pvtRate' => $pvtRate ? (float) $pvtRate->percentage / 100 : 0,
                     'pvtMinValue' => $pvtRate ? (float) $pvtRate->min_value : 0,
                     'pllPerPerson' => $pllRate ? (float) $pllRate->value : 0,
+                'rateAbove2_5M' => $rateAbove ? (float) $rateAbove->percentage / 100 : 0,
+                'minPremiumAbove2_5M' => $rateAbove ? (float) $rateAbove->min_premium : 0,
                     'color' => $companyColors[$i % count($companyColors)],
                     'prefix' => $c->getInitials(),
                 ];

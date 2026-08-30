@@ -48,34 +48,14 @@ class Claim extends Model
     }
 
     public const STATUS_REPORTED = 'reported';
-    public const STATUS_DOCUMENTS_PENDING = 'documents_pending';
-    public const STATUS_UNDER_REVIEW = 'under_review';
-    public const STATUS_SETTLEMENT = 'settlement';
-    public const STATUS_UNDER_INVESTIGATION = 'under_investigation';
-    public const STATUS_SETTLED = 'settled';
-    public const STATUS_DECLINED = 'declined';
+    
 
     public static function statuses(): array
     {
         return [
             self::STATUS_REPORTED => 'Claim is Reported',
-            self::STATUS_DOCUMENTS_PENDING => 'Documents - Pending',
-            self::STATUS_UNDER_REVIEW => 'Under Review',
-            self::STATUS_SETTLEMENT => 'Settlement - Awaiting Settlement Offer',
-            self::STATUS_UNDER_INVESTIGATION => 'Under Investigation',
-            self::STATUS_SETTLED => 'Settlement - Settled',
-            self::STATUS_DECLINED => 'Declined',
+
         ];
-    }
-
-    public function user(): BelongsTo
-    {
-        return $this->belongsTo(User::class);
-    }
-
-    public function onBehalfOfUser(): BelongsTo
-    {
-        return $this->belongsTo(User::class, 'on_behalf_of_user_id');
     }
 
     public static function documentTypes(): array
@@ -90,6 +70,17 @@ class Claim extends Model
         ];
     }
 
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
+    }
+
+    public function onBehalfOfUser(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'on_behalf_of_user_id');
+    }
+
+   
     public static function generateNumber(): string
     {
         $prefix = 'CLM';

@@ -23,6 +23,7 @@
             $pvtRate = $c->rates->where('vehicle_type', $vehicleType)->firstWhere('item_name', 'PVT Rate');
             $pllRate = $c->rates->where('vehicle_type', $vehicleType)->firstWhere('item_name', 'PLL Per Person');
             $maxAgeRate = $c->rates->where('vehicle_type', $vehicleType)->firstWhere('item_name', 'Max Age New Business');
+            $rateAbove = $c->rates->where('vehicle_type', $vehicleType)->firstWhere('item_name', 'Premium Rate Above 2.5M');
             $stats = $__companyStats->get($c->id);
             return [
                 'slug' => $c->slug,
@@ -35,6 +36,8 @@
                 'pvtRate' => $pvtRate ? (float) $pvtRate->percentage / 100 : 0,
                 'pvtMinValue' => $pvtRate ? (float) $pvtRate->min_value : 0,
                 'pllPerPerson' => $pllRate ? (float) $pllRate->value : 0,
+                'rateAbove2_5M' => $rateAbove ? (float) $rateAbove->percentage / 100 : 0,
+                'minPremiumAbove2_5M' => $rateAbove ? (float) $rateAbove->min_premium : 0,
                 'maxAge' => $maxAgeRate ? (int) $maxAgeRate->value : 99,
                 'minSumInsured' => $vehicleType === 'psv' ? (float) $c->min_sum_insured_psv : (float) $c->min_sum_insured_private,
                 'color' => $companyColors[$i % count($companyColors)],
@@ -294,6 +297,10 @@ Compare All Insurers
           <input type="text" id="f-chassis" placeholder="e.g. WVWZZZ1KZ9W123456">
         </div>
         <div class="form-group">
+          <label>Engine No</label>
+          <input type="text" id="f-engine" placeholder="e.g. CBA1234567">
+        </div>
+        <div class="form-group">
           <label>Make of Vehicle <span class="req">*</span></label>
           <div class="vehicle-search-wrap">
             <input type="text" id="f-make" placeholder="Search vehicle make..." autocomplete="off">
@@ -519,6 +526,10 @@ Compare All Insurers
         <div class="form-group">
           <label>Chassis / Frame Number</label>
           <input type="text" id="f-chassis" placeholder="e.g. WVWZZZ1KZ9W123456">
+        </div>
+        <div class="form-group">
+          <label>Engine No</label>
+          <input type="text" id="f-engine" placeholder="e.g. CBA1234567">
         </div>
         <div class="form-group">
           <label>Make of Vehicle <span class="req">*</span></label>
@@ -764,7 +775,7 @@ window.MIC_VEHICLE_TYPE = @json($__vehicleType);
 function guestGuard(callback) {
   if (typeof callback === 'function') {
     var match = callback.toString().match(/openQuotePage\('([^']+)'(?:,\s*'([^']*)')?\)/);
-    if (match && match[1] !== 'ALL') {
+    if (match) {
       try {
         var type = match[2] !== undefined ? match[2] : (document.getElementById('f-reg-private') ? 'private' : (document.getElementById('f-reg-psv') ? 'psv' : ''));
         var d = typeof getFormData === 'function' ? getFormData(type) : {};
@@ -778,18 +789,14 @@ function guestGuard(callback) {
       } catch(e) {}
     }
     if (window.MIC_GUEST) {
-      if (match && match[1] !== 'ALL') {
+      if (match) {
         sessionStorage.setItem('auth_redirect', '/dashboard?pending_quote=1');
         var alpineEl = document.querySelector('#authModal');
-        if (alpineEl && alpineEl.__x) { alpineEl.__x.$data.redirectTo = '/dashboard?pending_quote=1'; }
+        if (alpineEl && window.Alpine) { try { window.Alpine.$data(alpineEl).redirectTo = '/dashboard?pending_quote=1'; } catch(e) {} }
         openAuthModal();
         return;
       }
       callback();
-      return;
-    }
-    if (match && match[1] !== 'ALL') {
-      window.location.href = '/dashboard?pending_quote=1';
       return;
     }
   }

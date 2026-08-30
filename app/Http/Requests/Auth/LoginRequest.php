@@ -49,6 +49,7 @@ class LoginRequest extends FormRequest
 
         if (!$user) {
             RateLimiter::hit($this->throttleKey());
+            \App\Services\AuditService::activity('login_failed', "Failed login attempt for unknown email '{$email}'", 'warning');
             throw ValidationException::withMessages([
                 'email' => 'Username is not valid, try again',
             ]);
@@ -56,6 +57,7 @@ class LoginRequest extends FormRequest
 
         if (!\Illuminate\Support\Facades\Hash::check($password, $user->password)) {
             RateLimiter::hit($this->throttleKey());
+            \App\Services\AuditService::activity('login_failed', "Failed login attempt for {$user->email} (wrong password)", 'warning', $user->id);
             throw ValidationException::withMessages([
                 'password' => 'Password is not correct, please try again',
             ]);
@@ -63,6 +65,7 @@ class LoginRequest extends FormRequest
 
         if (!$user->is_active) {
             RateLimiter::hit($this->throttleKey());
+            \App\Services\AuditService::activity('login_failed', "Login blocked for {$user->email} (account inactive)", 'warning', $user->id);
             throw ValidationException::withMessages([
                 'email' => 'Your account is inactive. Please contact support.',
             ]);
@@ -71,6 +74,9 @@ class LoginRequest extends FormRequest
         \Illuminate\Support\Facades\Auth::login($user, $this->boolean('remember'));
 
         RateLimiter::clear($this->throttleKey());
+
+        \App\Services\AuditService::log('login', 'User', $user->id, null, ['method' => 'password'], $user->id);
+        \App\Services\AuditService::activity('login', "User {$user->name} logged in", 'info', $user->id);
     }
 
     /**
@@ -85,6 +91,14 @@ class LoginRequest extends FormRequest
         }
 
         event(new Lockout($this));
+
+        $email = $this->string('email')->toString();
+        \App\Services\AuditService::activity('login_lockout', "Account locked out after repeated failed attempts for '{$email}' from IP {$this->ip()}", 'error');
+
+        $admins = \App\Models\User::role(['super-admin', 'admin'])->get();
+        if ($admins->isNotEmpty()) {
+            \Illuminate\Support\Facades\Notification::send($admins, new \App\Notifications\FailedLoginLockout($email, $this->ip()));
+        }
 
         $seconds = RateLimiter::availableIn($this->throttleKey());
 

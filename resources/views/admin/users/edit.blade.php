@@ -1,61 +1,145 @@
 <x-app-layout>
-    <div class="max-w-2xl mx-auto space-y-6 fade-in">
-        <div class="flex items-center justify-between">
-            <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Edit User</h1>
-            <a href="{{ route('admin.users.index') }}" class="text-sm text-gray-500 hover:text-gray-700 dark:hover:text-gray-300">Back</a>
-        </div>
+    <div class="max-w-3xl mx-auto space-y-5 mt-10 fade-in">
 
-        <form action="{{ route('admin.users.update', $user) }}" method="POST" class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 space-y-4">
-            @csrf @method('PUT')
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {{-- ─── HERO ─────────────────────────────────────────────────────────── --}}
+        <div class="rounded-2xl bg-micblue px-6 py-7 shadow-sm">
+            <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">First Name</label>
-                    <input type="text" name="first_name" value="{{ old('first_name', $user->first_name) }}" required
-                           class="w-full px-4 py-2.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500">
+                    <p class="text-[10px] font-semibold uppercase tracking-widest text-blue-400">User Management</p>
+                    <h1 class="mt-0.5 text-xl font-bold text-white">Edit User</h1>
+                    <p class="mt-0.5 text-xs text-slate-400">Update {{ $user->first_name }} {{ $user->last_name }}'s account information and access.</p>
                 </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Last Name</label>
-                    <input type="text" name="last_name" value="{{ old('last_name', $user->last_name) }}" required
-                           class="w-full px-4 py-2.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500">
+                <a href="{{ route('admin.users.index') }}"
+                   class="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-medium text-white/80 hover:text-white border border-white/20 hover:bg-white/10 rounded-lg transition shrink-0">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+                    Back to Users
+                </a>
+            </div>
+
+            {{-- KPI row --}}
+            <div class="mt-6 grid grid-cols-2 md:grid-cols-4 gap-3">
+                <div class="kpi-card p-4">
+                    <div class="accent-bar"></div>
+                    <p class="kpi-eyebrow">Member since</p>
+                    <p class="kpi-value text-sm mt-1">{{ $user->created_at->format('M Y') }}</p>
+                    <span class="kpi-delta neutral mt-1.5 inline-block">Active account</span>
                 </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Email</label>
-                    <input type="email" name="email" value="{{ old('email', $user->email) }}" required
-                           class="w-full px-4 py-2.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500">
+
+                <div class="kpi-card p-4">
+                    <div class="accent-bar" style="background:linear-gradient(90deg,#34d399,#6ee7b7)"></div>
+                    <p class="kpi-eyebrow">Current role</p>
+                    <p class="kpi-value text-sm mt-1">{{ ucfirst($user->getRoleNames()->first() ?? 'User') }}</p>
+                    <span class="kpi-delta up mt-1.5 inline-block">Assigned</span>
                 </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Mobile</label>
-                    <input type="text" name="mobile" value="{{ old('mobile', $user->mobile) }}" required
-                           class="w-full px-4 py-2.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500">
+
+                <div class="kpi-card p-4">
+                    <div class="accent-bar" style="background:linear-gradient(90deg,#818cf8,#a5b4fc)"></div>
+                    <p class="kpi-eyebrow">Status</p>
+                    <p class="kpi-value text-sm mt-1">{{ $user->is_active ? 'Active' : 'Inactive' }}</p>
+                    @if($user->is_active)
+                        <span class="kpi-delta up mt-1.5 inline-block">Can sign in</span>
+                    @else
+                        <span class="kpi-delta neutral mt-1.5 inline-block">Access disabled</span>
+                    @endif
                 </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Gender</label>
-                    <select name="gender"
-                            class="w-full px-4 py-2.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500">
-                        <option value="">Select</option>
-                        <option value="male" {{ $user->gender === 'male' ? 'selected' : '' }}>Male</option>
-                        <option value="female" {{ $user->gender === 'female' ? 'selected' : '' }}>Female</option>
-                    </select>
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Status</label>
-                    <select name="is_active"
-                            class="w-full px-4 py-2.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500">
-                        <option value="1" {{ $user->is_active ? 'selected' : '' }}>Active</option>
-                        <option value="0" {{ !$user->is_active ? 'selected' : '' }}>Inactive</option>
-                    </select>
-                </div>
-                <div class="md:col-span-2">
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Role</label>
-                    <select name="role" required
-                            class="w-full px-4 py-2.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500">
-                        @foreach($roles as $role)
-                            <option value="{{ $role->id }}" {{ $user->hasRole($role->name) ? 'selected' : '' }}>{{ ucfirst($role->name) }}</option>
-                        @endforeach
-                    </select>
+
+                <div class="kpi-card p-4">
+                    <div class="accent-bar" style="background:linear-gradient(90deg,#fb7185,#fda4af)"></div>
+                    <p class="kpi-eyebrow">Email</p>
+                    <p class="kpi-value text-sm mt-1">{{ $user->hasVerifiedEmail() ? 'Verified' : 'Unverified' }}</p>
+                    @if($user->hasVerifiedEmail())
+                        <span class="kpi-delta up mt-1.5 inline-block">Confirmed</span>
+                    @else
+                        <span class="kpi-delta neutral mt-1.5 inline-block">Pending</span>
+                    @endif
                 </div>
             </div>
-            <button type="submit" class="px-6 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-medium">Update User</button>
-        </form>
+        </div>
+
+        {{-- ─── EDIT USER FORM ───────────────────────────────────────────────── --}}
+        <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
+            <div class="flex items-center gap-3 px-5 py-4 border-b border-gray-100 dark:border-gray-700">
+                <div class="w-10 h-10 rounded-full bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center flex-shrink-0 border border-gray-200 dark:border-gray-600">
+                    <svg class="w-5 h-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+                    </svg>
+                </div>
+                <div>
+                    <h2 class="text-sm font-semibold text-gray-900 dark:text-white">Account details</h2>
+                    <p class="text-xs text-gray-400 dark:text-gray-500 mt-0.5">Edit this user's personal details, role and access</p>
+                </div>
+            </div>
+
+            <form action="{{ route('admin.users.update', $user) }}" method="POST" class="px-5 py-5 space-y-4">
+                @csrf @method('PUT')
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-[11px] font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500 mb-1.5">First name</label>
+                        <input type="text" name="first_name" value="{{ old('first_name', $user->first_name) }}" required
+                               class="w-full px-3.5 py-2.5 text-sm rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition">
+                        @error('first_name') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
+                    </div>
+                    <div>
+                        <label class="block text-[11px] font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500 mb-1.5">Last name</label>
+                        <input type="text" name="last_name" value="{{ old('last_name', $user->last_name) }}" required
+                               class="w-full px-3.5 py-2.5 text-sm rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition">
+                        @error('last_name') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
+                    </div>
+                    <div>
+                        <label class="block text-[11px] font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500 mb-1.5">Email address</label>
+                        <input type="email" name="email" value="{{ old('email', $user->email) }}" required
+                               class="w-full px-3.5 py-2.5 text-sm rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition">
+                        @error('email') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
+                    </div>
+                    <div>
+                        <label class="block text-[11px] font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500 mb-1.5">Mobile number</label>
+                        <input type="text" name="mobile" value="{{ old('mobile', $user->mobile) }}" required
+                               class="w-full px-3.5 py-2.5 text-sm rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition">
+                        @error('mobile') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
+                    </div>
+                    <div>
+                        <label class="block text-[11px] font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500 mb-1.5">Gender</label>
+                        <select name="gender"
+                                class="w-full px-3.5 py-2.5 text-sm rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition">
+                            <option value="">Select gender</option>
+                            <option value="male"   {{ old('gender', $user->gender) === 'male'   ? 'selected' : '' }}>Male</option>
+                            <option value="female" {{ old('gender', $user->gender) === 'female' ? 'selected' : '' }}>Female</option>
+                        </select>
+                        @error('gender') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
+                    </div>
+                    <div>
+                        <label class="block text-[11px] font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500 mb-1.5">Status</label>
+                        <select name="is_active"
+                                class="w-full px-3.5 py-2.5 text-sm rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition">
+                            <option value="1" {{ old('is_active', $user->is_active) ? 'selected' : '' }}>Active</option>
+                            <option value="0" {{ !old('is_active', $user->is_active) ? 'selected' : '' }}>Inactive</option>
+                        </select>
+                        @error('is_active') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
+                    </div>
+                    <div class="md:col-span-2">
+                        <label class="block text-[11px] font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500 mb-1.5">Role</label>
+                        @php $currentRoleId = old('role', optional($roles->first(fn($r) => $user->hasRole($r->name)))->id); @endphp
+                        <select name="role" required
+                                class="w-full px-3.5 py-2.5 text-sm rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition">
+                            @foreach($roles as $role)
+                                <option value="{{ $role->id }}" {{ $currentRoleId == $role->id ? 'selected' : '' }}>{{ ucfirst($role->name) }}</option>
+                            @endforeach
+                        </select>
+                        @error('role') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
+                    </div>
+                </div>
+
+                <div class="pt-1">
+                    <button type="submit"
+                            class="inline-flex items-center gap-2 px-5 py-2.5 text-xs font-semibold bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                        </svg>
+                        Update User
+                    </button>
+                </div>
+            </form>
+        </div>
     </div>
 </x-app-layout>

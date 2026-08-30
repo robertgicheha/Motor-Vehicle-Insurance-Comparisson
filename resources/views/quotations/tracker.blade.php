@@ -76,14 +76,14 @@
                         <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/30">
                             <td class="px-5 py-2.5 text-gray-400">{{ $loop->iteration }}</td>
                             @if(auth()->user()->hasRole('super-admin') || auth()->user()->hasRole('admin'))
-                                <td class="px-5 py-2.5 font-medium text-gray-800 dark:text-white">{{ $q->user->name }}</td>
+                                <td class="px-5 py-2.5 font-medium text-gray-800 dark:text-white">{{ $q->customer_name }}</td>
                             @endif
                             <td class="px-5 py-2.5 font-medium text-gray-800 dark:text-white">{{ $q->company->name }}</td>
                             <td class="px-5 py-2.5">
                                 <span class="font-medium text-gray-800 dark:text-white">{{ $q->car_make }} {{ $q->car_model }}</span>
                                 <p class="text-[10px] text-gray-400">{{ $q->car_year }}</p>
                             </td>
-                            <td class="px-5 py-2.5 text-right font-bold text-gray-800 dark:text-white font-mono">KES {{ number_format($q->total_premium, 0) }}</td>
+                            <td class="px-5 py-2.5 text-right font-bold text-gray-800 dark:text-white font-mono">KES {{ number_format($q->total_premium, 2) }}</td>
                             <td class="px-5 py-2.5 text-center">
                                 <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium {{ $statusColors[$q->status] ?? 'bg-gray-50 text-gray-500 dark:bg-gray-700 dark:text-gray-400' }}">
                                     {{ ucfirst($q->status) }}
@@ -185,7 +185,7 @@
                         </div>
                     @endif
                     <div class="text-right shrink-0">
-                        <p class="text-xs font-bold text-gray-800 dark:text-white">KES {{ number_format($cq->total_premium, 0) }}</p>
+                        <p class="text-xs font-bold text-gray-800 dark:text-white">KES {{ number_format($cq->total_premium, 2) }}</p>
                     </div>
                 </a>
             @empty

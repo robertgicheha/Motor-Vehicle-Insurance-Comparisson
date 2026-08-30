@@ -45,7 +45,7 @@
                     </p>
                 </div>
                 <div class="text-right shrink-0">
-                    <p class="text-xs font-bold text-gray-800 dark:text-white">KES {{ number_format($q->total_premium, 0) }}</p>
+                    <p class="text-xs font-bold text-gray-800 dark:text-white">KES {{ number_format($q->total_premium, 2) }}</p>
                     <p class="text-[10px] text-gray-400">{{ $q->created_at->format('d M Y, h:i A') }}</p>
                 </div>
             </a>

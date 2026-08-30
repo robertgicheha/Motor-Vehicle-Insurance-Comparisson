@@ -6,7 +6,7 @@
             <div>
                 <p class="text-[10px] font-semibold uppercase tracking-widest text-blue-400">Reporting</p>
                 <h1 class="mt-0.5 text-xl font-bold text-white">Sticker Analytics</h1>
-                <p class="mt-0.5 text-xs text-slate-400">Company rankings, monthly trends, and certificate performance</p>
+                <p class="mt-0.5 text-xs text-slate-400">Company rankings, monthly trends, and sticker performance</p>
             </div>
             <div class="flex items-center gap-2 shrink-0">
                 <a href="{{ route('admin.stickers.tracker') }}" class="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-medium border border-white/20 text-white/80 rounded-lg hover:bg-white/10 transition">
@@ -21,7 +21,7 @@
                 <div class="accent-bar"></div>
                 <p class="kpi-eyebrow">Total Generated</p>
                 <p class="kpi-value mt-1">{{ number_format($total) }}</p>
-                <span class="kpi-delta neutral mt-1.5 inline-block">All certificates</span>
+                <span class="kpi-delta neutral mt-1.5 inline-block">All stickers</span>
             </div>
             <div class="kpi-card p-4">
                 <div class="accent-bar" style="background:linear-gradient(90deg,#34d399,#6ee7b7)"></div>
@@ -39,7 +39,7 @@
                 <div class="accent-bar" style="background:linear-gradient(90deg,#fbbf24,#fcd34d)"></div>
                 <p class="kpi-eyebrow">Top Company</p>
                 <p class="kpi-value mt-1 text-sm">{{ $topCompany['name'] ?? 'N/A' }}</p>
-                <span class="kpi-delta neutral mt-1.5 inline-block">{{ $topCompany['count'] ?? 0 }} certificates</span>
+                <span class="kpi-delta neutral mt-1.5 inline-block">{{ $topCompany['count'] ?? 0 }} stickers</span>
             </div>
         </div>
     </div>
@@ -84,7 +84,7 @@
         <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
             <div class="px-5 py-4 border-b border-gray-100 dark:border-gray-700">
                 <h2 class="text-xs font-semibold text-gray-800 dark:text-white">Company Rankings</h2>
-                <p class="text-[10px] text-gray-400 mt-0.5">Certificates generated per insurance company</p>
+                <p class="text-[10px] text-gray-400 mt-0.5">Stickers generated per insurance company</p>
             </div>
             <div class="p-5">
                 @forelse($byCompany as $idx => $item)
@@ -112,7 +112,7 @@
                         </div>
                     </div>
                 @empty
-                    <p class="text-xs text-gray-400 text-center py-8">No certificate data available.</p>
+                    <p class="text-xs text-gray-400 text-center py-8">No sticker data available.</p>
                 @endforelse
             </div>
         </div>
@@ -120,7 +120,7 @@
         <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
             <div class="px-5 py-4 border-b border-gray-100 dark:border-gray-700">
                 <h2 class="text-xs font-semibold text-gray-800 dark:text-white">Monthly Trends</h2>
-                <p class="text-[10px] text-gray-400 mt-0.5">Certificates generated per month</p>
+                <p class="text-[10px] text-gray-400 mt-0.5">Stickers generated per month</p>
             </div>
             <div class="p-5">
                 <canvas id="monthlyTrendChart" height="220"></canvas>
@@ -195,7 +195,7 @@
                 <h2 class="text-xs font-semibold text-gray-800 dark:text-white">Premium Distribution by Company</h2>
             </div>
             <div class="p-5">
-                <canvas id="premiumChart" height="220"></canvas>
+                <canvas id="stickerPremiumChart" height="220"></canvas>
             </div>
         </div>
     </div>
@@ -204,7 +204,7 @@
         <div class="px-5 py-4 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between">
             <div>
                 <h2 class="text-xs font-semibold text-gray-800 dark:text-white">Monthly Breakdown by Company</h2>
-                <p class="text-[10px] text-gray-400 mt-0.5">Detailed view of certificates per company per month</p>
+                <p class="text-[10px] text-gray-400 mt-0.5">Detailed view of stickers per company per month</p>
             </div>
         </div>
         <div class="overflow-x-auto">
@@ -243,7 +243,6 @@
 </div>
 
 @push('scripts')
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
 <script>
 const chartColors = ['#1756c8','#7c3aed','#0f7a65','#d4860e','#c0392b','#818cf8','#34d399','#fbbf24'];
 
@@ -252,7 +251,7 @@ new Chart(document.getElementById('monthlyTrendChart'), {
     data: {
         labels: {!! json_encode($byMonth->pluck('label')) !!},
         datasets: [{
-            label: 'Certificates',
+            label: 'Stickers',
             data: {!! json_encode($byMonth->pluck('count')) !!},
             borderColor: '#1756c8',
             backgroundColor: 'rgba(23,86,200,0.1)',
@@ -352,7 +351,7 @@ new Chart(document.getElementById('emailChart'), {
     }
 });
 
-new Chart(document.getElementById('premiumChart'), {
+new Chart(document.getElementById('stickerPremiumChart'), {
     type: 'bar',
     data: {
         labels: {!! json_encode($byCompany->take(8)->pluck('name')) !!},

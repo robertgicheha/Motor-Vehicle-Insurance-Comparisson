@@ -3,9 +3,10 @@
         Enter your email address and we'll send you a link to reset your password.
     </p>
 
-    <form method="POST" action="{{ route('password.email') }}" class="space-y-6">
+    <form method="POST" action="{{ route('password.email') }}" class="space-y-6" id="forgotPasswordForm">
         @csrf
-        
+        <input type="hidden" name="g-recaptcha-response" id="g-recaptcha-response">
+
         <div>
             <label for="email" class="block text-sm font-medium text-gray-700">Email address <span class="text-red-500">*</span></label>
             <div class="relative mt-1">
@@ -30,4 +31,18 @@
         <span class="text-gray-500">Return to</span>
         <a href="{{ route('login') }}" class="font-medium text-indigo-600 hover:text-indigo-500">Sign in</a>
     </div>
+
+    <script>
+    document.getElementById('forgotPasswordForm').addEventListener('submit', function (e) {
+        if (typeof grecaptcha === 'undefined' || !window.mvipRecaptchaSiteKey) return;
+        e.preventDefault();
+        var form = this;
+        grecaptcha.ready(function () {
+            grecaptcha.execute(window.mvipRecaptchaSiteKey, { action: 'forgot_password' }).then(function (token) {
+                document.getElementById('g-recaptcha-response').value = token;
+                form.submit();
+            });
+        });
+    });
+    </script>
 </x-auth-layout>

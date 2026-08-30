@@ -28,7 +28,7 @@ class ClaimsController extends Controller
         }
 
         if ($request->filled('registration_number')) {
-            $query->where('registration_number', 'like', '%' . $request->registration_number . '%');
+            $query->whereLikeCI('registration_number', $request->registration_number);
         }
 
         $claims = $query->paginate(20);
@@ -71,7 +71,15 @@ class ClaimsController extends Controller
 
         $companies = Company::active()->get(['id', 'name', 'slug', 'logo']);
 
-        return view('claims.create', compact('users', 'admins', 'isAdmin', 'self', 'companies'));
+        $companiesForJs = $companies->map(fn ($c) => [
+            'id' => $c->id,
+            'name' => $c->name,
+            'slug' => $c->slug,
+            'logo' => $c->logoUrl(),
+            'claims_email' => $c->claims_email,
+        ])->values();
+
+        return view('claims.create', compact('users', 'admins', 'isAdmin', 'self', 'companies','companiesForJs'));
     }
 
     public function store(Request $request)
@@ -110,7 +118,7 @@ class ClaimsController extends Controller
         $claimFor = $request->claim_for;
         $targetUserId = auth()->id();
 
-        if (($claimFor === 'user' || $claimFor === 'admin') && $request->filled('on_behalf_of')) {
+        if ($isAdmin && ($claimFor === 'user' || $claimFor === 'admin') && $request->filled('on_behalf_of')) {
             $targetUserId = (int) $request->on_behalf_of;
         }
 
@@ -154,11 +162,16 @@ class ClaimsController extends Controller
         }
 
         if ($request->filled('selected_underwriter_email')) {
-            try {
-                $claimCompany = $request->filled('selected_underwriter_id')
-                    ? Company::find($request->selected_underwriter_id)
-                    : null;
+            $claimCompany = $request->filled('selected_underwriter_id')
+                ? Company::find($request->selected_underwriter_id)
+                : null;
 
+            $fromAddress = $this->claimEmailFromAddress();
+            $ccAddress = $this->claimEmailCc($claimCompany);
+            $emailStatus = 'sent';
+            $emailError = null;
+
+            try {
                 $claimEmailData = [
                     'claim_number' => $claim->claim_number,
                     'customer_name' => $claim->customer_name,
@@ -172,12 +185,30 @@ class ClaimsController extends Controller
                     'company_name' => $claimCompany?->name ?? 'N/A',
                 ];
 
-                Mail::to($request->selected_underwriter_email)
-                    ->cc(config('mail.from.address'))
-                    ->send(new \App\Mail\ClaimLoggedMail($claimEmailData));
+                $mailable = (new \App\Mail\ClaimLoggedMail($claimEmailData))->from($fromAddress, $this->claimEmailFromName());
+                $toAddress = $request->selected_underwriter_email;
+
+                Mail::to($toAddress)->cc($ccAddress)->send($mailable);
+                \App\Services\AuditService::activity('claim_emailed', "Claim {$claim->claim_number} emailed to underwriter {$request->selected_underwriter_email}");
             } catch (\Exception $e) {
+                $emailStatus = 'failed';
+                $emailError = $e->getMessage();
                 \Log::error("Failed to send claim email to underwriter: " . $e->getMessage());
+                \App\Services\AuditService::activity('claim_email_failed', "Failed to email claim {$claim->claim_number} to {$request->selected_underwriter_email}: {$e->getMessage()}", 'error');
             }
+
+            \App\Models\ClaimEmailLog::create([
+                'claim_id' => $claim->id,
+                'type' => 'outbound_to_underwriter',
+                'recipient' => $request->selected_underwriter_email,
+                'cc' => $ccAddress,
+                'sender' => $fromAddress,
+                'subject' => 'New Claim Logged - ' . $claim->claim_number,
+                'status' => $emailStatus,
+                'error_message' => $emailError,
+                'triggered_by' => auth()->id(),
+                'sent_at' => $emailStatus === 'sent' ? now() : null,
+            ]);
         }
 
         return redirect()->route('claims.index')
@@ -219,18 +250,17 @@ class ClaimsController extends Controller
             return response()->json(['found' => false]);
         }
 
-        $user = $quotation->user;
-
         return response()->json([
             'found' => true,
             'registration_number' => $quotation->car_registration,
-            'customer_name' => $user ? (trim($user->first_name . ' ' . $user->last_name) ?: $user->name) : '',
-            'customer_email' => $user ? $user->email : '',
-            'customer_phone' => $user ? ($user->mobile ?? '') : '',
+            'customer_name' => $quotation->customer_name,
+            'customer_email' => $quotation->customer_email ?? '',
+            'customer_phone' => $quotation->customer_phone ?? '',
             'vehicle' => [
                 'make' => $quotation->car_make,
                 'model' => $quotation->car_model,
                 'year' => $quotation->car_year,
+                'color' => $quotation->color,
                 'valuation' => $quotation->car_valuation,
                 'cover_type' => $quotation->vehicle_type,
             ],
@@ -304,20 +334,6 @@ class ClaimsController extends Controller
             'admin_notes' => $request->admin_notes,
         ];
 
-        if ($newStatus === Claim::STATUS_UNDER_REVIEW) {
-            $updateData['reviewed_at'] = now();
-        }
-
-        if ($newStatus === Claim::STATUS_SETTLED) {
-            $updateData['settled_at'] = now();
-            $updateData['settlement_amount'] = $request->settlement_amount;
-            $updateData['settlement_notes'] = $request->settlement_notes;
-        }
-
-        if ($newStatus === Claim::STATUS_DECLINED) {
-            $updateData['declined_at'] = now();
-        }
-
         $claim->update($updateData);
 
         if ($claim->user) {
@@ -384,11 +400,38 @@ class ClaimsController extends Controller
         if ($registrationNumber) {
             $searched = true;
             $claims = Claim::with(['user', 'onBehalfOfUser'])
-                ->where('registration_number', $registrationNumber)
+                ->whereEqualsCI('registration_number', $registrationNumber)
                 ->latest()
                 ->get();
         }
 
         return view('claims.public-tracker', compact('claims', 'registrationNumber', 'searched'));
+    }
+
+    /**
+     * The noreply sender address for underwriter emails — shares the same
+     * setting configured under Admin > Stickers > Settings > Email Configuration.
+     */
+    protected function claimEmailFromAddress(): string
+    {
+        return \App\Models\EmailSetting::where('key', 'sticker_email_from_address')->value('value')
+            ?: config('mail.from.address');
+    }
+
+    protected function claimEmailFromName(): string
+    {
+        return \App\Models\EmailSetting::where('key', 'sticker_email_from_name')->value('value')
+            ?: config('mail.from.name');
+    }
+
+    /**
+     * CC address for underwriter emails: the company's own CC-claims address
+     * takes priority, then the global Sticker Settings CC, then the app default.
+     */
+    protected function claimEmailCc(?Company $company): ?string
+    {
+        return $company?->cc_claims_email
+            ?: \App\Models\EmailSetting::where('key', 'sticker_email_cc')->value('value')
+            ?: config('mail.from.address');
     }
 }

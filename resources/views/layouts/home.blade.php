@@ -12,13 +12,14 @@
         ->keyBy('company_id');
     $__totalQuotes = $__companyStats->sum('total');
     $companyColors = ['#003087', '#0066B3', '#00205B', '#D0021B', '#7c3aed', '#0f7a65'];
-    $__vehicleType = request()->query('vehicle_type', 'psv');
+    $__vehicleType = request()->query('vehicle_type', 'private');
     $__companyData = $__companies->map(function ($c, $i) use ($companyColors, $__companyStats, $__vehicleType) {
         $rate = $c->rates->where('vehicle_type', $__vehicleType)->firstWhere('item_name', 'Premium Rate');
         $iraLevy = $c->rates->where('vehicle_type', $__vehicleType)->firstWhere('item_name', 'IRA Levy');
         $pvtRate = $c->rates->where('vehicle_type', $__vehicleType)->firstWhere('item_name', 'PVT Rate');
         $pllRate = $c->rates->where('vehicle_type', $__vehicleType)->firstWhere('item_name', 'PLL Per Person');
         $maxAgeRate = $c->rates->where('vehicle_type', $__vehicleType)->firstWhere('item_name', 'Max Age New Business');
+        $rateAbove = $c->rates->where('vehicle_type', $__vehicleType)->firstWhere('item_name', 'Premium Rate Above 2.5M');
         $stats = $__companyStats->get($c->id);
         return [
             'slug' => $c->slug,
@@ -31,6 +32,8 @@
             'pvtRate' => $pvtRate ? (float) $pvtRate->percentage / 100 : 0,
             'pvtMinValue' => $pvtRate ? (float) $pvtRate->min_value : 0,
             'pllPerPerson' => $pllRate ? (float) $pllRate->value : 0,
+            'rateAbove2_5M' => $rateAbove ? (float) $rateAbove->percentage / 100 : 0,
+            'minPremiumAbove2_5M' => $rateAbove ? (float) $rateAbove->min_premium : 0,
             'maxAge' => $maxAgeRate ? (int) $maxAgeRate->value : 99,
             'color' => $companyColors[$i % count($companyColors)],
             'prefix' => $c->getInitials(),
@@ -46,6 +49,7 @@
         $pvtRate = $c->rates->where('vehicle_type', 'private')->firstWhere('item_name', 'PVT Rate');
         $pllRate = $c->rates->where('vehicle_type', 'private')->firstWhere('item_name', 'PLL Per Person');
         $maxAgeRate = $c->rates->where('vehicle_type', 'private')->firstWhere('item_name', 'Max Age New Business');
+        $rateAbove = $c->rates->where('vehicle_type', 'private')->firstWhere('item_name', 'Premium Rate Above 2.5M');
         $stats = $__companyStats->get($c->id);
         return [
             'slug' => $c->slug,
@@ -58,6 +62,8 @@
             'pvtRate' => $pvtRate ? (float) $pvtRate->percentage / 100 : 0,
             'pvtMinValue' => $pvtRate ? (float) $pvtRate->min_value : 0,
             'pllPerPerson' => $pllRate ? (float) $pllRate->value : 0,
+            'rateAbove2_5M' => $rateAbove ? (float) $rateAbove->percentage / 100 : 0,
+            'minPremiumAbove2_5M' => $rateAbove ? (float) $rateAbove->min_premium : 0,
             'maxAge' => $maxAgeRate ? (int) $maxAgeRate->value : 99,
             'color' => $companyColors[$i % count($companyColors)],
             'prefix' => $c->getInitials(),
@@ -66,7 +72,35 @@
             'total_premium' => $stats ? $stats->total_premium : 0,
         ];
     })->values();
-    $__psvCompanyData = $__companyData->filter(fn($cd) => in_array($cd['slug'], $__companies->whereIn('company_type', ['psv','both'])->pluck('slug')->toArray()))->values();
+    $__psvCompanies = $__companies->whereIn('company_type', ['psv','both']);
+    $__psvCompanyData = $__psvCompanies->values()->map(function ($c, $i) use ($companyColors, $__companyStats) {
+        $rate = $c->rates->where('vehicle_type', 'psv')->firstWhere('item_name', 'Premium Rate');
+        $pvtRate = $c->rates->where('vehicle_type', 'psv')->firstWhere('item_name', 'PVT Rate');
+        $pllRate = $c->rates->where('vehicle_type', 'psv')->firstWhere('item_name', 'PLL Per Person');
+        $maxAgeRate = $c->rates->where('vehicle_type', 'psv')->firstWhere('item_name', 'Max Age New Business');
+        $rateAbove = $c->rates->where('vehicle_type', 'psv')->firstWhere('item_name', 'Premium Rate Above 2.5M');
+        $stats = $__companyStats->get($c->id);
+        return [
+            'slug' => $c->slug,
+            'name' => $c->name,
+            'logo' => $c->logoUrl(),
+            'rate' => $rate ? (float) $rate->percentage / 100 : 0,
+            'taxRate' => 0,
+            'minPremium' => $rate ? (float) $rate->min_premium : 0,
+            'isPvtInclusive' => $rate ? (bool) $rate->is_pvt_inclusive : false,
+            'pvtRate' => $pvtRate ? (float) $pvtRate->percentage / 100 : 0,
+            'pvtMinValue' => $pvtRate ? (float) $pvtRate->min_value : 0,
+            'pllPerPerson' => $pllRate ? (float) $pllRate->value : 0,
+            'rateAbove2_5M' => $rateAbove ? (float) $rateAbove->percentage / 100 : 0,
+            'minPremiumAbove2_5M' => $rateAbove ? (float) $rateAbove->min_premium : 0,
+            'maxAge' => $maxAgeRate ? (int) $maxAgeRate->value : 99,
+            'color' => $companyColors[$i % count($companyColors)],
+            'prefix' => $c->getInitials(),
+            'logoFallback' => $c->logoUrl(),
+            'quote_count' => $stats ? $stats->total : 0,
+            'total_premium' => $stats ? $stats->total_premium : 0,
+        ];
+    })->values();
 @endphp
 
 <!DOCTYPE html>
@@ -274,6 +308,7 @@
       <input type="text"
              placeholder="Search by quotation number, registration number, vehicle..."
              id="searchInput"
+             aria-label="Search by quotation number, registration number, or vehicle"
              autocomplete="off"
              oninput="handleSearchInput()"
              onfocus="handleSearchInput()">
@@ -391,30 +426,30 @@
     <div class="form-panel active" id="panel-1">
       <div class="form-grid three">
         <div class="form-group">
-          <label>Salutation <span class="req">*</span></label>
+          <label for="f-salutation">Salutation <span class="req">*</span></label>
           <select id="f-salutation">
             <option value="">Select...</option>
             <option>Mr.</option><option>Mrs.</option><option>Miss</option><option>Dr.</option><option>Prof.</option>
           </select>
         </div>
         <div class="form-group">
-          <label>First Name <span class="req">*</span></label>
+          <label for="f-first">First Name <span class="req">*</span></label>
           <input type="text" id="f-first" placeholder="e.g. John">
         </div>
         <div class="form-group">
-          <label>Middle Name</label>
+          <label for="f-middle">Middle Name</label>
           <input type="text" id="f-middle" placeholder="Optional">
         </div>
         <div class="form-group">
-          <label>Last Name <span class="req">*</span></label>
+          <label for="f-last">Last Name <span class="req">*</span></label>
           <input type="text" id="f-last" placeholder="e.g. Doe">
         </div>
         <div class="form-group">
-          <label>Phone Number <span class="req">*</span></label>
+          <label for="f-phone">Phone Number <span class="req">*</span></label>
           <input type="tel" id="f-phone" placeholder="07 XX XXX XXX">
         </div>
         <div class="form-group">
-          <label>Email Address <span class="req">*</span></label>
+          <label for="f-email">Email Address <span class="req">*</span></label>
           <input type="email" id="f-email" placeholder="email@example.com">
         </div>
       </div>
@@ -427,18 +462,22 @@
     <div class="form-panel" id="panel-2">
       <div class="form-grid">
         <div class="form-group">
-          <label>Registration Number <span class="req">*</span></label>
+          <label for="f-reg">Registration Number <span class="req">*</span></label>
           <input type="text" id="f-reg" placeholder="e.g. KDH 724V" oninput="validateRegMain(this)">
           <div class="reg-error" id="f-reg-error" style="color:var(--red);font-size:11px;display:none;margin-top:2px">Invalid Kenyan registration format (e.g. KDH 291H)</div>
         </div>
         <div class="form-group" id="f-pax-group" style="display:none">
-          <label>Number of Passengers (Pax) <span class="req">*</span></label>
+          <label for="f-pax">Number of Passengers (Pax) <span class="req">*</span></label>
           <input type="number" id="f-pax" placeholder="e.g. 14" min="1" value="1">
           <div style="font-size:11px;color:var(--text-muted);margin-top:2px">Used to calculate Passenger Legal Liability (PLL)</div>
         </div>
         <div class="form-group">
-          <label>Chassis / Frame Number</label>
+          <label for="f-chassis">Chassis / Frame Number</label>
           <input type="text" id="f-chassis" placeholder="e.g. WVWZZZ1KZ9W123456">
+        </div>
+        <div class="form-group">
+          <label for="f-engine">Engine No</label>
+          <input type="text" id="f-engine" placeholder="e.g. CBA1234567">
         </div>
         <div class="form-group">
           <label>Make of Vehicle <span class="req">*</span></label>
@@ -459,7 +498,7 @@
           <input type="text" id="f-model-other" placeholder="Type your vehicle model..." style="display:none;margin-top:8px">
         </div>
         <div class="form-group">
-          <label>Body Type</label>
+          <label for="f-body">Body Type</label>
           <select id="f-body">
             <option value="">Select body type...</option>
             <option>Saloon</option><option>Station Wagon (S. Wagon)</option><option>SUV/4x4</option>
@@ -467,14 +506,14 @@
           </select>
         </div>
         <div class="form-group">
-          <label>Year of Manufacture <span class="req">*</span></label>
+          <label for="f-year">Year of Manufacture <span class="req">*</span></label>
           <select id="f-year">
             <option value="">Select year...</option>
           </select>
           <div class="value-error" id="f-year-error" style="display:none;color:var(--red);font-size:11px;margin-top:4px"></div>
         </div>
         <div class="form-group">
-          <label>Color</label>
+          <label for="f-color">Color</label>
           <select id="f-color" onchange="toggleOtherColor(this)">
             <option value="">Select color...</option>
             <option>White</option>
@@ -492,7 +531,7 @@
           <input type="text" id="f-color-other" placeholder="Type your vehicle color..." style="display:none;margin-top:8px">
         </div>
         <div class="form-group">
-          <label>Value of Vehicle (KES) <span class="req">*</span></label>
+          <label for="f-value">Value of Vehicle (KES) <span class="req">*</span></label>
           <input type="text" id="f-value" placeholder="e.g. 800,000" autocomplete="off">
           <div class="value-range-hint" id="f-value-hint">Enter the value of your vehicle</div>
           <div class="value-error" id="f-value-error" style="display:none"></div>
@@ -616,30 +655,30 @@
     <div class="form-panel active" id="panel-1-psv">
       <div class="form-grid three">
         <div class="form-group">
-          <label>Salutation <span class="req">*</span></label>
+          <label for="f-salutation-psv">Salutation <span class="req">*</span></label>
           <select id="f-salutation-psv">
             <option value="">Select...</option>
             <option>Mr.</option><option>Mrs.</option><option>Miss</option><option>Dr.</option><option>Prof.</option>
           </select>
         </div>
         <div class="form-group">
-          <label>First Name <span class="req">*</span></label>
+          <label for="f-first-psv">First Name <span class="req">*</span></label>
           <input type="text" id="f-first-psv" placeholder="e.g. John">
         </div>
         <div class="form-group">
-          <label>Middle Name</label>
+          <label for="f-middle-psv">Middle Name</label>
           <input type="text" id="f-middle-psv" placeholder="Optional">
         </div>
         <div class="form-group">
-          <label>Last Name <span class="req">*</span></label>
+          <label for="f-last-psv">Last Name <span class="req">*</span></label>
           <input type="text" id="f-last-psv" placeholder="e.g. Doe">
         </div>
         <div class="form-group">
-          <label>Phone Number <span class="req">*</span></label>
+          <label for="f-phone-psv">Phone Number <span class="req">*</span></label>
           <input type="tel" id="f-phone-psv" placeholder="07 XX XXX XXX">
         </div>
         <div class="form-group">
-          <label>Email Address <span class="req">*</span></label>
+          <label for="f-email-psv">Email Address <span class="req">*</span></label>
           <input type="email" id="f-email-psv" placeholder="email@example.com">
         </div>
       </div>
@@ -652,18 +691,22 @@
     <div class="form-panel" id="panel-2-psv">
       <div class="form-grid">
         <div class="form-group">
-          <label>Registration Number <span class="req">*</span></label>
+          <label for="f-reg-psv">Registration Number <span class="req">*</span></label>
           <input type="text" id="f-reg-psv" placeholder="e.g. KDH 724V" oninput="validateReg('psv', this)">
           <div class="reg-error" id="f-reg-error-psv" style="color:var(--red);font-size:11px;display:none;margin-top:2px">Invalid Kenyan registration format (e.g. KDH 291H)</div>
         </div>
         <div class="form-group" id="f-pax-group-psv">
-          <label>Number of Passengers (Pax) <span class="req">*</span></label>
+          <label for="f-pax-psv">Number of Passengers (Pax) <span class="req">*</span></label>
           <input type="number" id="f-pax-psv" placeholder="e.g. 14" min="1" value="1">
           <div style="font-size:11px;color:var(--text-muted);margin-top:2px">Used to calculate Passenger Legal Liability (PLL)</div>
         </div>
         <div class="form-group">
-          <label>Chassis / Frame Number</label>
+          <label for="f-chassis-psv">Chassis / Frame Number</label>
           <input type="text" id="f-chassis-psv" placeholder="e.g. WVWZZZ1KZ9W123456">
+        </div>
+        <div class="form-group">
+          <label for="f-engine-psv">Engine No</label>
+          <input type="text" id="f-engine-psv" placeholder="e.g. CBA1234567">
         </div>
         <div class="form-group">
           <label>Make of Vehicle <span class="req">*</span></label>
@@ -684,7 +727,7 @@
           <input type="text" id="f-model-other-psv" placeholder="Type your vehicle model..." style="display:none;margin-top:8px">
         </div>
         <div class="form-group">
-          <label>Body Type</label>
+          <label for="f-body-psv">Body Type</label>
           <select id="f-body-psv">
             <option value="">Select body type...</option>
             <option>Saloon</option><option>Station Wagon (S. Wagon)</option><option>SUV/4x4</option>
@@ -692,14 +735,14 @@
           </select>
         </div>
         <div class="form-group">
-          <label>Year of Manufacture <span class="req">*</span></label>
+          <label for="f-year-psv">Year of Manufacture <span class="req">*</span></label>
           <select id="f-year-psv">
             <option value="">Select year...</option>
           </select>
           <div class="value-error" id="f-year-error-psv" style="display:none;color:var(--red);font-size:11px;margin-top:4px"></div>
         </div>
         <div class="form-group">
-          <label>Color</label>
+          <label for="f-color-psv">Color</label>
           <select id="f-color-psv" onchange="toggleOtherColor('psv', this)">
             <option value="">Select color...</option>
             <option>White</option>
@@ -717,7 +760,7 @@
           <input type="text" id="f-color-other-psv" placeholder="Type your vehicle color..." style="display:none;margin-top:8px">
         </div>
         <div class="form-group">
-          <label>Value of Vehicle (KES) <span class="req">*</span></label>
+          <label for="f-value-psv">Value of Vehicle (KES) <span class="req">*</span></label>
           <input type="text" id="f-value-psv" placeholder="e.g. 800,000" autocomplete="off">
           <div class="value-range-hint" id="f-value-hint-psv">Enter the value of your vehicle</div>
           <div class="value-error" id="f-value-error-psv" style="display:none"></div>
@@ -808,7 +851,7 @@
         <span class="step-num">5</span>
       </div>
       <h4>Download Quote</h4>
-      <p>Download your preferred quotation instantly and proceed to cover.</p>
+      <p>Download your preferred quotation instantly and proceed to request for a sticker.</p>
     </div>
   </div>
 </section>
@@ -897,30 +940,30 @@
     <div class="form-panel active" id="panel-1-private">
       <div class="form-grid three">
         <div class="form-group">
-          <label>Salutation <span class="req">*</span></label>
+          <label for="f-salutation-private">Salutation <span class="req">*</span></label>
           <select id="f-salutation-private">
             <option value="">Select...</option>
             <option>Mr.</option><option>Mrs.</option><option>Miss</option><option>Dr.</option><option>Prof.</option>
           </select>
         </div>
         <div class="form-group">
-          <label>First Name <span class="req">*</span></label>
+          <label for="f-first-private">First Name <span class="req">*</span></label>
           <input type="text" id="f-first-private" placeholder="e.g. John">
         </div>
         <div class="form-group">
-          <label>Middle Name</label>
+          <label for="f-middle-private">Middle Name</label>
           <input type="text" id="f-middle-private" placeholder="Optional">
         </div>
         <div class="form-group">
-          <label>Last Name <span class="req">*</span></label>
+          <label for="f-last-private">Last Name <span class="req">*</span></label>
           <input type="text" id="f-last-private" placeholder="e.g. Doe">
         </div>
         <div class="form-group">
-          <label>Phone Number <span class="req">*</span></label>
+          <label for="f-phone-private">Phone Number <span class="req">*</span></label>
           <input type="tel" id="f-phone-private" placeholder="07 XX XXX XXX">
         </div>
         <div class="form-group">
-          <label>Email Address <span class="req">*</span></label>
+          <label for="f-email-private">Email Address <span class="req">*</span></label>
           <input type="email" id="f-email-private" placeholder="email@example.com">
         </div>
       </div>
@@ -933,13 +976,17 @@
     <div class="form-panel" id="panel-2-private">
       <div class="form-grid">
         <div class="form-group">
-          <label>Registration Number <span class="req">*</span></label>
+          <label for="f-reg-private">Registration Number <span class="req">*</span></label>
           <input type="text" id="f-reg-private" placeholder="e.g. KDH 724V" oninput="validateReg('private', this)">
           <div class="reg-error" id="f-reg-error-private" style="color:var(--red);font-size:11px;display:none;margin-top:2px">Invalid Kenyan registration format (e.g. KDH 291H)</div>
         </div>
         <div class="form-group">
-          <label>Chassis / Frame Number</label>
+          <label for="f-chassis-private">Chassis / Frame Number</label>
           <input type="text" id="f-chassis-private" placeholder="e.g. WVWZZZ1KZ9W123456">
+        </div>
+        <div class="form-group">
+          <label for="f-engine-private">Engine No</label>
+          <input type="text" id="f-engine-private" placeholder="e.g. CBA1234567">
         </div>
         <div class="form-group">
           <label>Make of Vehicle <span class="req">*</span></label>
@@ -960,7 +1007,7 @@
           <input type="text" id="f-model-other-private" placeholder="Type your vehicle model..." style="display:none;margin-top:8px">
         </div>
         <div class="form-group">
-          <label>Body Type</label>
+          <label for="f-body-private">Body Type</label>
           <select id="f-body-private">
             <option value="">Select body type...</option>
             <option>Saloon</option><option>Station Wagon (S. Wagon)</option><option>SUV/4x4</option>
@@ -968,14 +1015,14 @@
           </select>
         </div>
         <div class="form-group">
-          <label>Year of Manufacture <span class="req">*</span></label>
+          <label for="f-year-private">Year of Manufacture <span class="req">*</span></label>
           <select id="f-year-private">
             <option value="">Select year...</option>
           </select>
           <div class="value-error" id="f-year-error-private" style="display:none;color:var(--red);font-size:11px;margin-top:4px"></div>
         </div>
         <div class="form-group">
-          <label>Color</label>
+          <label for="f-color-private">Color</label>
           <select id="f-color-private" onchange="toggleOtherColor('private', this)">
             <option value="">Select color...</option>
             <option>White</option>
@@ -993,7 +1040,7 @@
           <input type="text" id="f-color-other-private" placeholder="Type your vehicle color..." style="display:none;margin-top:8px">
         </div>
         <div class="form-group">
-          <label>Value of Vehicle (KES) <span class="req">*</span></label>
+          <label for="f-value-private">Value of Vehicle (KES) <span class="req">*</span></label>
           <input type="text" id="f-value-private" placeholder="e.g. 800,000" autocomplete="off">
           <div class="value-range-hint" id="f-value-hint-private">Enter the value of your vehicle</div>
           <div class="value-error" id="f-value-error-private" style="display:none"></div>
@@ -1073,7 +1120,7 @@
         <span class="step-num">5</span>
       </div>
       <h4>Download Quote</h4>
-      <p>Download your preferred quotation instantly and proceed to cover.</p>
+      <p>Download your preferred quotation instantly and proceed to request for a sticker.</p>
     </div>
   </div>
 </section>
@@ -1194,30 +1241,30 @@
     <div class="form-panel active" id="panel-1-vt">
       <div class="form-grid three">
         <div class="form-group">
-          <label>Salutation <span class="req">*</span></label>
+          <label for="f-salutation-vt">Salutation <span class="req">*</span></label>
           <select id="f-salutation-vt">
             <option value="">Select...</option>
             <option>Mr.</option><option>Mrs.</option><option>Miss</option><option>Dr.</option><option>Prof.</option>
           </select>
         </div>
         <div class="form-group">
-          <label>First Name <span class="req">*</span></label>
+          <label for="f-first-vt">First Name <span class="req">*</span></label>
           <input type="text" id="f-first-vt" placeholder="e.g. John">
         </div>
         <div class="form-group">
-          <label>Middle Name</label>
+          <label for="f-middle-vt">Middle Name</label>
           <input type="text" id="f-middle-vt" placeholder="Optional">
         </div>
         <div class="form-group">
-          <label>Last Name <span class="req">*</span></label>
+          <label for="f-last-vt">Last Name <span class="req">*</span></label>
           <input type="text" id="f-last-vt" placeholder="e.g. Doe">
         </div>
         <div class="form-group">
-          <label>Phone Number <span class="req">*</span></label>
+          <label for="f-phone-vt">Phone Number <span class="req">*</span></label>
           <input type="tel" id="f-phone-vt" placeholder="07 XX XXX XXX">
         </div>
         <div class="form-group">
-          <label>Email Address <span class="req">*</span></label>
+          <label for="f-email-vt">Email Address <span class="req">*</span></label>
           <input type="email" id="f-email-vt" placeholder="email@example.com">
         </div>
       </div>
@@ -1230,18 +1277,22 @@
     <div class="form-panel" id="panel-2-vt">
       <div class="form-grid">
         <div class="form-group">
-          <label>Registration Number <span class="req">*</span></label>
+          <label for="f-reg-vt">Registration Number <span class="req">*</span></label>
           <input type="text" id="f-reg-vt" placeholder="e.g. KDH 724V" oninput="validateRegVT(this)">
           <div class="reg-error" id="f-reg-error-vt" style="color:var(--red);font-size:11px;display:none;margin-top:2px">Invalid Kenyan registration format (e.g. KDH 291H)</div>
         </div>
         <div class="form-group" id="f-pax-group-vt" style="display:none">
-          <label>Number of Passengers (Pax) <span class="req">*</span></label>
+          <label for="f-pax-vt">Number of Passengers (Pax) <span class="req">*</span></label>
           <input type="number" id="f-pax-vt" placeholder="e.g. 14" min="1" value="1">
           <div style="font-size:11px;color:var(--text-muted);margin-top:2px">Used to calculate Passenger Legal Liability (PLL)</div>
         </div>
         <div class="form-group">
-          <label>Chassis / Frame Number</label>
+          <label for="f-chassis-vt">Chassis / Frame Number</label>
           <input type="text" id="f-chassis-vt" placeholder="e.g. WVWZZZ1KZ9W123456">
+        </div>
+        <div class="form-group">
+          <label for="f-engine-vt">Engine No</label>
+          <input type="text" id="f-engine-vt" placeholder="e.g. CBA1234567">
         </div>
         <div class="form-group">
           <label>Make of Vehicle <span class="req">*</span></label>
@@ -1262,7 +1313,7 @@
           <input type="text" id="f-model-other-vt" placeholder="Type your vehicle model..." style="display:none;margin-top:8px">
         </div>
         <div class="form-group">
-          <label>Body Type</label>
+          <label for="f-body-vt">Body Type</label>
           <select id="f-body-vt">
             <option value="">Select body type...</option>
             <option>Saloon</option><option>Station Wagon (S. Wagon)</option><option>SUV/4x4</option>
@@ -1270,14 +1321,14 @@
           </select>
         </div>
         <div class="form-group">
-          <label>Year of Manufacture <span class="req">*</span></label>
+          <label for="f-year-vt">Year of Manufacture <span class="req">*</span></label>
           <select id="f-year-vt">
             <option value="">Select year...</option>
           </select>
           <div class="value-error" id="f-year-error-vt" style="display:none;color:var(--red);font-size:11px;margin-top:4px"></div>
         </div>
         <div class="form-group">
-          <label>Color</label>
+          <label for="f-color-vt">Color</label>
           <select id="f-color-vt">
             <option value="">Select color...</option>
             <option>White</option>
@@ -1295,7 +1346,7 @@
           <input type="text" id="f-color-other-vt" placeholder="Type your vehicle color..." style="display:none;margin-top:8px">
         </div>
         <div class="form-group">
-          <label>Value of Vehicle (KES) <span class="req">*</span></label>
+          <label for="f-value-vt">Value of Vehicle (KES) <span class="req">*</span></label>
           <input type="text" id="f-value-vt" placeholder="e.g. 800,000" autocomplete="off">
           <div class="value-range-hint" id="f-value-hint-vt">Enter the value of your vehicle</div>
           <div class="value-error" id="f-value-error-vt" style="display:none"></div>
@@ -1409,30 +1460,30 @@
     <div class="form-panel active" id="panel-1">
       <div class="form-grid three">
         <div class="form-group">
-          <label>Salutation <span class="req">*</span></label>
+          <label for="f-salutation">Salutation <span class="req">*</span></label>
           <select id="f-salutation">
             <option value="">Select...</option>
             <option>Mr.</option><option>Mrs.</option><option>Miss</option><option>Dr.</option><option>Prof.</option>
           </select>
         </div>
         <div class="form-group">
-          <label>First Name <span class="req">*</span></label>
+          <label for="f-first">First Name <span class="req">*</span></label>
           <input type="text" id="f-first" placeholder="e.g. John">
         </div>
         <div class="form-group">
-          <label>Middle Name</label>
+          <label for="f-middle">Middle Name</label>
           <input type="text" id="f-middle" placeholder="Optional">
         </div>
         <div class="form-group">
-          <label>Last Name <span class="req">*</span></label>
+          <label for="f-last">Last Name <span class="req">*</span></label>
           <input type="text" id="f-last" placeholder="e.g. Doe">
         </div>
         <div class="form-group">
-          <label>Phone Number <span class="req">*</span></label>
+          <label for="f-phone">Phone Number <span class="req">*</span></label>
           <input type="tel" id="f-phone" placeholder="07 XX XXX XXX">
         </div>
         <div class="form-group">
-          <label>Email Address <span class="req">*</span></label>
+          <label for="f-email">Email Address <span class="req">*</span></label>
           <input type="email" id="f-email" placeholder="email@example.com">
         </div>
       </div>
@@ -1445,11 +1496,11 @@
     <div class="form-panel" id="panel-2">
       <div class="form-grid">
         <div class="form-group">
-          <label>Registration Number <span class="req">*</span></label>
+          <label for="f-reg">Registration Number <span class="req">*</span></label>
           <input type="text" id="f-reg" placeholder="e.g. KDH 724V">
         </div>
         <div class="form-group">
-          <label>Chassis / Frame Number</label>
+          <label for="f-chassis">Chassis / Frame Number</label>
           <input type="text" id="f-chassis" placeholder="e.g. WVWZZZ1KZ9W123456">
         </div>
         <div class="form-group">
@@ -1471,7 +1522,7 @@
           <input type="text" id="f-model-other" placeholder="Type your vehicle model..." style="display:none;margin-top:8px">
         </div>
         <div class="form-group">
-          <label>Body Type</label>
+          <label for="f-body">Body Type</label>
           <select id="f-body">
             <option value="">Select body type...</option>
             <option>Saloon</option><option>Station Wagon (S. Wagon)</option><option>SUV/4x4</option>
@@ -1479,13 +1530,13 @@
           </select>
         </div>
         <div class="form-group">
-          <label>Year of Manufacture <span class="req">*</span></label>
+          <label for="f-year">Year of Manufacture <span class="req">*</span></label>
           <select id="f-year">
             <option value="">Select year...</option>
           </select>
         </div>
         <div class="form-group">
-          <label>Color</label>
+          <label for="f-color">Color</label>
           <select id="f-color" onchange="toggleOtherColor(this)">
             <option value="">Select color...</option>
             <option>White</option>
@@ -1503,7 +1554,7 @@
           <input type="text" id="f-color-other" placeholder="Type your vehicle color..." style="display:none;margin-top:8px">
         </div>
         <div class="form-group">
-          <label>Value of Vehicle (KES) <span class="req">*</span></label>
+          <label for="f-value">Value of Vehicle (KES) <span class="req">*</span></label>
           <input type="text" id="f-value" placeholder="e.g. 800,000" autocomplete="off">
           <div class="value-range-hint" id="f-value-hint">Enter between KES 800,000 and KES 1,300,000</div>
           <div class="value-error" id="f-value-error" style="display:none"></div>
@@ -1529,7 +1580,7 @@
           <div style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:14px">Click a card to open the full quotation</div>
           <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px">
 
-            @foreach ($__companyData as $cd)
+            @foreach ($__privateCompanyData as $cd)
             <div class="preview-card" onclick="guestGuard(function(){ openQuotePage('{{ $cd['slug'] }}'); })" style="background:white;border:1.5px solid var(--border);border-radius:var(--radius);padding:16px 14px;text-align:center;cursor:pointer;transition:box-shadow .2s,transform .15s">
               <div style="height:36px;display:flex;align-items:center;justify-content:center;margin-bottom:8px">
                 @if ($cd['logo'])
@@ -1551,7 +1602,7 @@
                 <span style="display:none;font-size:18px">📊</span>
               </div>
               <div style="font-size:11px;color:#D0021B;font-weight:700;margin-bottom:6px">COMPARE ALL</div>
-              <div style="font-size:1.1rem;font-weight:700;color:#D0021B">{{ $__companyData->count() }} Quotes</div>
+              <div style="font-size:1.1rem;font-weight:700;color:#D0021B">{{ $__privateCompanyData->count() }} Quotes</div>
               <div style="font-size:11px;color:var(--text-muted);margin-bottom:10px">All insurers</div>
               <div style="font-size:11px;font-weight:700;color:white;background:#D0021B;border-radius:5px;padding:5px 0">Compare ↗</div>
             </div>
@@ -1613,7 +1664,7 @@
     <div class="section-title">Why Choose Us?</div>
     <div class="section-sub">We make getting motor insurance simple, transparent, and tailored to your needs.</div>
   </div>
-  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:24px;max-width:1100px;margin:0 auto;padding:0 20px">
+  <div class="why-choose-grid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:24px;max-width:1100px;margin:0 auto;padding:0 20px">
     <div style="background:#F9F9FF;border-radius:16px;padding:32px 24px;text-align:center;transition:transform .2s,box-shadow .2s" onmouseover="this.style.transform='translateY(-4px)';this.style.boxShadow='0 8px 25px rgba(0,0,0,0.08)'" onmouseout="this.style.transform='';this.style.boxShadow=''">
       <div style="width:52px;height:52px;background:#003087;border-radius:12px;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;font-size:24px">⚡</div>
       <h3 style="font-size:16px;font-weight:700;margin-bottom:8px;color:#1a1a2e">Instant Quotes</h3>
@@ -1724,7 +1775,7 @@
       <form method="POST" action="{{ route('quotations.regenerate') }}" class="ql-form">
         @csrf
         <div class="regen-input-row">
-          <input type="text" name="registration_number" placeholder="e.g. KDH 724V" required autocomplete="off">
+          <input type="text" name="registration_number" placeholder="e.g. KDH 724V" aria-label="Vehicle registration number" required autocomplete="off">
           <button type="submit" class="ql-cta" id="regenSubmitBtn">Regenerate</button>
         </div>
       </form>
@@ -1851,7 +1902,7 @@
         <div class="modal-row"><span>Insurer</span><span id="m-insurer">—</span></div>
         <div class="modal-row"><span>Rate</span><span id="m-rate">—</span></div>
         <div class="modal-row"><span>Basic Premium</span><span id="m-premium">—</span></div>
-        <div class="modal-row"><span>PVT Premium</span><span id="m-pvt">—</span></div>
+        <div class="modal-row"><span>PVT(Political Violence &amp; Terrorism Extension)</span><span id="m-pvt">—</span></div>
         <div class="modal-row"><span>PLL Premium</span><span id="m-pll">—</span></div>
         <div class="modal-row"><span>Levis (0.45%)</span><span id="m-levis">—</span></div>
         <div class="modal-row"><span>Stamp Duty</span><span id="m-stamp">—</span></div>
@@ -1881,11 +1932,11 @@
 window.MIC_COMPANIES_ALL = @json($__companyData);
 window.MIC_COMPANIES_PSV = @json($__psvCompanyData);
 window.MIC_COMPANIES_PRIVATE = @json($__privateCompanyData);
-window.MIC_COMPANIES = window.MIC_COMPANIES_ALL;
+window.MIC_COMPANIES = window.MIC_COMPANIES_PRIVATE;
 window.MIC_GUEST = @json(auth()->guest());
 window.MIC_MODE = 'all';
 window.MIC_SELECTED_COMPANY = null;
-window.MIC_VEHICLE_TYPE = 'psv';
+window.MIC_VEHICLE_TYPE = 'private';
 window.MIC_MIN_SUM_PSV = @json($__companies->pluck('min_sum_insured_psv', 'slug')->filter());
 window.MIC_MIN_SUM_PRIVATE = @json($__companies->pluck('min_sum_insured_private', 'slug')->filter());
 window.hardcodedLogos = @json($__hardcodedLogos);
@@ -2052,7 +2103,7 @@ function guestGuard(callback) {
       if (match && match[1] !== 'ALL') {
         sessionStorage.setItem('auth_redirect', '/dashboard?pending_quote=1');
         var alpineEl = document.querySelector('#authModal');
-        if (alpineEl && alpineEl.__x) { alpineEl.__x.$data.redirectTo = '/dashboard?pending_quote=1'; }
+        if (alpineEl && window.Alpine) { try { window.Alpine.$data(alpineEl).redirectTo = '/dashboard?pending_quote=1'; } catch(e) {} }
         openAuthModal();
         return;
       }
@@ -2079,8 +2130,8 @@ function fallbackLogo(el, slug) {
 </script>
 <script src="{{ asset('js/home.js') }}"></script>
 <script>
-// Init value input listeners for suffixed forms
-['psv', 'private', 'vt'].forEach(function(sfx) {
+// Init value input listeners for suffixed forms, plus the bare main form ('')
+['', 'psv', 'private', 'vt'].forEach(function(sfx) {
   if (typeof initValueInput === 'function') initValueInput(sfx);
 });
 

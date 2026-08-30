@@ -48,7 +48,6 @@ class SettingsSeeder extends Seeder
         Setting::setValue('max_quotation_items', '10', 'quotations');
 
         // API
-        Setting::setValue('sticker_api_key', \Illuminate\Support\Str::random(32), 'api');
         Setting::setValue('api_rate_limit', '60', 'api');
         Setting::setValue('enable_public_api', 'true', 'api');
 

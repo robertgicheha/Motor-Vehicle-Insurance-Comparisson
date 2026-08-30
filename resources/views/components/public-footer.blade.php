@@ -5,7 +5,7 @@
 @endphp
 
 <footer class="bg-[#004f8c] text-white mt-auto">
-  <div class="grid grid-cols-[1.5fr_1fr_1fr_1fr] gap-10 px-10 py-[50px] pb-9 max-w-[1200px] mx-auto">
+  <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-[1.5fr_1fr_1fr_1fr] gap-8 md:gap-10 px-6 sm:px-10 py-10 md:py-[50px] pb-9 max-w-[1200px] mx-auto">
     <div>
       <img src="{{ $__footerLogoUrl }}" alt="MIC Global Risks" class="h-10 object-contain mb-4 brightness-0 invert">
       <p class="text-[12.5px] text-white/60 leading-relaxed">Your trusted insurance intermediary &mdash; connecting you to Kenya&rsquo;s leading insurers with transparency, speed and expertise.</p>
@@ -37,12 +37,12 @@
       <a href="#" class="block text-[13px] text-white/75 no-underline mb-2 hover:text-white">www.micglobalrisks.com</a>
     </div>
   </div>
-  <div class="border-t border-white/10 px-10 py-[18px] max-w-[1200px] mx-auto flex justify-between items-center text-[12px] text-white/50">
+  <div class="border-t border-white/10 px-6 sm:px-10 py-[18px] max-w-[1200px] mx-auto flex flex-col sm:flex-row gap-2 sm:gap-0 justify-between items-center text-[12px] text-white/50 text-center sm:text-left">
     <span>&copy; 2026 MIC Global Risks Insurance (Kenya) Limited</span>
     <div>
-      <a href="#" class="text-white/60 no-underline ml-5 hover:text-white">Privacy Policy</a>
-      <a href="#" class="text-white/60 no-underline ml-5 hover:text-white">Terms &amp; Conditions</a>
-      <a href="#" class="text-white/60 no-underline ml-5 hover:text-white">Contact Us</a>
+      <a href="#" class="text-white/60 no-underline ml-0 sm:ml-5 mr-2.5 sm:mr-0 hover:text-white">Privacy Policy</a>
+      <a href="#" class="text-white/60 no-underline ml-0 sm:ml-5 mr-2.5 sm:mr-0 hover:text-white">Terms &amp; Conditions</a>
+      <a href="#" class="text-white/60 no-underline ml-0 sm:ml-5 hover:text-white">Contact Us</a>
     </div>
   </div>
 </footer>

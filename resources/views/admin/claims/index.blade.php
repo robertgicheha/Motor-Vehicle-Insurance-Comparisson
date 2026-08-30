@@ -7,6 +7,13 @@
                 <h1 class="mt-0.5 text-xl font-bold text-white">All Claims</h1>
                 <p class="mt-0.5 text-xs text-slate-400">Manage and review all insurance claims</p>
             </div>
+            <div class="flex items-center gap-2 shrink-0">
+                <a href="{{ route('admin.claims.email-logs') }}"
+                   class="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-medium border border-white/20 text-white/80 rounded-lg hover:bg-white/10 transition">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+                    Email Logs
+                </a>
+            </div>
         </div>
     </div>
 
@@ -19,26 +26,7 @@
             <p class="text-[10px] font-semibold uppercase tracking-wider text-gray-400">Reported</p>
             <p class="text-lg font-bold text-gray-600 dark:text-gray-400 mt-1">{{ $stats['reported'] }}</p>
         </div>
-        <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-4">
-            <p class="text-[10px] font-semibold uppercase tracking-wider text-gray-400">Documents</p>
-            <p class="text-lg font-bold text-amber-600 dark:text-amber-400 mt-1">{{ $stats['documents_pending'] }}</p>
-        </div>
-        <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-4">
-            <p class="text-[10px] font-semibold uppercase tracking-wider text-gray-400">Review</p>
-            <p class="text-lg font-bold text-blue-600 dark:text-blue-400 mt-1">{{ $stats['under_review'] }}</p>
-        </div>
-        <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-4">
-            <p class="text-[10px] font-semibold uppercase tracking-wider text-gray-400">Settlement</p>
-            <p class="text-lg font-bold text-purple-600 dark:text-purple-400 mt-1">{{ $stats['settlement'] }}</p>
-        </div>
-        <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-4">
-            <p class="text-[10px] font-semibold uppercase tracking-wider text-gray-400">Investigation</p>
-            <p class="text-lg font-bold text-orange-600 dark:text-orange-400 mt-1">{{ $stats['under_investigation'] }}</p>
-        </div>
-        <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-4">
-            <p class="text-[10px] font-semibold uppercase tracking-wider text-gray-400">Settled</p>
-            <p class="text-lg font-bold text-emerald-600 dark:text-emerald-400 mt-1">{{ $stats['settled'] }}</p>
-        </div>
+        
     </div>
 
     <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
@@ -89,12 +77,6 @@
                                 @php
                                     $statusColor = match($claim->status) {
                                         \App\Models\Claim::STATUS_REPORTED => 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-400',
-                                        \App\Models\Claim::STATUS_DOCUMENTS_PENDING => 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
-                                        \App\Models\Claim::STATUS_UNDER_REVIEW => 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
-                                        \App\Models\Claim::STATUS_SETTLEMENT => 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400',
-                                        \App\Models\Claim::STATUS_UNDER_INVESTIGATION => 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400',
-                                        \App\Models\Claim::STATUS_SETTLED => 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400',
-                                        \App\Models\Claim::STATUS_DECLINED => 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
                                         default => 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-400',
                                     };
                                 @endphp

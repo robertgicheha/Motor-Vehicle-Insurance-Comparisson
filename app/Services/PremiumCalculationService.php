@@ -26,7 +26,8 @@ class PremiumCalculationService
         $premiumRate = $rates->get('Premium Rate::Premium Rate');
         $pvtRate = $rates->get('Premium Rate::PVT Rate');
         $pllRate = $rates->get('Premium Rate::PLL Per Person');
-        $levisRate = $rates->get('Premium Rate::Levis Rate');
+        $trainingLevyRate = $rates->get('Premium Rate::Training Levy Rate');
+        $policyHolderFundRate = $rates->get('Premium Rate::Policy Holder Fund Rate');
         $stampDuty = $rates->get('Premium Rate::Stamp Duty');
         $premiumRateAbove = $rates->get('Premium Rate::Premium Rate Above 2.5M');
 
@@ -69,10 +70,17 @@ class PremiumCalculationService
             $pll = (float) $pllRate->value * $numPassengers;
         }
 
-        $levis = 0;
-        if ($levisRate && $levisRate->percentage) {
-            $levis = ($basicPremium + $pvt + $pll) * ($levisRate->percentage / 100);
+        // The combined levy (previously a single "Levis Rate") is split into its
+        // two regulatory components so they can be shown/edited separately.
+        $trainingLevy = 0;
+        if ($trainingLevyRate && $trainingLevyRate->percentage) {
+            $trainingLevy = ($basicPremium + $pvt + $pll) * ($trainingLevyRate->percentage / 100);
         }
+        $policyHolderFund = 0;
+        if ($policyHolderFundRate && $policyHolderFundRate->percentage) {
+            $policyHolderFund = ($basicPremium + $pvt + $pll) * ($policyHolderFundRate->percentage / 100);
+        }
+        $levis = $trainingLevy + $policyHolderFund;
 
         $stampDutyAmount = 0;
         if ($stampDuty && $stampDuty->value) {
@@ -128,7 +136,11 @@ class PremiumCalculationService
             'pvt_premium' => round($pvt, 2),
             'pll_per_person' => $pllRate ? (float) $pllRate->value : 0,
             'pll_total' => round($pll, 2),
-            'levis_rate' => $levisRate ? (float) $levisRate->percentage : 0,
+            'training_levy_rate' => $trainingLevyRate ? (float) $trainingLevyRate->percentage : 0,
+            'training_levy' => round($trainingLevy, 2),
+            'policy_holder_fund_rate' => $policyHolderFundRate ? (float) $policyHolderFundRate->percentage : 0,
+            'policy_holder_fund' => round($policyHolderFund, 2),
+            'levis_rate' => ($trainingLevyRate ? (float) $trainingLevyRate->percentage : 0) + ($policyHolderFundRate ? (float) $policyHolderFundRate->percentage : 0),
             'levis' => round($levis, 2),
             'stamp_duty' => $stampDutyAmount,
             'total_premium' => round($totalPremium, 2),

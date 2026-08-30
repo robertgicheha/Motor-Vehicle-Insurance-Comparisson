@@ -2,7 +2,7 @@
 
 @section('content')
     <div class="text-[11px] font-bold uppercase tracking-widest text-gray-500 mb-3.5 flex items-center gap-2.5 after:content-[''] after:flex-1 after:h-px after:bg-gray-200">
-        Generate Insurance Certificate
+        Generate Insurance Sticker
     </div>
 
     <div class="bg-white border border-gray-200 rounded-2xl p-8 shadow-sm mb-8">
@@ -44,7 +44,7 @@
                     <label class="block text-[12px] font-bold text-gray-700 mb-1.5">Customer Email</label>
                     <input type="email" name="customer_email" value="{{ old('customer_email') }}" placeholder="e.g. john@example.com"
                            class="w-full px-4 py-2.5 rounded-lg border border-gray-300 text-sm font-medium focus:border-[#0066B3] focus:ring-2 focus:ring-[#0066B3]/20 outline-none transition">
-                    <p class="text-[11px] text-gray-400 mt-1">Certificate PDF will be emailed if provided</p>
+                    <p class="text-[11px] text-gray-400 mt-1">Sticker PDF will be emailed if provided</p>
                     @error('customer_email') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
                 </div>
             </div>
@@ -83,6 +83,24 @@
                 </div>
             </div>
 
+            <div class="grid grid-cols-2 gap-6">
+                <div>
+                    <label class="block text-[12px] font-bold text-gray-700 mb-1.5">Chassis Number</label>
+                    <input type="text" name="chassis_number" value="{{ old('chassis_number') }}" placeholder="e.g. JTDBR32E720123456"
+                           class="w-full px-4 py-2.5 rounded-lg border border-gray-300 text-sm font-medium focus:border-[#0066B3] focus:ring-2 focus:ring-[#0066B3]/20 outline-none transition">
+                </div>
+                <div>
+                    <label class="block text-[12px] font-bold text-gray-700 mb-1.5">Engine No</label>
+                    <input type="text" name="engine_number" value="{{ old('engine_number') }}" placeholder="e.g. CBA1234567"
+                           class="w-full px-4 py-2.5 rounded-lg border border-gray-300 text-sm font-medium focus:border-[#0066B3] focus:ring-2 focus:ring-[#0066B3]/20 outline-none transition">
+                </div>
+                <div>
+                    <label class="block text-[12px] font-bold text-gray-700 mb-1.5">Color</label>
+                    <input type="text" name="color" value="{{ old('color') }}" placeholder="e.g. White"
+                           class="w-full px-4 py-2.5 rounded-lg border border-gray-300 text-sm font-medium focus:border-[#0066B3] focus:ring-2 focus:ring-[#0066B3]/20 outline-none transition">
+                </div>
+            </div>
+
             <div class="grid grid-cols-3 gap-6">
                 <div>
                     <label class="block text-[12px] font-bold text-gray-700 mb-1.5">Vehicle Valuation (KES) <span class="text-red-500">*</span></label>
@@ -107,7 +125,7 @@
                 <button type="submit"
                         class="inline-flex items-center gap-2 px-8 py-3 rounded-xl text-[13px] font-bold cursor-pointer border-none transition-all hover:-translate-y-0.5 font-montserrat bg-[#0066B3] text-white hover:bg-[#004f8c] shadow-sm">
                     <svg class="w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                    Generate Certificate
+                    Generate Sticker
                 </button>
                 <a href="{{ url('/') }}" class="text-[13px] font-semibold text-gray-500 hover:text-gray-700">Cancel</a>
             </div>

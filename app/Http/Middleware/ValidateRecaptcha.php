@@ -2,30 +2,40 @@
 
 namespace App\Http\Middleware;
 
+use App\Services\AuditService;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 
 class ValidateRecaptcha
 {
     public function handle(Request $request, Closure $next)
     {
+        // Not configured yet (no keys in .env) — don't lock real users out;
+        // the endpoint still has rate limiting. Logged so it's visible operationally.
+        if (!config('services.recaptcha.secret_key')) {
+            Log::warning("reCAPTCHA secret key not configured — skipping verification for {$request->path()}");
+            return $next($request);
+        }
+
         $token = $request->input('g-recaptcha-response');
         if (!$token) {
-            if ($request->is('login') || $request->is('register')) {
-                return $next($request);
-            }
-            return back()->withErrors(['captcha' => 'reCAPTCHA verification required.']);
+            return back()->withErrors(['captcha' => 'reCAPTCHA verification required. Please try again.']);
         }
+
         $response = Http::asForm()->post('https://www.google.com/recaptcha/api/siteverify', [
             'secret' => config('services.recaptcha.secret_key'),
             'response' => $token,
             'remoteip' => $request->ip(),
         ]);
         $body = $response->json();
+
         if (!($body['success'] ?? false) || ($body['score'] ?? 0) < 0.5) {
-            return back()->withErrors(['captcha' => 'reCAPTCHA verification failed.']);
+            AuditService::activity('recaptcha_failed', "reCAPTCHA verification failed for {$request->path()} (score: " . ($body['score'] ?? 'n/a') . ')', 'warning');
+            return back()->withErrors(['captcha' => 'We could not verify you are human. Please try again.']);
         }
+
         $request->merge(['recaptcha_score' => $body['score'] ?? null]);
         return $next($request);
     }

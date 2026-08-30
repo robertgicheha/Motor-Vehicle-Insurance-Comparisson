@@ -10,6 +10,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
+    <meta name="robots" content="noindex, nofollow">
     <title>{{ config('app.name', 'Motor Vehicle Insurance Dashboard') }}</title>
     <link rel="icon" type="image/x-icon" href="{{ asset('Favicon.png') }}">
     <link rel="icon" type="image/png" sizes="32x32" href="{{ asset('Favicon.png') }}">
@@ -39,10 +40,14 @@
              x-transition:leave="transition-opacity duration-300" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0"
              @click="mobileSidebarOpen = false" class="fixed inset-0 bg-black/50 z-30 lg:hidden" x-cloak></div>
 
-        @include('layouts.sidebar')
+        @auth
+            @include('layouts.sidebar')
+        @endauth
 
         <div class="flex-1 flex flex-col min-w-0 overflow-x-hidden transition-all duration-300" :class="sidebarOpen ? 'lg:ml-60' : 'lg:ml-[68px]'" style="">
-            @include('layouts.navigation')
+            @auth
+                @include('layouts.navigation')
+            @endauth
 
             <main class="flex-1 p-4 md:p-6 lg:p-8 pt-18">
                 @if ($errors->any())
@@ -65,10 +70,13 @@
     </div>
 
     <x-toast />
+    @auth
+        <x-quick-search />
+    @endauth
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <script src="{{ asset('js/dashboard-charts.js') }}"></script>
     <script src="{{ asset('js/user-dashboard-charts.js') }}" defer></script>
 
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     @stack('scripts')
 </body>
 </html>

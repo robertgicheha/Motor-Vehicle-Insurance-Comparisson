@@ -13,7 +13,8 @@
 
     <form method="POST" action="{{ route('login') }}" class="space-y-6" id="loginForm" onsubmit="showLoginSpinner(this)">
         @csrf
-        
+        <input type="hidden" name="g-recaptcha-response" id="g-recaptcha-response">
+
         <div>
             <label for="email" class="block text-sm font-medium text-gray-700">Email address <span class="text-red-500">*</span></label>
             <div class="relative mt-1">
@@ -83,5 +84,17 @@
         document.getElementById('loginBtnSpinner').style.display = 'inline-flex';
         document.getElementById('loginBtn').disabled = true;
     }
+
+    document.getElementById('loginForm').addEventListener('submit', function (e) {
+        if (typeof grecaptcha === 'undefined' || !window.mvipRecaptchaSiteKey) return;
+        e.preventDefault();
+        var form = this;
+        grecaptcha.ready(function () {
+            grecaptcha.execute(window.mvipRecaptchaSiteKey, { action: 'login' }).then(function (token) {
+                document.getElementById('g-recaptcha-response').value = token;
+                form.submit();
+            });
+        });
+    });
     </script>
 </x-auth-layout>

@@ -13,7 +13,7 @@
     <a href="#">About Us</a><a href="#">Contact Us</a><a href="#">Affiliates</a><a href="#">Careers</a>
   </div>
   <div class="nav-main">
-    <a href="{{ url('/') }}"><img src="{{ asset('img/MIC-Global-Risks_logo.png') }}" alt="MIC Global Risks" class="nav-logo"></a>
+    <a href="{{ url('/') }}"><img src="{{ asset('images/MIC-Global-Risks_logo_no_background.png') }}" alt="MIC Global Risks" class="nav-logo" width="621" height="116"></a>
     <div class="nav-links">
       <a href="{{ url('/motor-quote') }}">Motor Quote</a>
       <a href="{{ route('stickers.create') }}">Certificates</a>
@@ -96,7 +96,7 @@
     </button>
   </div>
 
-  <div class="summary-card" style="margin-top:20px">
+  {{-- <div class="summary-card" style="margin-top:20px">
     <h4>Email This Certificate</h4>
     <form method="POST" action="{{ route('public.sticker.email') }}" class="email-form">
       @csrf
@@ -106,7 +106,7 @@
         <button type="submit" class="action-btn action-btn-download">Send Email</button>
       </div>
     </form>
-  </div>
+  </div> --}}
 
   @if($sticker->breakdown && count($sticker->breakdown) > 0)
     <div class="breakdown-table" style="margin-top:20px">
@@ -126,7 +126,7 @@
 <footer>
   <div class="footer-top">
     <div class="footer-brand">
-      <img src="{{ asset('img/MIC-Global-Risks_logo_no_background.png') }}" alt="MIC Global Risks">
+      <img src="{{ asset('images/MIC-Global-Risks_logo_no_background.png') }}" alt="MIC Global Risks" width="621" height="116">
       <p>Your trusted insurance intermediary — connecting you to Kenya's leading insurers with transparency, speed and expertise.</p>
     </div>
     <div class="footer-col">

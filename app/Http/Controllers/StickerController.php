@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Jobs\ScanDocumentJob;
 use App\Mail\CertificateIssuedMail;
+use App\Mail\StickerMail;
 use App\Models\CertificateDocument;
 use App\Models\Company;
 use App\Models\Quotation;
@@ -26,6 +27,10 @@ class StickerController extends Controller
         $quotation = null;
         if ($request->quotation_id) {
             $quotation = Quotation::with('company')->findOrFail($request->quotation_id);
+            $user = auth()->user();
+            if (!$user->hasRole('super-admin') && !$user->hasRole('admin') && $quotation->user_id !== $user->id) {
+                abort(403);
+            }
         }
 
         $companies = Company::active()->get();
@@ -48,7 +53,9 @@ class StickerController extends Controller
             }])
             ->where(function ($query) use ($search) {
                 $query->whereRaw('LOWER(quotation_number) LIKE ?', ["%{$search}%"])
-                    ->orWhereRaw('LOWER(car_registration) LIKE ?', ["%{$search}%"])
+                    ->orWhereLikeCI('car_registration', $search)
+                    ->orWhereRaw('LOWER(first_name) LIKE ?', ["%{$search}%"])
+                    ->orWhereRaw('LOWER(last_name) LIKE ?', ["%{$search}%"])
                     ->orWhereHas('user', function ($q) use ($search) {
                         $q->whereRaw('LOWER(name) LIKE ?', ["%{$search}%"])
                           ->orWhereRaw('LOWER(first_name) LIKE ?', ["%{$search}%"])
@@ -75,7 +82,7 @@ class StickerController extends Controller
                 return [
                     'id' => $q->id,
                     'quotation_number' => $q->quotation_number,
-                    'customer_name' => $q->user->name,
+                    'customer_name' => $q->customer_name,
                     'company' => $q->company->name,
                     'company_id' => $q->company->id,
                     'car_make' => $q->car_make,
@@ -136,16 +143,19 @@ class StickerController extends Controller
                 'quotation_id' => $quotation->id,
                 'issued_by' => $user->id,
                 'sticker_number' => Sticker::generateNumber(),
-                'customer_name' => $quotation->user->name,
-                'customer_email' => $quotation->user->email,
-                'customer_phone' => $quotation->user->mobile,
+                'customer_name' => $quotation->customer_name,
+                'customer_email' => $quotation->customer_email,
+                'customer_phone' => $quotation->customer_phone,
                 'vehicle_registration' => $quotation->car_registration,
                 'car_make' => $quotation->car_make,
                 'car_model' => $quotation->car_model,
                 'car_year' => $quotation->car_year,
+                'chassis_number' => $quotation->chassis_number,
+                'engine_number' => $quotation->engine_number,
+                'color' => $quotation->color,
                 'car_valuation' => $quotation->car_valuation,
                 'premium' => $quotation->total_premium,
-                'premium_rate' => $quotation->pvt_premium ? ($quotation->pvt_premium / $quotation->car_valuation * 100) : null,
+                'premium_rate' => $quotation->breakdown['premium_rate'] ?? null,
                 'cover_type' => $quotation->vehicle_type === 'psv' ? 'PSV' : 'Private',
                 'status' => 'pending',
                 'created_via' => 'web',
@@ -293,13 +303,17 @@ class StickerController extends Controller
             ], 422);
         }
 
+        $fromAddress = $this->stickerEmailFromAddress();
+        $fromName = $this->stickerEmailFromName();
+        $ccAddress = $this->stickerEmailCc($quotation->company);
+
         $sticker->update([
             'status' => 'issued',
             'admin_notes' => $request->admin_notes,
-            'email_subject' => 'Certificate Issuance Request - ' . $sticker->sticker_number,
-            'email_from_address' => config('mail.from.address'),
-            'email_from_name' => config('mail.from.name'),
-            'reply_to_address' => config('mail.from.address'),
+            'email_subject' => 'Sticker Issuance Request - ' . $sticker->sticker_number,
+            'email_from_address' => $fromAddress,
+            'email_from_name' => $fromName,
+            'reply_to_address' => $fromAddress,
         ]);
 
         $quotation->update(['status' => 'issued']);
@@ -308,11 +322,12 @@ class StickerController extends Controller
 
         $emailStatus = 'queued';
         $emailError = null;
+        $emailVia = config('mail.default');
 
         try {
-            Mail::to($sticker->underwriter_email)
-                ->cc(config('mail.from.address'))
-                ->send(new CertificateIssuedMail($sticker, $kycPaths));
+            $mailable = new CertificateIssuedMail($sticker, $kycPaths, $ccAddress, $fromAddress, $fromName);
+
+            Mail::send($mailable);
 
             $emailStatus = 'sent';
             $sticker->update([
@@ -330,7 +345,7 @@ class StickerController extends Controller
         } catch (\Exception $e) {
             $emailStatus = 'failed';
             $emailError = $e->getMessage();
-            Log::error("Failed to send certificate issued email: " . $e->getMessage());
+            Log::error("Failed to send sticker issued email: " . $e->getMessage());
 
             $sticker->update([
                 'last_email_status' => 'failed',
@@ -342,11 +357,12 @@ class StickerController extends Controller
             'sticker_id' => $sticker->id,
             'type' => 'outbound_to_underwriter',
             'recipient' => $sticker->underwriter_email,
-            'sender' => config('mail.from.address'),
-            'subject' => 'Certificate Issuance Request - ' . $sticker->sticker_number,
+            'sender' => $fromAddress,
+            'subject' => 'Sticker Issuance Request - ' . $sticker->sticker_number,
             'status' => $emailStatus,
             'error_message' => $emailError,
             'attachments' => ['kyc_documents' => count($kycPaths), 'certificate_pdf' => true],
+            'metadata' => ['cc' => $ccAddress, 'via' => $emailVia],
             'triggered_by' => $user->id,
             'sent_at' => $emailStatus === 'sent' ? now() : null,
         ]);
@@ -390,21 +406,30 @@ class StickerController extends Controller
         $documents = CertificateDocument::where('sticker_id', $sticker->id)->get();
         $kycPaths = $documents->map(fn($d) => storage_path('app/public/' . $d->path))->toArray();
 
+        $fromAddress = $this->stickerEmailFromAddress();
+
         try {
-            Mail::to($request->test_email)
-                ->cc(config('mail.from.address'))
-                ->send(new CertificateIssuedMail($sticker, $kycPaths));
+            Mail::send(new CertificateIssuedMail(
+                $sticker,
+                $kycPaths,
+                $this->stickerEmailCc($quotation->company),
+                $fromAddress,
+                $this->stickerEmailFromName(),
+                $request->test_email
+            ));
 
             StickerEmailLog::create([
                 'sticker_id' => $sticker->id,
                 'type' => 'test_email',
                 'recipient' => $request->test_email,
-                'sender' => config('mail.from.address'),
-                'subject' => '[TEST] Certificate Issuance - ' . $sticker->sticker_number,
+                'sender' => $fromAddress,
+                'subject' => '[TEST] Sticker Issuance - ' . $sticker->sticker_number,
                 'status' => 'sent',
                 'triggered_by' => auth()->id(),
                 'sent_at' => now(),
             ]);
+
+            AuditService::activity('sticker_test_email_sent', "Test certificate email for {$sticker->sticker_number} sent to {$request->test_email}");
 
             return response()->json([
                 'success' => true,
@@ -417,8 +442,8 @@ class StickerController extends Controller
                 'sticker_id' => $sticker->id,
                 'type' => 'test_email',
                 'recipient' => $request->test_email,
-                'sender' => config('mail.from.address'),
-                'subject' => '[TEST] Certificate Issuance - ' . $sticker->sticker_number,
+                'sender' => $fromAddress,
+                'subject' => '[TEST] Sticker Issuance - ' . $sticker->sticker_number,
                 'status' => 'failed',
                 'error_message' => $e->getMessage(),
                 'triggered_by' => auth()->id(),
@@ -452,6 +477,9 @@ class StickerController extends Controller
             'car_make' => 'required|string|max:255',
             'car_model' => 'required|string|max:255',
             'car_year' => 'required|integer|min:1990|max:2030',
+            'chassis_number' => 'nullable|string|max:100',
+            'engine_number' => 'nullable|string|max:100',
+            'color' => 'nullable|string|max:50',
             'car_valuation' => 'required|numeric|min:100000',
             'premium' => 'required|numeric',
             'premium_rate' => 'nullable|numeric|max:100',
@@ -476,6 +504,9 @@ class StickerController extends Controller
             'car_make' => $request->car_make,
             'car_model' => $request->car_model,
             'car_year' => $request->car_year,
+            'chassis_number' => $request->chassis_number,
+            'engine_number' => $request->engine_number,
+            'color' => $request->color,
             'car_valuation' => $request->car_valuation,
             'premium' => $request->premium,
             'premium_rate' => $request->premium_rate,
@@ -500,8 +531,10 @@ class StickerController extends Controller
         if ($request->customer_email) {
             try {
                 Mail::to($request->customer_email)->send(new StickerMail($sticker));
+                AuditService::activity('sticker_emailed', "Certificate {$sticker->sticker_number} emailed to {$request->customer_email}");
             } catch (\Exception $e) {
                 Log::warning("Failed to send sticker email: " . $e->getMessage());
+                AuditService::activity('sticker_email_failed', "Failed to email certificate {$sticker->sticker_number} to {$request->customer_email}: {$e->getMessage()}", 'error');
             }
         }
 
@@ -517,7 +550,67 @@ class StickerController extends Controller
 
     public function userLookup()
     {
-        return view('stickers.user-lookup');
+        $individualReports = collect();
+        $groupReports = collect();
+        $individualStats = ['total' => 0, 'pending' => 0, 'completed' => 0, 'total_premium' => 0];
+        $individualMonthly = collect();
+        $individualByCompany = collect();
+        $isAdmin = false;
+        $user = auth()->user();
+
+        if ($user) {
+            $isAdmin = $user->hasRole('super-admin') || $user->hasRole('admin');
+
+            $allMine = Sticker::with(['company', 'quotation'])
+                ->where('issued_by', $user->id)
+                ->latest()
+                ->get();
+
+            $individualReports = $allMine->take(20)->values();
+
+            $individualStats = [
+                'total' => $allMine->count(),
+                'completed' => $allMine->where('status', 'completed')->count(),
+                'pending' => $allMine->where('status', '!=', 'completed')->count(),
+                'total_premium' => $allMine->sum('premium'),
+            ];
+
+            $individualMonthly = $allMine
+                ->groupBy(fn($s) => $s->created_at->format('M Y'))
+                ->map->count()
+                ->reverse()
+                ->take(6)
+                ->reverse();
+
+            $individualByCompany = $allMine
+                ->groupBy(fn($s) => $s->company->name ?? 'Unknown')
+                ->map->count()
+                ->sortDesc();
+
+            if ($isAdmin) {
+                $groupReports = Sticker::with('issuedBy:id,name')
+                    ->whereNotNull('issued_by')
+                    ->get()
+                    ->groupBy('issued_by')
+                    ->map(function ($stickers) {
+                        return [
+                            'user' => $stickers->first()->issuedBy,
+                            'total' => $stickers->count(),
+                            'completed' => $stickers->where('status', 'completed')->count(),
+                            'pending' => $stickers->where('status', '!=', 'completed')->count(),
+                            'total_premium' => $stickers->sum('premium'),
+                            'latest_at' => $stickers->max('created_at'),
+                        ];
+                    })
+                    ->sortByDesc('total')
+                    ->values();
+            }
+        }
+
+        return view('stickers.user-lookup', compact(
+            'individualReports', 'groupReports', 'isAdmin',
+            'individualStats', 'individualMonthly', 'individualByCompany'
+        ));
     }
 
     public function lookupByQuotation(Request $request)
@@ -582,6 +675,72 @@ class StickerController extends Controller
         return redirect()->route('stickers.show', $sticker);
     }
 
+    /**
+     * Public quotation lookup for the "Look Up Sticker" page — search by
+     * quotation number, registration number, or customer name, with no
+     * login required (mirrors how a sticker number is independently
+     * verifiable). If the visitor is logged in and owns the matched
+     * quotation (or is staff), the response flags that they can jump
+     * straight into sticker issuance without re-searching there.
+     */
+    public function searchQuotationPublic(Request $request)
+    {
+        $request->validate(['search' => 'required|string|min:2|max:100']);
+
+        $search = trim($request->search);
+
+        $quotation = Quotation::with(['company', 'user'])
+            ->where(function ($query) use ($search) {
+                $query->whereRaw('LOWER(quotation_number) LIKE ?', ["%{$search}%"])
+                    ->orWhereLikeCI('car_registration', $search)
+                    ->orWhereRaw('LOWER(first_name) LIKE ?', ["%{$search}%"])
+                    ->orWhereRaw('LOWER(last_name) LIKE ?', ["%{$search}%"])
+                    ->orWhereHas('user', function ($q) use ($search) {
+                        $q->whereRaw('LOWER(name) LIKE ?', ["%{$search}%"])
+                          ->orWhereRaw('LOWER(first_name) LIKE ?', ["%{$search}%"])
+                          ->orWhereRaw('LOWER(last_name) LIKE ?', ["%{$search}%"]);
+                    });
+            })
+            ->latest()
+            ->first();
+
+        if (!$quotation) {
+            return response()->json(['error' => 'No quotation found matching your search.'], 404);
+        }
+
+        $sticker = Sticker::where('quotation_id', $quotation->id)->first();
+
+        $user = auth()->user();
+        $isOwner = $user && ($user->hasRole('super-admin') || $user->hasRole('admin') || $quotation->user_id === $user->id);
+
+        return response()->json([
+            'quotation' => [
+                'id' => $quotation->id,
+                'quotation_number' => $quotation->quotation_number,
+                'customer_name' => $quotation->customer_name,
+                'company' => $quotation->company->name ?? 'Unknown',
+                'company_logo' => $quotation->company?->logoUrl(),
+                'car_make' => $quotation->car_make,
+                'car_model' => $quotation->car_model,
+                'car_year' => $quotation->car_year,
+                'car_registration' => $quotation->car_registration,
+                'car_valuation' => $quotation->car_valuation,
+                'total_premium' => $quotation->total_premium,
+                'status' => $quotation->status,
+                'created_at' => $quotation->created_at->format('d M Y'),
+            ],
+            'sticker' => $sticker ? [
+                'sticker_number' => $sticker->sticker_number,
+                'status' => $sticker->status,
+                'show_url' => route('stickers.show', $sticker),
+                'download_url' => route('stickers.download', $sticker),
+            ] : null,
+            'can_generate_sticker' => !$sticker && $isOwner,
+            'requires_login' => !$user,
+            'generate_url' => route('stickers.issue', ['quotation_id' => $quotation->id]),
+        ]);
+    }
+
     public function downloadPdf(Sticker $sticker)
     {
         $sticker->load('company');
@@ -599,5 +758,161 @@ class StickerController extends Controller
         $sticker->update(['last_downloaded_at' => now()]);
 
         return view('stickers.print', compact('sticker'));
+    }
+
+    /**
+     * The noreply sender address for underwriter emails, as configured in
+     * Admin > Stickers > Settings > Email Configuration. Falls back to the
+     * app's default mail-from address if nothing has been set yet.
+     */
+    protected function stickerEmailFromAddress(): string
+    {
+        return \App\Models\EmailSetting::where('key', 'sticker_email_from_address')->value('value')
+            ?: config('mail.from.address');
+    }
+
+    protected function stickerEmailFromName(): string
+    {
+        return \App\Models\EmailSetting::where('key', 'sticker_email_from_name')->value('value')
+            ?: config('mail.from.name');
+    }
+
+    /**
+     * CC address for underwriter emails: the company's own CC address takes
+     * priority, then the global Sticker Settings CC, then the app default.
+     */
+    protected function stickerEmailCc(?Company $company): ?string
+    {
+        return $company?->sticker_notification_emails
+            ?: \App\Models\EmailSetting::where('key', 'sticker_email_cc')->value('value')
+            ?: config('mail.from.address');
+    }
+
+    /**
+     * "View All Stickers" for a regular user — the same shape as the admin
+     * sticker dashboard, but scoped to only the stickers this user has
+     * personally issued.
+     */
+    public function myStickers(Request $request)
+    {
+        $userId = auth()->id();
+
+        $stickers = Sticker::with('company')
+            ->where('issued_by', $userId)
+            ->latest()
+            ->paginate(20);
+
+        $stats = [
+            'total' => Sticker::where('issued_by', $userId)->count(),
+            'pending' => Sticker::where('issued_by', $userId)->where('status', '!=', 'completed')->count(),
+            'completed' => Sticker::where('issued_by', $userId)->where('status', 'completed')->count(),
+            'total_premium' => Sticker::where('issued_by', $userId)->sum('premium'),
+        ];
+
+        return view('user.stickers.my-stickers', compact('stickers', 'stats'));
+    }
+
+    /**
+     * "Update Stickers" for a regular user — mirrors the admin update-sticker
+     * workflow (search a sticker, enter the underwriter's returned sticker
+     * number, mark completed) but scoped to their own pending stickers only.
+     */
+    public function myUpdateForm(Request $request)
+    {
+        $stickers = Sticker::where('issued_by', auth()->id())
+            ->where('status', 'issued')
+            ->latest()
+            ->paginate(20);
+
+        return view('user.stickers.my-updates', compact('stickers'));
+    }
+
+    public function mySearchSticker(Request $request)
+    {
+        $request->validate(['search' => 'required|string|min:2']);
+
+        $search = trim($request->search);
+        $sticker = Sticker::with(['company', 'issuedBy', 'quotation'])
+            ->where('issued_by', auth()->id())
+            ->where(function ($q) use ($search) {
+                $q->whereRaw('LOWER(sticker_number) = ?', [strtolower($search)])
+                  ->orWhereRaw('LOWER(underwriter_sticker_no) = ?', [strtolower($search)]);
+            })
+            ->first();
+
+        if (!$sticker) {
+            return response()->json(['success' => false, 'error' => 'Sticker not found among your issued stickers. Search by Sticker ID (ours) or Sticker Number (from the underwriter).']);
+        }
+
+        $documents = CertificateDocument::where('sticker_id', $sticker->id)->get();
+
+        return response()->json([
+            'success' => true,
+            'sticker' => [
+                'id' => $sticker->id,
+                'sticker_number' => $sticker->sticker_number,
+                'underwriter_sticker_no' => $sticker->underwriter_sticker_no,
+                'customer_name' => $sticker->customer_name,
+                'vehicle_registration' => $sticker->vehicle_registration,
+                'car_make' => $sticker->car_make,
+                'car_model' => $sticker->car_model,
+                'car_year' => $sticker->car_year,
+                'premium' => $sticker->premium,
+                'cover_type' => $sticker->cover_type,
+                'status' => $sticker->status,
+                'company' => $sticker->company->name ?? 'N/A',
+                'issued_by' => $sticker->issuedBy?->name ?? 'N/A',
+                'completed_by' => $sticker->completedBy?->name,
+                'completed_at' => $sticker->generated_at?->format('d M Y H:i'),
+                'is_completed' => $sticker->status === 'completed',
+                'documents' => $documents->pluck('document_type', 'scan_status'),
+            ],
+        ]);
+    }
+
+    public function myUpdateSticker(Request $request)
+    {
+        $request->validate([
+            'sticker_id' => 'required|exists:stickers,id',
+            'underwriter_sticker_no' => 'required|string|max:100',
+        ]);
+
+        $user = auth()->user();
+        $sticker = Sticker::where('id', $request->sticker_id)->where('issued_by', $user->id)->first();
+
+        if (!$sticker) {
+            return response()->json(['success' => false, 'error' => 'Sticker not found among your issued stickers.'], 404);
+        }
+
+        if ($sticker->status === 'completed') {
+            return response()->json([
+                'success' => false,
+                'error' => 'This sticker has already been completed by ' . ($sticker->completedBy?->name ?? 'Unknown') . ' on ' . $sticker->generated_at?->format('d M Y H:i') . '. It cannot be overridden.',
+            ]);
+        }
+
+        $oldStatus = $sticker->status;
+        $sticker->update([
+            'status' => 'completed',
+            'underwriter_sticker_no' => $request->underwriter_sticker_no,
+            'generated_at' => now(),
+            'completed_by' => $user->id,
+        ]);
+
+        AuditService::log('update', 'Sticker', $sticker->id, [
+            'status' => $oldStatus,
+            'completed_by' => null,
+            'generated_at' => null,
+        ], [
+            'status' => 'completed',
+            'completed_by' => $user->id,
+            'generated_at' => now()->toISOString(),
+        ]);
+        AuditService::activity('sticker_completed', "Sticker {$sticker->sticker_number} marked as completed by {$user->name}. Certificate generated.");
+
+        return response()->json([
+            'success' => true,
+            'message' => "Sticker {$sticker->sticker_number} marked as completed successfully.",
+        ]);
     }
 }

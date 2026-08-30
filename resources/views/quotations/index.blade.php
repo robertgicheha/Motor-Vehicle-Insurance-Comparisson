@@ -1,11 +1,24 @@
 <x-app-layout>
     @php
-    $companiesJson = $companies->values()->map(fn($c, $idx) => [
-        'slug'  => $c->slug,
-        'name'  => $c->name,
-        'rate'  => (optional($c->rates->firstWhere('value_type', 'percentage'))->percentage ?? 3.5) / 100,
-        'color' => ['#1756c8','#7c3aed','#0f7a65','#d4860e','#c0392b'][$idx % 5],
-    ]);
+    $companiesJson = $companies->filter(fn($c) => in_array($c->company_type, ['both', 'private']))
+        ->values()
+        ->map(function ($c, $idx) {
+            $rate = $c->rates->where('vehicle_type', 'private')->firstWhere('item_name', 'Premium Rate');
+            $pvtRate = $c->rates->where('vehicle_type', 'private')->firstWhere('item_name', 'PVT Rate');
+            $rateAbove = $c->rates->where('vehicle_type', 'private')->firstWhere('item_name', 'Premium Rate Above 2.5M');
+            return [
+                'slug' => $c->slug,
+                'name' => $c->name,
+                'rate' => $rate ? (float) $rate->percentage / 100 : 0,
+                'minPremium' => $rate ? (float) $rate->min_premium : 0,
+                'isPvtInclusive' => $rate ? (bool) $rate->is_pvt_inclusive : false,
+                'pvtRate' => $pvtRate ? (float) $pvtRate->percentage / 100 : 0,
+                'pvtMinValue' => $pvtRate ? (float) $pvtRate->min_value : 0,
+                'rateAbove2_5M' => $rateAbove ? (float) $rateAbove->percentage / 100 : 0,
+                'minPremiumAbove2_5M' => $rateAbove ? (float) $rateAbove->min_premium : 0,
+                'color' => ['#1756c8','#7c3aed','#0f7a65','#d4860e','#c0392b'][$idx % 5],
+            ];
+        });
     @endphp
 
 {{-- ─── MAIN PAGE ─────────────────────────────────────────────────────────── --}}
@@ -130,7 +143,7 @@
                     @forelse($quotations as $q)
                         <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/30"
                             x-show="rowVisible($el)"
-                            data-search="{{ strtolower($q->quotation_number . ' ' . $q->car_make . ' ' . $q->car_model . ' ' . ($q->user->name ?? '') . ' ' . ($q->company->name ?? '')) }}"
+                            data-search="{{ strtolower($q->quotation_number . ' ' . $q->car_make . ' ' . $q->car_model . ' ' . $q->customer_name . ' ' . ($q->company->name ?? '')) }}"
                             data-status="{{ strtolower($q->status) }}"
                             data-date="{{ $q->created_at->format('Y-m-d') }}">
                             <td class="px-5 py-2.5">
@@ -140,9 +153,12 @@
                                 <td class="px-5 py-2.5">
                                     <div class="flex items-center gap-2.5">
                                         <div class="w-7 h-7 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white text-[10px] font-bold shrink-0">
-                                            {{ strtoupper(substr($q->user->name, 0, 2)) }}
+                                            {{ strtoupper(substr($q->customer_name, 0, 2)) }}
                                         </div>
-                                        <span class="font-medium text-gray-800 dark:text-white">{{ $q->user->name }}</span>
+                                        <span class="font-medium text-gray-800 dark:text-white">{{ $q->customer_name }}</span>
+                                        @if(!$q->user_id)
+                                            <span class="text-[9px] font-semibold px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">Guest</span>
+                                        @endif
                                     </div>
                                 </td>
                             @endif
@@ -152,7 +168,7 @@
                                 <p class="text-[10px] text-gray-400">{{ $q->car_year }}</p>
                             </td>
                             <td class="px-5 py-2.5 text-right text-gray-500 dark:text-gray-400 font-mono">{{ number_format($q->car_valuation, 0) }}</td>
-                            <td class="px-5 py-2.5 text-right font-bold text-gray-800 dark:text-white font-mono">{{ number_format($q->total_premium, 0) }}</td>
+                            <td class="px-5 py-2.5 text-right font-bold text-gray-800 dark:text-white font-mono">{{ number_format($q->total_premium, 2) }}</td>
                             <td class="px-5 py-2.5 text-center">
                                 @php
                                     $statusColors = [
@@ -171,8 +187,8 @@
                                         class="p-1.5 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-md transition" title="View">
                                         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0zM2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
                                     </a>
-                                    @if(auth()->user()->hasRole('super-admin') || auth()->user()->hasRole('admin'))
-                                    <button onclick="openApplyFor({{ $q->user_id }}, '{{ addslashes($q->user->name) }}')"
+                                    @if((auth()->user()->hasRole('super-admin') || auth()->user()->hasRole('admin')) && $q->user_id)
+                                    <button onclick="openApplyFor({{ $q->user_id }}, '{{ addslashes($q->customer_name) }}')"
                                         class="p-1.5 text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/20 rounded-md transition" title="Apply for this user">
                                         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
                                     </button>
@@ -212,7 +228,7 @@
                 <h3 class="text-xs font-bold text-gray-800 dark:text-white mt-0.5">Quotations by Underwriter</h3>
             </div>
             <div class="p-5">
-                <canvas id="companyChart" height="200"></canvas>
+                <canvas id="quotationsCompanyChart" height="200"></canvas>
             </div>
         </div>
         <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
@@ -221,7 +237,7 @@
                 <h3 class="text-xs font-bold text-gray-800 dark:text-white mt-0.5">Distribution by Insurer</h3>
             </div>
             <div class="p-5">
-                <canvas id="premiumChart" height="200"></canvas>
+                <canvas id="quotationsPremiumChart" height="200"></canvas>
             </div>
         </div>
     </div>
@@ -345,6 +361,10 @@
                         <input x-model="qf.chassis" type="text" placeholder="Optional" class="w-full px-3 py-2 text-xs rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none">
                     </div>
                     <div>
+                        <label class="block text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Engine No</label>
+                        <input x-model="qf.engine" type="text" placeholder="Optional" class="w-full px-3 py-2 text-xs rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none">
+                    </div>
+                    <div>
                         <label class="block text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Make of Vehicle <span class="text-rose-500">*</span></label>
                         <select x-model="qf.make" class="w-full px-3 py-2 text-xs rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none">
                             <option value="">Select make...</option>
@@ -413,7 +433,7 @@
                             <div @click="proceedToCreate(company.slug)"
                                 class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-4 text-center cursor-pointer hover:shadow-md hover:-translate-y-0.5 transition flex flex-col items-center gap-1.5">
                                 <div class="text-[10px] font-bold uppercase tracking-wider" x-text="company.name" :style="'color:' + company.color"></div>
-                                <div class="text-[10px] text-gray-400" x-text="'@ ' + (company.rate * 100) + '%'"></div>
+                                <div class="text-[10px] text-gray-400" x-text="'@ ' + getRate(company.slug) + '%'"></div>
                                 <div class="text-lg font-extrabold" x-text="'KES ' + (getPremium(company.slug) ? getPremium(company.slug).toLocaleString() : '—')" :style="'color:' + company.color"></div>
                                 <div class="w-full text-[10px] font-bold text-white rounded-md py-1.5 mt-1" x-text="'View Quote →'" :style="'background:' + company.color"></div>
                             </div>
@@ -515,7 +535,7 @@
 
 
 @push('scripts')
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="{{ asset('js/premium-calc.js') }}"></script>
 <script>
 function quotationsPage() {
     return {
@@ -525,10 +545,12 @@ function quotationsPage() {
         quoteStep: 1,
         qf: {
             salutation: '', first_name: '', middle_name: '', last_name: '',
-            phone: '', email: '', reg: '', chassis: '', make: '', make_other: '',
+            phone: '', email: '', reg: '', chassis: '', engine: '', make: '', make_other: '',
             model: '', body: '', year: '', color: '', color_other: '', value: ''
         },
         premiums: {},
+        _premiumRequestId: 0,
+        companies: @json($companiesJson),
         trendData:   @json($analytics['trend'] ?? []),
         companyData: @json($analytics['by_company'] ?? []),
 
@@ -542,24 +564,45 @@ function quotationsPage() {
 
         calcPremiums() {
             const v = parseFloat(this.qf.value) || 0;
-            const tax = 0.005;
-            this.premiums = {};
-            this.companies.forEach(c => {
-                this.premiums[c.slug] = Math.round(v * (c.rate + tax));
-            });
+            if (!v) { this.premiums = {}; return; }
+            const requestId = ++this._premiumRequestId;
+            fetch('{{ route("quotations.compare-all.calculate") }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content,
+                },
+                body: JSON.stringify({ vehicle_type: 'private', car_valuation: v, num_passengers: 1 }),
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (requestId !== this._premiumRequestId) return; // a newer request superseded this one
+                const next = {};
+                (data.results || []).forEach(r => {
+                    next[r.company.slug] = { total: Math.round(r.breakdown.total_premium), rate: r.breakdown.premium_rate };
+                });
+                this.premiums = next;
+            })
+            .catch(() => {});
         },
 
         getPremium(slug) {
-            return this.premiums[slug] || 0;
+            return this.premiums[slug] ? this.premiums[slug].total : 0;
+        },
+
+        getRate(slug) {
+            if (this.premiums[slug]) return this.premiums[slug].rate;
+            const c = this.companies.find(c => c.slug === slug);
+            return c ? (c.rate * 100) : 0;
         },
 
         get lowestPremium() {
-            const vals = Object.values(this.premiums).filter(v => v > 0);
+            const vals = Object.values(this.premiums).map(p => p.total).filter(v => v > 0);
             return vals.length ? Math.min(...vals) : 0;
         },
 
         get highestPremium() {
-            const vals = Object.values(this.premiums).filter(v => v > 0);
+            const vals = Object.values(this.premiums).map(p => p.total).filter(v => v > 0);
             return vals.length ? Math.max(...vals) : 0;
         },
 
@@ -568,7 +611,8 @@ function quotationsPage() {
             Object.entries(this.qf).forEach(([k, v]) => { if (v) p.set(k, v); });
             p.set('insurer', insurer);
             sessionStorage.setItem('micQuoteData', JSON.stringify(this.qf));
-            window.location.href = '{{ route("quotations.preview") }}?' + p.toString();
+            const destination = insurer === 'ALL' ? '{{ route("quotations.compare-all") }}' : '{{ route("quotations.preview") }}';
+            window.location.href = destination + '?' + p.toString();
         },
 
         resetQuoteForm() {
@@ -616,8 +660,8 @@ function quotationsPage() {
         filterTable() {},
 
         buildCompanyChart() {
-            const ctx = document.getElementById('companyChart');
-            if (!ctx) return;
+            const ctx = document.getElementById('quotationsCompanyChart');
+            if (!ctx || Chart.getChart(ctx)) return;
             new Chart(ctx, {
                 type: 'bar',
                 data: {
@@ -642,8 +686,8 @@ function quotationsPage() {
         },
 
         buildPremiumChart() {
-            const ctx = document.getElementById('premiumChart');
-            if (!ctx) return;
+            const ctx = document.getElementById('quotationsPremiumChart');
+            if (!ctx || Chart.getChart(ctx)) return;
             new Chart(ctx, {
                 type: 'doughnut',
                 data: {
@@ -665,7 +709,7 @@ function quotationsPage() {
 
         buildTrendChart() {
             const ctx = document.getElementById('trendChart');
-            if (!ctx) return;
+            if (!ctx || Chart.getChart(ctx)) return;
             new Chart(ctx, {
                 type: 'line',
                 data: {

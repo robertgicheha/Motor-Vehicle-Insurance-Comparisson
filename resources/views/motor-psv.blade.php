@@ -276,6 +276,10 @@
           <input type="text" id="f-chassis-psv" placeholder="e.g. WVWZZZ1KZ9W123456">
         </div>
         <div class="form-group">
+          <label>Engine No</label>
+          <input type="text" id="f-engine-psv" placeholder="e.g. CBA1234567">
+        </div>
+        <div class="form-group">
           <label>Make of Vehicle <span class="req">*</span></label>
           <input type="text" id="f-make-psv" placeholder="e.g. Toyota, Nissan, Mazda">
         </div>
@@ -382,7 +386,7 @@
       <div class="step-alt-card">
         <div class="step-alt-num">5</div>
         <h4>Download &amp; Proceed</h4>
-        <p>Download your preferred PSV quotation and proceed to get covered.</p>
+        <p>Download your preferred PSV quotation and proceed to request for a sticker.</p>
       </div>
     </div>
   </div>

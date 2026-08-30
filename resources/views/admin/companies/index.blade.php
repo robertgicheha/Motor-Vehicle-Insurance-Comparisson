@@ -5,15 +5,15 @@
     <div class="rounded-2xl bg-micblue px-6 py-7 shadow-sm">
         <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
             <div>
-                <p class="text-[10px] font-semibold uppercase tracking-widest text-blue-400">Insurer Directory</p>
-                <h1 class="mt-0.5 text-xl font-bold text-white">Insurance Companies</h1>
-                <p class="mt-0.5 text-xs text-slate-400">Manage partner insurers and the rates that power your quotations.</p>
+                <p class="text-[10px] font-semibold uppercase tracking-widest text-blue-400">Underwriter Directory</p>
+                <h1 class="mt-0.5 text-xl font-bold text-white">Underwriters</h1>
+                <p class="mt-0.5 text-xs text-slate-400">Manage partner underwriters and the rates that power your quotations.</p>
             </div>
             <div class="flex items-center gap-2 shrink-0">
                 <a href="{{ route('admin.companies.create') }}"
                    class="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold bg-blue-500 hover:bg-blue-400 text-white rounded-lg transition">
                     <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
-                    Add Company
+                    Add Underwriter
                 </a>
                 <button onclick="document.getElementById('bulkImportModal').classList.remove('hidden')"
                         class="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold bg-violet-500 hover:bg-violet-400 text-white rounded-lg transition">
@@ -66,8 +66,8 @@
         @php $maxQuotations = max($companies->max('quotations_count'), 1); @endphp
         <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
             <div class="px-5 py-4 border-b border-gray-100 dark:border-gray-700">
-                <h2 class="text-xs font-semibold text-gray-800 dark:text-white">Quotations by Insurer</h2>
-                <p class="text-[10px] text-gray-400 mt-0.5">Volume of quotations generated per company</p>
+                <h2 class="text-xs font-semibold text-gray-800 dark:text-white">Quotations by Underwriter</h2>
+                <p class="text-[10px] text-gray-400 mt-0.5">Volume of quotations generated per underwriter</p>
             </div>
             <div class="p-5 space-y-3">
                 @foreach($companies as $company)
@@ -91,7 +91,7 @@
                         <div class="flex items-center gap-3 min-w-0">
                             @php $cl = $company->logoUrl(); @endphp
                             @if($cl)
-                                <img src="{{ $cl }}" class="w-10 h-10 rounded-xl object-cover border border-gray-100 dark:border-gray-700 shrink-0">
+                                <img src="{{ $cl }}" alt="{{ $company->name }} logo" class="w-10 h-10 rounded-xl object-cover border border-gray-100 dark:border-gray-700 shrink-0">
                             @else
                                 <div class="w-10 h-10 rounded-xl bg-micblue flex items-center justify-center text-white font-bold text-sm shrink-0">
                                     {{ substr($company->name, 0, 1) }}
@@ -148,7 +148,7 @@
                                     <div class="flex items-center gap-2.5">
                                         @php $cl = $company->logoUrl(); @endphp
                                         @if($cl)
-                                            <img src="{{ $cl }}" class="w-7 h-7 rounded-lg object-cover">
+                                            <img src="{{ $cl }}" alt="{{ $company->name }} logo" class="w-7 h-7 rounded-lg object-cover">
                                         @else
                                             <div class="w-7 h-7 rounded-lg bg-micblue flex items-center justify-center text-white font-semibold text-[10px]">{{ substr($company->name, 0, 1) }}</div>
                                         @endif
@@ -181,7 +181,7 @@
         <div class="px-6 py-4 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between">
             <div class="flex items-center gap-2">
                 <svg class="w-4 h-4 text-violet-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
-                <h2 class="text-xs font-semibold text-gray-900 dark:text-white">Bulk Import Companies with Rates</h2>
+                <h2 class="text-xs font-semibold text-gray-900 dark:text-white">Bulk Import Underwriters with Rates</h2>
             </div>
             <button onclick="document.getElementById('bulkImportModal').classList.add('hidden')" class="text-gray-400 hover:text-gray-600">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
@@ -199,8 +199,8 @@
 
                 <div class="bg-gray-50 dark:bg-gray-700/30 rounded-xl p-4">
                     <h4 class="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">Expected Format</h4>
-                    <p class="text-[10px] text-gray-500 dark:text-gray-400 mb-2">First row: company names. First column: rate item labels. Cells: rate values.</p>
-                    <p class="text-[10px] text-gray-500 dark:text-gray-400">Companies are auto-created. Categories are auto-detected from item names.</p>
+                    <p class="text-[10px] text-gray-500 dark:text-gray-400 mb-2">First row: underwriter names. First column: rate item labels. Cells: rate values.</p>
+                    <p class="text-[10px] text-gray-500 dark:text-gray-400">Underwriters are auto-created. Categories are auto-detected from item names.</p>
                 </div>
 
                 <div class="flex items-center gap-2 justify-end">

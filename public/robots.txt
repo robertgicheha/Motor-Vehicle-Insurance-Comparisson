@@ -1,2 +1,18 @@
 User-agent: *
-Disallow:
+Disallow: /admin
+Disallow: /dashboard
+Disallow: /quotations
+Disallow: /claims
+Disallow: /stickers
+Disallow: /notifications
+Disallow: /profile
+Disallow: /certificates
+Disallow: /help
+Disallow: /my-quote
+Disallow: /my-quotations
+Disallow: /recent-quotations
+Disallow: /login
+Disallow: /register
+Disallow: /forgot-password
+Disallow: /reset-password
+Disallow: /api

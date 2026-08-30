@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="utf-8">
-    <title>Insurance Certificate - {{ $sticker->sticker_number }}</title>
+    <title>Insurance Sticker - {{ $sticker->sticker_number }}</title>
     <style>
         @page { 
             margin: 0; 
@@ -153,11 +153,11 @@
 
         <div class="certificate-body">
             <div class="sticker-number-display">
-                <div class="label">Certificate Number</div>
+                <div class="label">Sticker ID</div>
                 <div class="num">{{ $sticker->sticker_number }}</div>
             </div>
 
-            <div class="company-name-display">MOTOR INSURANCE CERTIFICATE</div>
+            <div class="company-name-display">MOTOR INSURANCE STICKER</div>
 
             <hr class="divider">
 
@@ -194,21 +194,21 @@
             </div>
 
             <div class="windscreen-notice">
-                This certificate must be displayed on the vehicle windscreen at all times.
+                This sticker must be displayed on the vehicle windscreen at all times.
                 Print in color on standard paper and affix to the inside of the windscreen.
             </div>
 
             <div class="terms">
                 <strong>{{ $sticker->company->name }}</strong> &mdash; Policy subject to standard terms and conditions.<br>
                 Generated: {{ $sticker->generated_at?->format('d M Y h:i A') ?? $sticker->created_at->format('d M Y h:i A') }}<br>
-                Certificate #{{ $sticker->sticker_number }} &mdash; MIC Global Risks Insurance (Kenya) Limited
+                Sticker ID #{{ $sticker->sticker_number }} &mdash; MIC Global Risks Insurance (Kenya) Limited
             </div>
         </div>
     </div>
 
     <div class="no-print" style="text-align:center;margin-top:14px;">
         <button onclick="window.print()" style="padding:10px 28px;background:#0066B3;color:white;border:none;border-radius:8px;font-size:14px;font-weight:bold;cursor:pointer;">
-            Print Certificate
+            Print Sticker
         </button>
     </div>
 

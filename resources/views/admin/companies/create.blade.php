@@ -5,9 +5,9 @@
     <div class="rounded-2xl bg-micblue px-6 py-7 shadow-sm">
         <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
             <div>
-                <p class="text-[10px] font-semibold uppercase tracking-widest text-blue-400">Insurer Directory</p>
-                <h1 class="mt-0.5 text-xl font-bold text-white">{{ isset($company) ? 'Edit Company' : 'Add Company' }}</h1>
-                <p class="mt-0.5 text-xs text-slate-400">{{ isset($company) ? 'Update company details below.' : 'Fill in the details to add a new insurer.' }}</p>
+                <p class="text-[10px] font-semibold uppercase tracking-widest text-blue-400">Underwriter Directory</p>
+                <h1 class="mt-0.5 text-xl font-bold text-white">{{ isset($company) ? 'Edit Underwriter' : 'Add Underwriter' }}</h1>
+                <p class="mt-0.5 text-xs text-slate-400">{{ isset($company) ? 'Update underwriter details below.' : 'Fill in the details to add a new underwriter.' }}</p>
             </div>
             <div class="flex items-center gap-2 shrink-0">
                 <a href="{{ route('admin.companies.index') }}"
@@ -29,14 +29,14 @@
             @if(isset($company)) @method('PUT') @endif
 
             <div class="px-5 py-4 border-b border-gray-100 dark:border-gray-700">
-                <h2 class="text-xs font-semibold text-gray-800 dark:text-white">Company Details</h2>
-                <p class="text-[10px] text-gray-400 mt-0.5">Basic information about the insurer.</p>
+                <h2 class="text-xs font-semibold text-gray-800 dark:text-white">Underwriter Details</h2>
+                <p class="text-[10px] text-gray-400 mt-0.5">Basic information about the underwriter.</p>
             </div>
 
             <div class="p-5 space-y-5">
                 <div>
-                    <label class="block text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Company Name <span class="text-rose-500">*</span></label>
-                    <input id="company-name" type="text" name="name" value="{{ old('name', $company->name ?? '') }}" required
+                    <label class="block text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Underwriter Name <span class="text-rose-500">*</span></label>
+                    <input id="underwriter-name" type="text" name="name" value="{{ old('name', $company->name ?? '') }}" required
                            class="w-full px-3 py-2 text-xs rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none">
                     @error('name')<p class="mt-1 text-xs text-rose-500">{{ $message }}</p>@enderror
                 </div>
@@ -63,7 +63,7 @@
                     <label for="logo-input" class="flex items-center gap-4 cursor-pointer group">
                         <div id="logo-drop" class="h-14 w-14 shrink-0 rounded-xl border-2 border-dashed border-gray-300 dark:border-gray-600 flex items-center justify-center overflow-hidden bg-gray-50 dark:bg-gray-900 group-hover:border-blue-500 transition">
                             @if(isset($company) && $company->logoUrl())
-                                <img id="logo-preview-img" src="{{ $company->logoUrl() }}" class="h-full w-full object-cover">
+                                <img id="logo-preview-img" src="{{ $company->logoUrl() }}" alt="{{ $company->name }} logo" class="h-full w-full object-cover">
                             @else
                                 <span id="logo-placeholder" class="text-lg font-semibold text-gray-400">—</span>
                             @endif
@@ -84,6 +84,79 @@
                     </label>
                 </div>
                 @endif
+            </div>
+
+            <div class="px-5 py-4 border-t border-b border-gray-100 dark:border-gray-700">
+                <h2 class="text-xs font-semibold text-gray-800 dark:text-white">Contact Profiles</h2>
+                <p class="text-[10px] text-gray-400 mt-0.5">Who to reach at this underwriter for certificate issuance and claims, and where emails are sent.</p>
+            </div>
+
+            <div class="p-5 grid grid-cols-1 md:grid-cols-2 gap-5">
+                {{-- Underwriting Profile --}}
+                <div class="rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
+                    <div class="px-4 py-2.5 bg-blue-50 dark:bg-blue-900/20 border-b border-gray-200 dark:border-gray-700">
+                        <p class="text-[10px] font-bold uppercase tracking-wider text-blue-700 dark:text-blue-400">Underwriting</p>
+                    </div>
+                    <div class="p-4 space-y-3">
+                        <div>
+                            <label class="block text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Name</label>
+                            <input type="text" name="underwriter_name" value="{{ old('underwriter_name', $company->underwriter_name ?? '') }}" placeholder="e.g. James Maroa"
+                                   class="w-full px-3 py-2 text-xs rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none">
+                            @error('underwriter_name') <p class="text-xs text-rose-500 mt-1">{{ $message }}</p> @enderror
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Email</label>
+                            <input type="email" name="underwriter_email" value="{{ old('underwriter_email', $company->underwriter_email ?? '') }}" placeholder="james.maroa@insurer.com"
+                                   class="w-full px-3 py-2 text-xs rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none">
+                            @error('underwriter_email') <p class="text-xs text-rose-500 mt-1">{{ $message }}</p> @enderror
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Telephone</label>
+                            <input type="text" name="underwriter_phone" value="{{ old('underwriter_phone', $company->underwriter_phone ?? '') }}" placeholder="0709 626 306"
+                                   class="w-full px-3 py-2 text-xs rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none">
+                            @error('underwriter_phone') <p class="text-xs text-rose-500 mt-1">{{ $message }}</p> @enderror
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">CC Email</label>
+                            <input type="email" name="sticker_notification_emails" value="{{ old('sticker_notification_emails', $company->sticker_notification_emails ?? '') }}" placeholder="cc-stickers@insurer.com"
+                                   class="w-full px-3 py-2 text-xs rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none">
+                            @error('sticker_notification_emails') <p class="text-xs text-rose-500 mt-1">{{ $message }}</p> @enderror
+                        </div>
+                    </div>
+                </div>
+
+                {{-- Claims Profile --}}
+                <div class="rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
+                    <div class="px-4 py-2.5 bg-emerald-50 dark:bg-emerald-900/20 border-b border-gray-200 dark:border-gray-700">
+                        <p class="text-[10px] font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-400">Claims</p>
+                    </div>
+                    <div class="p-4 space-y-3">
+                        <div>
+                            <label class="block text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Name</label>
+                            <input type="text" name="claims_name" value="{{ old('claims_name', $company->claims_name ?? '') }}" placeholder="e.g. Collins Owuor"
+                                   class="w-full px-3 py-2 text-xs rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none">
+                            @error('claims_name') <p class="text-xs text-rose-500 mt-1">{{ $message }}</p> @enderror
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Email</label>
+                            <input type="email" name="claims_email" value="{{ old('claims_email', $company->claims_email ?? '') }}" placeholder="collins.owuor@insurer.com"
+                                   class="w-full px-3 py-2 text-xs rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none">
+                            @error('claims_email') <p class="text-xs text-rose-500 mt-1">{{ $message }}</p> @enderror
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Telephone</label>
+                            <input type="text" name="claims_phone" value="{{ old('claims_phone', $company->claims_phone ?? '') }}" placeholder="0709 626 370"
+                                   class="w-full px-3 py-2 text-xs rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none">
+                            @error('claims_phone') <p class="text-xs text-rose-500 mt-1">{{ $message }}</p> @enderror
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">CC Email</label>
+                            <input type="email" name="cc_claims_email" value="{{ old('cc_claims_email', $company->cc_claims_email ?? '') }}" placeholder="cc-claims@insurer.com"
+                                   class="w-full px-3 py-2 text-xs rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none">
+                            @error('cc_claims_email') <p class="text-xs text-rose-500 mt-1">{{ $message }}</p> @enderror
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <div class="px-5 py-4 border-t border-gray-100 dark:border-gray-700 flex items-center justify-end gap-2">
@@ -188,7 +261,7 @@ function applyLogoCrop() {
         logoInput.files = container.files;
         logoCropped.value = '1';
         const url = URL.createObjectURL(blob);
-        document.getElementById('logo-drop').innerHTML = `<img src="${url}" class="h-full w-full object-cover">`;
+        document.getElementById('logo-drop').innerHTML = `<img src="${url}" alt="Logo preview" class="h-full w-full object-cover">`;
         document.getElementById('preview-avatar').innerHTML = `<img src="${url}" class="h-full w-full object-cover">`;
         closeLogoCrop();
     }, 'image/png', 0.9);

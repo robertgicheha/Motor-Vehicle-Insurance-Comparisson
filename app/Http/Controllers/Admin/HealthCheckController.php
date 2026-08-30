@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\HealthCheck;
 use App\Services\AuditService;
+use App\Services\Nav\NavMailService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
@@ -25,7 +26,7 @@ class HealthCheckController extends Controller
         $results[] = $this->checkDatabase();
         $results[] = $this->checkSite();
         $results[] = $this->checkServer();
-        $results[] = $this->checkStickerApi();
+        $results[] = $this->checkEmailServer();
 
         AuditService::activity('health_checks_run', 'Platform health checks executed');
 
@@ -126,35 +127,42 @@ class HealthCheckController extends Controller
         }
     }
 
-    protected function checkStickerApi(): HealthCheck
+    /**
+     * Verifies the NAV/Business Central mail WSDL is reachable and NTLM
+     * authentication succeeds — the email server that actually sends our
+     * outgoing mail (underwriter notifications, quotation emails, etc.)
+     * once NAV_MAIL_ENABLED is turned on. Never triggers a real send.
+     */
+    protected function checkEmailServer(): HealthCheck
     {
-        try {
-            $stickerUrl = config('services.sticker_api.url', 'https://api.example.com/sticker');
-            $start = microtime(true);
-            $response = Http::timeout(10)->get($stickerUrl);
-            $elapsed = round((microtime(true) - $start) * 1000);
+        $wsdl = config('services.nav.mail_wsdl');
 
+        if (!$wsdl) {
             return HealthCheck::create([
-                'type' => 'sticker_api',
-                'status' => $response->successful() ? 'up' : 'degraded',
-                'message' => $response->successful()
-                    ? "Sticker API responded in {$elapsed}ms"
-                    : "Sticker API returned status {$response->status()} in {$elapsed}ms",
-                'details' => [
-                    'url' => $stickerUrl,
-                    'status_code' => $response->status(),
-                    'response_time_ms' => $elapsed,
-                ],
-                'checked_at' => now(),
-            ]);
-        } catch (\Exception $e) {
-            return HealthCheck::create([
-                'type' => 'sticker_api',
+                'type' => 'email_server',
                 'status' => 'down',
-                'message' => 'Sticker API unreachable: ' . $e->getMessage(),
-                'details' => ['error' => $e->getMessage()],
+                'message' => 'NAV mail WSDL is not configured (NAV_MAIL_WSDL).',
+                'details' => [],
                 'checked_at' => now(),
             ]);
         }
+
+        $start = microtime(true);
+        $result = app(NavMailService::class)->testConnection();
+        $elapsed = round((microtime(true) - $start) * 1000);
+
+        return HealthCheck::create([
+            'type' => 'email_server',
+            'status' => $result['success'] ? 'up' : 'down',
+            'message' => $result['success']
+                ? "Email server (NAV) reachable, NTLM auth OK ({$elapsed}ms)"
+                : "Email server (NAV): {$result['message']}",
+            'details' => [
+                'url' => $wsdl,
+                'enabled' => (bool) config('services.nav.enabled'),
+                'response_time_ms' => $elapsed,
+            ],
+            'checked_at' => now(),
+        ]);
     }
 }

@@ -1,0 +1,96 @@
+services:
+  - type: web
+    name: mic-motor-insurance
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    plan: starter
+    healthCheckPath: /up
+    disk:
+      name: mic-storage
+      mountPath: /var/www/html/storage/app/public
+      sizeGB: 1
+    envVars:
+      - key: APP_NAME
+        value: "Motor Vehicle Insurance Portal"
+      - key: APP_ENV
+        value: production
+      - key: APP_DEBUG
+        value: "false"
+      - key: APP_KEY
+        generateValue: true
+      - key: APP_URL
+        sync: false
+      - key: APP_LOCALE
+        value: en
+      - key: APP_FALLBACK_LOCALE
+        value: en
+      - key: LOG_CHANNEL
+        value: stack
+      - key: LOG_LEVEL
+        value: warning
+      - key: DB_CONNECTION
+        value: pgsql
+      - key: DB_HOST
+        fromDatabase:
+          name: mic-motor-insurance-db
+          property: host
+      - key: DB_PORT
+        fromDatabase:
+          name: mic-motor-insurance-db
+          property: port
+      - key: DB_DATABASE
+        fromDatabase:
+          name: mic-motor-insurance-db
+          property: database
+      - key: DB_USERNAME
+        fromDatabase:
+          name: mic-motor-insurance-db
+          property: user
+      - key: DB_PASSWORD
+        fromDatabase:
+          name: mic-motor-insurance-db
+          property: password
+      - key: SESSION_DRIVER
+        value: database
+      - key: QUEUE_CONNECTION
+        value: database
+      - key: CACHE_STORE
+        value: database
+      - key: FILESYSTEM_DISK
+        value: public
+      # --- Mail (Mailtrap Sending API) ---
+      - key: MAIL_MAILER
+        value: mailtrap
+      - key: MAILTRAP_API_TOKEN
+        sync: false
+      - key: MAIL_FROM_ADDRESS
+        value: "hello@demomailtrap.com"
+      - key: MAIL_FROM_NAME
+        value: "${APP_NAME}"
+      # --- Secrets to fill in on the Render dashboard after first deploy ---
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: GOOGLE_CLIENT_SECRET
+        sync: false
+      - key: GOOGLE_REDIRECT_URI
+        sync: false
+      - key: RECAPTCHA_SITE_KEY
+        sync: false
+      - key: RECAPTCHA_SECRET_KEY
+        sync: false
+      - key: NAV_MAIL_ENABLED
+        value: "false"
+      - key: NAV_MAIL_WSDL
+        sync: false
+      - key: NAV_NTLM_DOMAIN
+        sync: false
+      - key: NAV_NTLM_USERNAME
+        sync: false
+      - key: NAV_NTLM_PASSWORD
+        sync: false
+
+databases:
+  - name: mic-motor-insurance-db
+    plan: free
+    databaseName: mic_motor_insurance
+    user: mic_app

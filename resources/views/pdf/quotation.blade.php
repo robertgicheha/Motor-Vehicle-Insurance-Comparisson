@@ -211,8 +211,8 @@
                 <tr><td>Training Levy</td><td style="text-align:right">{{ \App\Models\Rate::fmtPercent($_trainingLevyRate) }}%</td><td style="text-align:right">{{ number_format($_trainingLevy, 2) }}</td></tr>
                 <tr><td>Policy Holder Fund</td><td style="text-align:right">{{ \App\Models\Rate::fmtPercent($_policyHolderFundRate) }}%</td><td style="text-align:right">{{ number_format($_policyHolderFund, 2) }}</td></tr>
                 <tr><td>Stamp Duty</td><td style="text-align:right">-</td><td style="text-align:right">{{ number_format($_stampDuty, 2) }}</td></tr>
-                <tr><td>Excess - Own Damage</td><td style="text-align:right">—</td><td style="text-align:right">{{ $_excessOD > 0 ? number_format($_excessOD, 2) : 'Not Applicable' }}</td></tr>
-                <tr><td>Excess - Theft</td><td style="text-align:right">—</td><td style="text-align:right">{{ $_excessTheft > 0 ? number_format($_excessTheft, 2) : 'Not Applicable' }}</td></tr>
+                <tr><td>Excess - Own Damage</td><td style="text-align:right">—</td><td style="text-align:right">0.00</td></tr>
+                <tr><td>Excess - Theft</td><td style="text-align:right">—</td><td style="text-align:right">0.00</td></tr>
             </tbody>
             <tfoot>
                 <tr class="total-row"><td>Total Premium (incl. taxes)</td><td style="text-align:right">—</td><td style="text-align:right">{{ number_format($_breakdown['total_premium'] ?? $quotation->total_premium, 2) }}</td></tr>

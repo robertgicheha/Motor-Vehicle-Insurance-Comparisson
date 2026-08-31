@@ -18,5 +18,4 @@ tests
 .idea
 .vscode
 *.log
-database/database.sqlite
 

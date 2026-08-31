@@ -8,6 +8,20 @@ PORT="${PORT:-10000}"
 mkdir -p storage/app/public
 chown -R www-data:www-data storage bootstrap/cache
 
+# When using SQLite on a persistent disk, seed it from the image's bundled
+# database/database.sqlite the first time the disk is empty, so the app
+# deploys with its existing data (companies, rates, etc.) instead of a
+# blank schema. Later boots leave an existing file alone so nothing written
+# in production is ever overwritten by a redeploy.
+if [ "$DB_CONNECTION" = "sqlite" ] && [ -n "$DB_DATABASE" ]; then
+    mkdir -p "$(dirname "$DB_DATABASE")"
+    if [ ! -f "$DB_DATABASE" ]; then
+        cp database/database.sqlite "$DB_DATABASE"
+        echo "Seeded ${DB_DATABASE} from the image's bundled database.sqlite"
+    fi
+    chown -R www-data:www-data "$(dirname "$DB_DATABASE")"
+fi
+
 # APP_KEY is required for sessions/encryption. It should be set once as a
 # persistent env var on Render (so it survives redeploys) — but if it's
 # genuinely missing, generate one so the app doesn't hard-crash on first

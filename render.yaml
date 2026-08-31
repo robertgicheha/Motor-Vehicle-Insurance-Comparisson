@@ -5,9 +5,13 @@ services:
     dockerfilePath: ./Dockerfile
     plan: starter
     healthCheckPath: /up
+    # Mounted at storage/ (not just storage/app/public) so the same
+    # persistent disk holds both uploaded files AND the sqlite database
+    # below — Render disks aren't billed by count on this plan, but one
+    # disk keeps the setup simple and avoids a second mount to manage.
     disk:
       name: mic-storage
-      mountPath: /var/www/html/storage/app/public
+      mountPath: /var/www/html/storage
       sizeGB: 1
     envVars:
       - key: APP_NAME
@@ -29,27 +33,12 @@ services:
       - key: LOG_LEVEL
         value: warning
       - key: DB_CONNECTION
-        value: pgsql
-      - key: DB_HOST
-        fromDatabase:
-          name: mic-motor-insurance-db
-          property: host
-      - key: DB_PORT
-        fromDatabase:
-          name: mic-motor-insurance-db
-          property: port
+        value: sqlite
+      # Lives on the persistent disk mounted above, so it survives
+      # redeploys; entrypoint.sh seeds it from the image's bundled
+      # database/database.sqlite the first time this path doesn't exist.
       - key: DB_DATABASE
-        fromDatabase:
-          name: mic-motor-insurance-db
-          property: database
-      - key: DB_USERNAME
-        fromDatabase:
-          name: mic-motor-insurance-db
-          property: user
-      - key: DB_PASSWORD
-        fromDatabase:
-          name: mic-motor-insurance-db
-          property: password
+        value: /var/www/html/storage/database.sqlite
       - key: SESSION_DRIVER
         value: database
       - key: QUEUE_CONNECTION
@@ -88,9 +77,3 @@ services:
         sync: false
       - key: NAV_NTLM_PASSWORD
         sync: false
-
-databases:
-  - name: mic-motor-insurance-db
-    plan: free
-    databaseName: mic_motor_insurance
-    user: mic_app

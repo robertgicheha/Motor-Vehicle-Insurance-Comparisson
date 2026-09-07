@@ -20,19 +20,19 @@ class CompareAllController extends Controller
     public function update(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'logo' => 'nullable|image|mimes:png,jpg,jpeg,svg,webp|max:2048',
+            'logo' => 'nullable|string|max:255',
         ]);
 
         if ($validator->fails()) {
             return back()->withErrors($validator)->withInput();
         }
 
-        if ($request->hasFile('logo')) {
+        if ($request->filled('logo')) {
+            $path = $request->logo;
             $oldLogo = Setting::getValue('compare_all_logo');
-            if ($oldLogo) {
+            if ($oldLogo && !str_starts_with($oldLogo, 'images/')) {
                 Storage::disk('public')->delete($oldLogo);
             }
-            $path = $request->file('logo')->store('compare-all', 'public');
             Setting::setValue('compare_all_logo', $path, 'appearance');
             AuditService::activity('compare_all_logo_updated', 'Compare All card logo updated');
             return back()->with('success', 'Compare All card logo updated.');
@@ -44,7 +44,7 @@ class CompareAllController extends Controller
     public function destroy()
     {
         $oldLogo = Setting::getValue('compare_all_logo');
-        if ($oldLogo) {
+        if ($oldLogo && !str_starts_with($oldLogo, 'images/')) {
             Storage::disk('public')->delete($oldLogo);
         }
         Setting::setValue('compare_all_logo', '', 'appearance');

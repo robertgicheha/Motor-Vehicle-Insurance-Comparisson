@@ -308,7 +308,7 @@
 
         <div id="premium-preview" style="display:none">
           <div style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:14px">Your {{ $selectedCompany->name }} quote</div>
-          <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px" id="premium-cards-grid"></div>
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(160px,100%),1fr));gap:12px" id="premium-cards-grid"></div>
         </div>
       </div>
       <div class="btn-group">
@@ -323,7 +323,7 @@
     <div class="section-title">Why Choose {{ $selectedCompany->name }}?</div>
     <div class="section-sub">{{ $selectedCompany->name }} provides comprehensive private motor insurance tailored for personal vehicles.</div>
   </div>
-  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:24px;max-width:1100px;margin:0 auto;padding:0 20px">
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(260px,100%),1fr));gap:24px;max-width:1100px;margin:0 auto;padding:0 20px">
     <div style="background:#F9F9FF;border-radius:16px;padding:32px 24px;text-align:center;transition:transform .2s,box-shadow .2s"
          onmouseover="this.style.transform='translateY(-4px)';this.style.boxShadow='0 8px 25px rgba(0,0,0,0.08)'"
          onmouseout="this.style.transform='';this.style.boxShadow=''">

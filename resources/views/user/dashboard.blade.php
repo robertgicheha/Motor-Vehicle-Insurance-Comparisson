@@ -351,7 +351,7 @@
                     <h2 class="text-xs font-semibold text-gray-800 dark:text-white">Quick Actions</h2>
                     <p class="text-[10px] text-gray-400 mt-0.5">Frequently used tasks</p>
                 </div>
-                <div class="p-4 grid grid-cols-2 gap-2">
+                <div class="p-4 grid grid-cols-1 xl:grid-cols-2 gap-2">
                     <a href="{{ route('quotations.create') }}" class="flex items-center gap-2 px-3 py-2.5 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:border-blue-300 dark:hover:border-blue-700 transition no-underline">
                         <div class="w-8 h-8 rounded-lg bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center shrink-0">
                             <svg class="w-4 h-4 text-blue-600 dark:text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
@@ -892,7 +892,7 @@ window.MIC_QUOTE_COMPANY_DATA_PSV = @json($quoteCompanyDataPsv ?? []);
         var res = result.json;
         if (result.ok && res.success) {
           var quoteUrl = '/quotations/' + res.quotation.id + '?generated=1';
-          showDashboardToast('Your Quotation has been successfully generated. <a href=\'' + quoteUrl + '\' style=\'color:#fff;font-weight:700;text-decoration:underline\'>Click here to view it</a>', 'success');
+          showDashboardToast('Your Quotation has been successfully generated. <a href=\'' + quoteUrl + '\' style=\'color:#fff;font-weight:700;text-decoration:underline\'>Click here to view it</a>', 'success', true);
           document.getElementById('pq-quote-num').textContent = res.quotation.quotation_number;
           document.getElementById('pq-view-link').href = quoteUrl;
 
@@ -923,13 +923,20 @@ window.MIC_QUOTE_COMPANY_DATA_PSV = @json($quoteCompanyDataPsv ?? []);
     } catch(e) { console.warn('Pending quote error:', e); }
   }
 
-  function showDashboardToast(message, type) {
+  function escapeToastHtml(value) {
+    if (value === null || value === undefined) return '';
+    return String(value)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;').replace(/'/g, '&#039;');
+  }
+
+  function showDashboardToast(message, type, isHtml) {
     type = type || 'success';
     // Delegate to the shared toast component's manager (window._toastManager)
     // instead of building a second, independent toast UI — having both fire
     // at once is what produced two success toasts on the same page load.
     if (window._toastManager) {
-      window._toastManager.addToast(message, type);
+      window._toastManager.addToast(message, type, isHtml === true);
       return;
     }
     var container = document.createElement('div');
@@ -942,11 +949,11 @@ window.MIC_QUOTE_COMPANY_DATA_PSV = @json($quoteCompanyDataPsv ?? []);
     if (type === 'success') {
       toast.style.background = '#059669';
       toast.style.color = 'white';
-      toast.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> ' + message;
+      toast.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> ' + (isHtml === true ? message : escapeToastHtml(message));
     } else {
       toast.style.background = '#DC2626';
       toast.style.color = 'white';
-      toast.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg> ' + message;
+      toast.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg> ' + (isHtml === true ? message : escapeToastHtml(message));
     }
     container.appendChild(toast);
 

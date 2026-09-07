@@ -19,8 +19,13 @@ class AnalyticsController extends Controller
         $totalCompanies = Company::count();
         $totalStickers = Sticker::count();
 
+        $dbDriver = DB::connection()->getDriverName();
+        $monthExpr = $dbDriver === 'sqlite'
+            ? "strftime('%Y-%m', created_at) as month"
+            : "DATE_FORMAT(created_at, '%Y-%m') as month";
+
         $monthlyQuotations = Quotation::select(
-            DB::raw("strftime('%Y-%m', created_at) as month"),
+            DB::raw($monthExpr),
             DB::raw('count(*) as total')
         )
             ->where('created_at', '>=', now()->subMonths(12))
@@ -49,7 +54,7 @@ class AnalyticsController extends Controller
             ->get();
 
         $stickerStats = Sticker::select(
-            DB::raw("strftime('%Y-%m', created_at) as month"),
+            DB::raw($monthExpr),
             DB::raw('count(*) as total')
         )
             ->where('created_at', '>=', now()->subMonths(12))

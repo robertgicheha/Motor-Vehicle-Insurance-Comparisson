@@ -126,17 +126,17 @@
         {{-- Step Indicators --}}
         <div class="px-6 py-5 border-b border-gray-100 dark:border-gray-700">
             <div class="flex gap-2">
-                <div class="flex-1 px-3 py-2.5 rounded-lg border text-center cursor-pointer transition step-tab active" id="step-tab-1" onclick="goStep(1)">
+                <div class="flex-1 min-w-0 px-3 py-2.5 rounded-lg border text-center cursor-pointer transition step-tab active" id="step-tab-1" onclick="goStep(1)">
                     <div class="text-[9px] font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400 step-num">Step 1</div>
                     <div class="text-xs font-semibold text-blue-700 dark:text-blue-300 step-title">Personal Details</div>
                     <div class="text-[10px] text-gray-400">Contact information</div>
                 </div>
-                <div class="flex-1 px-3 py-2.5 rounded-lg border text-center cursor-pointer transition step-tab" id="step-tab-2" onclick="goStep(2)">
+                <div class="flex-1 min-w-0 px-3 py-2.5 rounded-lg border text-center cursor-pointer transition step-tab" id="step-tab-2" onclick="goStep(2)">
                     <div class="text-[9px] font-bold uppercase tracking-wider text-gray-400 step-num">Step 2</div>
                     <div class="text-xs font-semibold text-gray-500 dark:text-gray-400 step-title">Vehicle Details</div>
                     <div class="text-[10px] text-gray-400">Car information</div>
                 </div>
-                <div class="flex-1 px-3 py-2.5 rounded-lg border text-center cursor-pointer transition step-tab" id="step-tab-3" onclick="goStep(3)">
+                <div class="flex-1 min-w-0 px-3 py-2.5 rounded-lg border text-center cursor-pointer transition step-tab" id="step-tab-3" onclick="goStep(3)">
                     <div class="text-[9px] font-bold uppercase tracking-wider text-gray-400 step-num">Step 3</div>
                     <div class="text-xs font-semibold text-gray-500 dark:text-gray-400 step-title">Quote Generation</div>
                     <div class="text-[10px] text-gray-400">Premium estimates</div>

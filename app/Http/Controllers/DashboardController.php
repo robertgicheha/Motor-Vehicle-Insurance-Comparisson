@@ -84,6 +84,11 @@ class DashboardController extends Controller
         $monthEnd = now()->endOfMonth();
         $sixMonthsAgo = now()->subMonths(6)->startOfMonth();
 
+        $dbDriver = DB::connection()->getDriverName();
+        $monthExpr = $dbDriver === 'sqlite'
+            ? "strftime('%Y-%m', created_at) as month"
+            : "DATE_FORMAT(created_at, '%Y-%m') as month";
+
         $quotationStats = Quotation::selectRaw("
             COUNT(*) as total,
             SUM(CASE WHEN DATE(created_at) = ? THEN 1 ELSE 0 END) as today_count,
@@ -152,7 +157,7 @@ class DashboardController extends Controller
             ->get();
 
         $data['monthlyQuotations'] = Quotation::select(
-            DB::raw("strftime('%Y-%m', created_at) as month"),
+            DB::raw($monthExpr),
             DB::raw('count(*) as total')
         )
             ->where('created_at', '>=', $sixMonthsAgo)
@@ -185,7 +190,6 @@ class DashboardController extends Controller
                 ]),
             ]);
 
-        $dbDriver = DB::connection()->getDriverName();
         if ($dbDriver === 'sqlite') {
             $monthExpr = "strftime('%b %Y', created_at) as month";
             $sortExpr = "strftime('%Y-%m', created_at) as sort_key";
@@ -363,6 +367,11 @@ class DashboardController extends Controller
         $user = auth()->user();
         $userId = $user->id;
 
+        $dbDriver = DB::connection()->getDriverName();
+        $monthExpr = $dbDriver === 'sqlite'
+            ? "strftime('%Y-%m', created_at) as month"
+            : "DATE_FORMAT(created_at, '%Y-%m') as month";
+
         $data['memberSince'] = $user->created_at->format('F Y');
 
         $companyColors = ['#1756c8', '#7c3aed', '#0f7a65', '#d4860e', '#c0392b', '#1E40AF', '#F59E0B', '#10B981', '#8B5CF6', '#EF4444'];
@@ -423,7 +432,7 @@ class DashboardController extends Controller
         $data['quotationsByCompany'] = $companyUserStats->pluck('user_quotations_count', 'name');
 
         $data['monthlyQuotations'] = $user->quotations()
-            ->select(DB::raw("strftime('%Y-%m', created_at) as month"), DB::raw('count(*) as total'))
+            ->select(DB::raw($monthExpr), DB::raw('count(*) as total'))
             ->where('created_at', '>=', now()->subMonths(6))
             ->groupBy('month')
             ->orderBy('month')

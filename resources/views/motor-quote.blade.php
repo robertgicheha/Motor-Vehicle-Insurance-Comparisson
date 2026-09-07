@@ -291,7 +291,7 @@
         </div>
         <div id="premium-preview" style="display:none">
           <div style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:14px">Click a card to open the full quotation</div>
-          <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px" id="premium-cards-grid"></div>
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(160px,100%),1fr));gap:12px" id="premium-cards-grid"></div>
         </div>
       </div>
       <div class="btn-group">

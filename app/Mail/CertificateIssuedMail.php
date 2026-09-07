@@ -36,7 +36,7 @@ class CertificateIssuedMail extends Mailable
 
     public function envelope(): Envelope
     {
-        $subject = $this->envelopeSubject($this->template('certificate_issued'), 'Sticker Issuance - ' . $this->sticker->sticker_number, $this->variables());
+        $subject = $this->resolveSubject();
 
         $ccAddresses = array_unique(array_filter([
             $this->ccAddress,
@@ -61,14 +61,44 @@ class CertificateIssuedMail extends Mailable
             return $this->dynamicContent($template, $this->variables());
         }
 
+        // The blade view also reads admin_notes / breakdown / issued_at, which are
+        // already computed in variables(); without them the view throws
+        // "Undefined variable" and the whole send fails. Merge them in rather than
+        // duplicating the logic.
         return new Content(
             view: 'emails.certificate-issued',
-            with: [
+            with: array_merge($this->variables(), [
                 'sticker' => $this->sticker,
                 'quotation' => $this->sticker->quotation,
                 'kycPaths' => $this->kycPaths,
-            ],
+            ]),
         );
+    }
+
+    protected function resolveSubject(): string
+    {
+        $variables = $this->variables();
+
+        // 1. Governed by the 'certificate_issued' email template subject, if set.
+        $template = $this->template('certificate_issued');
+        if ($template && $template->subject) {
+            return $template->renderContent($template->subject, $variables);
+        }
+
+        // 2. Otherwise the sticker Email Configuration subject template
+        //    (stored with single-brace placeholders like {sticker_number}).
+        $subjectTemplate = \App\Models\EmailSetting::where('key', 'sticker_email_subject_template')->value('value');
+
+        if ($subjectTemplate) {
+            $normalized = preg_replace('/\{([a-zA-Z0-9_]+)\}/', '{{ $1 }}', $subjectTemplate);
+            return preg_replace_callback('/\{\{\s*([a-zA-Z0-9_]+)\s*\}\}/', function ($matches) use ($variables) {
+                $value = $variables[$matches[1]] ?? null;
+                return $value !== null ? (string) $value : $matches[0];
+            }, $normalized) ?? $subjectTemplate;
+        }
+
+        // 3. Final fallback.
+        return 'Sticker Issuance - ' . $this->sticker->sticker_number;
     }
 
     protected function variables(): array

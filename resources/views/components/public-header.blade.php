@@ -6,10 +6,10 @@
 
 <nav class="bg-white border-b border-gray-200 sticky top-0 z-200 shadow-sm">
   <div class="bg-[#004f8c] flex flex-wrap gap-x-5 gap-y-1 justify-end px-4 sm:px-10 py-1.5 text-[11px]">
-    <a href="#" class="text-white/75 hover:text-white no-underline">About Us</a>
-    <a href="#" class="text-white/75 hover:text-white no-underline">Contact Us</a>
-    <a href="#" class="text-white/75 hover:text-white no-underline">Affiliates</a>
-    <a href="#" class="text-white/75 hover:text-white no-underline">Careers</a>
+    <a href="#" class="text-white/75 hover:text-white no-underline py-1 inline-block">About Us</a>
+    <a href="#" class="text-white/75 hover:text-white no-underline py-1 inline-block">Contact Us</a>
+    <a href="#" class="text-white/75 hover:text-white no-underline py-1 inline-block">Affiliates</a>
+    <a href="#" class="text-white/75 hover:text-white no-underline py-1 inline-block">Careers</a>
   </div>
   <div class="flex items-center justify-between px-4 sm:px-10 py-3.5">
     <a href="{{ url('/') }}">

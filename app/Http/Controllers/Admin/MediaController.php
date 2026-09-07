@@ -49,11 +49,14 @@ class MediaController extends Controller
         $files = new \RecursiveIteratorIterator($iterator);
         foreach ($files as $file) {
             if ($file->isFile() && in_array(strtolower($file->getExtension()), $extensions)) {
-                $relativePath = 'images/' . $file->getFilename();
+                $subPathname = $files->getSubPathname();
+                $subPathname = str_replace('\\', '/', $subPathname);
+                $relativePath = 'images/' . $subPathname;
+                $encodedSegments = array_map('rawurlencode', explode('/', $relativePath));
                 $items->push([
                     'filename' => $file->getFilename(),
                     'path' => $relativePath,
-                    'url' => asset($relativePath),
+                    'url' => asset(implode('/', $encodedSegments)),
                     'size' => $file->getSize(),
                     'last_modified' => $file->getMTime(),
                 ]);
@@ -191,6 +194,7 @@ class MediaController extends Controller
             return [
                 'id' => $dbMedia->has($item['filename']) ? $dbMedia[$item['filename']]->id : null,
                 'url' => $item['url'],
+                'path' => $item['path'],
                 'filename' => $dbMedia->has($item['filename'])
                     ? $dbMedia[$item['filename']]->original_filename
                     : $item['filename'],

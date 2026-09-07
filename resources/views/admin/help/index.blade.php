@@ -44,7 +44,7 @@
                 <h2 class="text-xs font-semibold text-gray-800 dark:text-white">Enquiries</h2>
                 <p class="text-[10px] text-gray-400 mt-0.5">User support requests</p>
             </div>
-            <form method="GET" class="flex items-center gap-2">
+            <form method="GET" class="flex flex-wrap items-center gap-2">
                 <select name="status" onchange="this.form.submit()"
                         class="px-3 py-1.5 text-xs rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200 focus:ring-2 focus:ring-blue-500 outline-none">
                     <option value="">All Status</option>

@@ -44,7 +44,7 @@
                 <h2 class="text-xs font-semibold text-gray-800 dark:text-white">Email Log</h2>
                 <p class="text-[10px] text-gray-400 mt-0.5">{{ $logs->total() }} total entries</p>
             </div>
-            <form method="GET" class="flex items-center gap-2">
+            <form method="GET" class="flex flex-wrap items-center gap-2">
                 <select name="status" class="px-3 py-1.5 text-xs rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200 focus:ring-2 focus:ring-blue-500 outline-none">
                     <option value="">All Statuses</option>
                     <option value="sent" {{ request('status') === 'sent' ? 'selected' : '' }}>Sent</option>

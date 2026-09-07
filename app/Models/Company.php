@@ -67,7 +67,10 @@ class Company extends Model
 
     public function logoUrl(): string
     {
-        if ($this->logo) {
+        if ($this->logo && $this->logo !== 'pending-upload') {
+            if (str_starts_with($this->logo, 'images/')) {
+                return asset($this->logo);
+            }
             return asset('storage/' . $this->logo);
         }
         $map = static::hardcodedLogoMap();
@@ -75,5 +78,30 @@ class Company extends Model
             return asset($map[$this->slug]);
         }
         return '';
+    }
+
+    public function logoPath(): ?string
+    {
+        $logo = $this->logo;
+        if ($logo && $logo !== 'pending-upload') {
+            $path = str_starts_with($logo, 'images/')
+                ? public_path($logo)
+                : public_path('storage/' . $logo);
+            if (file_exists($path)) {
+                return $path;
+            }
+        }
+
+        $map = static::hardcodedLogoMap();
+        if (isset($map[$this->slug])) {
+            $path = public_path($map[$this->slug]);
+            if (file_exists($path)) {
+                return $path;
+            }
+        }
+
+        $default = public_path('images/MIC-Global-Risks_logo_no_background.png');
+
+        return file_exists($default) ? $default : null;
     }
 }

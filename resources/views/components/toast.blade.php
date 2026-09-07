@@ -32,7 +32,11 @@
                 'bg-blue-800 text-white': toast.type === 'info'
             }">
             <div class="flex-1 min-w-0">
-                <p class="text-xs font-medium" x-text="toast.message"></p>
+                {{-- Escaped unless the caller explicitly opted into HTML. Flash
+                     messages and server-returned errors routinely contain user
+                     data (names, emails), so rendering every toast as HTML would
+                     be an XSS hole; only trusted call sites pass html = true. --}}
+                <p class="text-xs font-medium" x-html="toast.html ? toast.message : escapeHtml(toast.message)"></p>
             </div>
             <button @click="removeToast(index)" class="shrink-0 opacity-70 hover:opacity-100 transition">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -54,9 +58,19 @@ function toastManager(messages = []) {
             });
             window._toastManager = self;
         },
-        addToast(message, type) {
+        escapeHtml(value) {
+            if (value === null || value === undefined) return '';
+            return String(value)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        },
+        // isHtml: opt-in, for trusted markup built in our own code only.
+        addToast(message, type, isHtml) {
             if (!message) return;
-            var toast = { message: message, type: type || 'success', show: true };
+            var toast = { message: message, type: type || 'success', html: isHtml === true, show: true };
             this.toasts.push(toast);
             setTimeout(() => {
                 this.removeToast(this.toasts.indexOf(toast));

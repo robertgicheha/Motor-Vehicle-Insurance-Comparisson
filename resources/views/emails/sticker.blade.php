@@ -27,7 +27,7 @@
 <body>
     <div class="wrapper">
         <div class="header">
-            <img src="{{ $message->embed(public_path('img/MIC-Global-Risks_logo_no_background.png')) }}" alt="MIC Global Risks" style="max-height:50px;max-width:160px;margin-bottom:8px;filter:brightness(0) invert(1)">
+            <img src="{{ $message->embed(public_path('images/MIC-Global-Risks_logo_no_background.png')) }}" alt="MIC Global Risks" style="max-height:50px;max-width:160px;margin-bottom:8px;filter:brightness(0) invert(1)">
             <h1>Insurance Certificate Generated</h1>
             <p>{{ $sticker->sticker_number }}</p>
         </div>

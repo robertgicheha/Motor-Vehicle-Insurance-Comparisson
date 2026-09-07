@@ -172,9 +172,13 @@
                                                    class="lh-website w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-800 dark:text-white focus:ring-2 focus:ring-blue-500">
                                         </div>
                                         <div class="col-span-2">
-                                            <label class="block text-[10px] font-medium text-gray-400 mb-1">Logo Path <span class="text-gray-300 dark:text-gray-600">(optional — storage path e.g. images/logo.png)</span></label>
-                                            <input type="text" name="letterhead_logo" value="{{ old('letterhead_logo', $setting->letterhead_logo) }}"
-                                                   class="lh-logo w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-800 dark:text-white font-mono focus:ring-2 focus:ring-blue-500">
+                                            <label class="block text-[10px] font-medium text-gray-400 mb-1">Logo Path <span class="text-gray-300 dark:text-gray-600">(optional — media library path e.g. images/logo.png)</span></label>
+                                            <div class="flex items-center gap-2">
+                                                <input type="text" name="letterhead_logo" value="{{ old('letterhead_logo', $setting->letterhead_logo) }}"
+                                                       class="lh-logo flex-1 min-w-0 px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-800 dark:text-white font-mono focus:ring-2 focus:ring-blue-500">
+                                                <button type="button" onclick="openLetterheadPicker(this)"
+                                                        class="shrink-0 px-3 py-2 text-xs font-semibold bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition">Browse</button>
+                                            </div>
                                         </div>
                                         <div class="col-span-2 grid grid-cols-2 gap-3">
                                             <label class="flex items-center gap-2 text-[10px] font-medium text-gray-600 dark:text-gray-300 cursor-pointer">
@@ -237,7 +241,23 @@
     @endif
 </div>
 
+<x-media-picker />
+
 @push('scripts')
+<script>
+function openLetterheadPicker(btn) {
+    var logoInput = btn.closest('form').querySelector('.lh-logo');
+    window.openMediaPicker({
+        selectedPath: logoInput.value,
+        onSelect: function(item) {
+            if (!item.path) return;
+            logoInput.value = item.path;
+            logoInput.dispatchEvent(new Event('input'));
+            logoInput.dispatchEvent(new Event('change'));
+        }
+    });
+}
+</script>
 <script>
 (function () {
     const sampleValues = {
@@ -271,7 +291,7 @@
 
         const applyLogo = (img) => {
             img.style.display = 'block';
-            img.src = logo ? ('/storage/' + logo) : '/images/MIC-Global-Risks_logo_no_background.png';
+            img.src = logo ? (logo.startsWith('images/') ? ('/' + logo) : ('/storage/' + logo)) : '/images/MIC-Global-Risks_logo_no_background.png';
             img.onerror = () => { img.style.display = 'none'; };
         };
         const headerWrap = panel.querySelector('.lh-preview-img');

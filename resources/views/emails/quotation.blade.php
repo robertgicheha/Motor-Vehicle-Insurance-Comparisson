@@ -27,7 +27,7 @@
 <body>
     <div class="wrapper">
         <div class="header">
-            @php $__company = $quotation->company; $__logoPath = $__company ? ($__company->logo ? public_path('storage/' . $__company->logo) : (isset(\App\Models\Company::hardcodedLogoMap()[strtoupper($__company->slug ?? '')]) ? public_path(\App\Models\Company::hardcodedLogoMap()[strtoupper($__company->slug ?? '')]) : '')) : ''; @endphp
+            @php $__company = $quotation->company; $__logoPath = $__company ? ($__company->logoPath() ?? '') : ''; @endphp
             @if($__logoPath && file_exists($__logoPath))
                 <img src="{{ $message->embed($__logoPath) }}" alt="{{ $__company->name }}" style="max-height:50px;max-width:160px;margin-bottom:8px;">
             @else

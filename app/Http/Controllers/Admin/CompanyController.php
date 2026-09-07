@@ -35,7 +35,7 @@ class CompanyController extends Controller
             'description' => 'nullable|string',
             'is_active' => 'boolean',
             'company_type' => 'required|in:private,psv,both',
-            'logo' => 'nullable|image|mimes:png,jpg,jpeg,svg,webp|max:2048',
+            'logo' => 'nullable|string|max:255',
             'claims_email' => 'nullable|email|max:255',
             'claims_name' => 'nullable|string|max:255',
             'claims_phone' => 'nullable|string|max:50',
@@ -67,8 +67,8 @@ class CompanyController extends Controller
         ];
 
         if (auth()->user()->hasRole('admin')) {
-            if ($request->hasFile('logo')) {
-                $data['logo'] = 'pending-upload';
+            if ($request->filled('logo')) {
+                $data['logo'] = $request->logo;
             }
             $changeRequest = ChangeRequest::create([
                 'user_id' => auth()->id(),
@@ -85,8 +85,8 @@ class CompanyController extends Controller
             return redirect()->route('admin.companies.index')->with('info', 'Your request to create a new company has been sent to the super-admin for approval.');
         }
 
-        if ($request->hasFile('logo')) {
-            $data['logo'] = $request->file('logo')->store('logos', 'public');
+        if ($request->filled('logo')) {
+            $data['logo'] = $request->logo;
         }
 
         $company = Company::create($data);
@@ -109,7 +109,7 @@ class CompanyController extends Controller
             'description' => 'nullable|string',
             'is_active' => 'boolean',
             'company_type' => 'required|in:private,psv,both',
-            'logo' => 'nullable|image|mimes:png,jpg,jpeg,svg,webp|max:2048',
+            'logo' => 'nullable|string|max:255',
             'claims_email' => 'nullable|email|max:255',
             'claims_name' => 'nullable|string|max:255',
             'claims_phone' => 'nullable|string|max:50',
@@ -141,6 +141,9 @@ class CompanyController extends Controller
         ];
 
         if (auth()->user()->hasRole('admin')) {
+            if ($request->filled('logo')) {
+                $data['logo'] = $request->logo;
+            }
             $changeRequest = ChangeRequest::create([
                 'user_id' => auth()->id(),
                 'type' => 'company',
@@ -156,11 +159,11 @@ class CompanyController extends Controller
             return redirect()->route('admin.companies.index')->with('info', 'Your update request has been sent to the super-admin for approval.');
         }
 
-        if ($request->hasFile('logo')) {
-            if ($company->logo) {
+        if ($request->filled('logo')) {
+            if ($company->logo && !str_starts_with($company->logo, 'images/')) {
                 Storage::disk('public')->delete($company->logo);
             }
-            $data['logo'] = $request->file('logo')->store('logos', 'public');
+            $data['logo'] = $request->logo;
         }
 
         $oldData = $company->toArray();

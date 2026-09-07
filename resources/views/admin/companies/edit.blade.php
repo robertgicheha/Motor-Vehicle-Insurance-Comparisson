@@ -21,7 +21,7 @@
 
     {{-- Form Card --}}
     <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
-        <form action="{{ isset($company) ? route('admin.companies.update', $company) : route('admin.companies.store') }}" method="POST" enctype="multipart/form-data">
+        <form action="{{ isset($company) ? route('admin.companies.update', $company) : route('admin.companies.store') }}" method="POST">
             @csrf
             @if(isset($company)) @method('PUT') @endif
 
@@ -57,8 +57,8 @@
 
                 <div>
                     <label class="block text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Logo</label>
-                    <p class="text-[10px] text-gray-400 mb-2">PNG or SVG, transparent background recommended.</p>
-                    <label for="logo-input" class="flex items-center gap-4 cursor-pointer group">
+                    <p class="text-[10px] text-gray-400 mb-2">Choose an image from the media library. You can upload a new one from your computer there first if it is not in the library yet.</p>
+                    <div class="flex items-center gap-4">
                         <div id="logo-drop" class="h-14 w-14 shrink-0 rounded-xl border-2 border-dashed border-gray-300 dark:border-gray-600 flex items-center justify-center overflow-hidden bg-gray-50 dark:bg-gray-900 group-hover:border-blue-500 transition">
                             @php $cl = $company->logoUrl(); @endphp
                             @if($cl)
@@ -67,9 +67,16 @@
                                 <span id="logo-placeholder" class="text-lg font-semibold text-gray-400">—</span>
                             @endif
                         </div>
-                        <span class="text-xs font-medium text-blue-600 dark:text-blue-400 group-hover:underline">Upload logo</span>
-                        <input id="logo-input" type="file" name="logo" accept="image/png,image/jpeg,image/svg+xml" class="hidden">
-                    </label>
+                        <div class="flex flex-col gap-1">
+                            <button type="button" onclick="openCompanyLogoPicker()"
+                                    class="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold bg-blue-500 hover:bg-blue-400 text-white rounded-lg transition">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                                Choose from Media Library
+                            </button>
+                            <span class="text-[10px] text-gray-400">PNG or SVG, transparent background recommended.</span>
+                        </div>
+                        <input type="hidden" name="logo" id="company-logo" value="{{ $company->logo ?? '' }}">
+                    </div>
                     @error('logo')<p class="text-xs text-rose-500">{{ $message }}</p>@enderror
                 </div>
 
@@ -169,17 +176,22 @@
     </div>
 </div>
 
+<x-media-picker />
+
+@push('scripts')
 <script>
-    const logoInput = document.getElementById('logo-input');
-    logoInput?.addEventListener('change', () => {
-        const file = logoInput.files[0];
-        if (!file) return;
-        const drop = document.getElementById('logo-drop');
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            drop.innerHTML = `<img src="${e.target.result}" alt="Logo preview" class="h-full w-full object-cover">`;
-        };
-        reader.readAsDataURL(file);
-    });
+    function openCompanyLogoPicker() {
+        const logoInput = document.getElementById('company-logo');
+        window.openMediaPicker({
+            selectedPath: logoInput.value,
+            onSelect: function(item) {
+                if (!item.path) return;
+                logoInput.value = item.path;
+                const drop = document.getElementById('logo-drop');
+                drop.innerHTML = `<img src="${item.url}" alt="Logo preview" class="h-full w-full object-cover">`;
+            }
+        });
+    }
 </script>
+@endpush
 </x-app-layout>

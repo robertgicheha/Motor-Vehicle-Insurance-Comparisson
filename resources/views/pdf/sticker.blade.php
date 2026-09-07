@@ -63,7 +63,7 @@
     {{-- LETTERHEAD BANNER --}}
     <div class="letterhead" style="background:{{ $meta['color'] }}">
         <div class="lh-left">
-            @php $__logoPath = $company->logo ? public_path('storage/' . $company->logo) : (isset(\App\Models\Company::hardcodedLogoMap()[$company->slug]) ? public_path(\App\Models\Company::hardcodedLogoMap()[$company->slug]) : ''); @endphp
+            @php $__logoPath = $company->logoPath() ?? ''; @endphp
             @if($__logoPath && file_exists($__logoPath))
                 <img src="{{ $__logoPath }}" alt="{{ $company->name }}" onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
             @else

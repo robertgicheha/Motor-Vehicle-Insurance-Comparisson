@@ -1114,7 +1114,7 @@ window.MIC_COMPANIES = @json($_companyData);
         var res = result.json;
         if (result.ok && res.success) {
           var quoteUrl = '/quotations/' + res.quotation.id + '?generated=1';
-          showDashboardToast('Your Quotation has been successfully generated. <a href=\'' + quoteUrl + '\' style=\'color:#fff;font-weight:700;text-decoration:underline\'>Click here to view it</a>', 'success');
+          showDashboardToast('Your Quotation has been successfully generated. <a href=\'' + quoteUrl + '\' style=\'color:#fff;font-weight:700;text-decoration:underline\'>Click here to view it</a>', 'success', true);
           document.getElementById('pq-quote-num').textContent = res.quotation.quotation_number;
           document.getElementById('pq-view-link').href = quoteUrl;
 
@@ -1145,13 +1145,20 @@ window.MIC_COMPANIES = @json($_companyData);
     } catch(e) { console.warn('Pending quote error:', e); }
   }
 
-  function showDashboardToast(message, type) {
+  function escapeToastHtml(value) {
+    if (value === null || value === undefined) return '';
+    return String(value)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;').replace(/'/g, '&#039;');
+  }
+
+  function showDashboardToast(message, type, isHtml) {
     type = type || 'success';
     // Delegate to the shared toast component's manager (window._toastManager)
     // instead of building a second, independent toast UI — having both fire
     // at once is what produced two success toasts on the same page load.
     if (window._toastManager) {
-      window._toastManager.addToast(message, type);
+      window._toastManager.addToast(message, type, isHtml === true);
       return;
     }
     var container = document.createElement('div');
@@ -1164,11 +1171,11 @@ window.MIC_COMPANIES = @json($_companyData);
     if (type === 'success') {
       toast.style.background = '#059669';
       toast.style.color = 'white';
-      toast.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> ' + message;
+      toast.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> ' + (isHtml === true ? message : escapeToastHtml(message));
     } else {
       toast.style.background = '#DC2626';
       toast.style.color = 'white';
-      toast.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg> ' + message;
+      toast.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg> ' + (isHtml === true ? message : escapeToastHtml(message));
     }
     container.appendChild(toast);
 

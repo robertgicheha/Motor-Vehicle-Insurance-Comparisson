@@ -40,7 +40,7 @@
 @endphp
 <div class="letterhead" style="background:{{ $__meta['color'] }}">
     <div class="lh-left">
-        @php $__logoPath = $__company && $__company->logo ? public_path('storage/' . $__company->logo) : (isset(\App\Models\Company::hardcodedLogoMap()[$__slug]) ? public_path(\App\Models\Company::hardcodedLogoMap()[$__slug]) : ''); @endphp
+        @php $__logoPath = $__company ? ($__company->logoPath() ?? '') : ''; @endphp
         @if($__company && $__logoPath && file_exists($__logoPath))
             <img src="{{ $__logoPath }}" alt="{{ $__brand }}" onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
         @else

@@ -61,7 +61,9 @@ class EmailSetting extends Model
     public function logoPath(): ?string
     {
         if ($this->letterhead_logo) {
-            $path = public_path('storage/' . $this->letterhead_logo);
+            $path = str_starts_with($this->letterhead_logo, 'images/')
+                ? public_path($this->letterhead_logo)
+                : public_path('storage/' . $this->letterhead_logo);
             if (file_exists($path)) {
                 return $path;
             }

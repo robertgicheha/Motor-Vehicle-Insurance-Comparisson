@@ -61,6 +61,14 @@ class RegisteredUserController extends Controller
 
         event(new Registered($user));
 
+        // Welcome the account holder. Wrapped in try/catch (as with the quotation
+        // mail) so an SMTP/API hiccup can never fail an otherwise good signup.
+        try {
+            \Illuminate\Support\Facades\Mail::to($user->email)->send(new \App\Mail\WelcomeMail($user));
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::warning("Failed to send welcome email to {$user->email}: " . $e->getMessage());
+        }
+
         $admins = User::role(['super-admin', 'admin'])->get();
         if ($admins->isNotEmpty()) {
             Notification::send($admins, new \App\Notifications\UserRegistered($user));

@@ -123,7 +123,7 @@ Route::middleware(['auth', 'online', 'role:super-admin|admin'])->prefix('admin')
         Route::post('/upload', [MediaController::class, 'upload'])->name('upload');
         Route::post('/rename', [MediaController::class, 'rename'])->name('rename');
         Route::delete('/{media}', [MediaController::class, 'destroy'])->name('destroy');
-        Route::delete('/file/{path}', [MediaController::class, 'destroy'])->name('destroy-file');
+        Route::delete('/file/{path}', [MediaController::class, 'destroyFile'])->name('destroy-file')->where('path', '.*');
         Route::get('/list', [MediaController::class, 'list'])->name('list');
     });
 

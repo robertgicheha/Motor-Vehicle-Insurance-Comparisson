@@ -296,7 +296,7 @@
                 @if($sticker->status === 'pending')
                     Waiting to be issued &mdash; KYC documents uploaded, click Issue to send to underwriter.
                 @else
-                    Sticker issued &mdash; awaiting underwriter response.
+                    Sticker request was successfull &mdash; awaiting underwriter response.
                 @endif
             </p>
             @if($sticker->email_sent_at)

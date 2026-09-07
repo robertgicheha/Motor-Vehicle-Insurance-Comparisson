@@ -165,7 +165,16 @@ class QuotationController extends Controller
             ? "strftime('%Y-%m-%d', created_at) as day"
             : "DATE(created_at) as day";
 
-        $rows = (clone $baseQuery)
+        // Callers hand us the same builder they paginate with, so it can already
+        // carry an ORDER BY created_at (from ->latest()) and a LIMIT/OFFSET (from
+        // ->paginate()). Both are wrong for an aggregate: MySQL rejects ordering
+        // by a non-grouped column under only_full_group_by, and an inherited LIMIT
+        // would silently truncate the trend. Strip both before grouping.
+        $trendQuery = (clone $baseQuery)->reorder();
+        $trendQuery->getQuery()->limit = null;
+        $trendQuery->getQuery()->offset = null;
+
+        $rows = $trendQuery
             ->select(DB::raw($dateExpr), DB::raw('COUNT(*) as count'))
             ->where('created_at', '>=', now()->subDays(13)->startOfDay())
             ->groupBy('day')

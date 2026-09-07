@@ -17,32 +17,32 @@
     </div>
     <div>
       <h5 class="text-[11px] font-bold uppercase tracking-widest text-white/50 mb-3.5">Company</h5>
-      <a href="#" class="block text-[13px] text-white/75 no-underline mb-2 hover:text-white">About Us</a>
-      <a href="#" class="block text-[13px] text-white/75 no-underline mb-2 hover:text-white">Our Team</a>
-      <a href="#" class="block text-[13px] text-white/75 no-underline mb-2 hover:text-white">Careers</a>
-      <a href="#" class="block text-[13px] text-white/75 no-underline mb-2 hover:text-white">Affiliates</a>
+      <a href="#" class="block text-[13px] text-white/75 no-underline py-2 hover:text-white">About Us</a>
+      <a href="#" class="block text-[13px] text-white/75 no-underline py-2 hover:text-white">Our Team</a>
+      <a href="#" class="block text-[13px] text-white/75 no-underline py-2 hover:text-white">Careers</a>
+      <a href="#" class="block text-[13px] text-white/75 no-underline py-2 hover:text-white">Affiliates</a>
     </div>
     <div>
       <h5 class="text-[11px] font-bold uppercase tracking-widest text-white/50 mb-3.5">Services</h5>
-      <a href="#" class="block text-[13px] text-white/75 no-underline mb-2 hover:text-white">Motor Insurance</a>
-      <a href="#" class="block text-[13px] text-white/75 no-underline mb-2 hover:text-white">Property Cover</a>
-      <a href="#" class="block text-[13px] text-white/75 no-underline mb-2 hover:text-white">Travel Insurance</a>
-      <a href="#" class="block text-[13px] text-white/75 no-underline mb-2 hover:text-white">Medical Cover</a>
+      <a href="#" class="block text-[13px] text-white/75 no-underline py-2 hover:text-white">Motor Insurance</a>
+      <a href="#" class="block text-[13px] text-white/75 no-underline py-2 hover:text-white">Property Cover</a>
+      <a href="#" class="block text-[13px] text-white/75 no-underline py-2 hover:text-white">Travel Insurance</a>
+      <a href="#" class="block text-[13px] text-white/75 no-underline py-2 hover:text-white">Medical Cover</a>
     </div>
     <div>
       <h5 class="text-[11px] font-bold uppercase tracking-widest text-white/50 mb-3.5">Contact</h5>
-      <a href="#" class="block text-[13px] text-white/75 no-underline mb-2 hover:text-white">6th Floor, 9 West</a>
-      <a href="#" class="block text-[13px] text-white/75 no-underline mb-2 hover:text-white">Ring Road Parklands</a>
-      <a href="#" class="block text-[13px] text-white/75 no-underline mb-2 hover:text-white">Nairobi, Kenya</a>
-      <a href="#" class="block text-[13px] text-white/75 no-underline mb-2 hover:text-white">www.micglobalrisks.com</a>
+      <a href="#" class="block text-[13px] text-white/75 no-underline py-2 hover:text-white">6th Floor, 9 West</a>
+      <a href="#" class="block text-[13px] text-white/75 no-underline py-2 hover:text-white">Ring Road Parklands</a>
+      <a href="#" class="block text-[13px] text-white/75 no-underline py-2 hover:text-white">Nairobi, Kenya</a>
+      <a href="#" class="block text-[13px] text-white/75 no-underline py-2 hover:text-white">www.micglobalrisks.com</a>
     </div>
   </div>
   <div class="border-t border-white/10 px-6 sm:px-10 py-[18px] max-w-[1200px] mx-auto flex flex-col sm:flex-row gap-2 sm:gap-0 justify-between items-center text-[12px] text-white/50 text-center sm:text-left">
     <span>&copy; 2026 MIC Global Risks Insurance (Kenya) Limited</span>
     <div>
-      <a href="#" class="text-white/60 no-underline ml-0 sm:ml-5 mr-2.5 sm:mr-0 hover:text-white">Privacy Policy</a>
-      <a href="#" class="text-white/60 no-underline ml-0 sm:ml-5 mr-2.5 sm:mr-0 hover:text-white">Terms &amp; Conditions</a>
-      <a href="#" class="text-white/60 no-underline ml-0 sm:ml-5 hover:text-white">Contact Us</a>
+      <a href="#" class="text-white/60 no-underline ml-0 sm:ml-5 mr-2.5 sm:mr-0 hover:text-white py-1.5 inline-block">Privacy Policy</a>
+      <a href="#" class="text-white/60 no-underline ml-0 sm:ml-5 mr-2.5 sm:mr-0 hover:text-white py-1.5 inline-block">Terms &amp; Conditions</a>
+      <a href="#" class="text-white/60 no-underline ml-0 sm:ml-5 hover:text-white py-1.5 inline-block">Contact Us</a>
     </div>
   </div>
 </footer>

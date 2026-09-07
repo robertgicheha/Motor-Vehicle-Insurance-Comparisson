@@ -154,7 +154,7 @@
                                         <input type="color" name="settings[{{ $key }}]" value="{{ $value }}"
                                                class="w-9 h-7 rounded border border-gray-200 dark:border-gray-600 cursor-pointer">
                                         <input type="text" name="settings[{{ $key }}]" value="{{ $value }}"
-                                               class="flex-1 px-2.5 py-1.5 text-xs rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200 focus:ring-2 focus:ring-blue-500 outline-none">
+                                               class="flex-1 min-w-0 px-2.5 py-1.5 text-xs rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200 focus:ring-2 focus:ring-blue-500 outline-none">
                                     </div>
                                 @elseif($inputType === 'password')
                                     <input type="password" name="settings[{{ $key }}]" value="{{ $value }}"
@@ -163,7 +163,7 @@
                                 @elseif($inputType === 'media')
                                     <div class="flex items-center gap-1.5">
                                         <input type="text" name="settings[{{ $key }}]" value="{{ $value }}"
-                                               class="flex-1 px-2.5 py-1.5 text-xs rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200 focus:ring-2 focus:ring-blue-500 outline-none"
+                                               class="flex-1 min-w-0 px-2.5 py-1.5 text-xs rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200 focus:ring-2 focus:ring-blue-500 outline-none"
                                                id="setting-{{ $key }}" readonly
                                                onclick="openMediaLibrary('setting-{{ $key }}')" style="cursor:pointer">
                                         <button type="button" onclick="openMediaLibrary('setting-{{ $key }}')"

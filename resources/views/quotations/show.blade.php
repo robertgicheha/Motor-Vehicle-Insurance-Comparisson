@@ -28,7 +28,7 @@
                 </button>
                 <span id="hero-copy-feedback" class="hidden text-emerald-300">Copied!</span>
             </div>
-            <div class="inline-flex items-center gap-2">
+            <div class="inline-flex flex-wrap items-center gap-2">
                 <a href="{{ route('quotations.download.pdf', $quotation) }}" target="_blank" class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-white/15 hover:bg-white/25 border border-white/25 text-white rounded-full transition">
                     <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
                     Download
@@ -89,7 +89,11 @@
         <h2 class="text-xs font-bold text-gray-800 dark:text-white mt-0.5">Vehicle Details</h2>
     </div>
 
-    <div class="p-5 grid grid-cols-2 gap-x-6 gap-y-3 text-xs">
+    {{-- auto-fit rather than a fixed 2 columns: this card is also rendered in a
+         narrow (~227px) sidebar column, where two columns leave ~81px each and
+         the label/value pairs spill out of the card. Sizing against the actual
+         container drops it to one column there and keeps two when there's room. --}}
+    <div class="p-5 grid gap-x-6 gap-y-3 text-xs" style="grid-template-columns:repeat(auto-fit,minmax(min(200px,100%),1fr))">
 
         {{-- Registration No --}}
         <div class="flex justify-between items-start gap-2">

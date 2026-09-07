@@ -24,10 +24,10 @@
                     <h2 class="text-xs font-semibold text-gray-800 dark:text-white">Claims</h2>
                     <p class="text-[10px] text-gray-400 mt-0.5">{{ $claims->total() }} total claims</p>
                 </div>
-                <form method="GET" class="flex items-center gap-2">
+                <form method="GET" class="flex flex-wrap items-center gap-2">
                     <input type="text" name="registration_number" value="{{ request('registration_number') }}"
                            placeholder="Search registration..."
-                           class="px-3 py-1.5 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-800 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                           class="min-w-0 flex-1 sm:flex-none px-3 py-1.5 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-800 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
                     <select name="status" class="px-3 py-1.5 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-800 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
                         <option value="">All Statuses</option>
                         @foreach(\App\Models\Claim::statuses() as $value => $label)

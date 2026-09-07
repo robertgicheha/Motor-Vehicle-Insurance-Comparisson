@@ -387,7 +387,7 @@ Compare All Insurers
               Click a card to open the full quotation
             @endif
           </div>
-          <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px">
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(160px,100%),1fr));gap:12px">
 
             @if($mode === 'single' && $selectedCompany)
               @php $cd = $companyData->firstWhere('slug', $selectedCompany->slug); @endphp
@@ -608,7 +608,7 @@ Compare All Insurers
 
         <div id="premium-preview" style="display:none">
           <div style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:14px">Click a card to open the full quotation</div>
-          <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px" id="premium-cards-grid"></div>
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(160px,100%),1fr));gap:12px" id="premium-cards-grid"></div>
         </div>
       </div>
       <div class="btn-group">
@@ -666,7 +666,7 @@ Compare All Insurers
     <div class="section-title">Why Choose Us?</div>
     <div class="section-sub">We make getting motor insurance simple, transparent, and tailored to your needs.</div>
   </div>
-  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:24px;max-width:1100px;margin:0 auto;padding:0 20px">
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(260px,100%),1fr));gap:24px;max-width:1100px;margin:0 auto;padding:0 20px">
     <div style="background:#F9F9FF;border-radius:16px;padding:32px 24px;text-align:center;transition:transform .2s,box-shadow .2s" onmouseover="this.style.transform='translateY(-4px)';this.style.boxShadow='0 8px 25px rgba(0,0,0,0.08)'" onmouseout="this.style.transform='';this.style.boxShadow=''">
       <div style="width:52px;height:52px;background:#003087;border-radius:12px;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;font-size:24px">⚡</div>
       <h3 style="font-size:16px;font-weight:700;margin-bottom:8px;color:#1a1a2e">Instant Quotes</h3>

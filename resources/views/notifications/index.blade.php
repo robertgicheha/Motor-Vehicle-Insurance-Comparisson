@@ -90,8 +90,13 @@
                 <thead>
                     <tr class="bg-gray-50 dark:bg-gray-700/40">
                         <th class="px-5 py-2.5 text-left font-semibold text-gray-400 uppercase tracking-wider text-[10px] w-10">
-                            <input type="checkbox" id="selectAll"
-                                   class="w-3.5 h-3.5 rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                            {{-- padded label wrapper: keeps the 14px control visually
+                                 dense but gives it a ~30px touch target (the input
+                                 itself can't carry a ::after reliably) --}}
+                            <label class="inline-flex items-center justify-center p-2 -m-2 cursor-pointer">
+                                <input type="checkbox" id="selectAll"
+                                       class="w-3.5 h-3.5 rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                            </label>
                         </th>
                         <th class="px-5 py-2.5 text-left font-semibold text-gray-400 uppercase tracking-wider text-[10px]">Status</th>
                         <th class="px-5 py-2.5 text-left font-semibold text-gray-400 uppercase tracking-wider text-[10px]">Message</th>
@@ -103,8 +108,10 @@
                     @forelse($notifications as $notification)
                         <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/30 {{ $tab !== 'trash' && !$notification->read_at ? 'bg-blue-50/30 dark:bg-blue-900/5' : '' }}">
                             <td class="px-5 py-2.5">
-                                <input type="checkbox" value="{{ $notification->id }}"
-                                       class="notification-checkbox w-3.5 h-3.5 rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                                <label class="inline-flex items-center justify-center p-2 -m-2 cursor-pointer">
+                                    <input type="checkbox" value="{{ $notification->id }}"
+                                           class="notification-checkbox w-3.5 h-3.5 rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                                </label>
                             </td>
                             <td class="px-5 py-2.5">
                                 <span class="w-2 h-2 rounded-full inline-block mt-0.5

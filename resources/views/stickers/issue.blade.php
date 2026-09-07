@@ -264,7 +264,7 @@
                                 </div>
                                 <div class="flex items-center gap-2">
                                     <input type="email" x-model="testEmail" placeholder="Enter test email address"
-                                           class="flex-1 px-3 py-2 text-xs border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500">
+                                           class="flex-1 min-w-0 px-3 py-2 text-xs border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500">
                                     <button @click="sendTestEmail()" :disabled="sendingTestEmail || !testEmail"
                                         class="inline-flex items-center gap-1.5 px-3 py-2 text-[11px] font-semibold rounded-lg transition-all duration-200 disabled:opacity-50"
                                         :class="sendingTestEmail ? 'bg-amber-100 text-amber-700' : 'bg-amber-50 hover:bg-amber-100 text-amber-700 dark:bg-amber-900/20 dark:text-amber-400 dark:hover:bg-amber-900/30'">

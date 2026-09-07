@@ -107,7 +107,20 @@ body {
   text-transform: uppercase;
   color: #7a8baa;
   margin: 20px 0 10px;
+  /* Some of these labels carry a float:right control cluster (auto-refresh /
+     refresh). As a plain block the label doesn't contain that float, so it
+     escapes downward; the next sibling is a grid, which establishes its own
+     formatting context and therefore refuses to overlap the float — narrowing
+     to the leftover width (~96px on a 375px phone) and crushing the activity
+     cards. Flex contains it, and lets the controls wrap below when narrow. */
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
 }
+/* Only the activity labels carry a child span (the control cluster); push it
+   to the right edge so the desktop layout matches the old float:right. */
+.db-section-label > span { margin-left: auto; }
 
 /* ── KPI GRID ── */
 .db-kpi-grid {
@@ -338,18 +351,19 @@ body {
 
 
 /* ── COMPANY GRID ── */
+/* This grid is used in two very different contexts: full width under
+   .db-main-content, and nested inside a .db-card that is itself one of three
+   columns of .db-chart-grid-3col (~195px wide). Viewport media queries can't
+   tell those apart — at 1024px both went to 3 columns, so the nested one gave
+   each card 58px and the company name was ellipsed down to ~2 characters.
+   auto-fit + minmax sizes against the ACTUAL container instead: 1 column when
+   nested, 3 across at full width, without any breakpoint guessing. */
 .db-company-grid {
   display: grid;
-  grid-template-columns: 1fr;
+  /* min(200px,100%) rather than a bare 200px: a hard 200px floor would itself
+     overflow a container narrower than that (the nested card is ~195px). */
+  grid-template-columns: repeat(auto-fit, minmax(min(200px, 100%), 1fr));
   gap: 10px;
-}
-
-@media (min-width: 768px) {
-  .db-company-grid { grid-template-columns: repeat(2, 1fr); }
-}
-
-@media (min-width: 1024px) {
-  .db-company-grid { grid-template-columns: repeat(3, 1fr); }
 }
 
 .db-company-card {
@@ -762,7 +776,14 @@ body {
 .db-layout { display:flex; gap:20px; align-items:flex-start; }
 .db-main-content { flex:1; min-width:0; }
 .db-right-sidebar { width:240px; flex-shrink:0; position:sticky; top:80px; }
-@media (max-width:1024px) { .db-layout { flex-direction:column; } .db-right-sidebar { width:100%; position:static; } }
+/* align-items:flex-start above is for the ROW layout (top-aligns the sidebar).
+   Once this stacks to a column, align-items governs the CROSS axis — i.e. width —
+   so leaving it as flex-start makes every child size to its max-content width and
+   blow past the viewport. Reset it to stretch so children fill the column. */
+@media (max-width:1024px) {
+  .db-layout { flex-direction:column; align-items:stretch; }
+  .db-right-sidebar { width:100%; position:static; }
+}
 
 .cta-card {
   background:#fff; border-radius:12px; border:0.5px solid #dde4ef; padding:16px;

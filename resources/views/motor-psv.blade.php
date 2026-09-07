@@ -36,7 +36,7 @@
   .benefit-card h4{font-size:14px;font-weight:600;margin-bottom:6px}
   .benefit-card p{font-size:12.5px;color:var(--text-muted);line-height:1.5}
   .rate-cards-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:20px}
-  .rate-card{background:#fff;border:1.5px solid var(--border);border-radius:var(--radius);padding:20px;text-align:center}
+  .rate-card{background:#fff;border:1.5px solid var(--border);border-radius:var(--radius);padding:20px;text-align:center;min-width:0}
   .rate-card .rate-value{font-size:28px;font-weight:700;color:var(--blue);margin:8px 0 4px}
   .rate-card .rate-label{font-size:12px;color:var(--text-muted);margin-bottom:6px}
   .rate-card .rate-desc{font-size:11px;color:var(--text-muted);line-height:1.4}
@@ -72,6 +72,7 @@
   .contact-form input:focus,.contact-form textarea:focus,.contact-form select:focus{border-color:var(--blue)}
   .contact-form .btn-submit{background:var(--blue);color:#fff;padding:10px 28px;border:none;border-radius:30px;font-weight:600;font-size:13px;cursor:pointer}
   .contact-form .btn-submit:hover{background:var(--blue-dark)}
+  @media(max-width:420px){.rate-card{padding:14px 10px}.rate-card .rate-value{font-size:20px}}
   @media(max-width:768px){.benefits-grid,.rate-cards-grid{grid-template-columns:1fr 1fr}.company-compare,.steps-alt,.contact-grid{grid-template-columns:1fr}.page-hero-content{padding:40px 24px}.page-section{padding:40px 20px}.rate-cards-grid{grid-template-columns:repeat(2,1fr)}}
 </style>
 </head>
@@ -346,7 +347,7 @@
 
         <div id="premium-preview-psv" style="display:none">
           <div style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:14px">Click a card to open the full quotation</div>
-          <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px" id="premium-cards-grid-psv"></div>
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(160px,100%),1fr));gap:12px" id="premium-cards-grid-psv"></div>
         </div>
       </div>
       <div class="btn-group">

@@ -1148,3 +1148,63 @@
   background:linear-gradient(135deg,var(--blue-light),#F0F9FF);
   border:1.5px solid var(--blue);border-radius:var(--radius-lg);padding:28px;margin-top:8px;
 }
+
+/* ─────────────────────────────────────────────────────────────────────────
+   MOBILE / TABLET REFINEMENTS
+   Appended last so these win over the equally-specific desktop rules above
+   without having to restructure them.
+   ───────────────────────────────────────────────────────────────────────── */
+
+/* The 3-step wizard header ("Personal Details / Vehicle Details / Quote
+   Generation") is a flex row of three equal columns with 20px side padding.
+   On a phone that leaves ~57px of text width per step, so the labels were
+   being cut off by the container's overflow:hidden. Tighten the padding and
+   type, let the labels wrap, and drop the decorative "›" (it is positioned
+   at right:-6px and contributes to the overflow). */
+@media (max-width: 700px) {
+  .form-steps,
+  .mic-motor .modern-section.quote-form .form-steps {
+    margin-bottom: 24px;
+  }
+  .form-step,
+  .mic-motor .modern-section.quote-form .form-step {
+    padding: 10px 6px;
+    min-width: 0;            /* let the flex items shrink below min-content */
+  }
+  .step-num,
+  .mic-motor .modern-section.quote-form .form-step .step-num {
+    font-size: 9px;
+    letter-spacing: .04em;
+  }
+  .step-name,
+  .mic-motor .modern-section.quote-form .form-step .step-name {
+    font-size: 11px;
+    line-height: 1.25;
+    margin-top: 1px;
+    overflow-wrap: break-word;
+  }
+  .form-step:not(:last-child)::after {
+    display: none;
+  }
+}
+
+/* Carousel dots are a 10px visual target — well under the 24x24 CSS px minimum
+   (WCAG 2.5.8) and far from a comfortable thumb target. Rather than enlarge the
+   dot (which would change the design), extend the *hit area* with a transparent
+   ::after. The gap is widened to match: at the original 10px gap the dot centres
+   sit 20px apart, so 32px hit areas would overlap badly and taps would land on
+   the wrong slide. 10px dot + 22px gap puts centres 32px apart, so the 32px
+   targets sit edge to edge without overlapping. */
+@media (max-width: 700px) {
+  .hero-dots { gap: 22px; }
+  .hero-dot { position: relative; }
+  .hero-dot::after {
+    content: '';
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: 32px;
+    height: 32px;
+  }
+}

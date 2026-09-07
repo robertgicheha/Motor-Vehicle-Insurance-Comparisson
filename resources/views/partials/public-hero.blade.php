@@ -1,9 +1,9 @@
 <section class="bg-gradient-to-r from-[#004f8c] via-[#0066B3] to-[#0091d5] px-10 py-[52px] text-white relative overflow-hidden">
   <div class="relative z-10 max-w-[1100px] mx-auto">
     <div class="flex items-center gap-2 text-[12px] text-white/65 mb-[18px]">
-      <a href="{{ url('/') }}" class="text-white/75 hover:text-white no-underline">Home</a>
+      <a href="{{ url('/') }}" class="text-white/75 hover:text-white no-underline py-1 inline-block">Home</a>
       <span class="opacity-50">&rsaquo;</span>
-      <a href="{{ url('/motor-quote') }}" class="text-white/75 hover:text-white no-underline">Motor Quote</a>
+      <a href="{{ url('/motor-quote') }}" class="text-white/75 hover:text-white no-underline py-1 inline-block">Motor Quote</a>
       <span class="opacity-50">&rsaquo;</span>
       <span>Quotation</span>
     </div>

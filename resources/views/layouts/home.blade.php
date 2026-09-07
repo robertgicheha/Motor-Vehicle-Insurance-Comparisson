@@ -356,7 +356,7 @@
         <div class="section-sub" style="text-align:center">We found a recent quotation on your account. Would you like to regenerate it for the same car, or start fresh?</div>
       </div>
 
-      <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:16px;max-width:720px;margin:24px auto 0">
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(280px,100%),1fr));gap:16px;max-width:720px;margin:24px auto 0">
         <div class="preview-card" onclick="regenerateSameCar()" style="background:white;border:1.5px solid var(--border);border-radius:var(--radius);padding:24px 18px;text-align:center;cursor:pointer;transition:box-shadow .2s,transform .15s">
           <div style="font-size:28px;margin-bottom:10px">🔁</div>
           <div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:6px">Yes, regenerate this quote</div>
@@ -556,7 +556,7 @@
 
         <div id="premium-preview" style="display:none">
           <div style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:14px">Click a card to open the full quotation</div>
-          <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px" id="premium-cards-grid"></div>
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(160px,100%),1fr));gap:12px" id="premium-cards-grid"></div>
         </div>
       </div>
       <div class="btn-group">
@@ -785,7 +785,7 @@
 
         <div id="premium-preview-psv" style="display:none">
           <div style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:14px">Click a card to open the full quotation</div>
-          <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px" id="premium-cards-grid-psv"></div>
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(160px,100%),1fr));gap:12px" id="premium-cards-grid-psv"></div>
         </div>
       </div>
       <div class="btn-group">
@@ -1065,7 +1065,7 @@
 
         <div id="premium-preview-private" style="display:none">
           <div style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:14px">Click a card to open the full quotation</div>
-          <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px" id="premium-cards-grid-private"></div>
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(160px,100%),1fr));gap:12px" id="premium-cards-grid-private"></div>
         </div>
       </div>
       <div class="btn-group">
@@ -1371,7 +1371,7 @@
   
         <div id="premium-preview-vt" style="display:none">
           <div style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:14px">Click a card to open the full quotation</div>
-          <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px" id="premium-cards-grid-vt"></div>
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(160px,100%),1fr));gap:12px" id="premium-cards-grid-vt"></div>
         </div>
       </div>
       <div class="btn-group">
@@ -1578,7 +1578,7 @@
  
         <div id="premium-preview" style="display:none">
           <div style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:14px">Click a card to open the full quotation</div>
-          <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px">
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(160px,100%),1fr));gap:12px">
 
             @foreach ($__privateCompanyData as $cd)
             <div class="preview-card" onclick="guestGuard(function(){ openQuotePage('{{ $cd['slug'] }}'); })" style="background:white;border:1.5px solid var(--border);border-radius:var(--radius);padding:16px 14px;text-align:center;cursor:pointer;transition:box-shadow .2s,transform .15s">
@@ -1664,7 +1664,7 @@
     <div class="section-title">Why Choose Us?</div>
     <div class="section-sub">We make getting motor insurance simple, transparent, and tailored to your needs.</div>
   </div>
-  <div class="why-choose-grid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:24px;max-width:1100px;margin:0 auto;padding:0 20px">
+  <div class="why-choose-grid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(260px,100%),1fr));gap:24px;max-width:1100px;margin:0 auto;padding:0 20px">
     <div style="background:#F9F9FF;border-radius:16px;padding:32px 24px;text-align:center;transition:transform .2s,box-shadow .2s" onmouseover="this.style.transform='translateY(-4px)';this.style.boxShadow='0 8px 25px rgba(0,0,0,0.08)'" onmouseout="this.style.transform='';this.style.boxShadow=''">
       <div style="width:52px;height:52px;background:#003087;border-radius:12px;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;font-size:24px">⚡</div>
       <h3 style="font-size:16px;font-weight:700;margin-bottom:8px;color:#1a1a2e">Instant Quotes</h3>

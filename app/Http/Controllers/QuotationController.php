@@ -161,11 +161,6 @@ class QuotationController extends Controller
      */
     protected function buildTrend($baseQuery)
     {
-        $dbDriver = DB::connection()->getDriverName();
-        $dateExpr = $dbDriver === 'sqlite'
-            ? "strftime('%Y-%m-%d', created_at) as day"
-            : "DATE(created_at) as day";
-
         // Callers hand us the same builder they paginate with, so it can already
         // carry an ORDER BY created_at (from ->latest()) and a LIMIT/OFFSET (from
         // ->paginate()). Both are wrong for an aggregate: MySQL rejects ordering
@@ -175,23 +170,24 @@ class QuotationController extends Controller
         $trendQuery->getQuery()->limit = null;
         $trendQuery->getQuery()->offset = null;
 
-        $rows = $trendQuery
-            ->select(DB::raw($dateExpr), DB::raw('COUNT(*) as count'))
+        // Grouped in PHP (not via a driver-specific SQL date function like
+        // strftime/DATE) so this never breaks depending on which database
+        // driver is actually active — see the strftime-on-MySQL production
+        // incident this replaced.
+        $counts = $trendQuery
             ->where('created_at', '>=', now()->subDays(13)->startOfDay())
-            ->groupBy('day')
-            ->orderBy('day')
-            ->get()
-            ->keyBy('day');
+            ->pluck('created_at')
+            ->countBy(fn($createdAt) => $createdAt->toDateString());
 
         $labels = [];
-        $counts = [];
+        $countsArr = [];
         for ($i = 13; $i >= 0; $i--) {
             $day = now()->subDays($i);
             $labels[] = $day->format('d M');
-            $counts[] = (int) ($rows[$day->toDateString()]->count ?? 0);
+            $countsArr[] = (int) ($counts[$day->toDateString()] ?? 0);
         }
 
-        return ['labels' => $labels, 'counts' => $counts];
+        return ['labels' => $labels, 'counts' => $countsArr];
     }
 
     public function create()

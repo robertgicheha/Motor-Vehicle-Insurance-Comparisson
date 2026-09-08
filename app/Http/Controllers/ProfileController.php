@@ -2,12 +2,18 @@
 
 namespace App\Http\Controllers;
 
+use App\Mail\EmailChangedMail;
+use App\Mail\PasswordChangedMail;
 use App\Mail\PendingEmailVerification;
 use App\Models\User;
+use App\Notifications\UserEmailChanged;
+use App\Notifications\UserPasswordChanged;
 use App\Services\AuditService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Facades\Validator;
 
@@ -102,6 +108,8 @@ class ProfileController extends Controller
             return redirect()->route('profile.edit')->withErrors(['email' => 'No pending email change found.']);
         }
 
+        $previousEmail = $user->email;
+
         $user->update([
             'email' => $user->pending_email,
             'pending_email' => null,
@@ -109,6 +117,21 @@ class ProfileController extends Controller
         ]);
 
         AuditService::activity('email_changed', "User {$user->name} changed email address");
+
+        try {
+            Mail::to($user->email)->send(new EmailChangedMail($user, $previousEmail));
+        } catch (\Throwable $e) {
+            Log::warning("Failed to send email-changed confirmation to {$user->email}: " . $e->getMessage());
+        }
+
+        $admins = User::role(['super-admin', 'admin'])->get();
+        if ($admins->isNotEmpty()) {
+            try {
+                Notification::send($admins, new UserEmailChanged($user, $previousEmail));
+            } catch (\Throwable $e) {
+                Log::warning("Failed to notify admins that {$user->email} changed their email: " . $e->getMessage());
+            }
+        }
 
         return redirect()->route('profile.edit')->with('profile_success', 'Your email address has been updated successfully.');
     }
@@ -124,8 +147,24 @@ class ProfileController extends Controller
             return back()->withErrors($validator);
         }
 
-        auth()->user()->update(['password' => Hash::make($request->password)]);
+        $user = auth()->user();
+        $user->update(['password' => Hash::make($request->password)]);
         AuditService::activity('password_changed', 'User changed password');
+
+        try {
+            Mail::to($user->email)->send(new PasswordChangedMail($user));
+        } catch (\Throwable $e) {
+            Log::warning("Failed to send password-changed confirmation to {$user->email}: " . $e->getMessage());
+        }
+
+        $admins = User::role(['super-admin', 'admin'])->get();
+        if ($admins->isNotEmpty()) {
+            try {
+                Notification::send($admins, new UserPasswordChanged($user));
+            } catch (\Throwable $e) {
+                Log::warning("Failed to notify admins that {$user->email} changed their password: " . $e->getMessage());
+            }
+        }
 
         return back()->with('password_success', 'Password updated.');
     }

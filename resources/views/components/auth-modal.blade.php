@@ -93,7 +93,9 @@
       headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' }
     }).then(function(response) {
       return response.json().then(function(data) {
-        if (response.ok) {
+        if (response.ok && data.pending_verification) {
+          window.location.href = data.redirect || '{{ route("register.pending") }}';
+        } else if (response.ok) {
           window.location.href = data.redirect || self.redirectTo;
         } else {
           self.loading = false;

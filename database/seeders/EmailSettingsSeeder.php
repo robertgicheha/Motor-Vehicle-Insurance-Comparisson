@@ -19,13 +19,14 @@ class EmailSettingsSeeder extends Seeder
                     . '<tr><td><strong>Password</strong></td><td><code>{{ password }}</code></td></tr>'
                     . '</table>'
                     . '<p style="text-align:center;margin-top:16px"><a href="{{ login_url }}" class="btn">Login to Portal</a></p>'
-                    . '<p>For security reasons, we strongly recommend changing your password after your first login.</p>',
+                    . '<p>For security reasons, please navigate to the Profile section after logging in to change your password.</p>',
                 'type' => 'user',
             ],
             'quotation' => [
-                'subject' => 'Insurance Quotation - {{ quotation_number }}',
+                'subject' => 'A Quotation {{ quotation_number }} has been created successfully',
                 'body' => '<h2>Dear {{ customer_name }},</h2>'
-                    . '<p>Thank you for choosing <strong>{{ company }}</strong>. Your comprehensive motor insurance quotation has been generated successfully.</p>'
+                    . '<p>A quotation with the quotation no <strong>{{ quotation_number }}</strong> has been generated successfully.</p>'
+                    . '<p>Thank you for choosing <strong>{{ company }}</strong>.</p>'
                     . '<div class="premium-box"><div class="label">Total Premium</div><div class="amount">KES {{ total_premium }}</div></div>'
                     . '<table>'
                     . '<tr><td>Quotation Number</td><td><strong>{{ quotation_number }}</strong></td></tr>'
@@ -65,6 +66,20 @@ class EmailSettingsSeeder extends Seeder
                     . '<p style="text-align:center;margin-top:16px"><a href="{{ dashboard_url }}" class="btn">Go to Dashboard</a></p>'
                     . '<p>If you signed up with Google, please complete your profile to unlock all features.</p>'
                     . '<p style="text-align:center"><a href="{{ profile_url }}" class="btn" style="background:#0f172a">Complete Profile</a></p>',
+                'type' => 'user',
+            ],
+            'account_pending_verification' => [
+                'subject' => 'Your Account Has Been Created — Pending Verification',
+                'body' => '<h2>Hello {{ user_name }},</h2>'
+                    . '<p>Thank you for creating an account with the <strong>Motor Vehicle Insurance Portal</strong>. Your account has been created successfully, but it is currently <strong>pending verification</strong> by our team.</p>'
+                    . '<p>You will receive another email as soon as your account has been verified — after that you\'ll be able to log in, generate quotations, and request stickers.</p>',
+                'type' => 'user',
+            ],
+            'account_verified' => [
+                'subject' => 'Your Account Has Been Verified',
+                'body' => '<h2>Hello {{ user_name }},</h2>'
+                    . '<p>Great news — your account has been verified successfully. You can now log in to the dashboard, generate quotations, and request stickers.</p>'
+                    . '<p style="text-align:center;margin-top:16px"><a href="{{ login_url }}" class="btn">Login to Portal</a></p>',
                 'type' => 'user',
             ],
             'pending_email_verification' => [

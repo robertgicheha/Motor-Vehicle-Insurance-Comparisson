@@ -43,10 +43,15 @@
     <div id="mediaGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
         @forelse($media as $item)
         <div class="media-item group relative bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden hover:shadow-md transition" data-filename="{{ strtolower($item['original_filename'] ?? $item['filename']) }}">
-            <div class="aspect-square bg-gray-50 dark:bg-gray-700 flex items-center justify-center p-2">
+            <div class="aspect-square bg-gray-50 dark:bg-gray-700 flex items-center justify-center p-2 relative">
                 <img src="{{ $item['url'] }}" alt="{{ $item['original_filename'] ?? $item['filename'] }}" class="max-w-full max-h-full object-contain"
                      onclick="previewImage('{{ $item['url'] }}', '{{ $item['original_filename'] ?? $item['filename'] }}')"
+                     onerror="this.style.display='none'; this.nextElementSibling.style.display='flex'"
                      style="cursor:pointer">
+                <div class="absolute inset-0 flex-col items-center justify-center text-center px-2" style="display:none" title="{{ $item['original_filename'] ?? $item['filename'] }}">
+                    <svg class="w-8 h-8 text-red-300 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z"/></svg>
+                    <p class="text-[9px] text-red-400 leading-tight break-all">Failed to load<br>{{ Str::limit($item['original_filename'] ?? $item['filename'], 20) }}</p>
+                </div>
             </div>
             <div class="p-2">
                 <p class="text-[10px] text-gray-600 dark:text-gray-400 truncate" title="{{ $item['original_filename'] ?? $item['filename'] }}">{{ $item['original_filename'] ?? $item['filename'] }}</p>

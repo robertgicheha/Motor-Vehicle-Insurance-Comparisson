@@ -48,7 +48,13 @@ class RegisteredUserController extends Controller
             'email' => $request->email,
             'mobile' => $request->mobile,
             'password' => Hash::make($request->password),
-            'is_active' => true,
+            // Self-registered accounts start deactivated and unverified — an
+            // admin must approve them from the Pending Users screen before
+            // they can log in (see LoginRequest::authenticate()'s is_active
+            // check). Admin-created and Google/Socialite accounts are
+            // created active + verified elsewhere and are unaffected.
+            'is_active' => false,
+            'verified_at' => null,
         ]);
 
         // syncRoles (not assignRole): guarantees a self-registered account ends up
@@ -57,47 +63,36 @@ class RegisteredUserController extends Controller
         $user->syncRoles(['user']);
 
         \App\Services\AuditService::log('create', 'User', $user->id, null, ['email' => $user->email, 'method' => 'self_registration'], $user->id);
-        \App\Services\AuditService::activity('user_registered', "New user {$user->name} ({$user->email}) registered", 'info', $user->id);
+        \App\Services\AuditService::activity('user_registered', "New user {$user->name} ({$user->email}) registered — pending verification", 'info', $user->id);
 
         event(new Registered($user));
 
-        // Welcome the account holder. Wrapped in try/catch (as with the quotation
-        // mail) so an SMTP/API hiccup can never fail an otherwise good signup.
+        // Let the user know their account is pending verification. Wrapped in
+        // try/catch (as with the quotation mail) so an SMTP/API hiccup can
+        // never fail an otherwise good signup.
         try {
-            \Illuminate\Support\Facades\Mail::to($user->email)->send(new \App\Mail\WelcomeMail($user));
+            \Illuminate\Support\Facades\Mail::to($user->email)->send(new \App\Mail\AccountPendingVerificationMail($user));
         } catch (\Throwable $e) {
-            \Illuminate\Support\Facades\Log::warning("Failed to send welcome email to {$user->email}: " . $e->getMessage());
+            \Illuminate\Support\Facades\Log::warning("Failed to send pending-verification email to {$user->email}: " . $e->getMessage());
         }
 
         $admins = User::role(['super-admin', 'admin'])->get();
         if ($admins->isNotEmpty()) {
-            Notification::send($admins, new \App\Notifications\UserRegistered($user));
-        }
-
-        Auth::login($user);
-
-         // Detect city from IP for weather personalisation
-        try {
-            $ip = request()->ip();
-            // Use ip-api.com (free, no key needed)
-            $geo = \Illuminate\Support\Facades\Http::timeout(3)
-                ->get("http://ip-api.com/json/{$ip}", ['fields' => 'city,lat,lon,status']);
-            if ($geo->successful() && $geo->json('status') === 'success') {
-                session(['weather_city' => $geo->json('city')]);
+            try {
+                Notification::send($admins, new \App\Notifications\UserRegistered($user, pendingVerification: true));
+            } catch (\Throwable $e) {
+                \Illuminate\Support\Facades\Log::warning("Failed to notify admins of pending registration for {$user->email}: " . $e->getMessage());
             }
-        } catch (\Exception $e) {
-            // silently fail — weather will default to Nairobi
         }
 
         if ($request->wantsJson()) {
-            $redirect = $request->input('redirect_to', route('dashboard'));
-            return response()->json(['redirect' => $redirect]);
+            return response()->json([
+                'pending_verification' => true,
+                'redirect' => route('register.pending'),
+                'message' => 'Your account has been created and is pending verification. You will receive an email once it has been verified.',
+            ]);
         }
 
-        if ($redirectTo = $request->input('redirect_to')) {
-            return redirect($redirectTo);
-        }
-
-        return redirect(route('dashboard', absolute: false));
+        return redirect()->route('register.pending');
     }
 }

@@ -10,6 +10,7 @@ class CertificateDocument extends Model
     protected $fillable = [
         'sticker_id',
         'document_type',
+        'document_label',
         'filename',
         'path',
         'mime_type',

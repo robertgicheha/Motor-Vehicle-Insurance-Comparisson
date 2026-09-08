@@ -1,5 +1,5 @@
 <x-app-layout>
-    <div class="max-w-3xl mx-auto space-y-5 mt-10 fade-in">
+    <div class="max-w-7xl mx-auto space-y-5 mt-10 fade-in">
 
         {{-- ─── HERO ─────────────────────────────────────────────────────────── --}}
         <div class="rounded-2xl bg-micblue px-6 py-7 shadow-sm">

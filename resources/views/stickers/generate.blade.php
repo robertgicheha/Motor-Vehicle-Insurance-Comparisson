@@ -44,7 +44,7 @@
                     <label class="block text-[12px] font-bold text-gray-700 mb-1.5">Customer Email</label>
                     <input type="email" name="customer_email" value="{{ old('customer_email') }}" placeholder="e.g. john@example.com"
                            class="w-full px-4 py-2.5 rounded-lg border border-gray-300 text-sm font-medium focus:border-[#0066B3] focus:ring-2 focus:ring-[#0066B3]/20 outline-none transition">
-                    <p class="text-[11px] text-gray-400 mt-1">Sticker PDF will be emailed if provided</p>
+                    <p class="text-[11px] text-gray-400 mt-1">For your records</p>
                     @error('customer_email') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
                 </div>
             </div>

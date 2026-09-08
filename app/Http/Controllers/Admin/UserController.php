@@ -115,6 +115,7 @@ class UserController extends Controller
             'mobile' => $request->mobile,
             'gender' => $request->gender,
             'is_active' => true,
+            'verified_at' => now(),
             'profile_completed' => true,
         ]);
 
@@ -135,6 +136,8 @@ class UserController extends Controller
                 AuditService::activity('credentials_email_failed', "Failed to email login credentials to {$user->name} ({$user->email}): {$e->getMessage()}");
                 $emailStatus = ' However, the credentials email failed to send — use "Send via Email" below to retry.';
             }
+
+            $this->notifyAdminsOfCredentials($user, $generatedPassword, auth()->user());
         }
 
         return redirect()->route('admin.users.index')
@@ -323,6 +326,26 @@ class UserController extends Controller
         \Mail::to($user->email)->send(new \App\Mail\UserCredentialsMail($user, $request->password));
         \App\Services\AuditService::activity('credentials_emailed', "Login credentials emailed to new user {$user->name} ({$user->email})");
 
+        $this->notifyAdminsOfCredentials($user, $request->password, auth()->user());
+
         return back()->with('success', 'Login credentials sent to ' . $user->email);
+    }
+
+    /**
+     * The admin/superadmin get their own copy of a newly created account's
+     * credentials — separate from the recipient's own email, and never
+     * allowed to fail the request it's called from.
+     */
+    protected function notifyAdminsOfCredentials(User $user, string $password, User $actor): void
+    {
+        $admins = User::role(['super-admin', 'admin'])->get();
+
+        foreach ($admins as $admin) {
+            try {
+                \Mail::to($admin->email)->send(new \App\Mail\UserCredentialsAdminMail($user, $password, $admin));
+            } catch (\Throwable $e) {
+                AuditService::activity('credentials_admin_email_failed', "Failed to notify admin {$admin->email} of credentials for {$user->name} ({$user->email}): {$e->getMessage()}");
+            }
+        }
     }
 }

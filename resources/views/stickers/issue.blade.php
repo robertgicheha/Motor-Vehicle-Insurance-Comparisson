@@ -114,7 +114,126 @@
                 </div>
             </div>
 
+            {{-- Cover Details: client type + cover period — captured before KYC
+                 upload unlocks, since the underwriter needs this alongside the
+                 documents themselves. --}}
             <div x-show="selectedQuotation" x-transition x-cloak
+                 class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+                <div class="px-5 py-4 border-b border-gray-100 dark:border-gray-700">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-2">
+                            <div class="w-6 h-6 rounded-full flex items-center justify-center" :class="coverDetailsSaved ? 'bg-emerald-100 dark:bg-emerald-900/30' : 'bg-blue-100 dark:bg-blue-900/30'">
+                                <svg x-show="!coverDetailsSaved" class="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                                <svg x-show="coverDetailsSaved" class="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+                            </div>
+                            <div>
+                                <h2 class="text-xs font-semibold text-gray-800 dark:text-white">Cover Details</h2>
+                                <p class="text-[10px] text-gray-400 mt-0.5">Client type and period of cover — required before KYC upload</p>
+                            </div>
+                        </div>
+                        <button x-show="coverDetailsSaved" @click="editCoverDetails()" type="button"
+                            class="text-[10px] font-semibold text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 transition">Edit</button>
+                    </div>
+                </div>
+
+                <div x-show="!coverDetailsSaved" x-transition class="p-5 space-y-5">
+                    <div>
+                        <label class="block text-[11px] font-semibold text-gray-700 dark:text-gray-300 mb-2">Client Type</label>
+                        <div class="grid grid-cols-2 gap-3">
+                            <label class="relative flex items-center gap-2.5 p-3 rounded-xl border-2 cursor-pointer transition-all duration-200"
+                                :class="clientType === 'individual' ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20' : 'border-gray-200 dark:border-gray-600 hover:border-blue-300'">
+                                <input type="radio" name="clientType" value="individual" x-model="clientType" class="w-4 h-4 text-blue-600 focus:ring-blue-500">
+                                <div>
+                                    <p class="text-xs font-semibold text-gray-800 dark:text-white">Individual</p>
+                                    <p class="text-[9px] text-gray-400 dark:text-gray-500">Vehicle owned by a person</p>
+                                </div>
+                            </label>
+                            <label class="relative flex items-center gap-2.5 p-3 rounded-xl border-2 cursor-pointer transition-all duration-200"
+                                :class="clientType === 'corporate' ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20' : 'border-gray-200 dark:border-gray-600 hover:border-blue-300'">
+                                <input type="radio" name="clientType" value="corporate" x-model="clientType" class="w-4 h-4 text-blue-600 focus:ring-blue-500">
+                                <div>
+                                    <p class="text-xs font-semibold text-gray-800 dark:text-white">Corporate</p>
+                                    <p class="text-[9px] text-gray-400 dark:text-gray-500">Vehicle under corporate ownership</p>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div>
+                        <div class="flex items-center justify-between mb-2">
+                            <label class="block text-[11px] font-semibold text-gray-700 dark:text-gray-300">Dates of Cover</label>
+                            {{-- Conspicuous quick-action: 1-year cover starting today, one click. --}}
+                            <button type="button" @click="startCoverFromToday()"
+                                class="inline-flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-bold bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white rounded-lg shadow-sm transition">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                                Start From Today (1 Year)
+                            </button>
+                        </div>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                            <div>
+                                <span class="block text-[10px] text-gray-500 dark:text-gray-400 mb-1">Policy Start Date</span>
+                                <input type="date" x-model="coverStartDate" @change="onCoverInputsChanged()"
+                                    class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                            </div>
+                            <div>
+                                <span class="block text-[10px] text-gray-500 dark:text-gray-400 mb-1">Enter Duration</span>
+                                <div class="flex gap-2">
+                                    <select x-model="coverDurationUnit" @change="onDurationUnitChanged()"
+                                        class="w-1/2 px-2 py-2 text-sm border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                        <option value="week">Week</option>
+                                        <option value="month">Month</option>
+                                        <option value="year">Year</option>
+                                    </select>
+                                    <select x-model.number="coverDurationValue" @change="onCoverInputsChanged()" x-show="coverDurationUnit !== 'year'"
+                                        class="w-1/2 px-2 py-2 text-sm border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                        <template x-for="n in (coverDurationUnit === 'week' ? 52 : 12)" :key="n">
+                                            <option :value="n" x-text="n"></option>
+                                        </template>
+                                    </select>
+                                    <div x-show="coverDurationUnit === 'year'" class="w-1/2 px-3 py-2 text-sm border border-gray-200 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-500 dark:text-gray-400">1 Year</div>
+                                </div>
+                            </div>
+                            <div>
+                                <span class="block text-[10px] text-gray-500 dark:text-gray-400 mb-1">Policy End Date</span>
+                                <div class="relative">
+                                    <input type="text" readonly :value="coverEndDateDisplay || '—'"
+                                        class="w-full px-3 py-2 text-sm border border-gray-200 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-300 font-semibold cursor-not-allowed">
+                                    <svg x-show="calculatingEndDate" class="animate-spin w-3.5 h-3.5 text-blue-500 absolute right-3 top-1/2 -translate-y-1/2" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
+                                </div>
+                                <p class="text-[9px] text-gray-400 mt-1">Calculated automatically</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div x-show="coverDetailsError" x-transition class="flex items-center gap-2 text-xs text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 rounded-lg px-3 py-2">
+                        <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        <span x-text="coverDetailsError"></span>
+                    </div>
+
+                    <button @click="saveCoverDetails()" :disabled="savingCoverDetails" type="button"
+                        class="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white rounded-lg transition">
+                        <svg x-show="!savingCoverDetails" class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                        <svg x-show="savingCoverDetails" class="animate-spin w-3.5 h-3.5" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
+                        <span x-text="savingCoverDetails ? 'Saving...' : 'Save &amp; Continue to Documents'"></span>
+                    </button>
+                </div>
+
+                <div x-show="coverDetailsSaved" x-transition class="px-5 py-4 flex flex-wrap gap-x-8 gap-y-2">
+                    <div>
+                        <p class="text-[9px] font-semibold uppercase tracking-wider text-gray-400">Client Type</p>
+                        <p class="text-xs font-semibold text-gray-800 dark:text-white capitalize" x-text="clientType"></p>
+                    </div>
+                    <div>
+                        <p class="text-[9px] font-semibold uppercase tracking-wider text-gray-400">Policy Period</p>
+                        <p class="text-xs font-semibold text-gray-800 dark:text-white">
+                            <span x-text="coverStartDate || 'Not set'"></span> &rarr; <span x-text="coverEndDateDisplay || 'Not set'"></span>
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <div x-show="selectedQuotation && coverDetailsSaved" x-transition x-cloak
                  class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
                 <div class="px-5 py-4 border-b border-gray-100 dark:border-gray-700">
                     <div class="flex items-center justify-between">
@@ -130,106 +249,99 @@
                         <div class="flex items-center gap-2">
                             <span class="text-[10px] font-semibold text-gray-500 dark:text-gray-400" x-text="uploadedCount + '/3'"></span>
                             <div class="flex gap-1">
-                                <template x-for="docType in ['id_copy', 'kra_pin', 'logbook']" :key="'dot-'+docType">
+                                <template x-for="docType in (clientType === 'corporate' ? ['kra_pin', 'certificate_of_incorporation', 'other'] : ['id_copy', 'kra_pin', 'logbook'])" :key="'dot-'+docType">
                                      <div class="w-1.5 h-1.5 rounded-full transition-colors duration-300"
-                                          :class="documents[docType]?.scan_status === 'clean' ? 'bg-emerald-500' : (documents[docType]?.scan_status === 'infected' ? 'bg-red-500' : ((documents[docType]?.scan_status === 'pending' || documents[docType]?.scan_status === 'scanning') ? 'bg-blue-500 animate-pulse' : 'bg-gray-300 dark:bg-gray-600'))"></div>
+                                          :class="getSlotStatus(docType) === 'clean' ? 'bg-emerald-500' : (getSlotStatus(docType) === 'infected' ? 'bg-red-500' : ((getSlotStatus(docType) === 'pending' || getSlotStatus(docType) === 'scanning') ? 'bg-blue-500 animate-pulse' : 'bg-gray-300 dark:bg-gray-600'))"></div>
                                  </template>
                             </div>
                         </div>
                     </div>
                 </div>
                 <div class="p-5">
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        @foreach(['id_copy' => ['Copy of ID', 'National ID, Passport, or License', 'M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V5a2 2 0 114 0v1m-4 0a2 2 0 104 0m-5 8a2 2 0 100-4 2 2 0 000 4zm0 0c1.306 0 2.417.835 2.83 2M9 14a3.001 3.001 0 00-2.83 2M15 11h3m-3 4h2'], 'kra_pin' => ['KRA PIN Certificate', 'Kenya Revenue Authority PIN', 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z'], 'logbook' => ['Vehicle Logbook', 'NTSA registered logbook', 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z']] as $type => $info)
-                            <div class="group relative border-2 rounded-xl transition-all duration-300 overflow-hidden"
-                                 :class="getDocumentStatus('{{ $type }}') === 'clean' ? 'border-emerald-300 dark:border-emerald-600 bg-emerald-50/50 dark:bg-emerald-900/10' : (getDocumentStatus('{{ $type }}') === 'infected' ? 'border-red-300 dark:border-red-600 bg-red-50/50 dark:bg-red-900/10' : ((getDocumentStatus('{{ $type }}') === 'pending' || getDocumentStatus('{{ $type }}') === 'scanning') ? 'border-blue-300 dark:border-blue-600 bg-blue-50/50 dark:bg-blue-900/10' : (getDocumentStatus('{{ $type }}') === 'error' ? 'border-amber-300 dark:border-amber-600 bg-amber-50/50 dark:bg-amber-900/10' : 'border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-750 hover:border-blue-300 dark:hover:border-blue-600')))">
-                                <div class="p-4">
-                                    <div class="flex items-start justify-between mb-3">
-                                        <div class="flex items-center gap-2">
-                                             <div class="w-7 h-7 rounded-lg flex items-center justify-center shrink-0"
-                                                  :class="getDocumentStatus('{{ $type }}') === 'clean' ? 'bg-emerald-100 dark:bg-emerald-900/30' : ((getDocumentStatus('{{ $type }}') === 'pending' || getDocumentStatus('{{ $type }}') === 'scanning') ? 'bg-blue-100 dark:bg-blue-900/30' : 'bg-gray-100 dark:bg-gray-700')">
-                                                <svg class="w-3.5 h-3.5" :class="getDocumentStatus('{{ $type }}') === 'clean' ? 'text-emerald-600 dark:text-emerald-400' : ((getDocumentStatus('{{ $type }}') === 'pending' || getDocumentStatus('{{ $type }}') === 'scanning') ? 'text-blue-600 dark:text-blue-400 animate-pulse' : 'text-gray-500 dark:text-gray-400')" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="{!! $info[2] !!}"/></svg>
-                                            </div>
-                                            <div>
-                                                <p class="text-[11px] font-semibold text-gray-800 dark:text-white">{!! $info[0] !!}</p>
-                                                <p class="text-[9px] text-gray-400 dark:text-gray-500">{!! $info[1] !!}</p>
-                                            </div>
-                                        </div>
-                                    </div>
+                    @php
+                        $__individualDocTypes = [
+                            'id_copy' => ['Copy of ID', 'National ID, Passport, or License', 'M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V5a2 2 0 114 0v1m-4 0a2 2 0 104 0m-5 8a2 2 0 100-4 2 2 0 000 4zm0 0c1.306 0 2.417.835 2.83 2M9 14a3.001 3.001 0 00-2.83 2M15 11h3m-3 4h2'],
+                            'kra_pin' => ['KRA PIN Certificate', 'Kenya Revenue Authority PIN', 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z'],
+                            'logbook' => ['Vehicle Logbook', 'NTSA registered logbook', 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z'],
+                        ];
+                        $__corporateDocTypes = [
+                            'kra_pin' => ['KRA PIN Certificate', 'Kenya Revenue Authority PIN', 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z'],
+                            'certificate_of_incorporation' => ['Certificate of Incorporation', 'Company registration certificate', 'M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4'],
+                        ];
+                    @endphp
 
-                                    <div x-show="uploading['{{ $type }}']" class="mt-2">
-                                        <div class="flex items-center gap-2 p-2.5 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
-                                            <svg class="animate-spin w-3.5 h-3.5 text-blue-600 shrink-0" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
-                                            <span class="text-[10px] font-medium text-blue-600 dark:text-blue-400">Uploading...</span>
-                                        </div>
-                                    </div>
-
-                                    <div x-show="(getDocumentStatus('{{ $type }}') === 'pending' || getDocumentStatus('{{ $type }}') === 'scanning') && !uploading['{{ $type }}']" class="mt-2">
-                                        <div class="flex items-center gap-2 p-2.5 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
-                                            <svg class="animate-spin w-3.5 h-3.5 text-blue-600 shrink-0" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
-                                            <div class="min-w-0 flex-1">
-                                                <p class="text-[10px] font-semibold text-blue-700 dark:text-blue-400 truncate" x-text="getDocumentFilename('{{ $type }}')"></p>
-                                                <p class="text-[9px] text-blue-600 dark:text-blue-500">Scanning in background...</p>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <div x-show="!getDocumentStatus('{{ $type }}') && !uploading['{{ $type }}']" class="mt-2">
-                                        <input type="file" id="doc-{{ $type }}" accept=".pdf,.jpg,.jpeg,.png" class="hidden" @change="uploadDocument($event, '{{ $type }}')">
-                                        <label for="doc-{{ $type }}"
-                                           class="flex flex-col items-center justify-center w-full py-5 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg cursor-pointer hover:border-blue-400 dark:hover:border-blue-500 hover:bg-blue-50/50 dark:hover:bg-blue-900/10 transition-all duration-200">
-                                            <svg class="w-7 h-7 text-gray-300 dark:text-gray-500 mb-1.5 group-hover:text-blue-400 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg>
-                                            <span class="text-[10px] font-medium text-gray-500 dark:text-gray-400">Drop or click</span>
-                                            <span class="text-[9px] text-gray-400 dark:text-gray-500 mt-0.5">PDF, JPG, PNG up to 10MB</span>
-                                        </label>
-                                    </div>
-
-                                    <div x-show="getDocumentStatus('{{ $type }}') === 'clean' && !uploading['{{ $type }}']" class="mt-2">
-                                        <div class="flex items-center gap-2 p-2.5 bg-emerald-100 dark:bg-emerald-900/30 rounded-lg">
-                                            <div class="w-6 h-6 rounded-full bg-emerald-500 flex items-center justify-center shrink-0">
-                                                <svg class="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
-                                            </div>
-                                            <div class="min-w-0 flex-1">
-                                                <p class="text-[10px] font-semibold text-emerald-700 dark:text-emerald-400 truncate" x-text="getDocumentFilename('{{ $type }}')"></p>
-                                                <p class="text-[9px] text-emerald-600 dark:text-emerald-500">Verified</p>
-                                            </div>
-                                            <button @click="removeDocument('{{ $type }}')" class="text-emerald-600 hover:text-red-500 dark:text-emerald-400 dark:hover:text-red-400 transition-colors p-0.5">
-                                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-                                            </button>
-                                        </div>
-                                    </div>
-
-                                    <div x-show="getDocumentStatus('{{ $type }}') === 'infected' && !uploading['{{ $type }}']" class="mt-2">
-                                        <div class="flex items-center gap-2 p-2.5 bg-red-100 dark:bg-red-900/30 rounded-lg">
-                                            <div class="w-6 h-6 rounded-full bg-red-500 flex items-center justify-center shrink-0">
-                                                <svg class="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg>
-                                            </div>
-                                            <div class="min-w-0 flex-1">
-                                                <p class="text-[10px] font-semibold text-red-700 dark:text-red-400">Rejected</p>
-                                                <p class="text-[9px] text-red-600 dark:text-red-500">Security threat</p>
-                                            </div>
-                                            <input type="file" id="doc-retry-{{ $type }}" accept=".pdf,.jpg,.jpeg,.png" class="hidden" @change="uploadDocument($event, '{{ $type }}')">
-                                            <button @click="$el.closest('.bg-white, .dark\\:bg-gray-800').querySelector('#doc-retry-{{ $type }}').click()" class="text-[10px] font-semibold text-red-600 hover:text-red-800 px-1.5 py-0.5 bg-red-50 dark:bg-red-900/20 rounded">Retry</button>
-                                        </div>
-                                    </div>
-
-                                    <div x-show="getDocumentStatus('{{ $type }}') === 'error' && !uploading['{{ $type }}']" class="mt-2">
-                                        <div class="flex items-center gap-2 p-2.5 bg-amber-100 dark:bg-amber-900/30 rounded-lg">
-                                            <div class="w-6 h-6 rounded-full bg-amber-500 flex items-center justify-center shrink-0">
-                                                <svg class="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                                            </div>
-                                            <div class="min-w-0 flex-1">
-                                                <p class="text-[10px] font-semibold text-amber-700 dark:text-amber-400">Scan unavailable</p>
-                                                <p class="text-[9px] text-amber-600 dark:text-amber-500">Not verified</p>
-                                            </div>
-                                            <input type="file" id="doc-retry2-{{ $type }}" accept=".pdf,.jpg,.jpeg,.png" class="hidden" @change="uploadDocument($event, '{{ $type }}')">
-                                            <button @click="$el.closest('.bg-white, .dark\\:bg-gray-800').querySelector('#doc-retry2-{{ $type }}').click()" class="text-[10px] font-semibold text-amber-600 hover:text-amber-800 px-1.5 py-0.5 bg-amber-50 dark:bg-amber-900/20 rounded">Retry</button>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
+                    <div x-show="clientType === 'individual'" class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        @foreach($__individualDocTypes as $type => $info)
+                            @include('stickers.partials.kyc-card', ['type' => $type, 'info' => $info])
                         @endforeach
                     </div>
+
+                    {{-- Corporate: two fixed documents (KRA PIN + Certificate of
+                         Incorporation) plus the "Others" panel below, which
+                         reuses the exact same row-based upload UI as the
+                         logbook's N/A fallback — pre-seeded with "CR12 Form". --}}
+                    <div x-show="clientType === 'corporate'" x-cloak class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        @foreach($__corporateDocTypes as $type => $info)
+                            @include('stickers.partials.kyc-card', ['type' => $type, 'info' => $info])
+                        @endforeach
+                    </div>
+
+                        {{-- Alternate documents, one row at a time — the logbook's N/A
+                             fallback for individual clients, or corporate's own
+                             "Others" slot (CR12 Form etc., always required, not a
+                             fallback). Each row is its own independent upload — its
+                             own name field, its own file, its own status — rather
+                             than a single multi-file drop, so a partial batch (one
+                             uploaded, one still picking a file) is never ambiguous. --}}
+                        <div x-show="logbookNA || clientType === 'corporate'" x-cloak class="mt-4 border-2 border-dashed border-amber-200 dark:border-amber-700 rounded-xl p-4 bg-amber-50/40 dark:bg-amber-900/5">
+                            <div class="flex items-center justify-between mb-3">
+                                <div>
+                                    <p class="text-[11px] font-semibold text-gray-800 dark:text-white" x-text="clientType === 'corporate' ? 'Other Supporting Documents' : 'Other Supporting Documents (Logbook Replacement)'"></p>
+                                    <p class="text-[9px] text-gray-400 dark:text-gray-500" x-text="clientType === 'corporate' ? 'e.g. CR12 Form — add as many as needed' : 'Provide at least one document in place of the logbook — e.g. Driver\'s Licence, Fleet Card'"></p>
+                                </div>
+                                <button type="button" @click="addOtherRow()"
+                                    class="inline-flex items-center gap-1 text-[10px] font-semibold text-blue-600 hover:text-blue-800 dark:text-blue-400">
+                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                                    Add Document
+                                </button>
+                            </div>
+
+                            <div class="space-y-2">
+                                <template x-for="row in otherDocuments" :key="row.rowId">
+                                    <div class="flex items-center gap-2 p-2 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-600">
+                                        <input type="text" x-model="row.label" placeholder="Document name, e.g. Driver's Licence"
+                                            :disabled="!!row.documentId"
+                                            class="flex-1 min-w-0 px-2.5 py-1.5 text-xs border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 disabled:opacity-60 disabled:cursor-not-allowed">
+
+                                        <template x-if="!row.documentId">
+                                            <span>
+                                                <input type="file" :id="'other-doc-' + row.rowId" accept=".pdf,.jpg,.jpeg,.png" class="hidden" @change="uploadOtherDocument($event, row)">
+                                                <label :for="'other-doc-' + row.rowId" x-show="!row.uploading"
+                                                    class="inline-flex items-center gap-1 px-2.5 py-1.5 text-[10px] font-semibold bg-blue-50 hover:bg-blue-100 text-blue-700 dark:bg-blue-900/20 dark:text-blue-400 rounded-lg cursor-pointer transition whitespace-nowrap">
+                                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg>
+                                                    Upload
+                                                </label>
+                                                <span x-show="row.uploading" class="inline-flex items-center gap-1 px-2.5 py-1.5 text-[10px] font-semibold text-blue-600">
+                                                    <svg class="animate-spin w-3 h-3" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
+                                                    Uploading...
+                                                </span>
+                                            </span>
+                                        </template>
+
+                                        <span x-show="row.documentId && row.scanStatus === 'clean'" class="inline-flex items-center gap-1 px-2.5 py-1.5 text-[10px] font-semibold text-emerald-700 dark:text-emerald-400 whitespace-nowrap">
+                                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+                                            <span x-text="row.filename" class="truncate max-w-[120px]"></span>
+                                        </span>
+
+                                        <button type="button" @click="removeOtherRow(row)" class="text-gray-400 hover:text-red-500 transition p-1 shrink-0">
+                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                                        </button>
+                                    </div>
+                                </template>
+
+                                <p x-show="otherDocuments.length === 0" class="text-[10px] text-gray-400 text-center py-2">No alternate documents added yet.</p>
+                            </div>
+                        </div>
 
                     <div class="mt-4 flex items-start gap-2 p-3 bg-gray-50 dark:bg-gray-750 rounded-lg border border-gray-200 dark:border-gray-600">
                         <svg class="w-3.5 h-3.5 text-gray-400 dark:text-gray-500 mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
@@ -414,8 +526,24 @@ function certificateIssue() {
             'created_at' => $quotation->created_at->format('d M Y'),
             'underwriter_email' => $quotation->company->underwriter_email,
             'breakdown' => $quotation->breakdown ?: [],
+            'sticker_id' => $quotation->stickers->first()?->id,
+            'client_type' => $quotation->stickers->first()?->client_type ?? 'individual',
+            'cover_start_date' => optional($quotation->stickers->first()?->cover_start_date)->format('Y-m-d'),
+            'cover_end_date' => optional($quotation->stickers->first()?->cover_end_date)->format('Y-m-d'),
+            'cover_duration_unit' => $quotation->stickers->first()?->cover_duration_unit,
+            'cover_duration_value' => $quotation->stickers->first()?->cover_duration_value,
+            'logbook_na' => (bool) ($quotation->stickers->first()?->logbook_na ?? false),
+            'cover_details_saved' => (bool) $quotation->stickers->first(),
+            'existing_documents' => $quotation->stickers->first()?->certificateDocuments->map(fn($d) => [
+                'id' => $d->id,
+                'document_type' => $d->document_type,
+                'document_label' => $d->document_label,
+                'scan_status' => $d->scan_status,
+                'filename' => $d->filename,
+            ])->toArray() ?? [],
         ]) : 'null' !!},
         documents: {},
+        otherDocuments: [],
         uploading: { id_copy: false, kra_pin: false, logbook: false },
         polling: { id_copy: false, kra_pin: false, logbook: false },
         issuing: false,
@@ -427,6 +555,24 @@ function certificateIssue() {
         testEmailSent: '',
         testEmailError: '',
 
+        // --- Cover details (client type + cover period) ---
+        clientType: 'individual',
+        coverStartDate: '',
+        coverDurationUnit: 'year',
+        coverDurationValue: 1,
+        coverEndDate: '',           // Y-m-d, authoritative value submitted to the server
+        coverEndDateDisplay: '',    // d/m/Y, what the user sees — always derived, never typed
+        calculatingEndDate: false,
+        coverCalcTimeout: null,
+        coverDetailsSaved: false,
+        savingCoverDetails: false,
+        coverDetailsError: '',
+
+        // --- Logbook N/A -> alternate "other" documents ---
+        logbookNA: false,
+        togglingLogbookNA: false,
+        nextOtherRowId: 1,
+
         get step() {
             if (!this.selectedQuotation) return 1;
             if (!this.canIssue) return 2;
@@ -434,12 +580,72 @@ function certificateIssue() {
         },
 
         get uploadedCount() {
-            return ['id_copy', 'kra_pin', 'logbook'].filter(t => this.documents[t]?.scan_status === 'clean' || this.documents[t]?.scan_status === 'pending' || this.documents[t]?.scan_status === 'scanning').length;
+            const inProgress = ['clean', 'pending', 'scanning'];
+
+            if (this.clientType === 'corporate') {
+                let n = ['kra_pin', 'certificate_of_incorporation'].filter(t => inProgress.includes(this.documents[t]?.scan_status)).length;
+                if (this.otherDocuments.some(r => inProgress.includes(r.scanStatus))) n++;
+                return n;
+            }
+
+            let n = ['id_copy', 'kra_pin'].filter(t => inProgress.includes(this.documents[t]?.scan_status)).length;
+            if (this.logbookNA) {
+                if (this.otherDocuments.some(r => inProgress.includes(r.scanStatus))) n++;
+            } else if (inProgress.includes(this.documents['logbook']?.scan_status)) {
+                n++;
+            }
+            return n;
+        },
+
+        hydrateFromQuotation(q) {
+            this.documents = {};
+            this.otherDocuments = [];
+            this.stickerId = q.sticker_id || null;
+            this.clientType = q.client_type || 'individual';
+            this.coverStartDate = q.cover_start_date || '';
+            this.coverDurationUnit = q.cover_duration_unit || 'year';
+            this.coverDurationValue = q.cover_duration_value || 1;
+            this.coverEndDate = q.cover_end_date || '';
+            this.coverEndDateDisplay = this.coverEndDate ? this.formatDateDisplay(this.coverEndDate) : '';
+            this.coverDetailsSaved = !!q.cover_details_saved;
+            this.logbookNA = !!q.logbook_na;
+
+            (q.existing_documents || []).forEach(doc => {
+                if (doc.document_type === 'other') {
+                    this.otherDocuments.push({
+                        rowId: this.nextOtherRowId++,
+                        label: doc.document_label || '',
+                        documentId: doc.id,
+                        filename: doc.filename,
+                        scanStatus: doc.scan_status,
+                        uploading: false,
+                    });
+                } else {
+                    this.documents[doc.document_type] = { scan_status: doc.scan_status, filename: doc.filename };
+                    if (doc.scan_status === 'pending' || doc.scan_status === 'scanning') {
+                        this.pollScanStatus(doc.document_type);
+                    }
+                }
+            });
+
+            // "Others" is always required for corporate (CR12 etc.), and is the
+            // logbook's fallback for individual once marked N/A — both reuse
+            // the same row-based upload panel, seeded with one starter row.
+            if ((this.logbookNA || this.clientType === 'corporate') && this.otherDocuments.length === 0) {
+                this.addOtherRow(this.clientType === 'corporate' ? 'CR12 Form' : '');
+            }
+        },
+
+        formatDateDisplay(ymd) {
+            if (!ymd) return '';
+            const [y, m, d] = ymd.split('-');
+            return `${d}/${m}/${y}`;
         },
 
         init() {
             if (this.selectedQuotation) {
                 this.selectedQuotation.breakdown = this.selectedQuotation.breakdown || {};
+                this.hydrateFromQuotation(this.selectedQuotation);
             }
         },
 
@@ -492,16 +698,7 @@ function certificateIssue() {
 
         selectQuotation(q) {
             this.selectedQuotation = q;
-            this.documents = {};
-            this.stickerId = q.sticker_id || null;
-            if (q.existing_documents && q.existing_documents.length > 0) {
-                q.existing_documents.forEach(doc => {
-                    this.documents[doc.document_type] = { scan_status: doc.scan_status, filename: doc.filename };
-                    if (doc.scan_status === 'pending' || doc.scan_status === 'scanning') {
-                        this.pollScanStatus(doc.document_type);
-                    }
-                });
-            }
+            this.hydrateFromQuotation(q);
             this.searchResults = [];
             this.$refs.searchInput.value = '';
             this.$nextTick(() => {
@@ -516,6 +713,21 @@ function certificateIssue() {
 
         getDocumentFilename(docType) {
             return this.documents[docType]?.filename || null;
+        },
+
+        // Like getDocumentStatus, but a slot that maps to the row-based
+        // "other" documents (the logbook, once marked N/A; or corporate's
+        // own "Others" slot, e.g. CR12) reflects THEIR combined status
+        // instead — used for the summary dots.
+        getSlotStatus(docType) {
+            const reflectsOtherDocs = docType === 'other' || (docType === 'logbook' && this.logbookNA);
+            if (reflectsOtherDocs) {
+                if (this.otherDocuments.some(r => r.scanStatus === 'infected')) return 'infected';
+                if (this.otherDocuments.some(r => r.scanStatus === 'clean')) return 'clean';
+                if (this.otherDocuments.some(r => r.scanStatus === 'pending' || r.scanStatus === 'scanning')) return 'pending';
+                return null;
+            }
+            return this.getDocumentStatus(docType);
         },
 
         async uploadDocument(event, docType) {
@@ -598,8 +810,230 @@ function certificateIssue() {
         },
 
         get canIssue() {
-            if (!this.selectedQuotation) return false;
-            return ['id_copy', 'kra_pin', 'logbook'].every(t => this.documents[t]?.scan_status === 'clean');
+            if (!this.selectedQuotation || !this.coverDetailsSaved) return false;
+
+            if (this.clientType === 'corporate') {
+                const kraOk = this.documents['kra_pin']?.scan_status === 'clean';
+                const coiOk = this.documents['certificate_of_incorporation']?.scan_status === 'clean';
+                const othersOk = this.otherDocuments.length > 0 && this.otherDocuments.every(r => r.scanStatus === 'clean');
+                return kraOk && coiOk && othersOk;
+            }
+
+            const baseOk = ['id_copy', 'kra_pin'].every(t => this.documents[t]?.scan_status === 'clean');
+            const logbookOk = this.logbookNA
+                ? (this.otherDocuments.length > 0 && this.otherDocuments.every(r => r.scanStatus === 'clean'))
+                : this.documents['logbook']?.scan_status === 'clean';
+            return baseOk && logbookOk;
+        },
+
+        // --- Cover details: client type + cover period ---
+
+        // Conspicuous one-click default: cover starts today and runs a full
+        // year — the common case, so it doesn't require touching the
+        // start-date picker or the duration dropdowns at all.
+        startCoverFromToday() {
+            const d = new Date();
+            const pad = n => String(n).padStart(2, '0');
+            this.coverStartDate = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+            this.coverDurationUnit = 'year';
+            this.coverDurationValue = 1;
+            this.recalculateCoverEndDate();
+        },
+
+        onDurationUnitChanged() {
+            // Clamp the value into whatever range the newly-selected unit
+            // actually offers (52 weeks / 12 months) rather than leaving a
+            // stale number like "45" sitting under "Month".
+            const max = this.coverDurationUnit === 'week' ? 52 : 12;
+            if (this.coverDurationValue > max) this.coverDurationValue = max;
+            if (!this.coverDurationValue) this.coverDurationValue = 1;
+            this.onCoverInputsChanged();
+        },
+
+        onCoverInputsChanged() {
+            clearTimeout(this.coverCalcTimeout);
+            this.coverCalcTimeout = setTimeout(() => this.recalculateCoverEndDate(), 200);
+        },
+
+        async recalculateCoverEndDate() {
+            if (!this.coverStartDate) { this.coverEndDate = ''; this.coverEndDateDisplay = ''; return; }
+            this.calculatingEndDate = true;
+
+            try {
+                const response = await fetch('{{ route("stickers.calculate-cover-end-date") }}', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
+                    body: JSON.stringify({
+                        cover_start_date: this.coverStartDate,
+                        cover_duration_unit: this.coverDurationUnit,
+                        cover_duration_value: this.coverDurationValue,
+                    }),
+                });
+                const data = await response.json();
+                if (data.success) {
+                    this.coverEndDate = data.cover_end_date;
+                    this.coverEndDateDisplay = data.cover_end_date_display;
+                }
+            } catch (e) {
+                // leave the previous value in place rather than clearing it
+            } finally {
+                this.calculatingEndDate = false;
+            }
+        },
+
+        async saveCoverDetails() {
+            if (!this.selectedQuotation) return;
+            if (!this.coverStartDate) {
+                this.coverDetailsError = 'Set a policy start date first.';
+                return;
+            }
+
+            this.savingCoverDetails = true;
+            this.coverDetailsError = '';
+
+            try {
+                const response = await fetch('{{ route("stickers.cover-details") }}', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
+                    body: JSON.stringify({
+                        quotation_id: this.selectedQuotation.id,
+                        client_type: this.clientType,
+                        cover_start_date: this.coverStartDate,
+                        cover_duration_unit: this.coverDurationUnit,
+                        cover_duration_value: this.coverDurationValue,
+                    }),
+                });
+                const data = await response.json();
+                if (data.success) {
+                    this.coverDetailsSaved = true;
+                    this.stickerId = data.sticker_id;
+                    this.coverEndDate = data.cover_end_date;
+                    this.coverEndDateDisplay = data.cover_end_date_display;
+                    // Corporate's third slot ("Others") is always required —
+                    // seed CR12 Form as the suggested starting row once cover
+                    // details are confirmed, same as logbook_na does for
+                    // individual clients.
+                    if (this.clientType === 'corporate' && this.otherDocuments.length === 0) {
+                        this.addOtherRow('CR12 Form');
+                    }
+                    if (typeof showToastSuccess === 'function') showToastSuccess('Cover details saved.');
+                } else {
+                    this.coverDetailsError = data.error || 'Failed to save cover details.';
+                }
+            } catch (e) {
+                this.coverDetailsError = 'An error occurred while saving cover details.';
+            } finally {
+                this.savingCoverDetails = false;
+            }
+        },
+
+        editCoverDetails() {
+            this.coverDetailsSaved = false;
+        },
+
+        // --- Logbook N/A -> alternate "other" documents ---
+        async toggleLogbookNA() {
+            if (!this.selectedQuotation) return;
+            const next = !this.logbookNA;
+            this.togglingLogbookNA = true;
+
+            try {
+                const response = await fetch('{{ route("stickers.toggle-logbook-na") }}', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
+                    body: JSON.stringify({ quotation_id: this.selectedQuotation.id, logbook_na: next }),
+                });
+                const data = await response.json();
+                if (data.success) {
+                    this.logbookNA = data.logbook_na;
+                    this.stickerId = data.sticker_id;
+                    if (this.logbookNA) {
+                        delete this.documents['logbook'];
+                        if (this.otherDocuments.length === 0) this.addOtherRow();
+                    } else {
+                        this.otherDocuments = [];
+                    }
+                } else if (typeof showToastError === 'function') {
+                    showToastError(data.error || 'Failed to update logbook status.');
+                }
+            } catch (e) {
+                if (typeof showToastError === 'function') showToastError('An error occurred.');
+            } finally {
+                this.togglingLogbookNA = false;
+            }
+        },
+
+        addOtherRow(defaultLabel = '') {
+            this.otherDocuments.push({
+                rowId: this.nextOtherRowId++,
+                label: defaultLabel,
+                documentId: null,
+                filename: null,
+                scanStatus: null,
+                uploading: false,
+            });
+        },
+
+        async uploadOtherDocument(event, row) {
+            const file = event.target.files[0];
+            if (!file || !this.selectedQuotation) return;
+
+            if (!row.label || !row.label.trim()) {
+                if (typeof showToastError === 'function') showToastError('Give this document a name first (e.g. "Driver\'s Licence").');
+                else alert('Give this document a name first.');
+                event.target.value = '';
+                return;
+            }
+
+            row.uploading = true;
+
+            const formData = new FormData();
+            formData.append('document', file);
+            formData.append('document_type', 'other');
+            formData.append('document_label', row.label.trim());
+            formData.append('quotation_id', this.selectedQuotation.id);
+
+            try {
+                const response = await fetch('{{ route("stickers.upload-document") }}', {
+                    method: 'POST',
+                    headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
+                    body: formData,
+                });
+                const data = await response.json();
+
+                if (data.success) {
+                    row.documentId = data.document_id;
+                    row.filename = data.filename;
+                    row.scanStatus = data.scan_status;
+                    if (data.sticker_id) this.stickerId = data.sticker_id;
+                    if (typeof showToastSuccess === 'function') showToastSuccess(data.message || 'Document uploaded.');
+                } else {
+                    row.scanStatus = data.scan_status || 'error';
+                    if (typeof showToastError === 'function') showToastError(data.error || 'Upload failed.');
+                    else alert(data.error || 'Upload failed.');
+                }
+            } catch (e) {
+                row.scanStatus = 'error';
+                if (typeof showToastError === 'function') showToastError('Upload error. Please try again.');
+                else alert('Upload error. Please try again.');
+            } finally {
+                row.uploading = false;
+                event.target.value = '';
+            }
+        },
+
+        async removeOtherRow(row) {
+            if (row.documentId) {
+                try {
+                    await fetch('{{ route("stickers.remove-document") }}', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
+                        body: JSON.stringify({ document_id: row.documentId }),
+                    });
+                } catch (e) { /* row is removed from the UI regardless */ }
+            }
+            this.otherDocuments = this.otherDocuments.filter(r => r.rowId !== row.rowId);
+            if (this.logbookNA && this.otherDocuments.length === 0) this.addOtherRow();
         },
 
         async issueCertificate() {

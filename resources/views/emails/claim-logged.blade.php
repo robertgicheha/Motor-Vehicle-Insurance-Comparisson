@@ -8,16 +8,15 @@
         <p style="color: #93c5fd; margin: 4px 0 0; font-size: 12px;">{{ config('app.name') }}</p>
     </div>
     <div style="padding: 24px;">
-        <p style="color: #374151; font-size: 14px; margin: 0 0 16px;">A new insurance claim has been logged and requires your attention.</p>
+        <p style="color: #374151; font-size: 14px; margin: 0 0 16px;">
+            A Claim has been successfully logged and the details of the claim are as follows:
+        </p>
 
-        <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
+        <p style="font-size: 11px; font-weight: 700; color: #005F9E; text-transform: uppercase; letter-spacing: 0.05em; margin: 20px 0 6px;">Owner Details</p>
+        <table style="width: 100%; border-collapse: collapse; margin-bottom: 12px;">
             <tr>
-                <td style="padding: 8px 12px; font-size: 12px; color: #6b7280; border-bottom: 1px solid #e5e7eb; font-weight: 600;">Claim Number</td>
-                <td style="padding: 8px 12px; font-size: 12px; color: #111827; border-bottom: 1px solid #e5e7eb; font-weight: 700;">{{ $claim['claim_number'] }}</td>
-            </tr>
-            <tr>
-                <td style="padding: 8px 12px; font-size: 12px; color: #6b7280; border-bottom: 1px solid #e5e7eb; font-weight: 600;">Customer</td>
-                <td style="padding: 8px 12px; font-size: 12px; color: #111827; border-bottom: 1px solid #e5e7eb;">{{ $claim['customer_name'] }}</td>
+                <td style="padding: 8px 12px; font-size: 12px; color: #6b7280; border-bottom: 1px solid #e5e7eb; font-weight: 600;">Customer Name</td>
+                <td style="padding: 8px 12px; font-size: 12px; color: #111827; border-bottom: 1px solid #e5e7eb; font-weight: 700;">{{ $claim['customer_name'] }}</td>
             </tr>
             <tr>
                 <td style="padding: 8px 12px; font-size: 12px; color: #6b7280; border-bottom: 1px solid #e5e7eb; font-weight: 600;">Email</td>
@@ -28,16 +27,47 @@
                 <td style="padding: 8px 12px; font-size: 12px; color: #111827; border-bottom: 1px solid #e5e7eb;">{{ $claim['customer_phone'] ?: 'N/A' }}</td>
             </tr>
             <tr>
-                <td style="padding: 8px 12px; font-size: 12px; color: #6b7280; border-bottom: 1px solid #e5e7eb; font-weight: 600;">Registration</td>
-                <td style="padding: 8px 12px; font-size: 12px; color: #111827; border-bottom: 1px solid #e5e7eb;">{{ $claim['registration_number'] }}</td>
+                <td style="padding: 8px 12px; font-size: 12px; color: #6b7280; font-weight: 600;">Claim Number</td>
+                <td style="padding: 8px 12px; font-size: 12px; color: #111827; font-weight: 700;">{{ $claim['claim_number'] }}</td>
             </tr>
-            @if(!empty($claim['vehicle_details']))
+        </table>
+
+        <p style="font-size: 11px; font-weight: 700; color: #005F9E; text-transform: uppercase; letter-spacing: 0.05em; margin: 20px 0 6px;">Vehicle Details</p>
+        <table style="width: 100%; border-collapse: collapse; margin-bottom: 12px;">
             <tr>
-                <td style="padding: 8px 12px; font-size: 12px; color: #6b7280; border-bottom: 1px solid #e5e7eb; font-weight: 600;">Vehicle</td>
+                <td style="padding: 8px 12px; font-size: 12px; color: #6b7280; border-bottom: 1px solid #e5e7eb; font-weight: 600;">Registration No</td>
+                <td style="padding: 8px 12px; font-size: 12px; color: #111827; border-bottom: 1px solid #e5e7eb;">{{ $claim['registration_number'] ?: 'N/A' }}</td>
+            </tr>
+            <tr>
+                <td style="padding: 8px 12px; font-size: 12px; color: #6b7280; border-bottom: 1px solid #e5e7eb; font-weight: 600;">Make / Model</td>
+                <td style="padding: 8px 12px; font-size: 12px; color: #111827; border-bottom: 1px solid #e5e7eb;">{{ trim(($claim['vehicle_details']['make'] ?? '') . ' ' . ($claim['vehicle_details']['model'] ?? '')) ?: 'N/A' }}</td>
+            </tr>
+            <tr>
+                <td style="padding: 8px 12px; font-size: 12px; color: #6b7280; border-bottom: 1px solid #e5e7eb; font-weight: 600;">Year</td>
+                <td style="padding: 8px 12px; font-size: 12px; color: #111827; border-bottom: 1px solid #e5e7eb;">{{ $claim['vehicle_details']['year'] ?? 'N/A' }}</td>
+            </tr>
+            <tr>
+                <td style="padding: 8px 12px; font-size: 12px; color: #6b7280; border-bottom: 1px solid #e5e7eb; font-weight: 600;">Chassis No</td>
+                <td style="padding: 8px 12px; font-size: 12px; color: #111827; border-bottom: 1px solid #e5e7eb;">{{ $claim['vehicle_details']['chassis_number'] ?? 'N/A' }}</td>
+            </tr>
+            <tr>
+                <td style="padding: 8px 12px; font-size: 12px; color: #6b7280; border-bottom: 1px solid #e5e7eb; font-weight: 600;">Engine No</td>
+                <td style="padding: 8px 12px; font-size: 12px; color: #111827; border-bottom: 1px solid #e5e7eb;">{{ $claim['vehicle_details']['engine_number'] ?? 'N/A' }}</td>
+            </tr>
+            <tr>
+                <td style="padding: 8px 12px; font-size: 12px; color: #6b7280; font-weight: 600;">Vehicle Valuation</td>
+                <td style="padding: 8px 12px; font-size: 12px; color: #111827;">{{ !empty($claim['vehicle_details']['valuation']) ? 'KES ' . number_format($claim['vehicle_details']['valuation']) : 'N/A' }}</td>
+            </tr>
+        </table>
+
+        <p style="font-size: 11px; font-weight: 700; color: #005F9E; text-transform: uppercase; letter-spacing: 0.05em; margin: 20px 0 6px;">Incident Details</p>
+        <table style="width: 100%; border-collapse: collapse; margin-bottom: 4px;">
+            @if(!empty($claim['claim_type']))
+            <tr>
+                <td style="padding: 8px 12px; font-size: 12px; color: #6b7280; border-bottom: 1px solid #e5e7eb; font-weight: 600;">Type of Claim</td>
                 <td style="padding: 8px 12px; font-size: 12px; color: #111827; border-bottom: 1px solid #e5e7eb;">
-                    {{ $claim['vehicle_details']['make'] ?? '' }} {{ $claim['vehicle_details']['model'] ?? '' }}
-                    @if(!empty($claim['vehicle_details']['year'])) ({{ $claim['vehicle_details']['year'] }}) @endif
-                    @if(!empty($claim['vehicle_details']['valuation'])) — KES {{ number_format($claim['vehicle_details']['valuation']) }} @endif
+                    {{ $claim['claim_type'] }}
+                    @if(!empty($claim['claim_type_other'])) — {{ $claim['claim_type_other'] }} @endif
                 </td>
             </tr>
             @endif
@@ -46,8 +76,8 @@
                 <td style="padding: 8px 12px; font-size: 12px; color: #111827; border-bottom: 1px solid #e5e7eb;">{{ \Carbon\Carbon::parse($claim['incident_date'])->format('d M Y') }}</td>
             </tr>
             <tr>
-                <td style="padding: 8px 12px; font-size: 12px; color: #6b7280; border-bottom: 1px solid #e5e7eb; font-weight: 600;">Police Notified</td>
-                <td style="padding: 8px 12px; font-size: 12px; color: #111827; border-bottom: 1px solid #e5e7eb;">{{ $claim['police_notified'] ? 'Yes' : 'No' }}</td>
+                <td style="padding: 8px 12px; font-size: 12px; color: #6b7280; font-weight: 600;">Police Notified</td>
+                <td style="padding: 8px 12px; font-size: 12px; color: #111827;">{{ $claim['police_notified'] ? 'Yes' : 'No' }}</td>
             </tr>
         </table>
 

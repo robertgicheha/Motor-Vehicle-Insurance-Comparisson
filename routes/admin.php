@@ -4,6 +4,7 @@ use App\Http\Controllers\Admin\NotificationController as AdminNotificationContro
 use App\Http\Controllers\Admin\StickerAdminController;
 use App\Http\Controllers\Admin\StickerSettingsController;
 use App\Http\Controllers\Admin\UserController;
+use App\Http\Controllers\Admin\PendingUserController;
 use App\Http\Controllers\Admin\RoleController;
 use App\Http\Controllers\Admin\CompanyController;
 use App\Http\Controllers\Admin\ReportController;
@@ -18,6 +19,7 @@ use App\Http\Controllers\Admin\ChangeRequestController;
 use App\Http\Controllers\Admin\MediaController;
 use App\Http\Controllers\Admin\EmailSettingController;
 use App\Http\Controllers\Admin\ClaimController as AdminClaimController;
+use App\Http\Controllers\Admin\EmailAnalyticsController;
 use App\Http\Controllers\DashboardController;
 use Illuminate\Support\Facades\Route;
 
@@ -28,6 +30,12 @@ Route::middleware(['auth', 'online', 'role:super-admin|admin'])->prefix('admin')
     // isn't swallowed by the resource's /users/{user} wildcard route.
     Route::get('/users/trash', [UserController::class, 'trash'])->name('users.trash')->middleware('role:super-admin');
     Route::post('/users/{id}/restore', [UserController::class, 'restore'])->name('users.restore')->middleware('role:super-admin');
+
+    Route::get('/email-analytics', [EmailAnalyticsController::class, 'index'])->name('email-analytics.index');
+
+    Route::get('/pending-users', [PendingUserController::class, 'index'])->name('pending-users.index');
+    Route::post('/pending-users/{user}/activate', [PendingUserController::class, 'activate'])->name('pending-users.activate');
+    Route::post('/pending-users/bulk-activate', [PendingUserController::class, 'bulkActivate'])->name('pending-users.bulk-activate');
 
     Route::resource('users', UserController::class);
     Route::patch('/users/{user}/toggle-status', [UserController::class, 'toggleStatus'])->name('users.toggle-status');
@@ -126,6 +134,19 @@ Route::middleware(['auth', 'online', 'role:super-admin|admin'])->prefix('admin')
         Route::delete('/file/{path}', [MediaController::class, 'destroyFile'])->name('destroy-file')->where('path', '.*');
         Route::get('/list', [MediaController::class, 'list'])->name('list');
     });
+
+    // Registered before the claims resource below — a static path like
+    // /admin/claims/reports would otherwise be swallowed by the resource's
+    // /admin/claims/{claim} wildcard (Laravel matches routes in order).
+    Route::get('/claims/reports', [App\Http\Controllers\Admin\ClaimReportController::class, 'index'])->name('claims.reports');
+    Route::post('/claims/reports/generate', [App\Http\Controllers\Admin\ClaimReportController::class, 'generate'])->name('claims.reports.generate')->middleware('throttle:20,1');
+    Route::get('/claims/reports/export-csv', [App\Http\Controllers\Admin\ClaimReportController::class, 'exportCsv'])->name('claims.reports.export-csv');
+    Route::get('/claims/reports/export-excel', [App\Http\Controllers\Admin\ClaimReportController::class, 'exportExcel'])->name('claims.reports.export-excel');
+    Route::get('/claims/reports/export-pdf', [App\Http\Controllers\Admin\ClaimReportController::class, 'exportPdf'])->name('claims.reports.export-pdf');
+    Route::get('/claims/reports/preview-pdf', [App\Http\Controllers\Admin\ClaimReportController::class, 'previewPdf'])->name('claims.reports.preview-pdf');
+    Route::post('/claims/reports/email', [App\Http\Controllers\Admin\ClaimReportController::class, 'emailReport'])->name('claims.reports.email')->middleware('throttle:5,1');
+    Route::post('/claims/reports/compare', [App\Http\Controllers\Admin\ClaimReportController::class, 'compare'])->name('claims.reports.compare')->middleware('throttle:10,1');
+    Route::post('/claims/reports/compare-pdf', [App\Http\Controllers\Admin\ClaimReportController::class, 'comparePdf'])->name('claims.reports.compare-pdf')->middleware('throttle:10,1');
 
     Route::resource('claims', AdminClaimController::class)->except(['create', 'store']);
     Route::patch('/claims/{claim}/update-status', [AdminClaimController::class, 'updateStatus'])->name('claims.update-status');

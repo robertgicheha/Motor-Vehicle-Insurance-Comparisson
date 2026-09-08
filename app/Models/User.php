@@ -16,7 +16,7 @@ class User extends Authenticatable
     /** @use HasFactory<UserFactory> */
     use HasFactory, Notifiable, HasRoles, SoftDeletes;
 
-    protected $fillable = ['first_name', 'last_name', 'name', 'email', 'password', 'mobile', 'gender', 'is_active', 'profile_completed', 'google_id', 'avatar', 'last_online_at', 'pending_email', 'email_verify_token'];
+    protected $fillable = ['first_name', 'last_name', 'name', 'email', 'password', 'mobile', 'gender', 'is_active', 'verified_at', 'profile_completed', 'google_id', 'avatar', 'last_online_at', 'pending_email', 'email_verify_token'];
 
     #[Hidden(['password', 'remember_token'])]
 
@@ -24,12 +24,24 @@ class User extends Authenticatable
     {
         return [
             'email_verified_at' => 'datetime',
+            'verified_at' => 'datetime',
             'password' => 'hashed',
             'is_active' => 'boolean',
             'profile_completed' => 'boolean',
             'last_online_at' => 'datetime',
             'deleted_at' => 'datetime',
         ];
+    }
+
+    /**
+     * A self-registered account awaiting admin approval — distinct from a
+     * normal account an admin later deactivated (which keeps its original
+     * verified_at), so the Pending Users queue only ever shows genuinely new
+     * signups.
+     */
+    public function isPendingVerification(): bool
+    {
+        return !$this->is_active && is_null($this->verified_at);
     }
 
     public function deletedBy()

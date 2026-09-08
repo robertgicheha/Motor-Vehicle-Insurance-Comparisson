@@ -14,7 +14,7 @@
 <div
     x-data="toastManager({{ json_encode($flashMessages) }})"
     x-init="init()"
-    class="fixed top-6 right-6 z-[100] flex flex-col gap-2 max-w-sm w-full pointer-events-none">
+    class="fixed top-20 right-6 z-[100] flex flex-col gap-2 max-w-sm w-full pointer-events-none">
     <template x-for="(toast, index) in toasts" :key="index">
         <div
             x-show="toast.show"

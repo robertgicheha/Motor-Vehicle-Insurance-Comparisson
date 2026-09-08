@@ -327,23 +327,15 @@ class ClaimsController extends Controller
 
         $user = auth()->user();
         $isAdmin = $user->hasRole('super-admin') || $user->hasRole('admin');
-        $driver = DB::connection()->getDriverName();
 
-        // Substring match via each engine's own regex support (MySQL REGEXP,
-        // SQLite REGEXP requires a UDF Laravel doesn't register, so it falls
-        // back to LIKE there) — the input is regex-escaped so this always
-        // behaves as a literal contains-match, never an arbitrary pattern
-        // the caller could turn into a slow/catastrophic regex.
-        $pattern = preg_quote($q, '/');
-
+        // Plain LIKE contains-match — works identically on every driver
+        // (MySQL/SQLite/PostgreSQL), unlike a REGEXP/LIKE split keyed off
+        // DB::connection()->getDriverName(), which is exactly the kind of
+        // driver-detection mismatch that caused the strftime-on-MySQL
+        // production incident this replaces the same class of bug for.
         $query = Quotation::select('id', 'car_registration', 'car_make', 'car_model', 'car_year', 'vehicle_type', 'created_at')
-            ->when(!$isAdmin, fn($qq) => $qq->where('user_id', $user->id));
-
-        if ($driver === 'mysql') {
-            $query->whereRaw('UPPER(car_registration) REGEXP ?', [$pattern]);
-        } else {
-            $query->whereRaw('UPPER(car_registration) LIKE ?', ['%' . $q . '%']);
-        }
+            ->when(!$isAdmin, fn($qq) => $qq->where('user_id', $user->id))
+            ->whereRaw('UPPER(car_registration) LIKE ?', ['%' . $q . '%']);
 
         // GROUP BY car_registration while selecting id/make/model/etc would
         // fail under MySQL's only_full_group_by (the same class of bug fixed

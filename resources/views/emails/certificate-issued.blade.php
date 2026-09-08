@@ -9,9 +9,10 @@
         .header h1 { color: #ffffff; margin: 0; font-size: 22px; font-weight: 700; }
         .header p { color: rgba(255,255,255,0.85); margin: 6px 0 0; font-size: 13px; }
         .body-content { padding: 28px 32px; }
-        .body-content h2 { color: #1a1a2e; font-size: 16px; margin: 0 0 16px; }
+        .body-content h2 { color: #1a1a2e; font-size: 15px; margin: 20px 0 10px; }
+        .body-content h2:first-of-type { margin-top: 0; }
         .body-content p { color: #475569; font-size: 13px; line-height: 1.6; margin: 0 0 12px; }
-        .details-table { width: 100%; border-collapse: collapse; margin: 16px 0; }
+        .details-table { width: 100%; border-collapse: collapse; margin: 8px 0 16px; }
         .details-table td { padding: 8px 12px; border-bottom: 1px solid #e2e8f0; font-size: 12px; }
         .details-table td:first-child { color: #64748b; width: 40%; }
         .details-table td:last-child { color: #1a1a2e; font-weight: 600; }
@@ -28,14 +29,18 @@
 <body>
     <div class="wrapper">
         <div class="header">
-            <h1>Sticker Issuance Request</h1>
-            <p>{{ $sticker->sticker_number }}</p>
+            <h1>Request for A Sticker</h1>
+            {{-- <p>{{ $sticker->sticker_number }}</p> --}}
         </div>
 
         <div class="body-content">
-            <h2>Dear Underwriter,</h2>
+            <h2>Dear {{ $underwriter_name }},</h2>
 
-            <p>A new motor insurance sticker has been requested and the KYC documents have been uploaded and verified. Please find the details below and respond to this email thread within 30 minutes with the Sticker and Policy Document attached.</p>
+            @if($client_type === 'corporate')
+            <p>A new motor insurance sticker has been requested on behalf of the corporate client below. The KYC documents have been uploaded and verified. Please find the owner and vehicle details below, along with the quotation attached for your perusal, and respond to this email thread with the Sticker and Policy Document attached.</p>
+            @else
+            <p>A new motor insurance sticker has been requested for the individual client below. The KYC documents have been uploaded and verified. Please find the owner and vehicle details below, along with the quotation attached for your perusal, and respond to this email thread with the Sticker and Policy Document attached.</p>
+            @endif
 
             @if($admin_notes)
             <div class="alert-box">
@@ -46,44 +51,38 @@
 
             <div class="premium-box">
                 <div class="label">Total Premium</div>
-                <div class="amount">KES {{ number_format($sticker->premium, 2) }}</div>
+                <div class="amount">KES {{ $premium }}</div>
             </div>
 
+            <h2>Owner Details</h2>
             <table class="details-table">
-                <tr><td>Sticker ID</td><td>{{ $sticker->sticker_number }}</td></tr>
-                <tr><td>Insurance Company</td><td>{{ $sticker->company->name }}</td></tr>
-                <tr><td>Customer Name</td><td>{{ $sticker->customer_name }}</td></tr>
-                <tr><td>Vehicle</td><td>{{ $sticker->car_make }} {{ $sticker->car_model }} ({{ $sticker->car_year }})</td></tr>
-                <tr><td>Registration</td><td>{{ $sticker->vehicle_registration ?? 'N/A' }}</td></tr>
-                <tr><td>Vehicle Valuation</td><td>KES {{ number_format($sticker->car_valuation, 2) }}</td></tr>
-                <tr><td>Cover Type</td><td>{{ $sticker->cover_type }}</td></tr>
-                <tr><td>Status</td><td><span class="badge">{{ ucfirst($sticker->status) }}</span></td></tr>
-                <tr><td>Quotation Number</td><td>{{ $quotation->quotation_number ?? 'N/A' }}</td></tr>
+                <tr><td>Client Type</td><td>{{ $client_type_label }}</td></tr>
+                <tr><td>Salutation</td><td>{{ $salutation ?: 'N/A' }}</td></tr>
+                <tr><td>Customer Name</td><td>{{ $customer_name }}</td></tr>
+            </table>
+
+            <h2>Vehicle Details</h2>
+            <table class="details-table">
+                <tr><td>Registration No</td><td>{{ $registration }}</td></tr>
+                <tr><td>Engine No</td><td>{{ $engine_number }}</td></tr>
+                <tr><td>Chassis No</td><td>{{ $chassis_number }}</td></tr>
+                <tr><td>Make of Vehicle</td><td>{{ $make }}</td></tr>
+                <tr><td>Model Name</td><td>{{ $model }}</td></tr>
+                <tr><td>Year of Manufacture</td><td>{{ $year ?: 'N/A' }}</td></tr>
+                <tr><td>Value of Vehicle</td><td>KES {{ $valuation }}</td></tr>
+            </table>
+
+            <h2>Sticker &amp; Quotation Reference</h2>
+            <table class="details-table">
+                {{-- <tr><td>Sticker ID</td><td>{{ $sticker->sticker_number }}</td></tr> --}}
+                <tr><td>Insurance Company</td><td>{{ $company }}</td></tr>
+                <tr><td>Cover Type</td><td>{{ $cover_type }}</td></tr>
+                <tr><td>Quotation Number</td><td>{{ $quotation_number }}</td></tr>
                 <tr><td>Issued At</td><td>{{ $issued_at }}</td></tr>
             </table>
 
-            <h2>Quotation Breakdown</h2>
-            @if(!empty($breakdown) && is_array($breakdown))
-                <table class="details-table">
-                    @foreach($breakdown as $key => $value)
-                        <tr>
-                            <td>{{ ucwords(str_replace('_', ' ', $key)) }}</td>
-                            <td>{{ is_numeric($value) ? 'KES ' . number_format($value, 2) : $value }}</td>
-                        </tr>
-                    @endforeach
-                </table>
-            @else
-                <p>No detailed breakdown available for this quotation.</p>
-            @endif
-
             <h2>Attached Documents</h2>
-            <p>The following KYC documents have been uploaded and virus-scanned:</p>
-            <ul>
-                <li>Copy of ID (Scanned)</li>
-                <li>Copy of KRA PIN (Scanned)</li>
-                <li>Copy of Logbook (Scanned)</li>
-            </ul>
-            <p>Please find these documents attached to this email. Respond to this thread with the Sticker and Policy Document within the 30-minute turnaround time.</p>
+            <p>The following documents are attached for your perusal: the quotation, the KYC documents uploaded and virus-scanned by the client{{ $client_type === 'corporate' ? ' (KRA PIN, Certificate of Incorporation, and supporting documents)' : ' (ID, KRA PIN, and logbook)' }}. Please respond to this thread with the Sticker and Policy Document.</p>
         </div>
 
         <div class="footer">

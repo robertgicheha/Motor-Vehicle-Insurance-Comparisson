@@ -42,6 +42,7 @@
     </style>
 </head>
 <body>
+<<<<<<< HEAD
     @php
         $company = $quotation->company;
         $slug = strtoupper($company->slug ?? '');
@@ -327,5 +328,8 @@
     <div class="pdf-footer-text">
         Quotation {{ $quotation->quotation_number }} | This is a computer-generated document.
     </div>
+=======
+@include('pdf.partials.quotation-body', ['quotation' => $quotation])
+>>>>>>> 6e09d9fe61c33867596115ee207a46e63c627a60
 </body>
 </html>

@@ -79,12 +79,18 @@ class CertificateIssuedMail extends Mailable
     {
         $variables = $this->variables();
 
+<<<<<<< HEAD
         // 1. Governed by the 'certificate_issued' email template subject, if set.
+=======
+        // Governed by the 'certificate_issued' email template subject, if an
+        // admin has customized it; otherwise the fixed, spec'd subject.
+>>>>>>> 6e09d9fe61c33867596115ee207a46e63c627a60
         $template = $this->template('certificate_issued');
         if ($template && $template->subject) {
             return $template->renderContent($template->subject, $variables);
         }
 
+<<<<<<< HEAD
         // 2. Otherwise the sticker Email Configuration subject template
         //    (stored with single-brace placeholders like {sticker_number}).
         $subjectTemplate = \App\Models\EmailSetting::where('key', 'sticker_email_subject_template')->value('value');
@@ -99,19 +105,31 @@ class CertificateIssuedMail extends Mailable
 
         // 3. Final fallback.
         return 'Sticker Issuance - ' . $this->sticker->sticker_number;
+=======
+        return 'Request for A Sticker';
+>>>>>>> 6e09d9fe61c33867596115ee207a46e63c627a60
     }
 
     protected function variables(): array
     {
         $quotation = $this->sticker->quotation;
         $breakdown = $this->sticker->breakdown ?: ($quotation?->breakdown ?: []);
+        $isCorporate = $this->sticker->client_type === 'corporate';
 
         return [
             'sticker_number' => $this->sticker->sticker_number,
+            'underwriter_name' => $this->sticker->company?->underwriter_name ?: 'Underwriter',
+            'salutation' => $quotation?->customer_salutation ?: '',
             'customer_name' => $this->sticker->customer_name,
+            'client_type' => $isCorporate ? 'corporate' : 'individual',
+            'client_type_label' => $isCorporate ? 'Corporate' : 'Individual',
             'company' => $this->sticker->company?->name ?? 'N/A',
             'vehicle' => trim(($this->sticker->car_make ?? '') . ' ' . ($this->sticker->car_model ?? '')),
+            'make' => $this->sticker->car_make ?: 'N/A',
+            'model' => $this->sticker->car_model ?: 'N/A',
             'registration' => $this->sticker->vehicle_registration ?? 'N/A',
+            'chassis_number' => $this->sticker->chassis_number ?: 'N/A',
+            'engine_number' => $this->sticker->engine_number ?: 'N/A',
             'year' => $this->sticker->car_year,
             'valuation' => number_format($this->sticker->car_valuation, 2),
             'premium' => number_format($this->sticker->premium, 2),
@@ -121,19 +139,28 @@ class CertificateIssuedMail extends Mailable
             'issued_at' => $this->sticker->generated_at?->format('d M Y H:i') ?? now()->format('d M Y H:i'),
             'underwriter_email' => $this->sticker->underwriter_email,
             'admin_notes' => $this->sticker->admin_notes,
+            'quotation_number' => $quotation?->quotation_number ?? 'N/A',
             'app_name' => config('app.name'),
         ];
     }
 
     public function attachments(): array
     {
+        // The system never generates its own certificate/sticker PDF — this
+        // email only requests the sticker; the underwriter replies to the
+        // thread with the actual sticker and policy document. So only the
+        // quotation (for their perusal) and the client's KYC documents go
+        // out here.
         $attachments = [];
 
-        $pdf = Pdf::loadView('pdf.sticker', ['sticker' => $this->sticker]);
-        $attachments[] = Attachment::fromData(
-            fn() => $pdf->output(),
-            "certificate-{$this->sticker->sticker_number}.pdf"
-        )->withMime('application/pdf');
+        if ($quotation = $this->sticker->quotation) {
+            $quotation->loadMissing(['user', 'company']);
+            $quotationPdf = Pdf::loadView('pdf.quotation', ['quotation' => $quotation]);
+            $attachments[] = Attachment::fromData(
+                fn() => $quotationPdf->output(),
+                'quotation-' . str_replace(['/', '\\'], '-', $quotation->quotation_number) . '.pdf'
+            )->withMime('application/pdf');
+        }
 
         foreach ($this->kycPaths as $index => $path) {
             if (!file_exists($path)) {

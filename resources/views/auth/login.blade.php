@@ -3,6 +3,12 @@
         Let's get you signed in. Enter your email and password to continue.
     </p>
 
+    @if (session('status'))
+        <div class="mb-4 p-3 rounded-md bg-emerald-50 border border-emerald-200">
+            <p class="text-sm text-emerald-700">{{ session('status') }}</p>
+        </div>
+    @endif
+
     @if ($errors->any())
         <div class="mb-4 p-3 rounded-md bg-red-50 border border-red-200">
             @foreach ($errors->all() as $error)

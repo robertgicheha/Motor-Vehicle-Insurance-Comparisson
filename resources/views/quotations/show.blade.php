@@ -352,7 +352,7 @@
             <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
             Print
         </a>
-        <button class="action-btn action-btn-preview inline-flex items-center gap-1.5 px-4 py-2.5 text-xs font-semibold bg-red-600 hover:bg-red-500 text-white border border-blue-600 hover:bg-red-50 dark:hover:bg-blue-900/20 rounded-lg transition" id="btn-preview" onclick="actionTogglePreview()">
+        <button class="action-btn action-btn-preview inline-flex items-center gap-1.5 px-4 py-2.5 text-xs font-semibold bg-purple-600 hover:bg-purple-500 text-white rounded-lg transition" id="btn-preview" onclick="actionTogglePreview()">
         <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
             <circle cx="12" cy="12" r="3"/>
@@ -396,11 +396,11 @@ function actionTogglePreview() {
       _pdfPreviewLoaded = true;
     }
     wrap.style.display = 'block';
-    if (btn) btn.classList.add('active');
+    if (btn) { btn.classList.add('active', 'bg-purple-800'); btn.classList.remove('bg-purple-600', 'hover:bg-purple-500'); }
     wrap.scrollIntoView({ behavior: 'smooth', block: 'start' });
   } else {
     wrap.style.display = 'none';
-    if (btn) btn.classList.remove('active');
+    if (btn) { btn.classList.remove('active', 'bg-purple-800'); btn.classList.add('bg-purple-600', 'hover:bg-purple-500'); }
   }
 }
 

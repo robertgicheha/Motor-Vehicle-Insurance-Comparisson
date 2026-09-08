@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class ClaimDocument extends Model
 {
     protected $fillable = [
+        'upload_token',
         'claim_id',
         'document_type',
         'filename',
@@ -15,6 +16,7 @@ class ClaimDocument extends Model
         'mime_type',
         'file_size',
         'scan_status',
+        'scan_result',
         'ai_validation_status',
         'ai_validation_notes',
         'uploaded_by',
@@ -37,6 +39,13 @@ class ClaimDocument extends Model
     public const AI_STATUS_INVALID = 'invalid';
     public const AI_STATUS_NEEDS_REVIEW = 'needs_review';
 
+    /**
+     * The original, fixed document checklist (still used by
+     * AIDocumentValidationService). The claim form's own attachments —
+     * 'police_abstract' and 'incident_photo' — are a separate, narrower
+     * set validated directly in ClaimsController rather than through this
+     * list, since incident photos aren't a checklist item with a fixed name.
+     */
     public static function documentTypes(): array
     {
         return [

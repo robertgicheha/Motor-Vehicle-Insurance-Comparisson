@@ -28,6 +28,17 @@ class PremiumCalculationService
         $pllRate = $rates->get('Premium Rate::PLL Per Person');
         $trainingLevyRate = $rates->get('Premium Rate::Training Levy Rate');
         $policyHolderFundRate = $rates->get('Premium Rate::Policy Holder Fund Rate');
+
+        // Defensive fallback: if a company's rates were seeded/restored from
+        // before the Training Levy / Policy Holder Fund split (a single
+        // combined "Levis Rate" row), don't silently drop the levy from the
+        // total — treat the combined rate as the training levy component so
+        // it still flows into total_premium and stays consistent with the
+        // client-side quote display.
+        if (!$trainingLevyRate && !$policyHolderFundRate) {
+            $trainingLevyRate = $rates->get('Premium Rate::Levis Rate');
+        }
+
         $stampDuty = $rates->get('Premium Rate::Stamp Duty');
         $premiumRateAbove = $rates->get('Premium Rate::Premium Rate Above 2.5M');
 

@@ -18,6 +18,8 @@ class Claim extends Model
         'vehicle_details',
         'incident_date',
         'incident_description',
+        'claim_type',
+        'claim_type_other',
         'police_abstract_reference',
         'documents_confirmed',
         'other_documents',
@@ -70,6 +72,17 @@ class Claim extends Model
         ];
     }
 
+    public static function claimTypes(): array
+    {
+        return [
+            'own_damage' => 'Own Damage',
+            'tpo' => 'TPO - Third Party Only',
+            'windscreen' => 'Windscreen',
+            'partial_theft' => 'Partial Theft',
+            'others' => 'Others',
+        ];
+    }
+
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
@@ -78,6 +91,11 @@ class Claim extends Model
     public function onBehalfOfUser(): BelongsTo
     {
         return $this->belongsTo(User::class, 'on_behalf_of_user_id');
+    }
+
+    public function documents(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(ClaimDocument::class);
     }
 
    

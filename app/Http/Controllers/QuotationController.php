@@ -17,6 +17,7 @@ use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 
 class QuotationController extends Controller
@@ -160,28 +161,33 @@ class QuotationController extends Controller
      */
     protected function buildTrend($baseQuery)
     {
-        $dbDriver = DB::connection()->getDriverName();
-        $dateExpr = $dbDriver === 'sqlite'
-            ? "strftime('%Y-%m-%d', created_at) as day"
-            : "DATE(created_at) as day";
+        // Callers hand us the same builder they paginate with, so it can already
+        // carry an ORDER BY created_at (from ->latest()) and a LIMIT/OFFSET (from
+        // ->paginate()). Both are wrong for an aggregate: MySQL rejects ordering
+        // by a non-grouped column under only_full_group_by, and an inherited LIMIT
+        // would silently truncate the trend. Strip both before grouping.
+        $trendQuery = (clone $baseQuery)->reorder();
+        $trendQuery->getQuery()->limit = null;
+        $trendQuery->getQuery()->offset = null;
 
-        $rows = (clone $baseQuery)
-            ->select(DB::raw($dateExpr), DB::raw('COUNT(*) as count'))
+        // Grouped in PHP (not via a driver-specific SQL date function like
+        // strftime/DATE) so this never breaks depending on which database
+        // driver is actually active — see the strftime-on-MySQL production
+        // incident this replaced.
+        $counts = $trendQuery
             ->where('created_at', '>=', now()->subDays(13)->startOfDay())
-            ->groupBy('day')
-            ->orderBy('day')
-            ->get()
-            ->keyBy('day');
+            ->pluck('created_at')
+            ->countBy(fn($createdAt) => $createdAt->toDateString());
 
         $labels = [];
-        $counts = [];
+        $countsArr = [];
         for ($i = 13; $i >= 0; $i--) {
             $day = now()->subDays($i);
             $labels[] = $day->format('d M');
-            $counts[] = (int) ($rows[$day->toDateString()]->count ?? 0);
+            $countsArr[] = (int) ($counts[$day->toDateString()] ?? 0);
         }
 
-        return ['labels' => $labels, 'counts' => $counts];
+        return ['labels' => $labels, 'counts' => $countsArr];
     }
 
     public function create()
@@ -408,6 +414,11 @@ class QuotationController extends Controller
         $admins = User::role(['super-admin', 'admin'])->get();
         foreach ($admins as $admin) {
             $admin->notify(new QuotationStatusChanged($quotation, 'new', 'generated'));
+            try {
+                Mail::to($admin->email)->send(new \App\Mail\QuotationCreatedAdminMail($quotation, $admin));
+            } catch (\Exception $e) {
+                \Illuminate\Support\Facades\Log::warning("Failed to email admin {$admin->email} about quotation {$quotation->quotation_number}: " . $e->getMessage());
+            }
         }
         try {
             $quotation->user?->notify(new QuotationStatusChanged($quotation, 'new', 'generated'));
@@ -711,10 +722,13 @@ class QuotationController extends Controller
                 false
             );
 
-            $geoRate = Rate::where('company_id', $company->id)
-                ->where('vehicle_type', $vehicleType)
-                ->where('item_name', 'Geographical Area')
-                ->first();
+            $companyRates = $company->rates->where('vehicle_type', $vehicleType);
+            $geoRate = $companyRates->firstWhere('item_name', 'Geographical Area');
+            $excessProtectorRate = $companyRates->firstWhere('item_name', 'Excess Protector');
+            $maxAgeRate = $companyRates->firstWhere('item_name', 'Max Age New Business');
+            $minSumInsured = $vehicleType === 'psv' ? (float) $company->min_sum_insured_psv : (float) $company->min_sum_insured_private;
+            $minSumInsuredRate = $companyRates->firstWhere('item_name', 'Minimum Sum Insured');
+
             $breakdown['geo_limit'] = $geoRate?->notes
                 ?: ($geoRate?->value ? 'KES ' . number_format($geoRate->value, 0) : 'Kenya');
 
@@ -726,10 +740,100 @@ class QuotationController extends Controller
                     'logo' => $company->logoUrl(),
                 ],
                 'breakdown' => $breakdown,
+                'benefits' => [
+                    'excess_protector' => $excessProtectorRate?->notes,
+                    'max_age' => $maxAgeRate ? $maxAgeRate->value . ' years' : null,
+                    'min_sum_insured' => $minSumInsured ? 'KES ' . number_format($minSumInsured, 0) : ($minSumInsuredRate?->notes ?: null),
+                ],
             ];
         })->values();
 
         return response()->json(['results' => $results]);
+    }
+
+    /**
+     * Builds one combined PDF containing every matching underwriter's full
+     * quotation document (same layout as a single quotation download, one
+     * per company, paginated back to back) so "Compare All" can be
+     * previewed, downloaded, or printed as a single file. Mirrors
+     * compareAllCalculate()'s company matching + premium calculation, but
+     * renders unsaved Quotation instances (never persisted) through the
+     * existing pdf.partials.quotation-body template.
+     */
+    protected function buildCompareAllQuotations(Request $request)
+    {
+        $request->validate([
+            'vehicle_type' => 'required|string|in:psv,private',
+            'car_valuation' => 'required|numeric|min:0',
+            'num_passengers' => 'sometimes|integer|min:1',
+            'salutation' => 'nullable|string|max:20',
+            'first_name' => 'nullable|string|max:100',
+            'middle_name' => 'nullable|string|max:100',
+            'last_name' => 'nullable|string|max:100',
+            'phone' => 'nullable|string|max:30',
+            'email' => 'nullable|email|max:150',
+            'car_registration' => 'nullable|string|max:30',
+            'chassis_number' => 'nullable|string|max:60',
+            'engine_number' => 'nullable|string|max:60',
+            'car_make' => 'nullable|string|max:100',
+            'car_model' => 'nullable|string|max:100',
+            'body_type' => 'nullable|string|max:100',
+            'car_year' => 'nullable|string|max:10',
+            'color' => 'nullable|string|max:50',
+        ]);
+
+        $vehicleType = $request->vehicle_type;
+        $valuation = (float) $request->car_valuation;
+        $numPassengers = (int) $request->input('num_passengers', 1);
+
+        $companies = Company::active()
+            ->with('rates')
+            ->get()
+            ->filter(fn($c) => in_array($c->company_type, ['both', $vehicleType]))
+            ->values();
+
+        return $companies->map(function ($company) use ($request, $vehicleType, $valuation, $numPassengers) {
+            $breakdown = $this->premiumCalculator->calculate(
+                $company,
+                $valuation,
+                $vehicleType,
+                true,
+                $numPassengers,
+                true,
+                false
+            );
+
+            $quotation = new Quotation($request->only([
+                'salutation', 'first_name', 'middle_name', 'last_name', 'phone', 'email',
+                'car_make', 'car_model', 'car_year', 'car_registration', 'chassis_number',
+                'engine_number', 'body_type', 'color',
+            ]));
+            $quotation->car_valuation = $valuation;
+            $quotation->vehicle_type = $vehicleType;
+            $quotation->num_passengers = $numPassengers;
+            $quotation->premium = $breakdown['basic_premium'] ?? 0;
+            $quotation->pvt_premium = $breakdown['pvt_premium'] ?? 0;
+            $quotation->total_premium = $breakdown['total_premium'] ?? 0;
+            $quotation->breakdown = $breakdown;
+            $quotation->quotation_number = 'CMP-' . now()->format('Ymd') . '-' . strtoupper(Str::random(4)) . '-' . strtoupper($company->slug);
+            $quotation->setRelation('company', $company);
+
+            return $quotation;
+        })->values();
+    }
+
+    public function compareAllPdfPreview(Request $request)
+    {
+        $quotations = $this->buildCompareAllQuotations($request);
+        $pdf = Pdf::loadView('pdf.compare-all-quotations', ['quotations' => $quotations]);
+        return $pdf->stream('compare-all-insurers-' . now()->format('Ymd-His') . '.pdf');
+    }
+
+    public function compareAllPdfDownload(Request $request)
+    {
+        $quotations = $this->buildCompareAllQuotations($request);
+        $pdf = Pdf::loadView('pdf.compare-all-quotations', ['quotations' => $quotations]);
+        return $pdf->download('compare-all-insurers-' . now()->format('Ymd-His') . '.pdf');
     }
 
     public function regenerate(Request $request)

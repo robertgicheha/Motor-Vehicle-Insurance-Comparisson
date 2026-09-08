@@ -37,9 +37,7 @@ Route::prefix('lookup')->name('public.')->middleware('throttle:30,1')->group(fun
     Route::get('/quotation/{number}', [PublicController::class, 'showQuotation'])->name('quotation.show');
     Route::get('/sticker/{number}', [PublicController::class, 'showSticker'])->name('sticker.show');
     Route::get('/quotation/{number}/download', [PublicController::class, 'downloadQuotationPdf'])->name('quotation.download');
-    Route::get('/sticker/{number}/download', [PublicController::class, 'downloadStickerPdf'])->name('sticker.download');
     Route::post('/quotation/email', [PublicController::class, 'sendQuotationEmail'])->name('quotation.email')->middleware('throttle:5,1');
-    Route::post('/sticker/email', [PublicController::class, 'sendStickerEmail'])->name('sticker.email')->middleware('throttle:5,1');
 });
 
 Route::post('/quotations/regenerate', [QuotationController::class, 'regenerate'])->name('quotations.regenerate');
@@ -52,7 +50,6 @@ Route::prefix('stickers')->name('stickers.')->group(function () {
     Route::post('/lookup', [StickerController::class, 'search'])->name('search')->middleware('throttle:30,1');
     Route::post('/lookup/search-quotation', [StickerController::class, 'searchQuotationPublic'])->name('lookup.search-quotation')->middleware('throttle:30,1');
     Route::get('/{sticker}', [StickerController::class, 'show'])->name('show');
-    Route::get('/{sticker}/download', [StickerController::class, 'downloadPdf'])->name('download');
     Route::get('/{sticker}/print', [StickerController::class, 'printView'])->name('print');
 });
 

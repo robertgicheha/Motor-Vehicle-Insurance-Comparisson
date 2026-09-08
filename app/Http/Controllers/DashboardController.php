@@ -156,6 +156,7 @@ class DashboardController extends Controller
             ->take(10)
             ->get();
 
+<<<<<<< HEAD
         $data['monthlyQuotations'] = Quotation::select(
             DB::raw($monthExpr),
             DB::raw('count(*) as total')
@@ -164,6 +165,17 @@ class DashboardController extends Controller
             ->groupBy('month')
             ->orderBy('month')
             ->get();
+=======
+        // Grouped in PHP (not via a driver-specific SQL date function like
+        // strftime/DATE_FORMAT) so this never breaks depending on which
+        // database driver is actually active.
+        $data['monthlyQuotations'] = Quotation::where('created_at', '>=', $sixMonthsAgo)
+            ->pluck('created_at')
+            ->countBy(fn($createdAt) => $createdAt->format('Y-m'))
+            ->sortKeys()
+            ->map(fn($total, $month) => (object)['month' => $month, 'total' => $total])
+            ->values();
+>>>>>>> 6e09d9fe61c33867596115ee207a46e63c627a60
 
         $data['usersByGender'] = User::select('gender', DB::raw('count(*) as total'))
             ->whereNotNull('gender')
@@ -190,6 +202,7 @@ class DashboardController extends Controller
                 ]),
             ]);
 
+<<<<<<< HEAD
         if ($dbDriver === 'sqlite') {
             $monthExpr = "strftime('%b %Y', created_at) as month";
             $sortExpr = "strftime('%Y-%m', created_at) as sort_key";
@@ -204,6 +217,21 @@ class DashboardController extends Controller
             ->groupBy('month', 'sort_key')
             ->orderBy('sort_key')
             ->get();
+=======
+        // Grouped in PHP (not via a driver-specific SQL date function like
+        // strftime/DATE_FORMAT) so this never breaks depending on which
+        // database driver is actually active.
+        $data['premiumTrend'] = Quotation::where('created_at', '>=', $sixMonthsAgo)
+            ->get(['created_at', 'total_premium'])
+            ->groupBy(fn($q) => $q->created_at->format('Y-m'))
+            ->map(fn($items, $sortKey) => (object)[
+                'sort_key' => $sortKey,
+                'month' => $items->first()->created_at->format('M Y'),
+                'avg_premium' => round($items->avg('total_premium')),
+            ])
+            ->sortBy('sort_key')
+            ->values();
+>>>>>>> 6e09d9fe61c33867596115ee207a46e63c627a60
 
         $data['allActivities'] = ActivityLog::with('user:id,name,avatar')->latest()->take(10)->get();
         $data['myActivities'] = ActivityLog::where('user_id', $user->id)->latest()->take(10)->get();
@@ -431,12 +459,20 @@ class DashboardController extends Controller
 
         $data['quotationsByCompany'] = $companyUserStats->pluck('user_quotations_count', 'name');
 
+        // Grouped in PHP (not via a driver-specific SQL date function like
+        // strftime/DATE_FORMAT) so this never breaks depending on which
+        // database driver is actually active.
         $data['monthlyQuotations'] = $user->quotations()
+<<<<<<< HEAD
             ->select(DB::raw($monthExpr), DB::raw('count(*) as total'))
+=======
+>>>>>>> 6e09d9fe61c33867596115ee207a46e63c627a60
             ->where('created_at', '>=', now()->subMonths(6))
-            ->groupBy('month')
-            ->orderBy('month')
-            ->get();
+            ->pluck('created_at')
+            ->countBy(fn($createdAt) => $createdAt->format('Y-m'))
+            ->sortKeys()
+            ->map(fn($total, $month) => (object)['month' => $month, 'total' => $total])
+            ->values();
 
         $data['weeklyQuotations'] = $user->quotations()
             ->whereBetween('created_at', [now()->startOfWeek(), now()->endOfWeek()])

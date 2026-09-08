@@ -108,7 +108,17 @@
                     var div = document.createElement('div');
                     div.className = 'relative bg-gray-50 dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden cursor-pointer hover:ring-2 hover:ring-blue-500 transition' +
                         (mediaPickerSelectedPath && mediaPickerSelectedPath === m.path ? ' ring-2 ring-blue-500 border-blue-500' : '');
+<<<<<<< HEAD
                     div.innerHTML = '<div class="aspect-square flex items-center justify-center p-2"><img src="' + m.url + '" alt="' + m.filename + '" class="max-w-full max-h-full object-contain"></div><div class="p-2"><p class="text-[10px] text-gray-600 dark:text-gray-400 truncate">' + m.filename + '</p></div>';
+=======
+                    div.innerHTML = '<div class="aspect-square flex items-center justify-center p-2 relative">' +
+                        '<img src="' + m.url + '" alt="' + m.filename + '" class="max-w-full max-h-full object-contain" onerror="this.style.display=\'none\'; this.nextElementSibling.style.display=\'flex\'">' +
+                        '<div class="absolute inset-0 flex-col items-center justify-center text-center px-2" style="display:none">' +
+                            '<svg class="w-6 h-6 text-red-300 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z"/></svg>' +
+                            '<p class="text-[9px] text-red-400 leading-tight">Failed to load</p>' +
+                        '</div>' +
+                    '</div><div class="p-2"><p class="text-[10px] text-gray-600 dark:text-gray-400 truncate">' + m.filename + '</p></div>';
+>>>>>>> 6e09d9fe61c33867596115ee207a46e63c627a60
                     div.onclick = function() {
                         pickMediaPickerItem({ id: m.id, path: m.path || null, url: m.url, filename: m.filename });
                     };

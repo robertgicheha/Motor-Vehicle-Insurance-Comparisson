@@ -20,7 +20,11 @@ Route::middleware(['auth', 'online'])->prefix('stickers')->name('stickers.')->gr
     Route::post('/lookup-by-quotation', [StickerController::class, 'lookupByQuotation'])->name('lookup-by-quotation');
     Route::get('/issue', [StickerController::class, 'issueForm'])->name('issue');
     Route::post('/search-quotation', [StickerController::class, 'searchQuotation'])->name('search-quotation');
+    Route::post('/cover-details', [StickerController::class, 'saveCoverDetails'])->name('cover-details');
+    Route::post('/calculate-cover-end-date', [StickerController::class, 'calculateCoverEndDate'])->name('calculate-cover-end-date');
+    Route::post('/toggle-logbook-na', [StickerController::class, 'toggleLogbookNA'])->name('toggle-logbook-na');
     Route::post('/upload-document', [StickerController::class, 'uploadDocument'])->name('upload-document');
+    Route::post('/remove-document', [StickerController::class, 'removeDocument'])->name('remove-document');
     Route::post('/scan-status', [StickerController::class, 'scanStatus'])->name('scan-status');
     Route::post('/issue', [StickerController::class, 'issue'])->name('issue.store');
     Route::post('/test-email', [StickerController::class, 'sendTestEmail'])->name('test-email');
@@ -51,6 +55,8 @@ Route::middleware(['auth', 'online'])->group(function () {
     Route::get('/quotations/preview', [QuotationController::class, 'preview'])->name('quotations.preview');
     Route::get('/quotations/compare-all', [QuotationController::class, 'compareAll'])->name('quotations.compare-all');
     Route::post('/quotations/compare-all/calculate', [QuotationController::class, 'compareAllCalculate'])->name('quotations.compare-all.calculate');
+    Route::post('/quotations/compare-all/pdf/preview', [QuotationController::class, 'compareAllPdfPreview'])->name('quotations.compare-all.pdf.preview');
+    Route::post('/quotations/compare-all/pdf/download', [QuotationController::class, 'compareAllPdfDownload'])->name('quotations.compare-all.pdf.download');
     Route::resource('quotations', QuotationController::class)->except(['edit', 'update']);
     Route::post('/quotations/calculate', [QuotationController::class, 'calculate'])->name('quotations.calculate');
     Route::get('/quotations/{quotation}/download-pdf', [QuotationController::class, 'downloadPdf'])->name('quotations.download.pdf');
@@ -60,6 +66,8 @@ Route::middleware(['auth', 'online'])->group(function () {
     Route::get('/claims/mine', [ClaimsController::class, 'myClaims'])->name('claims.mine');
     Route::get('/claims/lookup-vehicle', [ClaimsController::class, 'lookupVehicle'])->name('claims.lookup-vehicle');
     Route::get('/claims/suggest-vehicles', [ClaimsController::class, 'suggestVehicles'])->name('claims.suggest-vehicles');
+    Route::post('/claims/upload-document', [ClaimsController::class, 'uploadDocument'])->name('claims.upload-document');
+    Route::post('/claims/remove-document', [ClaimsController::class, 'removeDocument'])->name('claims.remove-document');
     Route::resource('claims', ClaimsController::class);
     Route::match(['post', 'patch'], '/claims/{claim}/update-status', [ClaimsController::class, 'updateStatus'])->name('claims.update-status');
     Route::match(['post', 'patch'], '/claims/{claim}/update-documents-confirmed', [ClaimsController::class, 'updateDocumentsConfirmed'])->name('claims.update-documents-confirmed');

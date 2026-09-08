@@ -184,6 +184,23 @@
                 </div>
             </div>
 
+            {{-- ─── ACTION BAR (combined document across all insurers) ──── --}}
+            <div class="action-bar bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-5 flex items-center gap-3 print:hidden">
+                <span class="action-bar-label text-[11px] font-semibold uppercase tracking-widest text-gray-400 flex-1">Compare All — Combined Document</span>
+                <button type="button" class="action-btn action-btn-download inline-flex items-center gap-1.5 px-4 py-2.5 text-xs font-semibold bg-blue-500 hover:bg-blue-400 text-white rounded-lg transition" @click="submitCompareAllPdf('download', false)">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                    Download All (PDF)
+                </button>
+                <button type="button" class="action-btn action-btn-print inline-flex items-center gap-1.5 px-4 py-2.5 text-xs font-semibold bg-gray-700 hover:bg-gray-600 text-white rounded-lg transition" @click="submitCompareAllPdf('preview', true)">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+                    Print All
+                </button>
+                <button type="button" class="action-btn action-btn-preview inline-flex items-center gap-1.5 px-4 py-2.5 text-xs font-semibold bg-purple-600 hover:bg-purple-500 text-white rounded-lg transition" @click="submitCompareAllPdf('preview', true)">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                    Preview All
+                </button>
+            </div>
+
             {{-- ─── SELECT AN INSURER ──────────────────────────────────── --}}
             <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden print:hidden">
                 <div class="px-6 py-4 border-b border-gray-100 dark:border-gray-700">
@@ -192,7 +209,8 @@
                 </div>
                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 p-6">
                     <template x-for="r in results" :key="r.company.slug">
-                        <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border-2 border-gray-200 dark:border-gray-700 p-5 text-center transition hover:-translate-y-0.5 hover:shadow-md hover:border-blue-500">
+                        <div class="group relative bg-white dark:bg-gray-800 rounded-2xl shadow-sm border-2 border-gray-200 dark:border-gray-700 p-5 text-center transition hover:-translate-y-0.5 hover:shadow-lg hover:border-blue-500 flex flex-col">
+                            <span x-show="r.company.slug === cheapestSlug" class="absolute top-3 right-3 text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-emerald-500 text-white">Lowest Premium</span>
                             <div class="h-11 flex items-center justify-center mb-3">
                                 <img :src="r.company.logo" :alt="r.company.name" class="max-h-10 max-w-[110px] object-contain" x-show="r.company.logo" onerror="this.style.display='none'">
                                 <span class="text-xs font-extrabold tracking-wider text-blue-600" x-show="!r.company.logo" x-text="r.company.name"></span>
@@ -200,7 +218,16 @@
                             <div class="text-xs font-bold text-gray-800 dark:text-white mb-1" x-text="r.company.name"></div>
                             <div class="text-[11px] text-gray-400 mb-3.5">Rate: <strong x-text="Number(r.breakdown.premium_rate).toFixed(2) + '%'"></strong> of vehicle value</div>
                             <div class="text-lg font-extrabold text-blue-600 dark:text-blue-400 mb-3.5 tabular-nums" x-text="fmt(r.breakdown.total_premium)"></div>
-                            <button type="button" @click="selectCompany(r.company.slug)" class="block w-full py-2.5 rounded-lg text-xs font-bold text-white transition bg-blue-600 hover:bg-blue-500">
+                            <div class="text-left mb-4 pt-3 border-t border-gray-100 dark:border-gray-700 space-y-1.5" x-show="cardBenefits(r).length">
+                                <p class="text-[9px] font-semibold uppercase tracking-wider text-gray-400 mb-1.5">Key Benefits</p>
+                                <template x-for="b in cardBenefits(r)" :key="b">
+                                    <div class="flex items-start gap-1.5 text-[10.5px] text-gray-600 dark:text-gray-300 leading-snug">
+                                        <svg class="w-3 h-3 mt-0.5 text-emerald-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+                                        <span x-text="b"></span>
+                                    </div>
+                                </template>
+                            </div>
+                            <button type="button" @click="selectCompany(r.company.slug)" class="mt-auto block w-full py-2.5 rounded-lg text-xs font-bold text-white transition bg-blue-600 hover:bg-blue-500">
                                 Select &amp; Continue →
                             </button>
                         </div>
@@ -267,6 +294,21 @@ function compareAllApp() {
             n = Number(n) || 0;
             return 'KES ' + n.toLocaleString('en-KE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
         },
+        get cheapestSlug() {
+            if (!this.results.length) return null;
+            return this.results.reduce((min, r) => (
+                !min || r.breakdown.total_premium < min.breakdown.total_premium ? r : min
+            ), null)?.company.slug || null;
+        },
+        cardBenefits(r) {
+            var b = r.benefits || {};
+            var lines = [
+                b.min_sum_insured ? 'Min. Sum Insured: ' + b.min_sum_insured : null,
+                b.max_age ? 'Max Vehicle Age: ' + b.max_age : null,
+                b.excess_protector ? 'Excess Protector: ' + b.excess_protector : null,
+            ].filter(Boolean);
+            return lines.slice(0, 3).map(t => t.length > 46 ? t.slice(0, 44) + '…' : t);
+        },
         selectCompany(slug) {
             if (this.data) {
                 this.data.insurer = slug;
@@ -275,6 +317,54 @@ function compareAllApp() {
             var params = '?insurer=' + encodeURIComponent(slug);
             if (this.urlOnBehalf) params += '&on_behalf_of=' + encodeURIComponent(this.urlOnBehalf);
             window.location.href = '{{ route("quotations.preview") }}' + params;
+        },
+        submitCompareAllPdf(mode, newTab) {
+            if (!this.data) return;
+            var d = this.data;
+            var first = d.first || d.first_name || d.firstName || '';
+            var middle = d.middle || d.middle_name || '';
+            var last = d.last || d.last_name || d.lastName || '';
+            var fields = {
+                vehicle_type: this.vehicleType,
+                car_valuation: this.vehicleValue,
+                num_passengers: Number(d.numPassengers || d.num_passengers) || 1,
+                salutation: d.salutation || '',
+                first_name: first,
+                middle_name: middle,
+                last_name: last,
+                phone: d.phone || '',
+                email: d.email || '',
+                car_registration: d.reg || '',
+                chassis_number: d.chassis || '',
+                engine_number: d.engine || '',
+                car_make: d.make || '',
+                car_model: d.model || '',
+                body_type: d.body || '',
+                car_year: d.year || '',
+                color: d.color || '',
+            };
+            var routeUrl = mode === 'download'
+                ? '{{ route("quotations.compare-all.pdf.download") }}'
+                : '{{ route("quotations.compare-all.pdf.preview") }}';
+            var form = document.createElement('form');
+            form.method = 'POST';
+            form.action = routeUrl;
+            if (newTab) form.target = '_blank';
+            var csrf = document.createElement('input');
+            csrf.type = 'hidden';
+            csrf.name = '_token';
+            csrf.value = document.querySelector('meta[name="csrf-token"]')?.content || '';
+            form.appendChild(csrf);
+            Object.keys(fields).forEach(function (key) {
+                var input = document.createElement('input');
+                input.type = 'hidden';
+                input.name = key;
+                input.value = fields[key];
+                form.appendChild(input);
+            });
+            document.body.appendChild(form);
+            form.submit();
+            document.body.removeChild(form);
         },
     };
 }

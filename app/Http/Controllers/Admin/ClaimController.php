@@ -39,7 +39,7 @@ class ClaimController extends Controller
 
     public function show(Claim $claim)
     {
-        $claim->load(['user', 'onBehalfOfUser']);
+        $claim->load(['user', 'onBehalfOfUser', 'documents']);
 
         return view('admin.claims.show', compact('claim'));
     }

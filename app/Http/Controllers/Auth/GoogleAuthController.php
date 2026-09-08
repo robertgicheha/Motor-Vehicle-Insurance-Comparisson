@@ -45,6 +45,7 @@ class GoogleAuthController extends Controller
                 'password' => Hash::make(str()->random(16)),
                 'is_active' => true,
                 'email_verified_at' => now(),
+                'verified_at' => now(),
                 'profile_completed' => false,
             ]);
             // syncRoles (not assignRole): guarantees a freshly created Google account

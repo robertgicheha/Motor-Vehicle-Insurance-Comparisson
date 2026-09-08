@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Mail\QuotationMail;
-use App\Mail\StickerMail;
 use App\Models\Company;
 use App\Models\Quotation;
 use App\Models\Rate;
@@ -226,19 +225,6 @@ class PublicController extends Controller
         return $pdf->download("quotation-{$quotation->quotation_number}.pdf");
     }
 
-    public function downloadStickerPdf($number)
-    {
-        $sticker = Sticker::where('sticker_number', $number)
-            ->with('company')
-            ->firstOrFail();
-
-        $sticker->increment('download_count');
-        $sticker->update(['last_downloaded_at' => now()]);
-
-        $pdf = Pdf::loadView('pdf.sticker', ['sticker' => $sticker]);
-        return $pdf->download("certificate-{$sticker->sticker_number}.pdf");
-    }
-
     public function sendQuotationEmail(Request $request)
     {
         $request->validate([
@@ -256,27 +242,6 @@ class PublicController extends Controller
             return back()->with('success', 'Quotation sent to ' . $request->email);
         } catch (\Exception $e) {
             \App\Services\AuditService::activity('quotation_email_failed', "Failed to email quotation {$quotation->quotation_number} to {$request->email}: {$e->getMessage()}", 'error');
-            return back()->with('error', 'Failed to send email. Please try again.');
-        }
-    }
-
-    public function sendStickerEmail(Request $request)
-    {
-        $request->validate([
-            'number' => 'required|string',
-            'email' => 'required|email',
-        ]);
-
-        $sticker = Sticker::where('sticker_number', $request->number)
-            ->with('company')
-            ->firstOrFail();
-
-        try {
-            Mail::to($request->email)->send(new StickerMail($sticker));
-            \App\Services\AuditService::activity('sticker_emailed', "Certificate {$sticker->sticker_number} emailed to {$request->email}");
-            return back()->with('success', 'Certificate sent to ' . $request->email);
-        } catch (\Exception $e) {
-            \App\Services\AuditService::activity('sticker_email_failed', "Failed to email certificate {$sticker->sticker_number} to {$request->email}: {$e->getMessage()}", 'error');
             return back()->with('error', 'Failed to send email. Please try again.');
         }
     }

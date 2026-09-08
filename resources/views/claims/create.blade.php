@@ -259,23 +259,6 @@
                         Add Photo
                     </button>
                 </div>
-<<<<<<< HEAD
-                <div id="otherDocsList" class="space-y-2">
-                    @if(old('other_documents'))
-                        @foreach(old('other_documents') as $idx => $od)
-                            @if($od)
-                                <div class="flex items-center gap-2 other-doc-row">
-                                    <input type="text" name="other_documents[]" value="{{ $od }}"
-                                           placeholder="Enter document name..."
-                                           class="flex-1 min-w-0 px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-800 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                                    <button type="button" class="removeOtherDoc p-2 text-gray-400 hover:text-red-500 transition" title="Remove">
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-                                    </button>
-                                </div>
-                            @endif
-                        @endforeach
-                    @endif
-=======
 
                 <div class="space-y-2">
                     <template x-for="row in photoRows" :key="row.rowId">
@@ -309,7 +292,6 @@
                     </template>
 
                     <p x-show="photoRows.length === 0" class="text-[10px] text-gray-400 text-center py-2">No photos added yet.</p>
->>>>>>> 6e09d9fe61c33867596115ee207a46e63c627a60
                 </div>
             </div>
 
@@ -559,7 +541,6 @@ function claimForm() {
         },
     };
 }
-<<<<<<< HEAD
 
 function selectSuggestion(reg, make, model, year, type) {
     document.getElementById('registration_number').value = reg;
@@ -779,8 +760,6 @@ docsList?.addEventListener('click', function(e) {
 @if(old('other_documents') && count(old('other_documents')) > 0)
     updateOtherDocsSection();
 @endif
-=======
->>>>>>> 6e09d9fe61c33867596115ee207a46e63c627a60
 </script>
 @endpush
 </x-app-layout>

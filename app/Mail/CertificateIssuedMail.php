@@ -79,35 +79,14 @@ class CertificateIssuedMail extends Mailable
     {
         $variables = $this->variables();
 
-<<<<<<< HEAD
-        // 1. Governed by the 'certificate_issued' email template subject, if set.
-=======
         // Governed by the 'certificate_issued' email template subject, if an
         // admin has customized it; otherwise the fixed, spec'd subject.
->>>>>>> 6e09d9fe61c33867596115ee207a46e63c627a60
         $template = $this->template('certificate_issued');
         if ($template && $template->subject) {
             return $template->renderContent($template->subject, $variables);
         }
 
-<<<<<<< HEAD
-        // 2. Otherwise the sticker Email Configuration subject template
-        //    (stored with single-brace placeholders like {sticker_number}).
-        $subjectTemplate = \App\Models\EmailSetting::where('key', 'sticker_email_subject_template')->value('value');
-
-        if ($subjectTemplate) {
-            $normalized = preg_replace('/\{([a-zA-Z0-9_]+)\}/', '{{ $1 }}', $subjectTemplate);
-            return preg_replace_callback('/\{\{\s*([a-zA-Z0-9_]+)\s*\}\}/', function ($matches) use ($variables) {
-                $value = $variables[$matches[1]] ?? null;
-                return $value !== null ? (string) $value : $matches[0];
-            }, $normalized) ?? $subjectTemplate;
-        }
-
-        // 3. Final fallback.
-        return 'Sticker Issuance - ' . $this->sticker->sticker_number;
-=======
         return 'Request for A Sticker';
->>>>>>> 6e09d9fe61c33867596115ee207a46e63c627a60
     }
 
     protected function variables(): array

@@ -572,6 +572,26 @@ function fetchPremiumPreview(val) {
 
 // ── Open quote page ──
 function openQuotePage(insurer) {
+    var valFieldEl = document.getElementById('f-value');
+    var valRaw = (valFieldEl.value || '').replace(/,/g, '');
+    var valNum = parseInt(valRaw, 10) || 0;
+    var valHint = document.getElementById('f-value-hint');
+    var valErr = document.getElementById('f-value-error');
+    if (valNum < 800000 || valNum > 1300000) {
+        if (valErr) {
+            valErr.textContent = 'Vehicle value must be between KES 800,000 and KES 1,300,000';
+            valErr.style.display = '';
+        }
+        valFieldEl.style.borderColor = '#e53e3e';
+        if (valHint) valHint.style.display = 'none';
+        valFieldEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        valFieldEl.focus();
+        return;
+    }
+    if (valErr) valErr.style.display = 'none';
+    valFieldEl.style.borderColor = '';
+    if (valHint) valHint.style.display = '';
+
     var userId = document.getElementById('f-user-id')?.value || null;
     var makeHidden = (document.getElementById('f-make-value') || {}).value || '';
     var makeOther  = (document.getElementById('f-make-other') || {}).value || '';

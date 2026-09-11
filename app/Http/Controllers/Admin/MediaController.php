@@ -120,6 +120,26 @@ class MediaController extends Controller
         }
     }
 
+    /**
+     * Resolves a media-relative path to a real filesystem path, rejecting
+     * anything (e.g. via "../" traversal) that would resolve outside the
+     * public/images media root.
+     */
+    private function resolveMediaPath(string $relativePath): ?string
+    {
+        $mediaRoot = realpath(public_path('images'));
+        if (!$mediaRoot) {
+            return null;
+        }
+
+        $real = realpath(public_path(ltrim($relativePath, '/')));
+        if ($real === false || !str_starts_with($real, $mediaRoot . DIRECTORY_SEPARATOR)) {
+            return null;
+        }
+
+        return $real;
+    }
+
     public function rename(Request $request)
     {
         $validator = Validator::make($request->all(), [
@@ -131,13 +151,14 @@ class MediaController extends Controller
             return back()->withErrors($validator)->withInput();
         }
 
-        $oldPath = public_path($request->old_path);
-        $dir = dirname($oldPath);
-        $newPath = $dir . DIRECTORY_SEPARATOR . $request->new_name;
+        $oldPath = $this->resolveMediaPath($request->old_path);
 
-        if (!file_exists($oldPath)) {
+        if (!$oldPath) {
             return back()->withErrors(['file' => 'File not found.']);
         }
+
+        $dir = dirname($oldPath);
+        $newPath = $dir . DIRECTORY_SEPARATOR . $request->new_name;
 
         if (file_exists($newPath)) {
             return back()->withErrors(['file' => 'A file with that name already exists.']);
@@ -172,7 +193,11 @@ class MediaController extends Controller
     public function destroyFile($path)
     {
         $decodedPath = base64_decode($path);
-        $filePath = public_path($decodedPath);
+        $filePath = $this->resolveMediaPath($decodedPath);
+
+        if (!$filePath) {
+            return back()->withErrors(['file' => 'File not found.']);
+        }
 
         if (file_exists($filePath)) {
             unlink($filePath);

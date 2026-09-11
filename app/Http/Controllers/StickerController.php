@@ -447,7 +447,7 @@ class StickerController extends Controller
         $sticker = $doc->sticker;
         $user = auth()->user();
 
-        if ($sticker && !$user->hasRole('super-admin') && !$user->hasRole('admin') && $sticker->issued_by !== $user->id) {
+        if (!$sticker || (!$user->hasRole('super-admin') && !$user->hasRole('admin') && $sticker->issued_by !== $user->id)) {
             return response()->json(['error' => 'You do not have access to this document.'], 403);
         }
 
@@ -470,6 +470,12 @@ class StickerController extends Controller
         if (!$sticker) {
             return response()->json(['success' => false, 'error' => 'No pending sticker found.'], 404);
         }
+
+        $user = auth()->user();
+        if (!$user->hasRole('super-admin') && !$user->hasRole('admin') && $sticker->issued_by !== $user->id) {
+            return response()->json(['error' => 'You do not have access to this sticker.'], 403);
+        }
+
         $documents = CertificateDocument::where('sticker_id', $sticker->id)->get();
 
         $docs = $documents->map(fn($d) => [

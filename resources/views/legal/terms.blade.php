@@ -85,13 +85,9 @@
             <p>We may update these Terms from time to time to reflect changes in the Portal's functionality or applicable law. The "Last updated" date above indicates when these Terms were last revised.</p>
         </section>
 
-        <section>
-            <h2 class="text-base font-bold text-[#1a1a2e] mb-2">13. Governing Law</h2>
-            <p>These Terms are governed by the laws of the Republic of Kenya, and any dispute arising from them shall be subject to the exclusive jurisdiction of the courts of Kenya.</p>
-        </section>
 
         <section>
-            <h2 class="text-base font-bold text-[#1a1a2e] mb-2">14. Contact Us</h2>
+            <h2 class="text-base font-bold text-[#1a1a2e] mb-2">13. Contact Us</h2>
             <p>For questions about these Terms, please contact MIC Global Risks Limited, 6th Floor, 9 West, Ring Road Parklands, Nairobi, Kenya, or via <a href="https://www.micglobalrisks.com" class="text-[#0066B3] font-semibold hover:underline" target="_blank" rel="noopener">www.micglobalrisks.com</a>.</p>
         </section>
 

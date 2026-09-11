@@ -36,7 +36,7 @@ Route::get('/api/vehicle-models/{make}', [VehicleDataController::class, 'models'
 Route::prefix('motor-quote')->name('motor.')->middleware('throttle:30,1')->group(function () {
     Route::post('/lookup-quotation', [PublicController::class, 'lookupQuotation'])->name('lookup.quotation');
     Route::post('/lookup-sticker', [PublicController::class, 'lookupSticker'])->name('lookup.sticker');
-    Route::get('/search', [PublicController::class, 'globalSearch'])->name('search');
+    Route::get('/search', [PublicController::class, 'globalSearch'])->name('search')->middleware('auth');
 });
 
 Route::prefix('lookup')->name('public.')->middleware('throttle:30,1')->group(function () {

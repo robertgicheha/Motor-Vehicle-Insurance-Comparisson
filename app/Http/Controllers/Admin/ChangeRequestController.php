@@ -40,7 +40,11 @@ class ChangeRequestController extends Controller
 
     public function approve(ChangeRequest $changeRequest, Request $request)
     {
+        abort_unless(auth()->user()->hasRole('super-admin'), 403);
+
         $request->validate(['review_notes' => 'nullable|string|max:1000']);
+
+        $this->applyChangeRequest($changeRequest);
 
         $changeRequest->update([
             'status' => 'approved',
@@ -63,6 +67,8 @@ class ChangeRequestController extends Controller
 
     public function decline(ChangeRequest $changeRequest, Request $request)
     {
+        abort_unless(auth()->user()->hasRole('super-admin'), 403);
+
         $request->validate(['review_notes' => 'nullable|string|max:1000']);
 
         $changeRequest->update([
@@ -82,5 +88,70 @@ class ChangeRequestController extends Controller
 
         return redirect()->route('admin.change-requests.index')
             ->with('success', 'Change request declined.');
+    }
+
+    /**
+     * Actually applies the change an admin proposed, once a super-admin
+     * approves it. Mirrors exactly the field sets each admin-submitting
+     * controller (CompanyController, SettingController) uses on its own
+     * direct (super-admin) write path — not a redesign of those flows,
+     * just performing on approval the write that was deferred at submission.
+     */
+    private function applyChangeRequest(ChangeRequest $changeRequest): void
+    {
+        $data = $changeRequest->data ?? [];
+
+        switch ($changeRequest->type) {
+            case 'setting':
+                foreach ($data as $key => $value) {
+                    \App\Models\Setting::setValue($key, $value);
+                }
+                break;
+
+            case 'company':
+                if ($changeRequest->action === 'create') {
+                    \App\Models\Company::create($data);
+                } elseif ($changeRequest->action === 'update') {
+                    $company = \App\Models\Company::find($data['company_id'] ?? null);
+                    if ($company) {
+                        $company->update(collect($data)->except(['company_id', 'company_name'])->all());
+                    } else {
+                        AuditService::activity('change_request_apply_failed', "Change request #{$changeRequest->id} could not be applied: company no longer exists.", 'warning');
+                    }
+                } elseif (in_array($changeRequest->action, ['activate', 'deactivate'], true)) {
+                    $company = \App\Models\Company::find($data['company_id'] ?? null);
+                    if ($company) {
+                        $company->update(['is_active' => $data['is_active']]);
+                    } else {
+                        AuditService::activity('change_request_apply_failed', "Change request #{$changeRequest->id} could not be applied: company no longer exists.", 'warning');
+                    }
+                }
+                break;
+
+            case 'rate':
+                if ($changeRequest->action === 'create') {
+                    $company = \App\Models\Company::find($data['company_id'] ?? null);
+                    if ($company) {
+                        $company->rates()->create(collect($data)->except(['company_id', 'company_name'])->all());
+                    } else {
+                        AuditService::activity('change_request_apply_failed', "Change request #{$changeRequest->id} could not be applied: company no longer exists.", 'warning');
+                    }
+                } elseif ($changeRequest->action === 'update') {
+                    $rate = \App\Models\Rate::find($data['rate_id'] ?? null);
+                    if ($rate) {
+                        $rate->update(collect($data)->except(['rate_id', 'rate_name', 'company_id', 'company_name'])->all());
+                    } else {
+                        AuditService::activity('change_request_apply_failed', "Change request #{$changeRequest->id} could not be applied: rate no longer exists.", 'warning');
+                    }
+                } elseif ($changeRequest->action === 'delete') {
+                    $rate = \App\Models\Rate::find($data['rate_id'] ?? null);
+                    if ($rate) {
+                        $rate->delete();
+                    } else {
+                        AuditService::activity('change_request_apply_failed', "Change request #{$changeRequest->id} could not be applied: rate already removed.", 'warning');
+                    }
+                }
+                break;
+        }
     }
 }

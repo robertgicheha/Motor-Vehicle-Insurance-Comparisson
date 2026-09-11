@@ -110,8 +110,8 @@ document.addEventListener('visibilitychange', function() {
 });
 
 const colors = ['#1756c8','#7c3aed','#0f7a65','#d4860e','#c0392b'];
-var companyLabels = {!! json_encode($companyBreakdown->keys()) !!};
-var companyData = {!! json_encode($companyBreakdown->values()) !!};
+var companyLabels = {{ \Illuminate\Support\Js::from($companyBreakdown->keys()) }};
+var companyData = {{ \Illuminate\Support\Js::from($companyBreakdown->values()) }};
 new Chart(document.getElementById('analyticsCompanyChart'), {
     type: 'doughnut',
     data: {
@@ -138,10 +138,10 @@ new Chart(document.getElementById('analyticsCompanyChart'), {
 new Chart(document.getElementById('analyticsMonthlyChart'), {
     type: 'line',
     data: {
-        labels: {!! json_encode($monthlyQuotations->pluck('month')) !!},
+        labels: {{ \Illuminate\Support\Js::from($monthlyQuotations->pluck('month')) }},
         datasets: [{
             label: 'Quotations',
-            data: {!! json_encode($monthlyQuotations->pluck('total')) !!},
+            data: {{ \Illuminate\Support\Js::from($monthlyQuotations->pluck('total')) }},
             borderColor: '#1756c8',
             backgroundColor: 'rgba(23,86,200,0.08)',
             fill: true,
@@ -153,8 +153,8 @@ new Chart(document.getElementById('analyticsMonthlyChart'), {
     options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, grid: { color: 'rgba(0,0,0,0.04)' } }, x: { grid: { display: false } } } }
 });
 
-var statusLabels = {!! json_encode($quotationsByStatus->keys()) !!};
-var statusData = {!! json_encode($quotationsByStatus->values()) !!};
+var statusLabels = {{ \Illuminate\Support\Js::from($quotationsByStatus->keys()) }};
+var statusData = {{ \Illuminate\Support\Js::from($quotationsByStatus->values()) }};
 new Chart(document.getElementById('statusChart'), {
     type: 'doughnut',
     data: {
@@ -181,10 +181,10 @@ new Chart(document.getElementById('statusChart'), {
 new Chart(document.getElementById('stickerChart'), {
     type: 'line',
     data: {
-        labels: {!! json_encode($stickerStats->pluck('month')) !!},
+        labels: {{ \Illuminate\Support\Js::from($stickerStats->pluck('month')) }},
         datasets: [{
             label: 'Stickers',
-            data: {!! json_encode($stickerStats->pluck('total')) !!},
+            data: {{ \Illuminate\Support\Js::from($stickerStats->pluck('total')) }},
             borderColor: '#0f7a65',
             backgroundColor: 'rgba(15,122,101,0.08)',
             fill: true,

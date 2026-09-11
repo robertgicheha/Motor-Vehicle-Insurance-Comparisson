@@ -37,7 +37,7 @@ Route::middleware(['auth', 'online', 'role:super-admin|admin'])->prefix('admin')
     Route::post('/pending-users/{user}/activate', [PendingUserController::class, 'activate'])->name('pending-users.activate');
     Route::post('/pending-users/bulk-activate', [PendingUserController::class, 'bulkActivate'])->name('pending-users.bulk-activate');
 
-    Route::resource('users', UserController::class);
+    Route::resource('users', UserController::class)->middlewareFor('destroy', 'role:super-admin');
     Route::patch('/users/{user}/toggle-status', [UserController::class, 'toggleStatus'])->name('users.toggle-status');
     Route::get('/users/export', [UserController::class, 'export'])->name('users.export');
     Route::post('/users/import', [UserController::class, 'import'])->name('users.import')->middleware('throttle:3,1');

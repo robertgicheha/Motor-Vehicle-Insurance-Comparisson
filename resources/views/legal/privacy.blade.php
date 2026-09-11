@@ -58,10 +58,7 @@
             <h2 class="text-base font-bold text-[#1a1a2e] mb-2">6. How We Protect KYC Documents</h2>
             <p>KYC documents are sensitive personal data and are handled with particular care:</p>
             <ul class="list-disc pl-5 mt-2 space-y-1">
-                <li>Documents are transmitted between your device and our servers, and from our servers to the underwriter, over encrypted (HTTPS/TLS) connections.</li>
-                <li>Every uploaded document is automatically scanned for malware before it is accepted.</li>
-                <li>Uploaded documents are held in restricted, non-public storage — not in our application database — and access is limited to the systems and staff who need it to process a specific sticker request.</li>
-                <li>Documents are held only for as long as it takes to assemble and send your sticker request to the underwriter; once that email has been sent successfully, the underlying files are deleted immediately. We do not retain KYC documents on the system.</li>
+                <li>Documents are transmitted via email to the underwriter, over encrypted (HTTPS/TLS) connections.</li>
                 <li>We do not store KYC document files in our database; the database only records limited metadata (such as the document type and verification status) needed to track a request.</li>
             </ul>
         </section>
@@ -71,33 +68,30 @@
             <p>We retain quotation, claim, and sticker-request records for as long as reasonably necessary to fulfil the purposes described in this Policy, to meet regulatory and record-keeping obligations applicable to insurance intermediation, and to resolve any disputes. KYC documents are not retained on the system.</p>
         </section>
 
-        <section>
-            <h2 class="text-base font-bold text-[#1a1a2e] mb-2">8. Your Rights</h2>
-            <p>Under the Kenya Data Protection Act, 2019, a data subject has the right to: be informed of the use of their personal data; access their personal data; request correction of inaccurate data; request deletion of data no longer necessary for the purpose collected; object to or restrict certain processing; and lodge a complaint with the Office of the Data Protection Commissioner, Kenya. Requests relating to a customer's data should be directed through the LOLC branch or agent who assisted with the quotation, claim, or sticker request, or directly to us using the contact details below.</p>
-        </section>
+     
 
         <section>
-            <h2 class="text-base font-bold text-[#1a1a2e] mb-2">9. Security Measures</h2>
+            <h2 class="text-base font-bold text-[#1a1a2e] mb-2">8. Security Measures</h2>
             <p>We apply technical and organisational measures appropriate to the sensitivity of the data we handle, including encrypted data transmission, malware scanning of uploaded files, restricted and audited access to stored documents, and role-based access controls limiting Portal features to authorised users. No system can guarantee absolute security, but we continually review and improve these measures.</p>
         </section>
 
         <section>
-            <h2 class="text-base font-bold text-[#1a1a2e] mb-2">10. Security Incident Notification</h2>
+            <h2 class="text-base font-bold text-[#1a1a2e] mb-2">9. Security Incident Notification</h2>
             <p>If we become aware of a security incident data breach affecting data processed through the Portal, we will: investigate the matter as a priority using the Portal's audit and activity logs; notify LOLC's designated contact in writing without undue delay, and in any event within 72 hours of becoming aware of it, describing the nature of the incident and the data or systems affected; and support LOLC in meeting any notification obligations it may have to the Office of the Data Protection Commissioner, Kenya, or to affected data subjects, under the Kenya Data Protection Act, 2019.</p>
         </section>
 
         <section>
-            <h2 class="text-base font-bold text-[#1a1a2e] mb-2">11. Cookies</h2>
+            <h2 class="text-base font-bold text-[#1a1a2e] mb-2">10. Cookies</h2>
             <p>The Portal uses strictly necessary cookies/session storage to keep you signed in and to remember your in-progress quotation while you complete a form. We do not use these cookies for advertising or cross-site tracking.</p>
         </section>
 
         <section>
-            <h2 class="text-base font-bold text-[#1a1a2e] mb-2">12. Changes to This Policy</h2>
+            <h2 class="text-base font-bold text-[#1a1a2e] mb-2">11. Changes to This Policy</h2>
             <p>We may update this Privacy Policy from time to time to reflect changes in our practices or in applicable law. The "Last updated" date above indicates when this Policy was last revised.</p>
         </section>
 
         <section>
-            <h2 class="text-base font-bold text-[#1a1a2e] mb-2">13. Contact Us</h2>
+            <h2 class="text-base font-bold text-[#1a1a2e] mb-2">12. Contact Us</h2>
             <p>For questions about this Privacy Policy, or to exercise your data protection rights, please contact MIC Global Risks Limited, 6th Floor, 9 West, Ring Road Parklands, Nairobi, Kenya, or via <a href="https://www.micglobalrisks.com" class="text-[#0066B3] font-semibold hover:underline" target="_blank" rel="noopener">www.micglobalrisks.com</a>.</p>
         </section>
 

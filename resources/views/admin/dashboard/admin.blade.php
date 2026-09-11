@@ -1309,9 +1309,9 @@ document.addEventListener('DOMContentLoaded', function () {
         new Chart(ucc, {
             type: 'bar',
             data: {
-                labels: {!! json_encode($quotationsByCompany->keys()) !!},
+                labels: {{ \Illuminate\Support\Js::from($quotationsByCompany->keys()) }},
                 datasets: [{
-                    data: {!! json_encode($quotationsByCompany->values()) !!},
+                    data: {{ \Illuminate\Support\Js::from($quotationsByCompany->values()) }},
                     backgroundColor: '#1756c8',
                     borderRadius: 6,
                     borderWidth: 0,
@@ -1343,10 +1343,10 @@ document.addEventListener('DOMContentLoaded', function () {
         new Chart(ctx, {
             type: 'line',
             data: {
-                labels: {!! json_encode(collect($monthlyQuotations)->pluck('month')->toArray()) !!},
+                labels: {{ \Illuminate\Support\Js::from(collect($monthlyQuotations)->pluck('month')->toArray()) }},
                 datasets: [{
                     label: 'Quotations',
-                    data: {!! json_encode(collect($monthlyQuotations)->pluck('total')->toArray()) !!},
+                    data: {{ \Illuminate\Support\Js::from(collect($monthlyQuotations)->pluck('total')->toArray()) }},
                     borderColor: '#3b82f6',
                     backgroundColor: 'rgba(59,130,246,0.08)',
                     fill: true,

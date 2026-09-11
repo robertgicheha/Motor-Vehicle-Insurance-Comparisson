@@ -797,7 +797,7 @@
             sunrise: '{{ $weather["sunrise"] ?? "" }}',
             sunset: '{{ $weather["sunset"] ?? "" }}',
             uvi: '{{ $weather["uvi"] ?? "" }}',
-            alerts: {!! json_encode($weather["alerts"] ?? []) !!},
+            alerts: {{ \Illuminate\Support\Js::from($weather["alerts"] ?? []) }},
             pollTimer: null,
             coords: null,
             init() {
@@ -864,10 +864,10 @@
     var companyChart = new Chart(document.getElementById('companyChart'), {
       type: 'bar',
       data: {
-        labels: {!! json_encode($quotationsByCompany->keys()) !!},
+        labels: {{ \Illuminate\Support\Js::from($quotationsByCompany->keys()) }},
         datasets: [{
           label: 'Quotations',
-          data: {!! json_encode($quotationsByCompany->values()) !!},
+          data: {{ \Illuminate\Support\Js::from($quotationsByCompany->values()) }},
           backgroundColor: '#1756c8',
           borderRadius: 6,
           borderWidth: 0,
@@ -895,10 +895,10 @@
     var monthlyChart = new Chart(document.getElementById('monthlyChart'), {
       type: 'bar',
       data: {
-        labels: {!! json_encode($monthlyQuotations->pluck('month')) !!},
+        labels: {{ \Illuminate\Support\Js::from($monthlyQuotations->pluck('month')) }},
         datasets: [{
           label: 'Quotations',
-          data: {!! json_encode($monthlyQuotations->pluck('total')) !!},
+          data: {{ \Illuminate\Support\Js::from($monthlyQuotations->pluck('total')) }},
           backgroundColor: '#1756c8',
           borderRadius: 6,
           borderWidth: 0,
@@ -923,10 +923,10 @@
     var distributionChart = new Chart(document.getElementById('distributionChart'), {
       type: 'bar',
       data: {
-        labels: {!! json_encode(($statusDistribution ?? collect())->keys()->map(fn($s) => ucfirst($s))) !!},
+        labels: {{ \Illuminate\Support\Js::from(($statusDistribution ?? collect())->keys()->map(fn($s) => ucfirst($s))) }},
         datasets: [{
           label: 'Quotations',
-          data: {!! json_encode(($statusDistribution ?? collect())->values()) !!},
+          data: {{ \Illuminate\Support\Js::from(($statusDistribution ?? collect())->values()) }},
           backgroundColor: ['#1756c8', '#0f7a65', '#d4860e', '#7c3aed'],
           borderRadius: 6,
           borderWidth: 0,
@@ -948,10 +948,10 @@
     var premiumChart = new Chart(document.getElementById('premiumChart'), {
       type: 'bar',
       data: {
-        labels: {!! json_encode($premiumTrend->pluck('month')) !!},
+        labels: {{ \Illuminate\Support\Js::from($premiumTrend->pluck('month')) }},
         datasets: [{
           label: 'Avg Premium (KES)',
-          data: {!! json_encode($premiumTrend->pluck('avg_premium')) !!},
+          data: {{ \Illuminate\Support\Js::from($premiumTrend->pluck('avg_premium')) }},
           backgroundColor: '#7c3aed',
           borderRadius: 6,
           borderWidth: 0,

@@ -287,7 +287,7 @@ class CompanyController extends Controller
             return back()->with('info', 'Your rate creation request has been sent to the super-admin for approval.');
         }
 
-        $company->rates()->create($request->all());
+        $company->rates()->create($request->only(['category', 'item_name', 'value', 'value_type', 'percentage', 'min_value']));
         AuditService::activity('rate_created', "Rate {$request->item_name} added for {$company->name}");
         return back()->with('success', 'Rate added.');
     }

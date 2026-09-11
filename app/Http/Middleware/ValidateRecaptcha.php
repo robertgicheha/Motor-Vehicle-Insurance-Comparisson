@@ -23,6 +23,19 @@ class ValidateRecaptcha
             return $next($request);
         }
 
+        // reCAPTCHA site keys are bound to the domain(s) registered for them
+        // in Google's admin console — normally the production domain, not
+        // localhost. Verifying against Google from local dev reliably fails
+        // (confirmed: Google returns invalid-input-response for a token
+        // generated on an unregistered domain, even with a correct, valid
+        // secret key), which would lock every developer out of login during
+        // local testing. Local traffic isn't the bot threat model this
+        // exists for, so skip active verification here — staging/production
+        // (where the domain does match) still fully enforce it.
+        if (app()->environment('local')) {
+            return $next($request);
+        }
+
         $token = $request->input('g-recaptcha-response');
         if (!$token) {
             return back()->withErrors(['captcha' => 'reCAPTCHA verification required. Please try again.']);

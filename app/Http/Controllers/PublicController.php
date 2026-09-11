@@ -474,18 +474,52 @@ class PublicController extends Controller
             return response()->json(['quotations' => [], 'stickers' => []]);
         }
 
-        $quotations = Quotation::where('quotation_number', 'like', "%{$q}%")
-            ->orWhereLikeCI('car_registration', $q)
-            ->orWhere('car_make', 'like', "%{$q}%")
-            ->orWhere('car_model', 'like', "%{$q}%")
+        $user = auth()->user();
+        $isSuperAdmin = $user->hasRole('super-admin');
+        $isAdmin = $user->hasRole('admin');
+
+        // Same visibility rule as the quotations list: super-admin sees
+        // everything; admin sees their own plus every 'user'-role account's
+        // records; a plain user sees only their own. The search-term
+        // matching is grouped into its own where(function...) so the
+        // visibility scope ANDs against the whole OR-group, not just the
+        // last orWhere term (SQL operator precedence: AND binds tighter
+        // than OR, so appending a bare ->where() after ->orWhere() chains
+        // would otherwise only scope the final term).
+        $quotations = Quotation::where(function ($query) use ($q) {
+                $query->where('quotation_number', 'like', "%{$q}%")
+                    ->orWhereLikeCI('car_registration', $q)
+                    ->orWhere('car_make', 'like', "%{$q}%")
+                    ->orWhere('car_model', 'like', "%{$q}%");
+            })
+            ->when(!$isSuperAdmin, function ($query) use ($user, $isAdmin) {
+                if ($isAdmin) {
+                    return $query->where(function ($sub) use ($user) {
+                        $sub->where('user_id', $user->id)
+                            ->orWhereHas('user', fn($uq) => $uq->role('user'));
+                    });
+                }
+                return $query->where('user_id', $user->id);
+            })
             ->limit(5)
             ->get(['id', 'quotation_number', 'car_make', 'car_model', 'car_registration']);
 
-        $stickers = Sticker::where('sticker_number', 'like', "%{$q}%")
-            ->orWhere('customer_name', 'like', "%{$q}%")
-            ->orWhereLikeCI('vehicle_registration', $q)
-            ->orWhere('car_make', 'like', "%{$q}%")
-            ->orWhere('car_model', 'like', "%{$q}%")
+        $stickers = Sticker::where(function ($query) use ($q) {
+                $query->where('sticker_number', 'like', "%{$q}%")
+                    ->orWhere('customer_name', 'like', "%{$q}%")
+                    ->orWhereLikeCI('vehicle_registration', $q)
+                    ->orWhere('car_make', 'like', "%{$q}%")
+                    ->orWhere('car_model', 'like', "%{$q}%");
+            })
+            ->when(!$isSuperAdmin, function ($query) use ($user, $isAdmin) {
+                if ($isAdmin) {
+                    return $query->where(function ($sub) use ($user) {
+                        $sub->where('issued_by', $user->id)
+                            ->orWhereHas('issuedBy', fn($uq) => $uq->role('user'));
+                    });
+                }
+                return $query->where('issued_by', $user->id);
+            })
             ->limit(5)
             ->get(['id', 'sticker_number', 'customer_name', 'car_make', 'car_model']);
 

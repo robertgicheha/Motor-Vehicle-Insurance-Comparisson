@@ -52,7 +52,7 @@
                 @php
                     $body = $notification->data['body'] ?? $notification->data['message'] ?? 'No message body.';
                 @endphp
-                {!! isset($notification->data['body']) ? $body : e($body) !!}
+                {{ $body }}
             </div>
 
             @php

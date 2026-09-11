@@ -249,10 +249,10 @@ const chartColors = ['#1756c8','#7c3aed','#0f7a65','#d4860e','#c0392b','#818cf8'
 new Chart(document.getElementById('monthlyTrendChart'), {
     type: 'line',
     data: {
-        labels: {!! json_encode($byMonth->pluck('label')) !!},
+        labels: {{ \Illuminate\Support\Js::from($byMonth->pluck('label')) }},
         datasets: [{
             label: 'Stickers',
-            data: {!! json_encode($byMonth->pluck('count')) !!},
+            data: {{ \Illuminate\Support\Js::from($byMonth->pluck('count')) }},
             borderColor: '#1756c8',
             backgroundColor: 'rgba(23,86,200,0.1)',
             fill: true,
@@ -276,9 +276,9 @@ new Chart(document.getElementById('monthlyTrendChart'), {
 new Chart(document.getElementById('coverTypeChart'), {
     type: 'doughnut',
     data: {
-        labels: {!! json_encode($byCoverType->pluck('type')) !!},
+        labels: {{ \Illuminate\Support\Js::from($byCoverType->pluck('type')) }},
         datasets: [{
-            data: {!! json_encode($byCoverType->pluck('count')) !!},
+            data: {{ \Illuminate\Support\Js::from($byCoverType->pluck('count')) }},
             backgroundColor: chartColors.slice(0, {{ $byCoverType->count() }}),
             borderWidth: 0,
         }]
@@ -293,9 +293,9 @@ new Chart(document.getElementById('coverTypeChart'), {
 new Chart(document.getElementById('statusChart'), {
     type: 'doughnut',
     data: {
-        labels: {!! json_encode($byStatus->pluck('status')) !!},
+        labels: {{ \Illuminate\Support\Js::from($byStatus->pluck('status')) }},
         datasets: [{
-            data: {!! json_encode($byStatus->pluck('count')) !!},
+            data: {{ \Illuminate\Support\Js::from($byStatus->pluck('count')) }},
             backgroundColor: ['#34d399','#fbbf24','#818cf8','#f87171','#6ee7b7','#a5b4fc'].slice(0, {{ $byStatus->count() }}),
             borderWidth: 0,
         }]
@@ -310,9 +310,9 @@ new Chart(document.getElementById('statusChart'), {
 new Chart(document.getElementById('createdViaChart'), {
     type: 'doughnut',
     data: {
-        labels: {!! json_encode($byCreatedVia->pluck('via')) !!},
+        labels: {{ \Illuminate\Support\Js::from($byCreatedVia->pluck('via')) }},
         datasets: [{
-            data: {!! json_encode($byCreatedVia->pluck('count')) !!},
+            data: {{ \Illuminate\Support\Js::from($byCreatedVia->pluck('count')) }},
             backgroundColor: chartColors.slice(0, {{ $byCreatedVia->count() }}),
             borderWidth: 0,
         }]
@@ -354,10 +354,10 @@ new Chart(document.getElementById('emailChart'), {
 new Chart(document.getElementById('stickerPremiumChart'), {
     type: 'bar',
     data: {
-        labels: {!! json_encode($byCompany->take(8)->pluck('name')) !!},
+        labels: {{ \Illuminate\Support\Js::from($byCompany->take(8)->pluck('name')) }},
         datasets: [{
             label: 'Total Premium (KES)',
-            data: {!! json_encode($byCompany->take(8)->pluck('total_premium')->map(fn($v) => round($v, 2))) !!},
+            data: {{ \Illuminate\Support\Js::from($byCompany->take(8)->pluck('total_premium')->map(fn($v) => round($v, 2))) }},
             backgroundColor: chartColors.slice(0, {{ min($byCompany->count(), 8) }}),
             borderWidth: 0,
             borderRadius: 4,

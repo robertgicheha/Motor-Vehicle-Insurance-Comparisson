@@ -66,6 +66,13 @@ class AppServiceProvider extends ServiceProvider
         // number (or similar free-typed identifier) is searched, so "kdx"
         // matches a "KDX 123A" stored in any case, regardless of DB driver
         // collation.
+        //
+        // SECURITY: $column is interpolated directly into the raw SQL string
+        // (only $value goes through the bound "?" parameter) since a column
+        // name can't be parameter-bound. Every current call site passes a
+        // hardcoded literal column name — safe as used today — but this
+        // macro would become SQL-injectable if a future caller ever passed
+        // a request-derived/dynamic column name. Never do that.
         Builder::macro('whereLikeCI', function (string $column, ?string $value) {
             /** @var Builder $this */
             return $this->whereRaw("LOWER($column) LIKE ?", ['%' . mb_strtolower(trim((string) $value)) . '%']);

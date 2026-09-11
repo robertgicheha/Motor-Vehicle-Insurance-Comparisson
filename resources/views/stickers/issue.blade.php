@@ -484,7 +484,7 @@ function certificateIssue() {
         searching: false,
         searchResults: [],
         searchError: '',
-        selectedQuotation: {!! $quotation ? json_encode([
+        selectedQuotation: {{ Illuminate\Support\Js::from($quotation ? [
             'id' => $quotation->id,
             'quotation_number' => $quotation->quotation_number,
             'customer_name' => $quotation->customer_name,
@@ -521,7 +521,7 @@ function certificateIssue() {
                 'scan_status' => $d->scan_status,
                 'filename' => $d->filename,
             ])->toArray() ?? [],
-        ]) : 'null' !!},
+        ] : null) }},
         documents: {},
         otherDocuments: [],
         uploading: { id_copy: false, kra_pin: false, logbook: false },

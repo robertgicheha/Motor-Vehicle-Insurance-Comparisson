@@ -33,8 +33,12 @@ class ClaimLoggedMail extends Mailable
 
     public function envelope(): Envelope
     {
+        // No internal claim number in the subject — like sticker requests,
+        // this reference never leaves our system, so it can't help the
+        // underwriter identify anything. They reference the thread by the
+        // vehicle/customer details in the body instead.
         return new Envelope(
-            subject: 'New Claim Logged - ' . $this->claim['claim_number'],
+            subject: 'New Claim Logged - ' . ($this->claim['registration_number'] ?? $this->claim['customer_name'] ?? ''),
         );
     }
 

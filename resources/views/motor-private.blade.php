@@ -285,37 +285,11 @@
           <input type="text" id="f-model-private" placeholder="e.g. Corolla, Hilux, Premio">
         </div>
         <div class="form-group">
-          <label>Body Type</label>
-          <select id="f-body-private">
-            <option value="">Select body type...</option>
-            <option>Saloon</option><option>Station Wagon (S. Wagon)</option><option>SUV/4x4</option>
-            <option>Hatchback</option><option>Pick-Up</option><option>Van/Minivan</option><option>Convertible</option><option>Coupe</option>
-          </select>
-        </div>
-        <div class="form-group">
           <label>Year of Manufacture <span class="req">*</span></label>
           <select id="f-year-private">
             <option value="">Select year...</option>
           </select>
           <div class="value-error" id="f-year-error-private" style="display:none;color:var(--red);font-size:11px;margin-top:4px"></div>
-        </div>
-        <div class="form-group">
-          <label>Color</label>
-          <select id="f-color-private" onchange="toggleOtherColor('private', this)">
-            <option value="">Select color...</option>
-            <option>White</option>
-            <option>Black</option>
-            <option>Silver/Grey</option>
-            <option>Blue</option>
-            <option>Red</option>
-            <option>Brown/Maroon</option>
-            <option>Gold/Champagne</option>
-            <option>Green</option>
-            <option>Orange</option>
-            <option>Purple</option>
-            <option>Other</option>
-          </select>
-          <input type="text" id="f-color-other-private" placeholder="Type your vehicle color..." style="display:none;margin-top:8px">
         </div>
         <div class="form-group">
           <label>Value of Vehicle (KES) <span class="req">*</span></label>

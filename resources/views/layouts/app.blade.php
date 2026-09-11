@@ -16,6 +16,13 @@
     <link rel="icon" type="image/png" sizes="32x32" href="{{ asset('Favicon.png') }}">
     <link rel="stylesheet" href="{{ asset('css/dashboard.css') }}">
     @vite(['resources/css/app.css', 'resources/js/app.js'])
+    @php
+        $__recaptchaSiteKey = \App\Models\Setting::getValue('recaptcha_site_key') ?: config('services.recaptcha.site_key');
+    @endphp
+    @if($__recaptchaSiteKey)
+        <script src="https://www.google.com/recaptcha/api.js?render={{ $__recaptchaSiteKey }}"></script>
+        <script>window.mvipRecaptchaSiteKey = @json($__recaptchaSiteKey);</script>
+    @endif
     <style>
         [x-cloak] { display: none !important; }
         .sidebar-transition { transition: width 0.25s cubic-bezier(0.4, 0, 0.2, 1), transform 0.25s cubic-bezier(0.4, 0, 0.2, 1); }

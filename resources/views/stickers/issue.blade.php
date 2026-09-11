@@ -170,7 +170,7 @@
                             </button>
                         </div>
 
-                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        <div class="grid grid-cols-1 sm:grid-cols-[1fr_1.5fr_1fr] gap-4">
                             <div>
                                 <span class="block text-[10px] text-gray-500 dark:text-gray-400 mb-1">Policy Start Date</span>
                                 <input type="date" x-model="coverStartDate" @change="onCoverInputsChanged()"
@@ -178,20 +178,20 @@
                             </div>
                             <div>
                                 <span class="block text-[10px] text-gray-500 dark:text-gray-400 mb-1">Enter Duration</span>
-                                <div class="flex gap-2">
+                                <div class="flex gap-3">
                                     <select x-model="coverDurationUnit" @change="onDurationUnitChanged()"
-                                        class="w-1/2 px-2 py-2 text-sm border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                        class="w-1/2 min-w-0 px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
                                         <option value="week">Week</option>
                                         <option value="month">Month</option>
                                         <option value="year">Year</option>
                                     </select>
                                     <select x-model.number="coverDurationValue" @change="onCoverInputsChanged()" x-show="coverDurationUnit !== 'year'"
-                                        class="w-1/2 px-2 py-2 text-sm border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                        class="w-1/2 min-w-0 px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
                                         <template x-for="n in (coverDurationUnit === 'week' ? 52 : 12)" :key="n">
                                             <option :value="n" x-text="n"></option>
                                         </template>
                                     </select>
-                                    <div x-show="coverDurationUnit === 'year'" class="w-1/2 px-3 py-2 text-sm border border-gray-200 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-500 dark:text-gray-400">1 Year</div>
+                                    <div x-show="coverDurationUnit === 'year'" class="w-1/2 min-w-0 px-3 py-2 text-sm border border-gray-200 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-500 dark:text-gray-400">1 Year</div>
                                 </div>
                             </div>
                             <div>
@@ -249,7 +249,7 @@
                         <div class="flex items-center gap-2">
                             <span class="text-[10px] font-semibold text-gray-500 dark:text-gray-400" x-text="uploadedCount + '/3'"></span>
                             <div class="flex gap-1">
-                                <template x-for="docType in (clientType === 'corporate' ? ['kra_pin', 'certificate_of_incorporation', 'other'] : ['id_copy', 'kra_pin', 'logbook'])" :key="'dot-'+docType">
+                                <template x-for="docType in (clientType === 'corporate' ? ['kra_pin', 'certificate_of_incorporation', 'logbook_import'] : ['id_copy', 'kra_pin', 'logbook'])" :key="'dot-'+docType">
                                      <div class="w-1.5 h-1.5 rounded-full transition-colors duration-300"
                                           :class="getSlotStatus(docType) === 'clean' ? 'bg-emerald-500' : (getSlotStatus(docType) === 'infected' ? 'bg-red-500' : ((getSlotStatus(docType) === 'pending' || getSlotStatus(docType) === 'scanning') ? 'bg-blue-500 animate-pulse' : 'bg-gray-300 dark:bg-gray-600'))"></div>
                                  </template>
@@ -258,6 +258,11 @@
                     </div>
                 </div>
                 <div class="p-5">
+                    <div class="flex items-start gap-2 mb-4 px-3 py-2.5 rounded-lg bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-800">
+                        <svg class="w-3.5 h-3.5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        <p class="text-[10px] text-amber-800 dark:text-amber-400 leading-snug">Authenticity of the documents submitted will be subject to verification by the bank.</p>
+                    </div>
+
                     @php
                         $__individualDocTypes = [
                             'id_copy' => ['Copy of ID', 'National ID, Passport, or License', 'M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V5a2 2 0 114 0v1m-4 0a2 2 0 104 0m-5 8a2 2 0 100-4 2 2 0 000 4zm0 0c1.306 0 2.417.835 2.83 2M9 14a3.001 3.001 0 00-2.83 2M15 11h3m-3 4h2'],
@@ -267,6 +272,7 @@
                         $__corporateDocTypes = [
                             'kra_pin' => ['KRA PIN Certificate', 'Kenya Revenue Authority PIN', 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z'],
                             'certificate_of_incorporation' => ['Certificate of Incorporation', 'Company registration certificate', 'M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4'],
+                            'logbook_import' => ['Vehicle Logbook / Import Documents', 'NTSA logbook or import/customs documents', 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z'],
                         ];
                     @endphp
 
@@ -276,28 +282,33 @@
                         @endforeach
                     </div>
 
-                    {{-- Corporate: two fixed documents (KRA PIN + Certificate of
-                         Incorporation) plus the "Others" panel below, which
-                         reuses the exact same row-based upload UI as the
-                         logbook's N/A fallback — pre-seeded with "CR12 Form". --}}
-                    <div x-show="clientType === 'corporate'" x-cloak class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {{-- Corporate: three fixed documents (KRA PIN + Certificate
+                         of Incorporation + Vehicle Logbook / Import Documents).
+                         The "Others" panel below is optional extra material,
+                         same as it is for individual clients — not one of the
+                         three required documents. --}}
+                    <div x-show="clientType === 'corporate'" x-cloak class="grid grid-cols-1 md:grid-cols-3 gap-4">
                         @foreach($__corporateDocTypes as $type => $info)
                             @include('stickers.partials.kyc-card', ['type' => $type, 'info' => $info])
                         @endforeach
                     </div>
 
-                        {{-- Alternate documents, one row at a time — the logbook's N/A
-                             fallback for individual clients, or corporate's own
-                             "Others" slot (CR12 Form etc., always required, not a
-                             fallback). Each row is its own independent upload — its
-                             own name field, its own file, its own status — rather
-                             than a single multi-file drop, so a partial batch (one
-                             uploaded, one still picking a file) is never ambiguous. --}}
-                        <div x-show="logbookNA || clientType === 'corporate'" x-cloak class="mt-4 border-2 border-dashed border-amber-200 dark:border-amber-700 rounded-xl p-4 bg-amber-50/40 dark:bg-amber-900/5">
+                        {{-- Optional extra documents, one row at a time — available for
+                             both client types so anything beyond the fixed
+                             required set (an extra ID, a fleet card, etc.) has
+                             somewhere to go, each with its own label. For an
+                             individual client whose logbook is marked N/A, this
+                             same panel additionally becomes the required
+                             replacement for that missing document. Each row is
+                             its own independent upload — its own name field, its
+                             own file, its own status — rather than a single
+                             multi-file drop, so a partial batch (one uploaded,
+                             one still picking a file) is never ambiguous. --}}
+                        <div class="mt-4 border-2 border-dashed border-amber-200 dark:border-amber-700 rounded-xl p-4 bg-amber-50/40 dark:bg-amber-900/5">
                             <div class="flex items-center justify-between mb-3">
                                 <div>
-                                    <p class="text-[11px] font-semibold text-gray-800 dark:text-white" x-text="clientType === 'corporate' ? 'Other Supporting Documents' : 'Other Supporting Documents (Logbook Replacement)'"></p>
-                                    <p class="text-[9px] text-gray-400 dark:text-gray-500" x-text="clientType === 'corporate' ? 'e.g. CR12 Form — add as many as needed' : 'Provide at least one document in place of the logbook — e.g. Driver\'s Licence, Fleet Card'"></p>
+                                    <p class="text-[11px] font-semibold text-gray-800 dark:text-white" x-text="(clientType === 'individual' && logbookNA) ? 'Other Supporting Documents (Logbook Replacement)' : 'Additional Supporting Documents (Optional)'"></p>
+                                    <p class="text-[9px] text-gray-400 dark:text-gray-500" x-text="(clientType === 'individual' && logbookNA) ? 'Provide at least one document in place of the logbook — e.g. Driver\'s Licence, Fleet Card' : 'Add any extra supporting documents the underwriter might need — give each one a label'"></p>
                                 </div>
                                 <button type="button" @click="addOtherRow()"
                                     class="inline-flex items-center gap-1 text-[10px] font-semibold text-blue-600 hover:text-blue-800 dark:text-blue-400">
@@ -315,7 +326,7 @@
 
                                         <template x-if="!row.documentId">
                                             <span>
-                                                <input type="file" :id="'other-doc-' + row.rowId" accept=".pdf,.jpg,.jpeg,.png" class="hidden" @change="uploadOtherDocument($event, row)">
+                                                <input type="file" :id="'other-doc-' + row.rowId" accept=".pdf,.jpg,.jpeg" class="hidden" @change="uploadOtherDocument($event, row)">
                                                 <label :for="'other-doc-' + row.rowId" x-show="!row.uploading"
                                                     class="inline-flex items-center gap-1 px-2.5 py-1.5 text-[10px] font-semibold bg-blue-50 hover:bg-blue-100 text-blue-700 dark:bg-blue-900/20 dark:text-blue-400 rounded-lg cursor-pointer transition whitespace-nowrap">
                                                     <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg>
@@ -343,13 +354,7 @@
                             </div>
                         </div>
 
-                    <div class="mt-4 flex items-start gap-2 p-3 bg-gray-50 dark:bg-gray-750 rounded-lg border border-gray-200 dark:border-gray-600">
-                        <svg class="w-3.5 h-3.5 text-gray-400 dark:text-gray-500 mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
-                        <div>
-                            <p class="text-[10px] font-medium text-gray-600 dark:text-gray-400">Security scanning is performed automatically</p>
-                            <p class="text-[9px] text-gray-400 dark:text-gray-500">Files checked for executable content, extension spoofing, and malware.</p>
-                        </div>
-                    </div>
+                   
 
                     <div x-show="canIssue" x-transition x-cloak class="mt-5 space-y-4">
                        
@@ -362,31 +367,6 @@
                                     <p class="text-xs font-bold text-emerald-700 dark:text-emerald-400">All documents verified</p>
                                     <p class="text-[10px] text-emerald-600 dark:text-emerald-500">Ready to send to underwriter</p>
                                 </div>
-                            </div>
-
-                            <div class="bg-white dark:bg-gray-800 rounded-lg p-3 border border-gray-200 dark:border-gray-700 mb-3">
-                                <div class="flex items-center gap-2 mb-2">
-                                    <div class="w-6 h-6 rounded-lg bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center shrink-0">
-                                        <svg class="w-3 h-3 text-amber-600 dark:text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
-                                    </div>
-                                    <div>
-                                        <p class="text-[11px] font-semibold text-gray-800 dark:text-white">Test Email</p>
-                                        <p class="text-[9px] text-gray-400 dark:text-gray-500">Preview how the email will look before sending</p>
-                                    </div>
-                                </div>
-                                <div class="flex items-center gap-2">
-                                    <input type="email" x-model="testEmail" placeholder="Enter test email address"
-                                           class="flex-1 min-w-0 px-3 py-2 text-xs border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500">
-                                    <button @click="sendTestEmail()" :disabled="sendingTestEmail || !testEmail"
-                                        class="inline-flex items-center gap-1.5 px-3 py-2 text-[11px] font-semibold rounded-lg transition-all duration-200 disabled:opacity-50"
-                                        :class="sendingTestEmail ? 'bg-amber-100 text-amber-700' : 'bg-amber-50 hover:bg-amber-100 text-amber-700 dark:bg-amber-900/20 dark:text-amber-400 dark:hover:bg-amber-900/30'">
-                                        <svg x-show="!sendingTestEmail" class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
-                                        <svg x-show="sendingTestEmail" class="animate-spin w-3.5 h-3.5" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
-                                        <span x-text="sendingTestEmail ? 'Sending...' : 'Send Test'"></span>
-                                    </button>
-                                </div>
-                                <p x-show="testEmailSent" x-transition class="mt-2 text-[10px] text-emerald-600 dark:text-emerald-400 font-medium" x-text="testEmailSent"></p>
-                                <p x-show="testEmailError" x-transition class="mt-2 text-[10px] text-red-600 dark:text-red-400 font-medium" x-text="testEmailError"></p>
                             </div>
 
                             <textarea x-model="adminNotes" rows="2" placeholder="Notes for the underwriter (optional)..."
@@ -550,10 +530,6 @@ function certificateIssue() {
         adminNotes: '',
         searchTimeout: null,
         stickerId: null,
-        testEmail: '',
-        sendingTestEmail: false,
-        testEmailSent: '',
-        testEmailError: '',
 
         // --- Cover details (client type + cover period) ---
         clientType: 'individual',
@@ -583,9 +559,7 @@ function certificateIssue() {
             const inProgress = ['clean', 'pending', 'scanning'];
 
             if (this.clientType === 'corporate') {
-                let n = ['kra_pin', 'certificate_of_incorporation'].filter(t => inProgress.includes(this.documents[t]?.scan_status)).length;
-                if (this.otherDocuments.some(r => inProgress.includes(r.scanStatus))) n++;
-                return n;
+                return ['kra_pin', 'certificate_of_incorporation', 'logbook_import'].filter(t => inProgress.includes(this.documents[t]?.scan_status)).length;
             }
 
             let n = ['id_copy', 'kra_pin'].filter(t => inProgress.includes(this.documents[t]?.scan_status)).length;
@@ -628,11 +602,12 @@ function certificateIssue() {
                 }
             });
 
-            // "Others" is always required for corporate (CR12 etc.), and is the
-            // logbook's fallback for individual once marked N/A — both reuse
-            // the same row-based upload panel, seeded with one starter row.
-            if ((this.logbookNA || this.clientType === 'corporate') && this.otherDocuments.length === 0) {
-                this.addOtherRow(this.clientType === 'corporate' ? 'CR12 Form' : '');
+            // Seed one starter row only when "Others" is actually required —
+            // an individual client's logbook marked N/A. Otherwise it's
+            // optional extra material and starts empty until the user clicks
+            // "Add Document".
+            if (this.logbookNA && this.otherDocuments.length === 0) {
+                this.addOtherRow();
             }
         },
 
@@ -715,10 +690,11 @@ function certificateIssue() {
             return this.documents[docType]?.filename || null;
         },
 
-        // Like getDocumentStatus, but a slot that maps to the row-based
-        // "other" documents (the logbook, once marked N/A; or corporate's
-        // own "Others" slot, e.g. CR12) reflects THEIR combined status
-        // instead — used for the summary dots.
+        // Like getDocumentStatus, but the "other" slot (or an individual
+        // client's logbook once marked N/A, which falls back to the same
+        // row-based panel) reflects THEIR combined status instead — used for
+        // the summary dots. Corporate's logbook_import is a real fixed slot
+        // like kra_pin, so it falls through to the normal status lookup.
         getSlotStatus(docType) {
             const reflectsOtherDocs = docType === 'other' || (docType === 'logbook' && this.logbookNA);
             if (reflectsOtherDocs) {
@@ -812,18 +788,24 @@ function certificateIssue() {
         get canIssue() {
             if (!this.selectedQuotation || !this.coverDetailsSaved) return false;
 
+            // Any optional "Others" documents the user has started must finish
+            // clean before the request can go out — an infected or still-
+            // scanning optional file shouldn't silently ship alongside the
+            // required set.
+            const othersClean = this.otherDocuments.every(r => r.scanStatus === 'clean');
+
             if (this.clientType === 'corporate') {
                 const kraOk = this.documents['kra_pin']?.scan_status === 'clean';
                 const coiOk = this.documents['certificate_of_incorporation']?.scan_status === 'clean';
-                const othersOk = this.otherDocuments.length > 0 && this.otherDocuments.every(r => r.scanStatus === 'clean');
-                return kraOk && coiOk && othersOk;
+                const logbookOk = this.documents['logbook_import']?.scan_status === 'clean';
+                return kraOk && coiOk && logbookOk && othersClean;
             }
 
             const baseOk = ['id_copy', 'kra_pin'].every(t => this.documents[t]?.scan_status === 'clean');
             const logbookOk = this.logbookNA
                 ? (this.otherDocuments.length > 0 && this.otherDocuments.every(r => r.scanStatus === 'clean'))
                 : this.documents['logbook']?.scan_status === 'clean';
-            return baseOk && logbookOk;
+            return baseOk && logbookOk && othersClean;
         },
 
         // --- Cover details: client type + cover period ---
@@ -909,13 +891,6 @@ function certificateIssue() {
                     this.stickerId = data.sticker_id;
                     this.coverEndDate = data.cover_end_date;
                     this.coverEndDateDisplay = data.cover_end_date_display;
-                    // Corporate's third slot ("Others") is always required —
-                    // seed CR12 Form as the suggested starting row once cover
-                    // details are confirmed, same as logbook_na does for
-                    // individual clients.
-                    if (this.clientType === 'corporate' && this.otherDocuments.length === 0) {
-                        this.addOtherRow('CR12 Form');
-                    }
                     if (typeof showToastSuccess === 'function') showToastSuccess('Cover details saved.');
                 } else {
                     this.coverDetailsError = data.error || 'Failed to save cover details.';
@@ -1064,32 +1039,6 @@ function certificateIssue() {
             }
         },
 
-        async sendTestEmail() {
-            if (!this.testEmail || !this.selectedQuotation) return;
-            this.sendingTestEmail = true;
-            this.testEmailSent = '';
-            this.testEmailError = '';
-
-            try {
-                const response = await fetch('{{ route("stickers.test-email") }}', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
-                    body: JSON.stringify({ quotation_id: this.selectedQuotation.id, test_email: this.testEmail }),
-                });
-
-                const data = await response.json();
-
-                if (data.success) {
-                    this.testEmailSent = data.message;
-                } else {
-                    this.testEmailError = data.error || 'Failed to send test email.';
-                }
-            } catch (e) {
-                this.testEmailError = 'An error occurred while sending test email.';
-            } finally {
-                this.sendingTestEmail = false;
-            }
-        },
     }
 }
 </script>

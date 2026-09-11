@@ -49,6 +49,7 @@
                 <div class="label">Total Premium</div>
                 <div class="amount">KES {{ number_format($breakdown['total_premium'] ?? $quotation->total_premium, 2) }}</div>
             </div>
+            <p style="font-size:11px;color:#94a3b8;text-align:center;margin-top:-10px">The amount above is subject to the underwriter's confirmation.</p>
 
             <table class="details-table">
                 <tr><td>Quotation Number</td><td>{{ $quotation->quotation_number }}</td></tr>

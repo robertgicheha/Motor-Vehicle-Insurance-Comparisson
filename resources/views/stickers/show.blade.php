@@ -27,12 +27,19 @@
     {{-- ─── HERO ───────────────────────────────────────────────────────── --}}
     <div class="rounded-2xl bg-micblue px-6 py-7 shadow-sm print:hidden">
         <p class="text-[10px] font-semibold uppercase tracking-widest text-blue-400">Insurance Sticker</p>
-        <h1 class="mt-0.5 text-2xl font-bold text-white tracking-tight">Sticker {{ $sticker->sticker_number }}</h1>
+        <h1 class="mt-0.5 text-2xl font-bold text-white tracking-tight">{{ $sticker->vehicle_registration ?: $sticker->customer_name }}</h1>
         <p class="mt-1 text-xs text-blue-200">{{ $sticker->company->name }} &mdash; {{ $sticker->car_make }} {{ $sticker->car_model }} ({{ $sticker->car_year }})</p>
+        @if($sticker->underwriter_sticker_no)
         <div class="mt-3 inline-flex items-center gap-2 rounded-full bg-white/15 border border-white/25 px-4 py-1.5 text-xs font-bold text-white tracking-wide">
-            <span class="opacity-70 font-medium">Sticker:</span>
-            <span>{{ $sticker->sticker_number }}</span>
+            <span class="opacity-70 font-medium">Sticker Number:</span>
+            <span>{{ $sticker->underwriter_sticker_no }}</span>
         </div>
+        @else
+        <div class="mt-3 inline-flex items-center gap-2 rounded-full bg-white/10 border border-white/20 px-4 py-1.5 text-xs font-semibold text-white/80 tracking-wide">
+            Awaiting the underwriter's sticker number
+        </div>
+        @endif
+        <p class="mt-2 text-[10px] text-blue-300/70">Internal reference: {{ $sticker->sticker_number }}</p>
     </div>
 
     {{-- ─── SUMMARY CARDS ──────────────────────────────────────────────── --}}
@@ -45,10 +52,6 @@
                 <h2 class="text-xs font-bold text-gray-800 dark:text-white mt-0.5">Sticker Info</h2>
             </div>
             <div class="p-5 space-y-3 text-xs">
-                <div class="flex justify-between items-start gap-3">
-                    <span class="text-gray-400 shrink-0">Sticker ID</span>
-                    <span class="font-bold text-gray-800 dark:text-white text-right">{{ $sticker->sticker_number }}</span>
-                </div>
                 @if($sticker->underwriter_sticker_no)
                 <div class="flex justify-between items-start gap-3">
                     <span class="text-gray-400 shrink-0">Sticker Number</span>

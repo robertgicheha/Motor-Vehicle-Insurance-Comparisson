@@ -215,12 +215,12 @@
                 <p class="text-[10px] text-gray-400 mb-2">Attach if available — not required</p>
 
                 <div x-show="!policeAbstract.uploading && !policeAbstract.documentId" class="max-w-sm">
-                    <input type="file" id="police-abstract-input" accept=".pdf,.jpg,.jpeg,.png" class="hidden" @change="uploadPoliceAbstract($event)">
+                    <input type="file" id="police-abstract-input" accept=".pdf,.jpg,.jpeg" class="hidden" @change="uploadPoliceAbstract($event)">
                     <label for="police-abstract-input"
                        class="flex flex-col items-center justify-center w-full py-5 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg cursor-pointer hover:border-blue-400 dark:hover:border-blue-500 hover:bg-blue-50/50 dark:hover:bg-blue-900/10 transition-all duration-200">
                         <svg class="w-7 h-7 text-gray-300 dark:text-gray-500 mb-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg>
                         <span class="text-[10px] font-medium text-gray-500 dark:text-gray-400">Drop or click</span>
-                        <span class="text-[9px] text-gray-400 dark:text-gray-500 mt-0.5">PDF, JPG, PNG up to 10MB</span>
+                        <span class="text-[9px] text-gray-400 dark:text-gray-500 mt-0.5">PDF, JPG or JPEG up to 5MB</span>
                     </label>
                 </div>
                 <div x-show="policeAbstract.uploading" class="max-w-sm">
@@ -267,7 +267,7 @@
 
                             <template x-if="!row.documentId">
                                 <span class="flex-1 min-w-0">
-                                    <input type="file" :id="'photo-' + row.rowId" accept=".pdf,.jpg,.jpeg,.png" class="hidden" @change="uploadPhoto($event, row)">
+                                    <input type="file" :id="'photo-' + row.rowId" accept=".pdf,.jpg,.jpeg" class="hidden" @change="uploadPhoto($event, row)">
                                     <label :for="'photo-' + row.rowId" x-show="!row.uploading"
                                         class="inline-flex items-center gap-1 px-2.5 py-1.5 text-[10px] font-semibold bg-blue-50 hover:bg-blue-100 text-blue-700 dark:bg-blue-900/20 dark:text-blue-400 rounded-lg cursor-pointer transition whitespace-nowrap">
                                         <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg>

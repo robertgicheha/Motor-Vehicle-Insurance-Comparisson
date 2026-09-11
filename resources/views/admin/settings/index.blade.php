@@ -108,7 +108,7 @@
 
                                 if (in_array($value, ['true', 'false']) || str_contains($key, 'enable') || str_contains($key, 'require') || str_contains($key, 'notify_on') || str_contains($key, 'two_factor') || str_contains($key, 'collapsed') || str_contains($key, 'social_login') || str_contains($key, 'public_api') || str_contains($key, 'pvt')) {
                                     $inputType = 'boolean';
-                                } elseif (str_contains($key, 'password') && !str_contains($key, 'min_length')) {
+                                } elseif ((str_contains($key, 'password') && !str_contains($key, 'min_length')) || str_contains($key, 'secret')) {
                                     $inputType = 'password';
                                 } elseif (str_contains($key, 'email')) {
                                     $inputType = 'email';

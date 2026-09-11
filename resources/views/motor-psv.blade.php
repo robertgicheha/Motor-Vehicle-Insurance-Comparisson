@@ -37,6 +37,7 @@
   .benefit-card p{font-size:12.5px;color:var(--text-muted);line-height:1.5}
   .rate-cards-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:20px}
   .rate-card{background:#fff;border:1.5px solid var(--border);border-radius:var(--radius);padding:20px;text-align:center;min-width:0}
+  .rate-card .rate-card-logo{display:block;width:72px;height:36px;margin:0 auto 10px;object-fit:contain}
   .rate-card .rate-value{font-size:28px;font-weight:700;color:var(--blue);margin:8px 0 4px}
   .rate-card .rate-label{font-size:12px;color:var(--text-muted);margin-bottom:6px}
   .rate-card .rate-desc{font-size:11px;color:var(--text-muted);line-height:1.4}
@@ -146,18 +147,34 @@
   <div class="section-label" style="text-align:center">Key Rates</div>
   <h2 class="section-title">PSV Premium Rates at a Glance</h2>
   <p class="section-sub">Understanding the key rates that determine your PSV comprehensive motor vehicle premium.</p>
+  @php
+      // Logos come from the same $companyData the page already builds from the
+      // admin-managed Company records (see the company-card grid below) — so a
+      // logo change in the admin panel is reflected here automatically, rather
+      // than a hardcoded asset path per insurer.
+      $psvRateLogo = fn($needle) => collect($companyData)->first(fn($cd) => str_contains(strtolower($cd['name']), strtolower($needle)))['logo'] ?? null;
+  @endphp
   <div class="rate-cards-grid">
     <div class="rate-card">
+      @if($logo = $psvRateLogo('sanlam'))
+        <img src="{{ $logo }}" alt="Sanlam Allianz" class="rate-card-logo" onerror="this.style.display='none'">
+      @endif
       <div class="rate-label">Premium Rate (Sanlam)</div>
       <div class="rate-value">6.5%</div>
       <div class="rate-desc">of vehicle value, min premium Kshs. 75,000, inclusive of PVT. Includes Excess Protector.</div>
     </div>
     <div class="rate-card">
+      @if($logo = $psvRateLogo('ga '))
+        <img src="{{ $logo }}" alt="GA Insurance" class="rate-card-logo" onerror="this.style.display='none'">
+      @endif
       <div class="rate-label">Premium Rate (GA)</div>
       <div class="rate-value">7.5%</div>
       <div class="rate-desc">of vehicle value, min premium Kshs. 35,000 basic. PVT at 0.5% min Kshs. 5,000.</div>
     </div>
     <div class="rate-card">
+      @if($logo = $psvRateLogo('definite'))
+        <img src="{{ $logo }}" alt="Definite Assurance" class="rate-card-logo" onerror="this.style.display='none'">
+      @endif
       <div class="rate-label">Premium Rate (Definite)</div>
       <div class="rate-value">5.5%</div>
       <div class="rate-desc">of vehicle value, min premium Kshs. 37,500. PVT at 0.45% min Kshs. 3,500.</div>
@@ -289,37 +306,11 @@
           <input type="text" id="f-model-psv" placeholder="e.g. Hiace, Matatu, Coaster">
         </div>
         <div class="form-group">
-          <label>Body Type</label>
-          <select id="f-body-psv">
-            <option value="">Select body type...</option>
-            <option>Saloon</option><option>Station Wagon (S. Wagon)</option><option>SUV/4x4</option>
-            <option>Hatchback</option><option>Pick-Up</option><option>Van/Minivan</option><option>Convertible</option><option>Coupe</option>
-          </select>
-        </div>
-        <div class="form-group">
           <label>Year of Manufacture <span class="req">*</span></label>
           <select id="f-year-psv">
             <option value="">Select year...</option>
           </select>
           <div class="value-error" id="f-year-error-psv" style="display:none;color:var(--red);font-size:11px;margin-top:4px"></div>
-        </div>
-        <div class="form-group">
-          <label>Color</label>
-          <select id="f-color-psv" onchange="toggleOtherColor('psv', this)">
-            <option value="">Select color...</option>
-            <option>White</option>
-            <option>Black</option>
-            <option>Silver/Grey</option>
-            <option>Blue</option>
-            <option>Red</option>
-            <option>Brown/Maroon</option>
-            <option>Gold/Champagne</option>
-            <option>Green</option>
-            <option>Orange</option>
-            <option>Purple</option>
-            <option>Other</option>
-          </select>
-          <input type="text" id="f-color-other-psv" placeholder="Type your vehicle color..." style="display:none;margin-top:8px">
         </div>
         <div class="form-group">
           <label>Value of Vehicle (KES) <span class="req">*</span></label>

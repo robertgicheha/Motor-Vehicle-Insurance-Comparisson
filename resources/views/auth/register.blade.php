@@ -79,7 +79,7 @@
 
         <div class="flex items-center mt-4">
                 <input id="terms" name="terms" type="checkbox" required class="w-4 h-4 border-gray-300 rounded focus:ring-[#0066B3]" style="color:var(--blue)">
-            <label for="terms" class="block ml-2 text-sm text-gray-900">Agree the Terms & Policy</label>
+            <label for="terms" class="block ml-2 text-sm text-gray-900">I agree to the <a href="{{ route('legal.terms') }}" target="_blank" class="text-[#0066B3] font-semibold hover:underline">Terms &amp; Conditions</a> and <a href="{{ route('legal.privacy') }}" target="_blank" class="text-[#0066B3] font-semibold hover:underline">Privacy Policy</a></label>
         </div>
 
         <button type="submit" id="registerBtn" class="flex justify-center items-center gap-2 w-full px-4 py-2 mt-4 text-sm font-medium text-white transition border border-transparent rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#0066B3]" style="background:var(--blue)" onmouseover="this.style.background='var(--blue-dark)'" onmouseout="this.style.background='var(--blue)'">

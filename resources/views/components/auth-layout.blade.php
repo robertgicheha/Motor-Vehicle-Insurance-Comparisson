@@ -10,9 +10,12 @@
     {{-- <link href="https://fonts.bunny.net/css?family=Montserrat:300,400,500,600,700,800" rel="stylesheet" /> --}}
     <link rel="stylesheet" href="{{ asset('css/dashboard.css') }}">
     @vite(['resources/css/app.css', 'resources/js/app.js'])
-    @if(config('services.recaptcha.site_key'))
-        <script src="https://www.google.com/recaptcha/api.js?render={{ config('services.recaptcha.site_key') }}"></script>
-        <script>window.mvipRecaptchaSiteKey = @json(config('services.recaptcha.site_key'));</script>
+    @php
+        $__recaptchaSiteKey = \App\Models\Setting::getValue('recaptcha_site_key') ?: config('services.recaptcha.site_key');
+    @endphp
+    @if($__recaptchaSiteKey)
+        <script src="https://www.google.com/recaptcha/api.js?render={{ $__recaptchaSiteKey }}"></script>
+        <script>window.mvipRecaptchaSiteKey = @json($__recaptchaSiteKey);</script>
     @endif
 </head>
 <body class="font-montserrat antialiased text-gray-900 bg-white">

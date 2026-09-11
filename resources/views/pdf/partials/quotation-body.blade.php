@@ -141,14 +141,23 @@
         // once per request (e.g. this partial is included once per underwriter
         // on the combined "compare all" PDF), and PHP cannot redeclare a
         // top-level function.
-        $fmtRateValue = function ($r) {
-            $parts = [];
-            if ($r->percentage && $r->percentage > 0) $parts[] = \App\Models\Rate::fmtPercent($r->percentage) . '%';
-            if ($r->value && $r->value > 0) $parts[] = 'Kes ' . number_format($r->value, 0);
-            if ($r->min_value && $r->min_value > 0) $parts[] = 'Min Kes ' . number_format($r->min_value, 0);
-            if ($r->max_value && $r->max_value > 0) $parts[] = 'Max Kes ' . number_format($r->max_value, 0);
-            if ($r->min_premium && $r->min_premium > 0) $parts[] = 'Min prem Kes ' . number_format($r->min_premium, 0);
-            return implode(', ', $parts) ?: ($r->notes ? substr($r->notes, 0, 60) : '');
+        //
+        // For a percentage-based item (e.g. "10%, min KES 50,000") this shows
+        // the actual computed KES amount for this vehicle's valuation — via
+        // Rate::computeAmountFor(), which floors at min_value and caps at
+        // max_value — rather than the raw configuration rule.
+        $fmtRateValue = function ($r) use ($quotation) {
+            $computed = $r->computeAmountFor((float) $quotation->car_valuation);
+            if ($computed !== null) {
+                return 'KES ' . number_format($computed, 2);
+            }
+            if ($r->value && $r->value > 0) {
+                return 'KES ' . number_format($r->value, 0);
+            }
+            if ($r->min_premium && $r->min_premium > 0) {
+                return 'KES ' . number_format($r->min_premium, 0) . ' (min premium)';
+            }
+            return $r->notes ? substr($r->notes, 0, 60) : '';
         };
     @endphp
 

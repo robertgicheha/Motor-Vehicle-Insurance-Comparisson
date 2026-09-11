@@ -111,14 +111,6 @@
                             <span class="block font-medium text-gray-800 dark:text-white mt-1" x-text="data.reg || '—'"></span>
                         </div>
                         <div>
-                            <span class="block text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Body Type</span>
-                            <span class="block font-medium text-gray-800 dark:text-white mt-1" x-text="data.body || '—'"></span>
-                        </div>
-                        <div>
-                            <span class="block text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Color</span>
-                            <span class="block font-medium text-gray-800 dark:text-white mt-1" x-text="data.color || '—'"></span>
-                        </div>
-                        <div>
                             <span class="block text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Chassis</span>
                             <span class="block font-medium text-gray-800 dark:text-white mt-1" x-text="data.chassis || '—'"></span>
                         </div>
@@ -177,8 +169,9 @@
                 </div>
 
                 {{-- Confirm Form --}}
-                <form method="POST" action="{{ route('quotations.store') }}" class="mt-5">
+                <form id="quotationStoreForm" method="POST" action="{{ route('quotations.store') }}" class="mt-5">
                     @csrf
+                    <input type="hidden" name="g-recaptcha-response" id="g-recaptcha-response">
                     <input type="hidden" name="_signed" :value="data._signed">
                     <input type="hidden" name="car_make" :value="data.make">
                     <input type="hidden" name="car_model" :value="data.model">
@@ -186,8 +179,6 @@
                     <input type="hidden" name="car_registration" :value="data.reg">
                     <input type="hidden" name="chassis_number" :value="data.chassis">
                     <input type="hidden" name="engine_number" :value="data.engine">
-                    <input type="hidden" name="body_type" :value="data.body">
-                    <input type="hidden" name="color" :value="data.color">
                     <input type="hidden" name="car_valuation" :value="vehicleValue">
                     <input type="hidden" name="vehicle_type" :value="data.vehicle_type || 'private'">
                     <input type="hidden" name="num_passengers" :value="data.numPassengers || data.num_passengers || 1">

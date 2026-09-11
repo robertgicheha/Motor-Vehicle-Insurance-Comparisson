@@ -119,7 +119,7 @@ class StickerAdminController extends Controller
 
     public function updateStickerForm(Request $request)
     {
-        $stickers = Sticker::with(['company', 'issuedBy', 'completedBy'])
+        $stickers = Sticker::with(['company', 'issuedBy', 'completedBy', 'quotation'])
             ->where('status', 'issued')
             ->latest()
             ->paginate(20);
@@ -127,6 +127,15 @@ class StickerAdminController extends Controller
         return view('admin.stickers.update-stickers', compact('stickers'));
     }
 
+    /**
+     * Searches stickers by whatever the underwriter's email thread will
+     * actually reference — quotation number, registration, chassis/engine
+     * number, or owner name — never by our internal Sticker ID (that number
+     * never leaves this system). Returns every match so the reviewer can
+     * pick the right one before recording the underwriter's real sticker
+     * number. Mirrors StickerController::mySearchSticker(), unscoped to any
+     * one issuer.
+     */
     public function searchSticker(Request $request)
     {
         $request->validate([
@@ -134,25 +143,35 @@ class StickerAdminController extends Controller
         ]);
 
         $search = trim($request->search);
-        $sticker = Sticker::with(['company', 'issuedBy', 'quotation'])
-            ->whereRaw('LOWER(sticker_number) = ?', [strtolower($search)])
-            ->orWhereRaw('LOWER(underwriter_sticker_no) = ?', [strtolower($search)])
-            ->first();
+        $stickers = Sticker::with(['company', 'issuedBy', 'quotation'])
+            ->where(function ($q) use ($search) {
+                $q->whereLikeCI('vehicle_registration', $search)
+                  ->orWhereLikeCI('chassis_number', $search)
+                  ->orWhereLikeCI('engine_number', $search)
+                  ->orWhereLikeCI('customer_name', $search)
+                  ->orWhereHas('quotation', function ($q) use ($search) {
+                      $q->whereLikeCI('quotation_number', $search);
+                  });
+            })
+            ->orderByDesc('created_at')
+            ->take(20)
+            ->get();
 
-        if (!$sticker) {
-            return response()->json(['success' => false, 'error' => 'Sticker not found. Search by Sticker ID (ours) or Sticker Number (from the underwriter).']);
+        if ($stickers->isEmpty()) {
+            return response()->json(['success' => false, 'error' => 'No sticker found. Search by quotation number, registration, chassis number, engine number, or owner name.']);
         }
-
-        $documents = CertificateDocument::where('sticker_id', $sticker->id)->get();
 
         return response()->json([
             'success' => true,
-            'sticker' => [
+            'stickers' => $stickers->map(fn($sticker) => [
                 'id' => $sticker->id,
                 'sticker_number' => $sticker->sticker_number,
                 'underwriter_sticker_no' => $sticker->underwriter_sticker_no,
+                'quotation_number' => $sticker->quotation?->quotation_number,
                 'customer_name' => $sticker->customer_name,
                 'vehicle_registration' => $sticker->vehicle_registration,
+                'chassis_number' => $sticker->chassis_number,
+                'engine_number' => $sticker->engine_number,
                 'car_make' => $sticker->car_make,
                 'car_model' => $sticker->car_model,
                 'car_year' => $sticker->car_year,
@@ -164,8 +183,8 @@ class StickerAdminController extends Controller
                 'completed_by' => $sticker->completedBy?->name,
                 'completed_at' => $sticker->generated_at?->format('d M Y H:i'),
                 'is_completed' => $sticker->status === 'completed',
-                'documents' => $documents->pluck('document_type', 'scan_status'),
-            ],
+                'documents' => CertificateDocument::where('sticker_id', $sticker->id)->get()->pluck('document_type', 'scan_status'),
+            ]),
         ]);
     }
 

@@ -18,12 +18,14 @@ class CertificateDocument extends Model
         'scan_status',
         'scan_result',
         'uploaded_by',
+        'purged_at',
     ];
 
     protected function casts(): array
     {
         return [
             'file_size' => 'integer',
+            'purged_at' => 'datetime',
         ];
     }
 

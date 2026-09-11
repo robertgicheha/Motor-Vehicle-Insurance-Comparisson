@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\Setting;
 use App\Services\AuditService;
 use Closure;
 use Illuminate\Http\Request;
@@ -12,9 +13,12 @@ class ValidateRecaptcha
 {
     public function handle(Request $request, Closure $next)
     {
-        // Not configured yet (no keys in .env) — don't lock real users out;
-        // the endpoint still has rate limiting. Logged so it's visible operationally.
-        if (!config('services.recaptcha.secret_key')) {
+        // Admin-configured key (Settings > Security) takes priority; falls back to .env.
+        $secretKey = Setting::getValue('recaptcha_secret_key') ?: config('services.recaptcha.secret_key');
+
+        // Not configured yet — don't lock real users out; the endpoint still has
+        // rate limiting. Logged so it's visible operationally.
+        if (!$secretKey) {
             Log::warning("reCAPTCHA secret key not configured — skipping verification for {$request->path()}");
             return $next($request);
         }
@@ -25,7 +29,7 @@ class ValidateRecaptcha
         }
 
         $response = Http::asForm()->post('https://www.google.com/recaptcha/api/siteverify', [
-            'secret' => config('services.recaptcha.secret_key'),
+            'secret' => $secretKey,
             'response' => $token,
             'remoteip' => $request->ip(),
         ]);

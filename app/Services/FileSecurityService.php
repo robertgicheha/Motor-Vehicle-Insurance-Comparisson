@@ -10,14 +10,12 @@ class FileSecurityService
         'pdf'  => ['application/pdf'],
         'jpg'  => ['image/jpeg'],
         'jpeg' => ['image/jpeg'],
-        'png'  => ['image/png'],
     ];
 
     private const MAGIC_BYTES = [
         'pdf'  => ['255044462D'],
         'jpg'  => ['FFD8FF'],
         'jpeg' => ['FFD8FF'],
-        'png'  => ['89504E47'],
     ];
 
     public function validate(UploadedFile $file, string $documentType): array
@@ -28,7 +26,7 @@ class FileSecurityService
         $clientMime = $file->getClientMimeType();
 
         if (!isset(self::ALLOWED_MIME_MAP[$extension])) {
-            $errors[] = "File extension '{$extension}' is not allowed. Accepted: PDF, JPG, PNG.";
+            $errors[] = "File extension '{$extension}' is not allowed. Accepted: PDF, JPG, JPEG.";
         }
 
         $realMimeType = $this->getRealMimeType($file->getRealPath());
@@ -58,7 +56,7 @@ class FileSecurityService
             }
         }
 
-        if ($realMimeType !== 'application/pdf' && !in_array($realMimeType, ['image/jpeg', 'image/png'])) {
+        if ($realMimeType !== 'application/pdf' && !in_array($realMimeType, ['image/jpeg'])) {
             if (empty($errors)) {
                 $errors[] = "File content type '{$realMimeType}' does not match any allowed document type.";
                 return ['valid' => false, 'errors' => $errors, 'threat' => true];

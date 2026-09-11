@@ -83,84 +83,84 @@
         </div>
 
         {{-- Vehicle Details --}}
-<div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
-    <div class="px-5 py-4 border-b border-gray-100 dark:border-gray-700">
-        <p class="text-[10px] font-semibold uppercase tracking-widest text-gray-400">Vehicle</p>
-        <h2 class="text-xs font-bold text-gray-800 dark:text-white mt-0.5">Vehicle Details</h2>
-    </div>
+        <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+            <div class="px-5 py-4 border-b border-gray-100 dark:border-gray-700">
+                <p class="text-[10px] font-semibold uppercase tracking-widest text-gray-400">Vehicle</p>
+                <h2 class="text-xs font-bold text-gray-800 dark:text-white mt-0.5">Vehicle Details</h2>
+            </div>
 
-    {{-- auto-fit rather than a fixed 2 columns: this card is also rendered in a
-         narrow (~227px) sidebar column, where two columns leave ~81px each and
-         the label/value pairs spill out of the card. Sizing against the actual
-         container drops it to one column there and keeps two when there's room. --}}
-    <div class="p-5 grid gap-x-6 gap-y-3 text-xs" style="grid-template-columns:repeat(auto-fit,minmax(min(200px,100%),1fr))">
+            {{-- auto-fit rather than a fixed 2 columns: this card is also rendered in a
+                narrow (~227px) sidebar column, where two columns leave ~81px each and
+                the label/value pairs spill out of the card. Sizing against the actual
+                container drops it to one column there and keeps two when there's room. --}}
+            <div class="p-5 grid gap-x-6 gap-y-3 text-xs" style="grid-template-columns:repeat(auto-fit,minmax(min(200px,100%),1fr))">
 
-        {{-- Registration No --}}
-        <div class="flex justify-between items-start gap-2">
-            <span class="text-gray-400 shrink-0">Registration No</span>
-            <span class="font-medium text-gray-800 dark:text-white text-right">
-                {{ $quotation->car_registration ?: '—' }}
-            </span>
+                {{-- Registration No --}}
+                <div class="flex justify-between items-start gap-2">
+                    <span class="text-gray-400 shrink-0">Registration No</span>
+                    <span class="font-medium text-gray-800 dark:text-white text-right">
+                        {{ $quotation->car_registration ?: '—' }}
+                    </span>
+                </div>
+
+                {{-- Make of Vehicle --}}
+                <div class="flex justify-between items-start gap-2">
+                    <span class="text-gray-400 shrink-0">Make of Vehicle</span>
+                    <span class="font-medium text-gray-800 dark:text-white text-right">
+                        {{ $quotation->car_make ?: '—' }}
+                    </span>
+                </div>
+
+                {{-- Model Name --}}
+                <div class="flex justify-between items-start gap-2">
+                    <span class="text-gray-400 shrink-0">Model Name</span>
+                    <span class="font-medium text-gray-800 dark:text-white text-right">
+                        {{ $quotation->car_model ?: '—' }}
+                    </span>
+                </div>
+
+                {{-- Body Type --}}
+                <div class="flex justify-between items-start gap-2">
+                    <span class="text-gray-400 shrink-0">Body Type</span>
+                    <span class="font-medium text-gray-800 dark:text-white text-right">
+                        {{ $quotation->body_type ?: '—' }}
+                    </span>
+                </div>
+
+                {{-- Year of Make --}}
+                <div class="flex justify-between items-start gap-2">
+                    <span class="text-gray-400 shrink-0">Year of Make</span>
+                    <span class="font-medium text-gray-800 dark:text-white text-right">
+                        {{ $quotation->car_year ?: '—' }}
+                    </span>
+                </div>
+
+                {{-- Color --}}
+                <div class="flex justify-between items-start gap-2">
+                    <span class="text-gray-400 shrink-0">Color</span>
+                    <span class="font-medium text-gray-800 dark:text-white text-right">
+                        {{ $quotation->color ?: '—' }}
+                    </span>
+                </div>
+
+                {{-- Chassis No --}}
+                <div class="flex justify-between items-start gap-2">
+                    <span class="text-gray-400 shrink-0">Chassis No</span>
+                    <span class="font-medium text-gray-800 dark:text-white text-right">
+                        {{ $quotation->chassis_number ?: '—' }}
+                    </span>
+                </div>
+
+                {{-- Engine No --}}
+                <div class="flex justify-between items-start gap-2">
+                    <span class="text-gray-400 shrink-0">Engine No</span>
+                    <span class="font-medium text-gray-800 dark:text-white text-right">
+                        {{ $quotation->engine_number ?: '—' }}
+                    </span>
+                </div>
+
+            </div>
         </div>
-
-        {{-- Make of Vehicle --}}
-        <div class="flex justify-between items-start gap-2">
-            <span class="text-gray-400 shrink-0">Make of Vehicle</span>
-            <span class="font-medium text-gray-800 dark:text-white text-right">
-                {{ $quotation->car_make ?: '—' }}
-            </span>
-        </div>
-
-        {{-- Model Name --}}
-        <div class="flex justify-between items-start gap-2">
-            <span class="text-gray-400 shrink-0">Model Name</span>
-            <span class="font-medium text-gray-800 dark:text-white text-right">
-                {{ $quotation->car_model ?: '—' }}
-            </span>
-        </div>
-
-        {{-- Body Type --}}
-        <div class="flex justify-between items-start gap-2">
-            <span class="text-gray-400 shrink-0">Body Type</span>
-            <span class="font-medium text-gray-800 dark:text-white text-right">
-                {{ $quotation->body_type ?: '—' }}
-            </span>
-        </div>
-
-        {{-- Year of Make --}}
-        <div class="flex justify-between items-start gap-2">
-            <span class="text-gray-400 shrink-0">Year of Make</span>
-            <span class="font-medium text-gray-800 dark:text-white text-right">
-                {{ $quotation->car_year ?: '—' }}
-            </span>
-        </div>
-
-        {{-- Color --}}
-        <div class="flex justify-between items-start gap-2">
-            <span class="text-gray-400 shrink-0">Color</span>
-            <span class="font-medium text-gray-800 dark:text-white text-right">
-                {{ $quotation->color ?: '—' }}
-            </span>
-        </div>
-
-        {{-- Chassis No --}}
-        <div class="flex justify-between items-start gap-2">
-            <span class="text-gray-400 shrink-0">Chassis No</span>
-            <span class="font-medium text-gray-800 dark:text-white text-right">
-                {{ $quotation->chassis_number ?: '—' }}
-            </span>
-        </div>
-
-        {{-- Engine No --}}
-        <div class="flex justify-between items-start gap-2">
-            <span class="text-gray-400 shrink-0">Engine No</span>
-            <span class="font-medium text-gray-800 dark:text-white text-right">
-                {{ $quotation->engine_number ?: '—' }}
-            </span>
-        </div>
-
-    </div>
-</div>
 
         {{-- Valuation --}}
         <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
@@ -190,133 +190,125 @@
     </div>
 
    {{-- ─── QUOTATION SUMMARY ──────────────────────────────────────────── --}}
-<div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden print:hidden">
-    <div class="px-6 py-4 border-b border-gray-100 dark:border-gray-700">
-        <p class="text-[10px] font-semibold uppercase tracking-widest text-gray-400">Financials</p>
-        <h2 class="text-xs font-bold text-gray-800 dark:text-white mt-0.5">Quotation Summary — {{ $quotation->company->name ?? 'Insurer' }}</h2>
-    </div>
-
-    <div class="p-6 overflow-x-auto">
-        <table class="w-full text-xs">
-            <thead>
-                <tr class="text-gray-400 uppercase tracking-wider text-[10px]">
-                    <th class="text-left font-semibold pb-2">Description</th>
-                    <th class="text-left font-semibold pb-2">Rate / Notes</th>
-                    <th class="text-right font-semibold pb-2">Amount (KES)</th>
-                </tr>
-            </thead>
-            <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
-                <tr class="hover:bg-blue-50 dark:hover:bg-blue-900/20">
-                    <td class="px-4 py-3">Estimated Vehicle Value</td>
-                    <td class="px-4 py-3 text-gray-400 text-xs">—</td>
-                    <td class="px-4 py-3 text-right font-semibold tabular-nums">{{ number_format($quotation->car_valuation, 2) }}</td>
-                </tr>
-                <tr class="hover:bg-blue-50 dark:hover:bg-blue-900/20">
-                    <td class="px-4 py-3">Basic Annual Premium</td>
-                    <td class="px-4 py-3 text-gray-400 text-xs">@ {{ \App\Models\Rate::fmtPercent($breakdown['premium_rate'] ?? 0) }}% of vehicle value</td>
-                    <td class="px-4 py-3 text-right font-semibold tabular-nums">{{ number_format($breakdown['basic_premium'] ?? 0, 2) }}</td>
-                </tr>
-                <tr class="hover:bg-blue-50 dark:hover:bg-blue-900/20">
-                    <td class="px-4 py-3">PVT(Political Violence &amp; Terrorism Extension)</td>
-                    <td class="px-4 py-3 text-gray-400 text-xs">{{ !empty($breakdown['is_pvt_inclusive']) ? 'Included in basic premium' : '@ ' . \App\Models\Rate::fmtPercent($breakdown['pvt_rate'] ?? 0) . '%' }}</td>
-                    <td class="px-4 py-3 text-right font-semibold tabular-nums">{{ number_format($breakdown['pvt_premium'] ?? 0, 2) }}</td>
-                </tr>
-                @if(($breakdown['pll_total'] ?? 0) > 0)
-                <tr class="hover:bg-blue-50 dark:hover:bg-blue-900/20">
-                    <td class="px-4 py-3">Passenger Legal Liability (PLL)</td>
-                    <td class="px-4 py-3 text-gray-400 text-xs">KES {{ number_format($breakdown['pll_per_person'] ?? 0, 0) }} &times; {{ $quotation->num_passengers ?? 1 }} pax</td>
-                    <td class="px-4 py-3 text-right font-semibold tabular-nums">{{ number_format($breakdown['pll_total'] ?? 0, 2) }}</td>
-                </tr>
-                @endif
-                <tr class="hover:bg-blue-50 dark:hover:bg-blue-900/20">
-                    <td class="px-4 py-3">Training Levy</td>
-                    <td class="px-4 py-3 text-gray-400 text-xs">@ {{ \App\Models\Rate::fmtPercent($breakdown['training_levy_rate'] ?? 0) }}% of premium + PVT + PLL</td>
-                    <td class="px-4 py-3 text-right font-semibold tabular-nums">{{ number_format($breakdown['training_levy'] ?? 0, 2) }}</td>
-                </tr>
-                <tr class="hover:bg-blue-50 dark:hover:bg-blue-900/20">
-                    <td class="px-4 py-3">Policy Holder Fund</td>
-                    <td class="px-4 py-3 text-gray-400 text-xs">@ {{ \App\Models\Rate::fmtPercent($breakdown['policy_holder_fund_rate'] ?? 0) }}% of premium + PVT + PLL</td>
-                    <td class="px-4 py-3 text-right font-semibold tabular-nums">{{ number_format($breakdown['policy_holder_fund'] ?? 0, 2) }}</td>
-                </tr>
-                <tr class="hover:bg-blue-50 dark:hover:bg-blue-900/20">
-                    <td class="px-4 py-3">Stamp Duty</td>
-                    <td class="px-4 py-3 text-gray-400 text-xs">Fixed</td>
-                    <td class="px-4 py-3 text-right font-semibold tabular-nums">{{ number_format($breakdown['stamp_duty'] ?? 0, 2) }}</td>
-                </tr>
-                <tr class="hover:bg-blue-50 dark:hover:bg-blue-900/20">
-                    <td class="px-4 py-3">Excess - Own Damage</td>
-                    <td class="px-4 py-3 text-gray-400 text-xs">—</td>
-                    <td class="px-4 py-3 text-right font-semibold tabular-nums">{{ ($breakdown['excess_own_damage'] ?? 0) > 0 ? number_format($breakdown['excess_own_damage'], 2) : 'Not Applicable' }}</td>
-                </tr>
-                <tr class="hover:bg-blue-50 dark:hover:bg-blue-900/20">
-                    <td class="px-4 py-3">Excess - Theft</td>
-                    <td class="px-4 py-3 text-gray-400 text-xs">—</td>
-                    <td class="px-4 py-3 text-right font-semibold tabular-nums">{{ ($breakdown['excess_theft'] ?? 0) > 0 ? number_format($breakdown['excess_theft'], 2) : 'Not Applicable' }}</td>
-                </tr>
-            </tbody>
-            <tfoot>
-                <tr class="border-t-2 border-gray-200 dark:border-gray-600">
-                    <td colspan="2" class="pt-3 font-bold text-gray-800 dark:text-white">Total Premium (incl. taxes)</td>
-                    <td class="pt-3 text-right font-extrabold text-lg text-blue-600 dark:text-blue-400">KES {{ number_format($breakdown['total_premium'] ?? $quotation->total_premium, 2) }}</td>
-                </tr>
-            </tfoot>
-        </table>
-    </div>
-
-    @if(!empty($rateCategories) && collect($rateCategories)->flatten(1)->isNotEmpty())
-<div class="px-6 pb-6 pt-2 space-y-6 border-t border-gray-100 dark:border-gray-700">
-    <h3 class="text-[10px] font-bold uppercase tracking-widest text-gray-400 pt-4">Benefits &amp; Cover Details</h3>
-    @foreach($rateCategories as $categoryLabel => $items)
-        @if($items->isNotEmpty())
-        <div>
-            <h4 class="text-[10px] font-bold uppercase tracking-widest text-blue-600 dark:text-blue-400 mb-2">{{ $categoryLabel }}</h4>
-            <div class="overflow-x-auto rounded-xl border border-gray-100 dark:border-gray-700">
-                <table class="w-full text-xs">
-                    <thead>
-                        <tr class="text-gray-400 uppercase tracking-wider text-[10px]">
-                            <th class="text-left font-semibold pb-2 px-4 pt-3">Description</th>
-                            <th class="text-left font-semibold pb-2 px-4 pt-3">Rate / Notes</th>
-                            <th class="text-right font-semibold pb-2 px-4 pt-3">Amount (KES)</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
-                        @foreach($items as $item)
-                        <tr class="hover:bg-blue-50 dark:hover:bg-blue-900/20">
-                            <td class="px-4 py-2.5 text-gray-600 dark:text-gray-300 w-1/3">{{ $item->item_name }}</td>
-                            <td class="px-4 py-2.5 text-gray-400 text-[11px]">{{ $item->notes ?: '—' }}</td>
-                            <td class="px-4 py-2.5 text-right font-semibold text-gray-800 dark:text-white tabular-nums">
-                                @if($item->item_name === 'Max Age New Business' && $item->value)
-                                    {{ number_format($item->value, 0) }} years
-                                @elseif($item->percentage)
-                                    {{ \App\Models\Rate::fmtPercent($item->percentage) }}%
-                                @elseif($item->value)
-                                    KES {{ number_format($item->value, 0) }}
-                                @else
-                                    —
-                                @endif
-                            </td>
-                        </tr>
-                        @endforeach
-                    </tbody>
-                </table>
-            </div>
+    <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden print:hidden">
+        <div class="px-6 py-4 border-b border-gray-100 dark:border-gray-700">
+            <p class="text-[10px] font-semibold uppercase tracking-widest text-gray-400">Financials</p>
+            <h2 class="text-xs font-bold text-gray-800 dark:text-white mt-0.5">Quotation Summary — {{ $quotation->company->name ?? 'Insurer' }}</h2>
         </div>
-        @endif
-    @endforeach
 
-    <div class="overflow-x-auto rounded-xl border border-gray-100 dark:border-gray-700">
-        <table class="w-full text-xs">
-            <tfoot>
-                <tr class="border-t-2 border-gray-200 dark:border-gray-600">
-                    <td colspan="2" class="px-4 py-3 font-bold text-gray-800 dark:text-white">Total Premium (incl. taxes)</td>
-                    <td class="px-4 py-3 text-right font-extrabold text-lg text-blue-600 dark:text-blue-400">KES {{ number_format($breakdown['total_premium'] ?? $quotation->total_premium, 2) }}</td>
-                </tr>
-            </tfoot>
-        </table>
+        <div class="p-6 overflow-x-auto">
+            <table class="w-full text-xs">
+                <thead>
+                    <tr class="text-gray-400 uppercase tracking-wider text-[10px]">
+                        <th class="text-left font-semibold pb-2">Description</th>
+                        <th class="text-left font-semibold pb-2">Rate / Notes</th>
+                        <th class="text-right font-semibold pb-2">Amount (KES)</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
+                    <tr class="hover:bg-blue-50 dark:hover:bg-blue-900/20">
+                        <td class="px-4 py-3">Estimated Vehicle Value</td>
+                        <td class="px-4 py-3 text-gray-400 text-xs">—</td>
+                        <td class="px-4 py-3 text-right font-semibold tabular-nums">{{ number_format($quotation->car_valuation, 2) }}</td>
+                    </tr>
+                    <tr class="hover:bg-blue-50 dark:hover:bg-blue-900/20">
+                        <td class="px-4 py-3">Basic Annual Premium</td>
+                        <td class="px-4 py-3 text-gray-400 text-xs">@ {{ \App\Models\Rate::fmtPercent($breakdown['premium_rate'] ?? 0) }}% of vehicle value</td>
+                        <td class="px-4 py-3 text-right font-semibold tabular-nums">{{ number_format($breakdown['basic_premium'] ?? 0, 2) }}</td>
+                    </tr>
+                    <tr class="hover:bg-blue-50 dark:hover:bg-blue-900/20">
+                        <td class="px-4 py-3">PVT(Political Violence &amp; Terrorism Extension)</td>
+                        <td class="px-4 py-3 text-gray-400 text-xs">{{ !empty($breakdown['is_pvt_inclusive']) ? 'Included in basic premium' : '@ ' . \App\Models\Rate::fmtPercent($breakdown['pvt_rate'] ?? 0) . '%' }}</td>
+                        <td class="px-4 py-3 text-right font-semibold tabular-nums">{{ number_format($breakdown['pvt_premium'] ?? 0, 2) }}</td>
+                    </tr>
+                    @if(($breakdown['pll_total'] ?? 0) > 0)
+                    <tr class="hover:bg-blue-50 dark:hover:bg-blue-900/20">
+                        <td class="px-4 py-3">Passenger Legal Liability (PLL)</td>
+                        <td class="px-4 py-3 text-gray-400 text-xs">KES {{ number_format($breakdown['pll_per_person'] ?? 0, 0) }} &times; {{ $quotation->num_passengers ?? 1 }} pax</td>
+                        <td class="px-4 py-3 text-right font-semibold tabular-nums">{{ number_format($breakdown['pll_total'] ?? 0, 2) }}</td>
+                    </tr>
+                    @endif
+                    <tr class="hover:bg-blue-50 dark:hover:bg-blue-900/20">
+                        <td class="px-4 py-3">Training Levy</td>
+                        <td class="px-4 py-3 text-gray-400 text-xs">@ {{ \App\Models\Rate::fmtPercent($breakdown['training_levy_rate'] ?? 0) }}% of premium + PVT + PLL</td>
+                        <td class="px-4 py-3 text-right font-semibold tabular-nums">{{ number_format($breakdown['training_levy'] ?? 0, 2) }}</td>
+                    </tr>
+                    <tr class="hover:bg-blue-50 dark:hover:bg-blue-900/20">
+                        <td class="px-4 py-3">Policy Holder Fund</td>
+                        <td class="px-4 py-3 text-gray-400 text-xs">@ {{ \App\Models\Rate::fmtPercent($breakdown['policy_holder_fund_rate'] ?? 0) }}% of premium + PVT + PLL</td>
+                        <td class="px-4 py-3 text-right font-semibold tabular-nums">{{ number_format($breakdown['policy_holder_fund'] ?? 0, 2) }}</td>
+                    </tr>
+                    <tr class="hover:bg-blue-50 dark:hover:bg-blue-900/20">
+                        <td class="px-4 py-3">Stamp Duty</td>
+                        <td class="px-4 py-3 text-gray-400 text-xs">Fixed</td>
+                        <td class="px-4 py-3 text-right font-semibold tabular-nums">{{ number_format($breakdown['stamp_duty'] ?? 0, 2) }}</td>
+                    </tr>
+                    
+                </tbody>
+                <tfoot>
+                    <tr class="border-t-2 border-gray-200 dark:border-gray-600">
+                        <td colspan="2" class="pt-3 font-bold text-gray-800 dark:text-white">Total Premium (incl. taxes)</td>
+                        <td class="pt-3 text-right font-extrabold text-lg text-blue-600 dark:text-blue-400">KES {{ number_format($breakdown['total_premium'] ?? $quotation->total_premium, 2) }}</td>
+                    </tr>
+                </tfoot>
+            </table>
+            <p class="px-4 pt-2 text-[10px] text-gray-400 dark:text-gray-500 italic">The amount calculated is subject to the underwriter's confirmation.</p>
+        </div>
+
+        @if(!empty($rateCategories) && collect($rateCategories)->flatten(1)->isNotEmpty())
+    <div class="px-6 pb-6 pt-2 space-y-6 border-t border-gray-100 dark:border-gray-700">
+        <h3 class="text-[10px] font-bold uppercase tracking-widest text-gray-400 pt-4">Benefits &amp; Cover Details</h3>
+        @foreach($rateCategories as $categoryLabel => $items)
+            @if($items->isNotEmpty())
+            <div>
+                <h4 class="text-[10px] font-bold uppercase tracking-widest text-blue-600 dark:text-blue-400 mb-2">{{ $categoryLabel }}</h4>
+                <div class="overflow-x-auto rounded-xl border border-gray-100 dark:border-gray-700">
+                    <table class="w-full text-xs">
+                        <thead>
+                            <tr class="text-gray-400 uppercase tracking-wider text-[10px]">
+                                <th class="text-left font-semibold pb-2 px-4 pt-3">Description</th>
+                                <th class="text-left font-semibold pb-2 px-4 pt-3">Rate / Notes</th>
+                                <th class="text-right font-semibold pb-2 px-4 pt-3">Amount (KES)</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
+                            @foreach($items as $item)
+                            <tr class="hover:bg-blue-50 dark:hover:bg-blue-900/20">
+                                <td class="px-4 py-2.5 text-gray-600 dark:text-gray-300 w-1/3">{{ $item->item_name }}</td>
+                                <td class="px-4 py-2.5 text-gray-400 text-[11px]">{{ $item->notes ?: '—' }}</td>
+                                <td class="px-4 py-2.5 text-right font-semibold text-gray-800 dark:text-white tabular-nums">
+                                    @if($item->item_name === 'Max Age New Business' && $item->value)
+                                        {{ number_format($item->value, 0) }} years
+                                    @elseif($item->percentage)
+                                        KES {{ number_format($item->computeAmountFor((float) $quotation->car_valuation), 2) }}
+                                    @elseif($item->value)
+                                        KES {{ number_format($item->value, 0) }}
+                                    @else
+                                        —
+                                    @endif
+                                </td>
+                            </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            @endif
+        @endforeach
+
+        <div class="overflow-x-auto rounded-xl border border-gray-100 dark:border-gray-700">
+            <table class="w-full text-xs">
+                <tfoot>
+                    <tr class="border-t-2 border-gray-200 dark:border-gray-600">
+                        <td colspan="2" class="px-4 py-3 font-bold text-gray-800 dark:text-white">Total Premium (incl. taxes)</td>
+                        <td class="px-4 py-3 text-right font-extrabold text-lg text-blue-600 dark:text-blue-400">KES {{ number_format($breakdown['total_premium'] ?? $quotation->total_premium, 2) }}</td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
     </div>
-</div>
-@endif
-</div>
+    @endif
+    </div>
 
     {{-- ─── DOWNLOAD CARD ──────────────────────────────────────────────── --}}
     <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden print:hidden">

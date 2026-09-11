@@ -27,7 +27,6 @@ Route::middleware(['auth', 'online'])->prefix('stickers')->name('stickers.')->gr
     Route::post('/remove-document', [StickerController::class, 'removeDocument'])->name('remove-document');
     Route::post('/scan-status', [StickerController::class, 'scanStatus'])->name('scan-status');
     Route::post('/issue', [StickerController::class, 'issue'])->name('issue.store');
-    Route::post('/test-email', [StickerController::class, 'sendTestEmail'])->name('test-email');
     Route::get('/generate', [StickerController::class, 'create'])->name('create');
     Route::post('/generate', [StickerController::class, 'store'])->name('store');
     Route::get('/my-stickers', [StickerController::class, 'myStickers'])->name('my-stickers');
@@ -36,7 +35,7 @@ Route::middleware(['auth', 'online'])->prefix('stickers')->name('stickers.')->gr
     Route::post('/my-updates/complete', [StickerController::class, 'myUpdateSticker'])->name('my-updates.complete');
 });
 
-Route::post('/api/quotation/from-session', [PublicController::class, 'storeQuotationFromSession'])->middleware('auth')->name('api.quotation.from-session');
+Route::post('/api/quotation/from-session', [PublicController::class, 'storeQuotationFromSession'])->middleware(['auth', 'throttle:15,1', 'recaptcha'])->name('api.quotation.from-session');
 
 Route::middleware(['auth', 'online'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
@@ -55,9 +54,9 @@ Route::middleware(['auth', 'online'])->group(function () {
     Route::get('/quotations/preview', [QuotationController::class, 'preview'])->name('quotations.preview');
     Route::get('/quotations/compare-all', [QuotationController::class, 'compareAll'])->name('quotations.compare-all');
     Route::post('/quotations/compare-all/calculate', [QuotationController::class, 'compareAllCalculate'])->name('quotations.compare-all.calculate');
-    Route::post('/quotations/compare-all/pdf/preview', [QuotationController::class, 'compareAllPdfPreview'])->name('quotations.compare-all.pdf.preview');
-    Route::post('/quotations/compare-all/pdf/download', [QuotationController::class, 'compareAllPdfDownload'])->name('quotations.compare-all.pdf.download');
-    Route::resource('quotations', QuotationController::class)->except(['edit', 'update']);
+    Route::post('/quotations/compare-all/pdf/preview', [QuotationController::class, 'compareAllPdfPreview'])->name('quotations.compare-all.pdf.preview')->middleware(['throttle:20,1', 'recaptcha']);
+    Route::post('/quotations/compare-all/pdf/download', [QuotationController::class, 'compareAllPdfDownload'])->name('quotations.compare-all.pdf.download')->middleware(['throttle:20,1', 'recaptcha']);
+    Route::resource('quotations', QuotationController::class)->except(['edit', 'update'])->middlewareFor('store', ['throttle:10,1', 'recaptcha']);
     Route::post('/quotations/calculate', [QuotationController::class, 'calculate'])->name('quotations.calculate');
     Route::get('/quotations/{quotation}/download-pdf', [QuotationController::class, 'downloadPdf'])->name('quotations.download.pdf');
     Route::get('/quotations/{quotation}/preview-pdf', [QuotationController::class, 'previewPdf'])->name('quotations.preview.pdf');

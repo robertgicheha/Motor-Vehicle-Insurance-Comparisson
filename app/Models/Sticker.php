@@ -109,14 +109,27 @@ class Sticker extends Model
     }
 
     /**
-     * The Sticker ID — our own internal identifier (e.g. STK-001), distinct
-     * from the underwriter_sticker_no, which is the real number a company
-     * assigns and is only known once their reply comes back.
+     * The Sticker ID — our own internal identifier, distinct from
+     * underwriter_sticker_no (the real number a company assigns, only known
+     * once their reply comes back — see StickerController). Never shown to
+     * the customer as "the" sticker number; used only for our own tracking
+     * before that reply arrives.
+     *
+     * Format: STK-<3 random letters><2-digit sequence>/<company
+     * abbreviation>, e.g. STK-VPX01/SLM for Sanlam Allianz or STK-KLZ01/GA
+     * for GA Insurance — the company suffix makes it obvious at a glance
+     * which underwriter a request concerns.
      */
-    public static function generateNumber(): string
+    public static function generateNumber(Company $company): string
     {
-        $seq = static::count() + 1;
-        return 'STK-' . str_pad($seq, 3, '0', STR_PAD_LEFT);
+        $seq = str_pad((string) (static::where('company_id', $company->id)->count() + 1), 2, '0', STR_PAD_LEFT);
+
+        do {
+            $random = chr(rand(65, 90)) . chr(rand(65, 90)) . chr(rand(65, 90));
+            $candidate = 'STK-' . $random . $seq . '/' . $company->getInitials();
+        } while (static::where('sticker_number', $candidate)->exists());
+
+        return $candidate;
     }
 
     public function scopeActive($query)

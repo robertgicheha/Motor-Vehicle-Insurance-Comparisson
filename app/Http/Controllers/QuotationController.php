@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Mail\CompareAllQuotationsMail;
 use App\Mail\QuotationMail;
 use App\Models\Quotation;
 use App\Models\QuoteSession;
@@ -260,7 +261,7 @@ class QuotationController extends Controller
             'car_model' => 'required|string|max:255',
             'car_year' => 'required|integer|min:2000|max:2030',
             'car_registration' => 'nullable|string|max:50',
-            'car_valuation' => 'required|numeric|min:500000|max:10000000',
+            'car_valuation' => 'required|numeric|min:800000|max:1300000',
             'has_anti_theft' => 'boolean',
             'is_young_driver' => 'boolean',
             'include_pvt' => 'boolean',
@@ -313,7 +314,7 @@ class QuotationController extends Controller
             'car_model' => 'required|string|max:255',
             'car_year' => 'required|integer|min:2000|max:2030',
             'car_registration' => 'nullable|string|max:50',
-            'car_valuation' => 'required|numeric|min:500000|max:10000000',
+            'car_valuation' => 'required|numeric|min:800000|max:1300000',
             'company_id' => 'required|exists:companies,id',
             'premium' => 'required|numeric',
             'pvt_premium' => 'nullable|numeric',
@@ -473,6 +474,27 @@ class QuotationController extends Controller
         // it's noise, not information the customer needs to see.
         $notCovered = fn($r) => $r->notes && stripos($r->notes, 'no cover') !== false;
 
+        $additionalInfo = $rates->get('Optional Benefits', collect())
+            ->merge($rates->get('Premium Rate', collect())->whereIn('item_name', ['Max Age New Business', 'Minimum Sum Insured']))
+            ->reject($notCovered);
+
+        // The authoritative minimum sum insured lives on the Company record
+        // (min_sum_insured_private/psv) — not the "Minimum Sum Insured" Rate
+        // row, which is commonly left at 0 since the real figure is
+        // configured per company, not per rate item. Overriding it here (in
+        // memory only, never persisted) is the same source the PDF partial
+        // already uses, so this stops showing a stray "0".
+        $minSumInsured = ($quotation->vehicle_type ?? 'private') === 'psv' ? (float) $company->min_sum_insured_psv : (float) $company->min_sum_insured_private;
+        if ($minSumInsured > 0) {
+            $minSumInsuredItem = $additionalInfo->firstWhere('item_name', 'Minimum Sum Insured');
+            if ($minSumInsuredItem) {
+                $minSumInsuredItem->value = $minSumInsured;
+                $minSumInsuredItem->percentage = null;
+            } else {
+                $additionalInfo->push(new Rate(['item_name' => 'Minimum Sum Insured', 'value' => $minSumInsured]));
+            }
+        }
+
         return [
             'BENEFITS / COVER LIMITS' => $rates->get('Cover Limits', collect())
                 ->merge($rates->get('Extras', collect()))
@@ -481,9 +503,7 @@ class QuotationController extends Controller
             'THIRD PARTY LIMITS OF LIABILITY' => $rates->get('Third Party Limits', collect())->reject($notCovered),
             'POLICY EXCESSES' => $rates->get('Excess', collect())->reject($notCovered),
             'SPECIAL CONDITIONS' => $rates->get('Additional Cover', collect())->reject($notCovered),
-            'ADDITIONAL INFO' => $rates->get('Optional Benefits', collect())
-                ->merge($rates->get('Premium Rate', collect())->whereIn('item_name', ['Max Age New Business', 'Minimum Sum Insured']))
-                ->reject($notCovered),
+            'ADDITIONAL INFO' => $additionalInfo,
         ];
     }
 
@@ -697,7 +717,7 @@ class QuotationController extends Controller
     {
         $request->validate([
             'vehicle_type' => 'required|string|in:psv,private',
-            'car_valuation' => 'required|numeric|min:0',
+            'car_valuation' => 'required|numeric|min:800000|max:1300000',
             'num_passengers' => 'sometimes|integer|min:1',
         ]);
 
@@ -764,8 +784,9 @@ class QuotationController extends Controller
     {
         $request->validate([
             'vehicle_type' => 'required|string|in:psv,private',
-            'car_valuation' => 'required|numeric|min:0',
+            'car_valuation' => 'required|numeric|min:800000|max:1300000',
             'num_passengers' => 'sometimes|integer|min:1',
+            'company_slug' => 'nullable|string|max:100',
             'salutation' => 'nullable|string|max:20',
             'first_name' => 'nullable|string|max:100',
             'middle_name' => 'nullable|string|max:100',
@@ -790,6 +811,7 @@ class QuotationController extends Controller
             ->with('rates')
             ->get()
             ->filter(fn($c) => in_array($c->company_type, ['both', $vehicleType]))
+            ->when($request->filled('company_slug'), fn($c) => $c->where('slug', $request->company_slug))
             ->values();
 
         return $companies->map(function ($company) use ($request, $vehicleType, $valuation, $numPassengers) {
@@ -834,6 +856,103 @@ class QuotationController extends Controller
         $quotations = $this->buildCompareAllQuotations($request);
         $pdf = Pdf::loadView('pdf.compare-all-quotations', ['quotations' => $quotations]);
         return $pdf->download('compare-all-insurers-' . now()->format('Ymd-His') . '.pdf');
+    }
+
+    public function compareAllPdfEmail(Request $request)
+    {
+        $request->validate(['email' => 'required|email|max:255']);
+
+        $quotations = $this->buildCompareAllQuotations($request);
+        if ($quotations->isEmpty()) {
+            return response()->json(['success' => false, 'message' => 'No matching insurers found for this vehicle.'], 422);
+        }
+
+        $customerName = trim(($request->first_name ?? '') . ' ' . ($request->last_name ?? '')) ?: 'Customer';
+
+        try {
+            Mail::to($request->email)->send(new CompareAllQuotationsMail($quotations, $customerName));
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::warning('Failed to email compare-all quotation: ' . $e->getMessage());
+            return response()->json(['success' => false, 'message' => 'We could not send the email. Please try again.'], 500);
+        }
+
+        return response()->json(['success' => true, 'message' => 'Quotation comparison sent to ' . $request->email]);
+    }
+
+    /**
+     * Builds one unsaved Quotation for a single company from posted
+     * vehicle/customer fields, so the public quote page can preview/download
+     * the exact same document a saved quotation would produce (pdf.quotation)
+     * before the user has signed in or saved anything.
+     */
+    protected function buildSingleQuotation(Request $request): Quotation
+    {
+        $request->validate([
+            'company_slug' => 'required|string|max:100',
+            'vehicle_type' => 'required|string|in:psv,private',
+            'car_valuation' => 'required|numeric|min:800000|max:1300000',
+            'num_passengers' => 'sometimes|integer|min:1',
+            'salutation' => 'nullable|string|max:20',
+            'first_name' => 'nullable|string|max:100',
+            'middle_name' => 'nullable|string|max:100',
+            'last_name' => 'nullable|string|max:100',
+            'phone' => 'nullable|string|max:30',
+            'email' => 'nullable|email|max:150',
+            'car_registration' => 'nullable|string|max:30',
+            'chassis_number' => 'nullable|string|max:60',
+            'engine_number' => 'nullable|string|max:60',
+            'car_make' => 'nullable|string|max:100',
+            'car_model' => 'nullable|string|max:100',
+            'body_type' => 'nullable|string|max:100',
+            'car_year' => 'nullable|string|max:10',
+            'color' => 'nullable|string|max:50',
+        ]);
+
+        $company = Company::active()->with('rates')->where('slug', $request->company_slug)->firstOrFail();
+        $vehicleType = $request->vehicle_type;
+        $valuation = (float) $request->car_valuation;
+        $numPassengers = (int) $request->input('num_passengers', 1);
+
+        $breakdown = $this->premiumCalculator->calculate(
+            $company,
+            $valuation,
+            $vehicleType,
+            true,
+            $numPassengers,
+            true,
+            false
+        );
+
+        $quotation = new Quotation($request->only([
+            'salutation', 'first_name', 'middle_name', 'last_name', 'phone', 'email',
+            'car_make', 'car_model', 'car_year', 'car_registration', 'chassis_number',
+            'engine_number', 'body_type', 'color',
+        ]));
+        $quotation->car_valuation = $valuation;
+        $quotation->vehicle_type = $vehicleType;
+        $quotation->num_passengers = $numPassengers;
+        $quotation->premium = $breakdown['basic_premium'] ?? 0;
+        $quotation->pvt_premium = $breakdown['pvt_premium'] ?? 0;
+        $quotation->total_premium = $breakdown['total_premium'] ?? 0;
+        $quotation->breakdown = $breakdown;
+        $quotation->quotation_number = 'QTE-' . now()->format('Ymd') . '-' . strtoupper(Str::random(4)) . '-' . strtoupper($company->slug);
+        $quotation->setRelation('company', $company);
+
+        return $quotation;
+    }
+
+    public function quotationPdfPreview(Request $request)
+    {
+        $quotation = $this->buildSingleQuotation($request);
+        $pdf = Pdf::loadView('pdf.quotation', ['quotation' => $quotation]);
+        return $pdf->stream('quotation-preview-' . now()->format('Ymd-His') . '.pdf');
+    }
+
+    public function quotationPdfDownload(Request $request)
+    {
+        $quotation = $this->buildSingleQuotation($request);
+        $pdf = Pdf::loadView('pdf.quotation', ['quotation' => $quotation]);
+        return $pdf->download('quotation-' . now()->format('Ymd-His') . '.pdf');
     }
 
     public function regenerate(Request $request)

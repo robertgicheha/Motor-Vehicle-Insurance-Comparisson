@@ -380,27 +380,8 @@
                         <input x-model="qf.model" type="text" placeholder="e.g. Vezel, Mark X" class="w-full px-3 py-2 text-xs rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none">
                     </div>
                     <div>
-                        <label class="block text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Body Type</label>
-                        <select x-model="qf.body" class="w-full px-3 py-2 text-xs rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none">
-                            <option value="">Select body type...</option>
-                            <option>Saloon</option><option>Station Wagon</option><option>SUV/4x4</option>
-                            <option>Hatchback</option><option>Pick-Up</option><option>Van/Minivan</option>
-                            <option>Convertible</option><option>Coupe</option>
-                        </select>
-                    </div>
-                    <div>
                         <label class="block text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Year of Manufacture <span class="text-rose-500">*</span></label>
                         <input x-model="qf.year" type="number" placeholder="e.g. 2020" class="w-full px-3 py-2 text-xs rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none">
-                    </div>
-                    <div>
-                        <label class="block text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Color</label>
-                        <select x-model="qf.color" class="w-full px-3 py-2 text-xs rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none">
-                            <option value="">Select color...</option>
-                            <option>White</option><option>Black</option><option>Silver/Grey</option>
-                            <option>Blue</option><option>Red</option><option>Brown/Maroon</option>
-                            <option>Gold/Champagne</option><option>Green</option><option>Other</option>
-                        </select>
-                        <input x-show="qf.color === 'Other'" x-model="qf.color_other" type="text" placeholder="Type color…" class="w-full px-3 py-2 text-xs rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none mt-1.5">
                     </div>
                     <div>
                         <label class="block text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Value of Vehicle (KES) <span class="text-rose-500">*</span></label>

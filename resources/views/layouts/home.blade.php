@@ -498,37 +498,11 @@
           <input type="text" id="f-model-other" placeholder="Type your vehicle model..." style="display:none;margin-top:8px">
         </div>
         <div class="form-group">
-          <label for="f-body">Body Type</label>
-          <select id="f-body">
-            <option value="">Select body type...</option>
-            <option>Saloon</option><option>Station Wagon (S. Wagon)</option><option>SUV/4x4</option>
-            <option>Hatchback</option><option>Pick-Up</option><option>Van/Minivan</option><option>Convertible</option><option>Coupe</option>
-          </select>
-        </div>
-        <div class="form-group">
           <label for="f-year">Year of Manufacture <span class="req">*</span></label>
           <select id="f-year">
             <option value="">Select year...</option>
           </select>
           <div class="value-error" id="f-year-error" style="display:none;color:var(--red);font-size:11px;margin-top:4px"></div>
-        </div>
-        <div class="form-group">
-          <label for="f-color">Color</label>
-          <select id="f-color" onchange="toggleOtherColor(this)">
-            <option value="">Select color...</option>
-            <option>White</option>
-            <option>Black</option>
-            <option>Silver/Grey</option>
-            <option>Blue</option>
-            <option>Red</option>
-            <option>Brown/Maroon</option>
-            <option>Gold/Champagne</option>
-            <option>Green</option>
-            <option>Orange</option>
-            <option>Purple</option>
-            <option>Other</option>
-          </select>
-          <input type="text" id="f-color-other" placeholder="Type your vehicle color..." style="display:none;margin-top:8px">
         </div>
         <div class="form-group">
           <label for="f-value">Value of Vehicle (KES) <span class="req">*</span></label>
@@ -727,37 +701,11 @@
           <input type="text" id="f-model-other-psv" placeholder="Type your vehicle model..." style="display:none;margin-top:8px">
         </div>
         <div class="form-group">
-          <label for="f-body-psv">Body Type</label>
-          <select id="f-body-psv">
-            <option value="">Select body type...</option>
-            <option>Saloon</option><option>Station Wagon (S. Wagon)</option><option>SUV/4x4</option>
-            <option>Hatchback</option><option>Pick-Up</option><option>Van/Minivan</option><option>Convertible</option><option>Coupe</option>
-          </select>
-        </div>
-        <div class="form-group">
           <label for="f-year-psv">Year of Manufacture <span class="req">*</span></label>
           <select id="f-year-psv">
             <option value="">Select year...</option>
           </select>
           <div class="value-error" id="f-year-error-psv" style="display:none;color:var(--red);font-size:11px;margin-top:4px"></div>
-        </div>
-        <div class="form-group">
-          <label for="f-color-psv">Color</label>
-          <select id="f-color-psv" onchange="toggleOtherColor('psv', this)">
-            <option value="">Select color...</option>
-            <option>White</option>
-            <option>Black</option>
-            <option>Silver/Grey</option>
-            <option>Blue</option>
-            <option>Red</option>
-            <option>Brown/Maroon</option>
-            <option>Gold/Champagne</option>
-            <option>Green</option>
-            <option>Orange</option>
-            <option>Purple</option>
-            <option>Other</option>
-          </select>
-          <input type="text" id="f-color-other-psv" placeholder="Type your vehicle color..." style="display:none;margin-top:8px">
         </div>
         <div class="form-group">
           <label for="f-value-psv">Value of Vehicle (KES) <span class="req">*</span></label>
@@ -1007,37 +955,11 @@
           <input type="text" id="f-model-other-private" placeholder="Type your vehicle model..." style="display:none;margin-top:8px">
         </div>
         <div class="form-group">
-          <label for="f-body-private">Body Type</label>
-          <select id="f-body-private">
-            <option value="">Select body type...</option>
-            <option>Saloon</option><option>Station Wagon (S. Wagon)</option><option>SUV/4x4</option>
-            <option>Hatchback</option><option>Pick-Up</option><option>Van/Minivan</option><option>Convertible</option><option>Coupe</option>
-          </select>
-        </div>
-        <div class="form-group">
           <label for="f-year-private">Year of Manufacture <span class="req">*</span></label>
           <select id="f-year-private">
             <option value="">Select year...</option>
           </select>
           <div class="value-error" id="f-year-error-private" style="display:none;color:var(--red);font-size:11px;margin-top:4px"></div>
-        </div>
-        <div class="form-group">
-          <label for="f-color-private">Color</label>
-          <select id="f-color-private" onchange="toggleOtherColor('private', this)">
-            <option value="">Select color...</option>
-            <option>White</option>
-            <option>Black</option>
-            <option>Silver/Grey</option>
-            <option>Blue</option>
-            <option>Red</option>
-            <option>Brown/Maroon</option>
-            <option>Gold/Champagne</option>
-            <option>Green</option>
-            <option>Orange</option>
-            <option>Purple</option>
-            <option>Other</option>
-          </select>
-          <input type="text" id="f-color-other-private" placeholder="Type your vehicle color..." style="display:none;margin-top:8px">
         </div>
         <div class="form-group">
           <label for="f-value-private">Value of Vehicle (KES) <span class="req">*</span></label>
@@ -1313,37 +1235,11 @@
           <input type="text" id="f-model-other-vt" placeholder="Type your vehicle model..." style="display:none;margin-top:8px">
         </div>
         <div class="form-group">
-          <label for="f-body-vt">Body Type</label>
-          <select id="f-body-vt">
-            <option value="">Select body type...</option>
-            <option>Saloon</option><option>Station Wagon (S. Wagon)</option><option>SUV/4x4</option>
-            <option>Hatchback</option><option>Pick-Up</option><option>Van/Minivan</option><option>Convertible</option><option>Coupe</option>
-          </select>
-        </div>
-        <div class="form-group">
           <label for="f-year-vt">Year of Manufacture <span class="req">*</span></label>
           <select id="f-year-vt">
             <option value="">Select year...</option>
           </select>
           <div class="value-error" id="f-year-error-vt" style="display:none;color:var(--red);font-size:11px;margin-top:4px"></div>
-        </div>
-        <div class="form-group">
-          <label for="f-color-vt">Color</label>
-          <select id="f-color-vt">
-            <option value="">Select color...</option>
-            <option>White</option>
-            <option>Black</option>
-            <option>Silver/Grey</option>
-            <option>Blue</option>
-            <option>Red</option>
-            <option>Brown/Maroon</option>
-            <option>Gold/Champagne</option>
-            <option>Green</option>
-            <option>Orange</option>
-            <option>Purple</option>
-            <option>Other</option>
-          </select>
-          <input type="text" id="f-color-other-vt" placeholder="Type your vehicle color..." style="display:none;margin-top:8px">
         </div>
         <div class="form-group">
           <label for="f-value-vt">Value of Vehicle (KES) <span class="req">*</span></label>
@@ -1415,9 +1311,7 @@
     setVal('f-model', q.car_model);
     setVal('f-model-value', q.car_model);
 
-    setVal('f-body', q.body_type);
     setVal('f-year', q.year_of_manufacture);
-    setVal('f-color', q.color);
     setVal('f-value', q.vehicle_value);
 
     goStep(3);
@@ -1522,36 +1416,10 @@
           <input type="text" id="f-model-other" placeholder="Type your vehicle model..." style="display:none;margin-top:8px">
         </div>
         <div class="form-group">
-          <label for="f-body">Body Type</label>
-          <select id="f-body">
-            <option value="">Select body type...</option>
-            <option>Saloon</option><option>Station Wagon (S. Wagon)</option><option>SUV/4x4</option>
-            <option>Hatchback</option><option>Pick-Up</option><option>Van/Minivan</option><option>Convertible</option><option>Coupe</option>
-          </select>
-        </div>
-        <div class="form-group">
           <label for="f-year">Year of Manufacture <span class="req">*</span></label>
           <select id="f-year">
             <option value="">Select year...</option>
           </select>
-        </div>
-        <div class="form-group">
-          <label for="f-color">Color</label>
-          <select id="f-color" onchange="toggleOtherColor(this)">
-            <option value="">Select color...</option>
-            <option>White</option>
-            <option>Black</option>
-            <option>Silver/Grey</option>
-            <option>Blue</option>
-            <option>Red</option>
-            <option>Brown/Maroon</option>
-            <option>Gold/Champagne</option>
-            <option>Green</option>
-            <option>Orange</option>
-            <option>Purple</option>
-            <option>Other</option>
-          </select>
-          <input type="text" id="f-color-other" placeholder="Type your vehicle color..." style="display:none;margin-top:8px">
         </div>
         <div class="form-group">
           <label for="f-value">Value of Vehicle (KES) <span class="req">*</span></label>
@@ -1667,33 +1535,33 @@
   <div class="why-choose-grid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(260px,100%),1fr));gap:24px;max-width:1100px;margin:0 auto;padding:0 20px">
     <div style="background:#F9F9FF;border-radius:16px;padding:32px 24px;text-align:center;transition:transform .2s,box-shadow .2s" onmouseover="this.style.transform='translateY(-4px)';this.style.boxShadow='0 8px 25px rgba(0,0,0,0.08)'" onmouseout="this.style.transform='';this.style.boxShadow=''">
       <div style="width:52px;height:52px;background:#003087;border-radius:12px;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;font-size:24px">⚡</div>
-      <h3 style="font-size:16px;font-weight:700;margin-bottom:8px;color:#1a1a2e">Instant Quotes</h3>
-      <p style="font-size:13px;color:#6b7280;line-height:1.6">Get your premium estimate in seconds. No paperwork, no waiting — just enter your details and see your quote instantly.</p>
+      <h3 style="font-size:16px;font-weight:700;margin-bottom:8px;color:#1a1a2e">Generate Quotations</h3>
+      <p style="font-size:13px;color:#6b7280;line-height:1.6">Get an instant motor insurance quotation for private vehicles and PSVs in seconds — just enter your vehicle and customer details.</p>
     </div>
     <div style="background:#F9F9FF;border-radius:16px;padding:32px 24px;text-align:center;transition:transform .2s,box-shadow .2s" onmouseover="this.style.transform='translateY(-4px)';this.style.boxShadow='0 8px 25px rgba(0,0,0,0.08)'" onmouseout="this.style.transform='';this.style.boxShadow=''">
       <div style="width:52px;height:52px;background:#003087;border-radius:12px;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;font-size:24px">🔄</div>
-      <h3 style="font-size:16px;font-weight:700;margin-bottom:8px;color:#1a1a2e">Side-by-Side Comparison</h3>
-      <p style="font-size:13px;color:#6b7280;line-height:1.6">Compare premiums from Kenya's top insurers at a glance. Find the best rate and coverage for your vehicle.</p>
+      <h3 style="font-size:16px;font-weight:700;margin-bottom:8px;color:#1a1a2e">Compare Premiums Across Underwriters</h3>
+      <p style="font-size:13px;color:#6b7280;line-height:1.6">See premiums from Kenya's leading insurers side by side, with full benefits and cover comparisons, to find the best fit.</p>
     </div>
     <div style="background:#F9F9FF;border-radius:16px;padding:32px 24px;text-align:center;transition:transform .2s,box-shadow .2s" onmouseover="this.style.transform='translateY(-4px)';this.style.boxShadow='0 8px 25px rgba(0,0,0,0.08)'" onmouseout="this.style.transform='';this.style.boxShadow=''">
-      <div style="width:52px;height:52px;background:#003087;border-radius:12px;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;font-size:24px">🔒</div>
-      <h3 style="font-size:16px;font-weight:700;margin-bottom:8px;color:#1a1a2e">Trusted & Secure</h3>
-      <p style="font-size:13px;color:#6b7280;line-height:1.6">Your data is safe with us. We work with IRM-authorized providers to ensure your information is always protected.</p>
+      <div style="width:52px;height:52px;background:#003087;border-radius:12px;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;font-size:24px">🖨️</div>
+      <h3 style="font-size:16px;font-weight:700;margin-bottom:8px;color:#1a1a2e">Download &amp; Print Quotations</h3>
+      <p style="font-size:13px;color:#6b7280;line-height:1.6">Download your quotation as a polished PDF or print it directly — ready to share with your customer or keep on file.</p>
     </div>
     <div style="background:#F9F9FF;border-radius:16px;padding:32px 24px;text-align:center;transition:transform .2s,box-shadow .2s" onmouseover="this.style.transform='translateY(-4px)';this.style.boxShadow='0 8px 25px rgba(0,0,0,0.08)'" onmouseout="this.style.transform='';this.style.boxShadow=''">
-      <div style="width:52px;height:52px;background:#003087;border-radius:12px;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;font-size:24px">📄</div>
-      <h3 style="font-size:16px;font-weight:700;margin-bottom:8px;color:#1a1a2e">Downloadable Quotations</h3>
-      <p style="font-size:13px;color:#6b7280;line-height:1.6">Generate and download a detailed PDF quotation instantly. Share it with your insurer or keep it for your records.</p>
+      <div style="width:52px;height:52px;background:#003087;border-radius:12px;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;font-size:24px">🏷️</div>
+      <h3 style="font-size:16px;font-weight:700;margin-bottom:8px;color:#1a1a2e">Request for Stickers</h3>
+      <p style="font-size:13px;color:#6b7280;line-height:1.6">Submit a sticker request on behalf of your customer, complete with the required KYC documents, straight to the underwriter.</p>
     </div>
     <div style="background:#F9F9FF;border-radius:16px;padding:32px 24px;text-align:center;transition:transform .2s,box-shadow .2s" onmouseover="this.style.transform='translateY(-4px)';this.style.boxShadow='0 8px 25px rgba(0,0,0,0.08)'" onmouseout="this.style.transform='';this.style.boxShadow=''">
-      <div style="width:52px;height:52px;background:#003087;border-radius:12px;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;font-size:24px">💡</div>
-      <h3 style="font-size:16px;font-weight:700;margin-bottom:8px;color:#1a1a2e">Tailored for You</h3>
-      <p style="font-size:13px;color:#6b7280;line-height:1.6">Whether it's a private car or a PSV, we have the right cover options designed specifically for your vehicle type.</p>
+      <div style="width:52px;height:52px;background:#003087;border-radius:12px;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;font-size:24px">✅</div>
+      <h3 style="font-size:16px;font-weight:700;margin-bottom:8px;color:#1a1a2e">Get Stickers</h3>
+      <p style="font-size:13px;color:#6b7280;line-height:1.6">Track your sticker request through to issuance, and record the underwriter's official sticker number as soon as it arrives.</p>
     </div>
     <div style="background:#F9F9FF;border-radius:16px;padding:32px 24px;text-align:center;transition:transform .2s,box-shadow .2s" onmouseover="this.style.transform='translateY(-4px)';this.style.boxShadow='0 8px 25px rgba(0,0,0,0.08)'" onmouseout="this.style.transform='';this.style.boxShadow=''">
-      <div style="width:52px;height:52px;background:#003087;border-radius:12px;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;font-size:24px">📞</div>
-      <h3 style="font-size:16px;font-weight:700;margin-bottom:8px;color:#1a1a2e">Dedicated Support</h3>
-      <p style="font-size:13px;color:#6b7280;line-height:1.6">Our team is here to help. Reach out anytime for assistance with your quote, coverage questions, or claims support.</p>
+      <div style="width:52px;height:52px;background:#003087;border-radius:12px;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;font-size:24px">📋</div>
+      <h3 style="font-size:16px;font-weight:700;margin-bottom:8px;color:#1a1a2e">Log &amp; Report Claims</h3>
+      <p style="font-size:13px;color:#6b7280;line-height:1.6">Log a motor vehicle claim on behalf of a customer, attach supporting documents, and track its status through to resolution.</p>
     </div>
   </div>
 </section>
@@ -1892,9 +1760,8 @@
         <h4>Vehicle Details</h4>
         <div class="modal-row"><span>Registration</span><span id="m-reg">—</span></div>
         <div class="modal-row"><span>Make / Model</span><span id="m-make">—</span></div>
-        <div class="modal-row"><span>Year / Color</span><span id="m-year">—</span></div>
+        <div class="modal-row"><span>Year</span><span id="m-year">—</span></div>
         <div class="modal-row"><span>Estimated Value</span><span id="m-value">—</span></div>
-        <div class="modal-row"><span>Body Type</span><span id="m-body">—</span></div>
         <div class="modal-row"><span>Chassis No.</span><span id="m-chassis">—</span></div>
       </div>
       <div class="modal-section">

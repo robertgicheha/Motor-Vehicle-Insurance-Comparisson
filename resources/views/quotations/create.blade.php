@@ -232,40 +232,8 @@
                     <input type="text" id="f-model-other" class="w-full px-3 py-2 text-xs rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none mt-1.5" placeholder="Type your vehicle model..." style="display:none">
                 </div>
                 <div>
-                    <label class="block text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1" for="f-body">Body Type</label>
-                    <select id="f-body" class="w-full px-3 py-2 text-xs rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none">
-                        <option value="">Select body type...</option>
-                        <option {{ $prefill['body'] === 'Saloon' ? 'selected' : '' }}>Saloon</option>
-                        <option {{ $prefill['body'] === 'Station Wagon (S. Wagon)' ? 'selected' : '' }}>Station Wagon (S. Wagon)</option>
-                        <option {{ $prefill['body'] === 'SUV/4x4' ? 'selected' : '' }}>SUV/4x4</option>
-                        <option {{ $prefill['body'] === 'Hatchback' ? 'selected' : '' }}>Hatchback</option>
-                        <option {{ $prefill['body'] === 'Pick-Up' ? 'selected' : '' }}>Pick-Up</option>
-                        <option {{ $prefill['body'] === 'Van/Minivan' ? 'selected' : '' }}>Van/Minivan</option>
-                        <option {{ $prefill['body'] === 'Convertible' ? 'selected' : '' }}>Convertible</option>
-                        <option {{ $prefill['body'] === 'Coupe' ? 'selected' : '' }}>Coupe</option>
-                    </select>
-                </div>
-                <div>
                     <label class="block text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1" for="f-year">Year of Manufacture <span class="text-rose-500">*</span></label>
                     <select id="f-year" class="w-full px-3 py-2 text-xs rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none"></select>
-                </div>
-                <div>
-                    <label class="block text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1" for="f-color">Color</label>
-                    <select id="f-color" class="w-full px-3 py-2 text-xs rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none" onchange="toggleOtherColor(this)">
-                        <option value="">Select color...</option>
-                        <option {{ $prefill['color'] === 'White' ? 'selected' : '' }}>White</option>
-                        <option {{ $prefill['color'] === 'Black' ? 'selected' : '' }}>Black</option>
-                        <option {{ $prefill['color'] === 'Silver/Grey' ? 'selected' : '' }}>Silver/Grey</option>
-                        <option {{ $prefill['color'] === 'Blue' ? 'selected' : '' }}>Blue</option>
-                        <option {{ $prefill['color'] === 'Red' ? 'selected' : '' }}>Red</option>
-                        <option {{ $prefill['color'] === 'Brown/Maroon' ? 'selected' : '' }}>Brown/Maroon</option>
-                        <option {{ $prefill['color'] === 'Gold/Champagne' ? 'selected' : '' }}>Gold/Champagne</option>
-                        <option {{ $prefill['color'] === 'Green' ? 'selected' : '' }}>Green</option>
-                        <option {{ $prefill['color'] === 'Orange' ? 'selected' : '' }}>Orange</option>
-                        <option {{ $prefill['color'] === 'Purple' ? 'selected' : '' }}>Purple</option>
-                        <option {{ $prefill['color'] === 'Other' ? 'selected' : '' }}>Other</option>
-                    </select>
-                    <input type="text" id="f-color-other" class="w-full px-3 py-2 text-xs rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none mt-1.5" placeholder="Type your vehicle color..." style="display:none">
                 </div>
                 <div>
                     <label class="block text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Value of Vehicle (KES) <span class="text-rose-500">*</span></label>

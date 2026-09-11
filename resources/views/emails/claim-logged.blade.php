@@ -26,10 +26,7 @@
                 <td style="padding: 8px 12px; font-size: 12px; color: #6b7280; border-bottom: 1px solid #e5e7eb; font-weight: 600;">Phone</td>
                 <td style="padding: 8px 12px; font-size: 12px; color: #111827; border-bottom: 1px solid #e5e7eb;">{{ $claim['customer_phone'] ?: 'N/A' }}</td>
             </tr>
-            <tr>
-                <td style="padding: 8px 12px; font-size: 12px; color: #6b7280; font-weight: 600;">Claim Number</td>
-                <td style="padding: 8px 12px; font-size: 12px; color: #111827; font-weight: 700;">{{ $claim['claim_number'] }}</td>
-            </tr>
+           
         </table>
 
         <p style="font-size: 11px; font-weight: 700; color: #005F9E; text-transform: uppercase; letter-spacing: 0.05em; margin: 20px 0 6px;">Vehicle Details</p>

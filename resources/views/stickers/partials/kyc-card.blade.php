@@ -48,12 +48,12 @@
         </div>
 
         <div x-show="!getDocumentStatus('{{ $type }}') && !uploading['{{ $type }}']" class="mt-2">
-            <input type="file" id="doc-{{ $type }}" accept=".pdf,.jpg,.jpeg,.png" class="hidden" @change="uploadDocument($event, '{{ $type }}')">
+            <input type="file" id="doc-{{ $type }}" accept=".pdf,.jpg,.jpeg" class="hidden" @change="uploadDocument($event, '{{ $type }}')">
             <label for="doc-{{ $type }}"
                class="flex flex-col items-center justify-center w-full py-5 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg cursor-pointer hover:border-blue-400 dark:hover:border-blue-500 hover:bg-blue-50/50 dark:hover:bg-blue-900/10 transition-all duration-200">
                 <svg class="w-7 h-7 text-gray-300 dark:text-gray-500 mb-1.5 group-hover:text-blue-400 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg>
                 <span class="text-[10px] font-medium text-gray-500 dark:text-gray-400">Drop or click</span>
-                <span class="text-[9px] text-gray-400 dark:text-gray-500 mt-0.5">PDF, JPG, PNG up to 10MB</span>
+                <span class="text-[9px] text-gray-400 dark:text-gray-500 mt-0.5">PDF, JPG or JPEG up to 5MB</span>
             </label>
         </div>
 
@@ -81,7 +81,7 @@
                     <p class="text-[10px] font-semibold text-red-700 dark:text-red-400">Rejected</p>
                     <p class="text-[9px] text-red-600 dark:text-red-500">Security threat</p>
                 </div>
-                <input type="file" id="doc-retry-{{ $type }}" accept=".pdf,.jpg,.jpeg,.png" class="hidden" @change="uploadDocument($event, '{{ $type }}')">
+                <input type="file" id="doc-retry-{{ $type }}" accept=".pdf,.jpg,.jpeg" class="hidden" @change="uploadDocument($event, '{{ $type }}')">
                 <button @click="$el.closest('.bg-white, .dark\\:bg-gray-800').querySelector('#doc-retry-{{ $type }}').click()" class="text-[10px] font-semibold text-red-600 hover:text-red-800 px-1.5 py-0.5 bg-red-50 dark:bg-red-900/20 rounded">Retry</button>
             </div>
         </div>
@@ -95,7 +95,7 @@
                     <p class="text-[10px] font-semibold text-amber-700 dark:text-amber-400">Scan unavailable</p>
                     <p class="text-[9px] text-amber-600 dark:text-amber-500">Not verified</p>
                 </div>
-                <input type="file" id="doc-retry2-{{ $type }}" accept=".pdf,.jpg,.jpeg,.png" class="hidden" @change="uploadDocument($event, '{{ $type }}')">
+                <input type="file" id="doc-retry2-{{ $type }}" accept=".pdf,.jpg,.jpeg" class="hidden" @change="uploadDocument($event, '{{ $type }}')">
                 <button @click="$el.closest('.bg-white, .dark\\:bg-gray-800').querySelector('#doc-retry2-{{ $type }}').click()" class="text-[10px] font-semibold text-amber-600 hover:text-amber-800 px-1.5 py-0.5 bg-amber-50 dark:bg-amber-900/20 rounded">Retry</button>
             </div>
         </div>

@@ -274,7 +274,7 @@ class ClaimsController extends Controller
         $redirectRoute = $isAdmin ? route('admin.claims.show', $claim) : route('claims.show', $claim);
 
         return redirect($redirectRoute)
-            ->with('success', 'Claim logged successfully! Claim number: ' . $claim->claim_number);
+            ->with('success', 'Claim logged successfully! The underwriter will assign an official claim number once they acknowledge it.');
     }
 
     public function lookupVehicle(Request $request)
@@ -371,10 +371,21 @@ class ClaimsController extends Controller
         $request->validate([
             'upload_token' => 'required|string|max:100',
             'document_type' => 'required|in:police_abstract,incident_photo',
-            'document' => 'required|file|mimes:pdf,jpg,jpeg,png|max:10240',
+            'document' => 'required|file|mimes:pdf,jpg,jpeg|max:5120',
         ]);
 
         $file = $request->file('document');
+
+        // Same intake check used for KYC sticker documents — rejects a
+        // disguised/executable file before it's ever written to disk.
+        $securityResult = (new \App\Services\FileSecurityService())->validate($file, $request->document_type);
+        if (!$securityResult['valid']) {
+            \App\Services\AuditService::activity('claim_document_rejected', "Claim document upload rejected at intake: " . implode('; ', $securityResult['errors']), 'warning');
+            return response()->json([
+                'error' => 'This file could not be accepted: ' . implode(' ', $securityResult['errors']),
+            ], 422);
+        }
+
         $filename = time() . '_' . uniqid() . '_' . preg_replace('/[^A-Za-z0-9_\-\.]/', '', $file->getClientOriginalName());
         $path = $file->storeAs('claim-documents', $filename, 'public');
 

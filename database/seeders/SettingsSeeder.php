@@ -71,6 +71,8 @@ class SettingsSeeder extends Seeder
         Setting::setValue('lockout_duration', '15', 'security');
         Setting::setValue('require_email_verification', 'true', 'security');
         Setting::setValue('two_factor_auth', 'false', 'security');
+        Setting::setValue('recaptcha_site_key', '6Lc8G7QtAAAAADnZqJJoLgCw6-zpId1-aZNjk2KE', 'security');
+        Setting::setValue('recaptcha_secret_key', '6Lc8G7QtAAAAAOhpSw2Gxws1h9O8lCr4lGBWyf52', 'security');
 
         // Integration
         Setting::setValue('openweather_api_key', '', 'integrations');

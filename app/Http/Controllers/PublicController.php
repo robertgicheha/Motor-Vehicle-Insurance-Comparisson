@@ -165,10 +165,152 @@ class PublicController extends Controller
             $userQuotation = $quotationQuery->latest()->first();
         }
 
+        // Vehicle valuation, needed to resolve a percentage-based rate item (e.g.
+        // "10%, min KES 50,000") into its actual computed amount. Not stored
+        // server-side on this pre-save page — it lives in the browser's
+        // sessionStorage — so it only arrives here if the caller passed it as a
+        // query param (see public/js/home.js). Falls back to the logged-in
+        // user's most recent quotation, same as $userQuotation above, so a
+        // bookmarked/refreshed visit isn't left showing bare percentages.
+        $carValuation = (float) request()->query('car_valuation', 0);
+        if ($carValuation <= 0 && $userQuotation) {
+            $carValuation = (float) $userQuotation->car_valuation;
+        }
+
         $iraLevyRate = $selectedCompany?->rates->firstWhere('item_name', 'IRA Levy');
         $taxRate = $iraLevyRate ? (float) $iraLevyRate->percentage / 100 : 0.005;
 
-        return view('quotation', compact('companies', 'selectedCompany', 'taxRate', 'coverage', 'companyData', 'userQuotation', 'hardcodedLogos', '__compareAllLogoUrl', 'vehicleType', 'numPassengers'));
+        // No company picked (or an unknown slug) — show the standalone all-insurers
+        // comparison view instead of the single-quotation one.
+        if (!$selectedCompany) {
+            $benefitsComparison = $this->benefitsComparisonMatrix($companiesForType, $vehicleType, $carValuation);
+
+            return view('quotation-compare', compact('companies', 'taxRate', 'coverage', 'companyData', 'userQuotation', 'hardcodedLogos', '__compareAllLogoUrl', 'vehicleType', 'numPassengers', 'benefitsComparison'));
+        }
+
+        $rateCategories = $this->rateCategoriesFor($selectedCompany, $vehicleType);
+
+        return view('quotation', compact('companies', 'selectedCompany', 'taxRate', 'coverage', 'companyData', 'userQuotation', 'hardcodedLogos', '__compareAllLogoUrl', 'vehicleType', 'numPassengers', 'rateCategories', 'carValuation'));
+    }
+
+    /**
+     * Groups one company's rate settings into the standard quotation document
+     * sections (mirrors QuotationController::quotationRateCategories, which
+     * operates on a saved Quotation's company instead).
+     */
+    private function rateCategoriesFor(Company $company, string $vehicleType): array
+    {
+        $rates = $company->rates()
+            ->where('vehicle_type', $vehicleType)
+            ->get()
+            ->groupBy('category');
+
+        $notCovered = fn($r) => $r->notes && stripos($r->notes, 'no cover') !== false;
+
+        $additionalInfo = $rates->get('Optional Benefits', collect())
+            ->merge($rates->get('Premium Rate', collect())->whereIn('item_name', ['Max Age New Business', 'Minimum Sum Insured']))
+            ->reject($notCovered);
+
+        // The authoritative minimum sum insured lives on the Company record
+        // (min_sum_insured_private/psv) — not the "Minimum Sum Insured" Rate
+        // row, which is commonly left at 0 since the real figure is
+        // configured per company, not per rate item. Overriding it here (in
+        // memory only, never persisted) is the same source the PDF partial
+        // already uses, so this stops showing a stray "0".
+        $minSumInsured = $vehicleType === 'psv' ? (float) $company->min_sum_insured_psv : (float) $company->min_sum_insured_private;
+        if ($minSumInsured > 0) {
+            $minSumInsuredItem = $additionalInfo->firstWhere('item_name', 'Minimum Sum Insured');
+            if ($minSumInsuredItem) {
+                $minSumInsuredItem->value = $minSumInsured;
+                $minSumInsuredItem->percentage = null;
+            } else {
+                $additionalInfo->push(new Rate(['item_name' => 'Minimum Sum Insured', 'value' => $minSumInsured]));
+            }
+        }
+
+        return [
+            'BENEFITS / COVER LIMITS' => $rates->get('Cover Limits', collect())
+                ->merge($rates->get('Extras', collect()))
+                ->reject(fn($r) => $r->item_name === 'Geographical Area')
+                ->reject($notCovered),
+            'THIRD PARTY LIMITS OF LIABILITY' => $rates->get('Third Party Limits', collect())->reject($notCovered),
+            'POLICY EXCESSES' => $rates->get('Excess', collect())->reject($notCovered),
+            'SPECIAL CONDITIONS' => $rates->get('Additional Cover', collect())->reject($notCovered),
+            'ADDITIONAL INFO' => $additionalInfo,
+        ];
+    }
+
+    /**
+     * Pivots each underwriter's rate categories into a side-by-side matrix —
+     * one table per category, one row per benefit, one column per insurer —
+     * instead of listing each company's benefits one after another (which
+     * gives the reader nothing to actually compare).
+     */
+    private function benefitsComparisonMatrix($companiesForType, string $vehicleType, float $valuation = 0): array
+    {
+        $perCompany = $companiesForType->values()->map(fn($c) => [
+            'slug' => $c->slug,
+            'name' => $c->name,
+            'logo' => $c->logoUrl(),
+            'categories' => $this->rateCategoriesFor($c, $vehicleType),
+        ]);
+
+        if ($perCompany->isEmpty()) {
+            return [];
+        }
+
+        $categoryLabels = array_keys($perCompany->first()['categories']);
+        $companyColumns = $perCompany->map(fn($c) => ['slug' => $c['slug'], 'name' => $c['name'], 'logo' => $c['logo']])->values();
+
+        $matrix = [];
+        foreach ($categoryLabels as $label) {
+            $itemNames = collect();
+            foreach ($perCompany as $company) {
+                foreach ($company['categories'][$label] as $item) {
+                    if (!$itemNames->contains($item->item_name)) {
+                        $itemNames->push($item->item_name);
+                    }
+                }
+            }
+
+            if ($itemNames->isEmpty()) {
+                continue;
+            }
+
+            $rows = $itemNames->map(function ($itemName) use ($perCompany, $label, $valuation) {
+                return [
+                    'item' => $itemName,
+                    'values' => $perCompany->mapWithKeys(function ($company) use ($itemName, $label, $valuation) {
+                        $match = $company['categories'][$label]->firstWhere('item_name', $itemName);
+                        return [$company['slug'] => $this->formatRateItemValue($match, $valuation)];
+                    }),
+                ];
+            })->values();
+
+            $matrix[$label] = ['companies' => $companyColumns, 'rows' => $rows];
+        }
+
+        return $matrix;
+    }
+
+    private function formatRateItemValue(?Rate $item, float $valuation = 0): string
+    {
+        if (!$item) {
+            return '—';
+        }
+        if ($item->item_name === 'Max Age New Business' && $item->value) {
+            return number_format($item->value, 0) . ' years';
+        }
+        if ($item->percentage) {
+            if ($valuation > 0) {
+                return 'KES ' . number_format($item->computeAmountFor($valuation), 2);
+            }
+            return Rate::fmtPercent($item->percentage) . '%';
+        }
+        if ($item->value) {
+            return 'KES ' . number_format($item->value, 0);
+        }
+        return $item->notes ?: '—';
     }
 
     public function lookupQuotation(Request $request)
@@ -255,7 +397,7 @@ class PublicController extends Controller
             'car_year' => 'required|integer',
             'car_registration' => 'nullable|string|max:50',
             'color' => 'nullable|string|max:50',
-            'car_valuation' => 'required|numeric|min:0',
+            'car_valuation' => 'required|numeric|min:800000|max:1300000',
             'vehicle_type' => 'sometimes|string|in:psv,private',
             'num_passengers' => 'sometimes|integer|min:1',
             'salutation' => 'nullable|string|max:20',

@@ -9,6 +9,7 @@ class Claim extends Model
 {
     protected $fillable = [
         'claim_number',
+        'underwriter_claim_number',
         'user_id',
         'on_behalf_of_user_id',
         'customer_name',

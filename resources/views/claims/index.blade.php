@@ -47,7 +47,7 @@
                     <div class="flex items-start justify-between gap-4">
                         <div class="flex-1 min-w-0">
                             <div class="flex items-center gap-2">
-                                <a href="{{ route('claims.show', $claim) }}" class="font-medium text-blue-600 hover:text-blue-800 text-xs">{{ $claim->claim_number }}</a>
+                                <a href="{{ route('claims.show', $claim) }}" class="font-medium text-blue-600 hover:text-blue-800 text-xs">{{ $claim->underwriter_claim_number ?: $claim->registration_number }}</a>
                                 <span class="text-gray-400 text-[10px]">{{ $claim->registration_number }}</span>
                             </div>
                             <p class="text-[10px] text-gray-400 mt-0.5">

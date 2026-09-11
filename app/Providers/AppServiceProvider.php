@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
 use Mailtrap\Api\AbstractApi;
 use Mailtrap\Bridge\Transport\MailtrapSdkTransport;
@@ -30,6 +31,13 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // Sensitive data (KYC documents, customer PII) must never transit in
+        // plaintext — force every generated URL, and any request already
+        // reaching the app, onto https:// in production.
+        if (config('app.env') === 'production') {
+            URL::forceScheme('https');
+        }
+
         Mail::extend('nav', function () {
             return new NavTransport(app(NavMailService::class));
         });

@@ -116,7 +116,7 @@
                     <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                     <span>Sticker <strong x-text="result.sticker.sticker_number"></strong> already <span x-text="result.sticker.status"></span></span>
                 </div>
-                <a :href="result.sticker.show_url" class="px-4 py-2 text-xs font-bold text-white bg-[#0066B3] hover:bg-[#004f8c] rounded-lg transition shrink-0">View Certificate →</a>
+                <a href="javascript:void(0)" @click="viewCertificate()" class="px-4 py-2 text-xs font-bold text-white bg-[#0066B3] hover:bg-[#004f8c] rounded-lg transition shrink-0">View Sticker →</a>
             </div>
         </template>
 
@@ -152,7 +152,28 @@
 </section>
 
 <x-public-footer/>
+<x-auth-modal/>
+<x-toast/>
 <script>
+window.MIC_GUEST = @json(auth()->guest());
+
+function openAuthModal(tab) {
+    if (!sessionStorage.getItem('auth_redirect')) {
+        sessionStorage.setItem('auth_redirect', window.location.href);
+    }
+    document.getElementById('authModal').style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+    if (tab && window.Alpine) {
+        var el = document.getElementById('authModal');
+        if (el) { try { window.Alpine.$data(el).tab = tab; } catch(e) {} }
+    }
+}
+
+function closeAuthModal() {
+    document.getElementById('authModal').style.display = 'none';
+    document.body.style.overflow = '';
+}
+
 function stickerLookup() {
     return {
         number: '',
@@ -179,6 +200,14 @@ function stickerLookup() {
             })
             .catch(() => { this.error = 'Failed to look up. Please try again.'; })
             .finally(() => { this.loading = false; });
+        },
+        viewCertificate() {
+            if (window.MIC_GUEST) {
+                sessionStorage.setItem('auth_redirect', '{{ route('dashboard') }}');
+                openAuthModal();
+                return;
+            }
+            window.location.href = '{{ route('dashboard') }}';
         }
     };
 }

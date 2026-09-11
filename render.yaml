@@ -41,6 +41,11 @@ services:
         value: /var/www/html/storage/database.sqlite
       - key: SESSION_DRIVER
         value: database
+      # APP_URL is https:// in production, so the session cookie must be
+      # marked Secure — otherwise it's usable over the plain-HTTP mixed-
+      # content edge case and the "secure session cookie" claim isn't true.
+      - key: SESSION_SECURE_COOKIE
+        value: "true"
       - key: QUEUE_CONNECTION
         value: database
       - key: CACHE_STORE

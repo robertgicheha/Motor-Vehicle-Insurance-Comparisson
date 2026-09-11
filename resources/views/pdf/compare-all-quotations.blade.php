@@ -39,41 +39,13 @@
         .company-logo { max-height: 40px; max-width: 140px; }
         .page-break { page-break-before: always; }
         .grid-2col td { width: 25%; }
-        .compare-cover { padding: 30px 26px; text-align: center; }
-        .compare-cover h1 { font-size: 20px; margin: 10px 0 4px; color: #1a1a2e; }
-        .compare-cover p { font-size: 11px; color: #6b7280; }
-        .compare-cover table { width: 100%; border-collapse: collapse; margin: 18px 0; font-size: 10.5px; }
-        .compare-cover th { background: #004f8c; color: #fff; padding: 6px 8px; text-align: left; }
-        .compare-cover td { padding: 6px 8px; border: 1px solid #dde3ed; }
     </style>
 </head>
 <body>
-    {{-- COVER / SUMMARY PAGE --}}
-    <div class="compare-cover">
-        @php $__micLogoPath = public_path('images/MIC-Global-Risks_logo_no_background.png'); @endphp
-        @if(file_exists($__micLogoPath))
-            <img src="{{ $__micLogoPath }}" alt="MIC Global Risks" style="max-height:48px">
-        @endif
-        <h1>Compare All Insurers</h1>
-        <p>Side-by-side premium comparison across every underwriter that covers this vehicle — generated {{ now()->format('d F Y, h:i A') }}.</p>
-        <table>
-            <thead>
-                <tr><th>Insurer</th><th style="text-align:right">Rate</th><th style="text-align:right">Total Premium (KES)</th></tr>
-            </thead>
-            <tbody>
-                @foreach($quotations as $q)
-                <tr>
-                    <td>{{ $q->company->name }}</td>
-                    <td style="text-align:right">{{ \App\Models\Rate::fmtPercent($q->breakdown['premium_rate'] ?? 0) }}%</td>
-                    <td style="text-align:right;font-weight:bold">{{ number_format($q->breakdown['total_premium'] ?? $q->total_premium, 2) }}</td>
-                </tr>
-                @endforeach
-            </tbody>
-        </table>
-    </div>
-
     @foreach($quotations as $quotation)
+        @if(!$loop->first)
         <div class="page-break"></div>
+        @endif
         @include('pdf.partials.quotation-body', ['quotation' => $quotation])
     @endforeach
 </body>

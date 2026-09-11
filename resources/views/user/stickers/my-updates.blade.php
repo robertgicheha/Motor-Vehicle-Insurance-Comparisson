@@ -21,13 +21,13 @@
                         </div>
                         <div>
                             <h2 class="text-xs font-semibold text-gray-800 dark:text-white">Search Sticker</h2>
-                            <p class="text-[10px] text-gray-400 mt-0.5">Enter the sticker number to find and update</p>
+                            <p class="text-[10px] text-gray-400 mt-0.5">Search by quotation number, registration, chassis number, engine number, or owner name</p>
                         </div>
                     </div>
                 </div>
                 <div class="p-5">
                     <div class="flex items-center gap-3">
-                        <input type="text" x-model="searchQuery" @keyup.enter="searchSticker()" placeholder="e.g. STK-001 (Sticker ID) or the underwriter's Sticker Number"
+                        <input type="text" x-model="searchQuery" @keyup.enter="searchSticker()" placeholder="e.g. quotation number, registration, chassis/engine no., or owner name"
                                class="flex-1 min-w-0 px-3 py-2.5 text-sm border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
                         <button @click="searchSticker()" :disabled="searching || !searchQuery.trim()"
                             class="inline-flex items-center gap-1.5 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-lg transition-all duration-200 disabled:opacity-50 shadow-sm">
@@ -40,6 +40,29 @@
                 </div>
             </div>
 
+            <div x-show="searchResults.length > 0 && !foundSticker" x-transition x-cloak class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+                <div class="px-5 py-4 border-b border-gray-100 dark:border-gray-700">
+                    <h2 class="text-xs font-semibold text-gray-800 dark:text-white">Select the Matching Sticker</h2>
+                    <p class="text-[10px] text-gray-400 mt-0.5" x-text="searchResults.length + ' match' + (searchResults.length === 1 ? '' : 'es') + ' found'"></p>
+                </div>
+                <div class="p-5 space-y-2">
+                    <template x-for="r in searchResults" :key="r.id">
+                        <div @click="foundSticker = r; underwriterStickerNo = ''"
+                             class="p-3 rounded-xl border border-gray-200 dark:border-gray-600 hover:border-blue-300 dark:hover:border-blue-600 bg-gray-50 dark:bg-gray-700/50 hover:bg-blue-50 dark:hover:bg-blue-900/10 cursor-pointer transition-all duration-200">
+                            <div class="flex items-center justify-between gap-2">
+                                <div class="min-w-0">
+                                    <p class="text-[11px] font-bold text-gray-800 dark:text-white" x-text="(r.quotation_number || 'No quotation number') + ' — ' + r.customer_name"></p>
+                                    <p class="text-[10px] text-gray-500 dark:text-gray-400" x-text="(r.vehicle_registration || 'No reg.') + ' · ' + r.car_make + ' ' + r.car_model + ' · ' + r.company"></p>
+                                </div>
+                                <span class="text-[8px] font-semibold px-1.5 py-0.5 rounded-full shrink-0"
+                                      :class="r.is_completed ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300' : 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300'"
+                                      x-text="r.is_completed ? 'COMPLETED' : 'ISSUED'"></span>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+            </div>
+
             <div x-show="foundSticker" x-transition x-cloak class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
                 <div class="px-5 py-4 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between">
                     <div class="flex items-center gap-2">
@@ -48,15 +71,22 @@
                         </div>
                         <h2 class="text-xs font-semibold text-gray-800 dark:text-white">Sticker Details</h2>
                     </div>
-                    <span class="text-[9px] font-semibold px-2 py-0.5 rounded-full"
-                          :class="foundSticker?.is_completed ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400' : (foundSticker?.status === 'issued' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400' : 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-400')"
-                          x-text="foundSticker?.is_completed ? 'Completed' : (foundSticker?.status === 'issued' ? 'Issued - Ready to Complete' : foundSticker?.status)"></span>
+                    <div class="flex items-center gap-2">
+                        <button x-show="searchResults.length > 1" type="button" @click="foundSticker = null" class="text-[10px] font-semibold text-blue-600 hover:text-blue-800 dark:text-blue-400">&larr; Back to results</button>
+                        <span class="text-[9px] font-semibold px-2 py-0.5 rounded-full"
+                              :class="foundSticker?.is_completed ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400' : (foundSticker?.status === 'issued' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400' : 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-400')"
+                              x-text="foundSticker?.is_completed ? 'Completed' : (foundSticker?.status === 'issued' ? 'Issued - Ready to Complete' : foundSticker?.status)"></span>
+                    </div>
                 </div>
                 <div class="p-5">
                     <div class="grid grid-cols-2 sm:grid-cols-3 gap-4">
                         <div>
-                            <p class="text-[9px] font-semibold uppercase tracking-wider text-gray-400 mb-0.5">Sticker ID</p>
-                            <p class="text-sm font-bold text-gray-800 dark:text-white" x-text="foundSticker?.sticker_number"></p>
+                            <p class="text-[9px] font-semibold uppercase tracking-wider text-gray-400 mb-0.5">Quotation Number</p>
+                            <p class="text-sm font-bold text-gray-800 dark:text-white" x-text="foundSticker?.quotation_number || 'N/A'"></p>
+                        </div>
+                        <div>
+                            <p class="text-[9px] font-semibold uppercase tracking-wider text-gray-400 mb-0.5">Registration</p>
+                            <p class="text-sm font-bold text-gray-800 dark:text-white" x-text="foundSticker?.vehicle_registration || 'N/A'"></p>
                         </div>
                         <div x-show="foundSticker?.underwriter_sticker_no">
                             <p class="text-[9px] font-semibold uppercase tracking-wider text-gray-400 mb-0.5">Sticker Number</p>
@@ -75,8 +105,8 @@
                             <p class="text-sm font-medium text-gray-800 dark:text-white" x-text="foundSticker?.car_make + ' ' + foundSticker?.car_model + ' (' + foundSticker?.car_year + ')'"></p>
                         </div>
                         <div>
-                            <p class="text-[9px] font-semibold uppercase tracking-wider text-gray-400 mb-0.5">Registration</p>
-                            <p class="text-sm font-medium text-gray-800 dark:text-white" x-text="foundSticker?.vehicle_registration || 'N/A'"></p>
+                            <p class="text-[9px] font-semibold uppercase tracking-wider text-gray-400 mb-0.5">Chassis / Engine No.</p>
+                            <p class="text-sm font-medium text-gray-800 dark:text-white" x-text="(foundSticker?.chassis_number || 'N/A') + ' / ' + (foundSticker?.engine_number || 'N/A')"></p>
                         </div>
                         <div>
                             <p class="text-[9px] font-semibold uppercase tracking-wider text-gray-400 mb-0.5">Premium</p>
@@ -95,6 +125,7 @@
                             <p class="text-sm font-medium text-gray-800 dark:text-white" x-text="foundSticker?.completed_by"></p>
                         </div>
                     </div>
+                    <p class="mt-3 text-[9px] text-gray-300 dark:text-gray-600">Internal reference: <span x-text="foundSticker?.sticker_number"></span></p>
 
                     <div class="mt-5 border-t border-gray-100 dark:border-gray-700 pt-4">
                         <div x-show="foundSticker?.is_completed" class="bg-emerald-50 dark:bg-emerald-900/10 border border-emerald-200 dark:border-emerald-700 rounded-xl p-4">
@@ -135,12 +166,35 @@
                     @if($stickers->count())
                         <div class="space-y-2">
                             @foreach($stickers as $sticker)
-                                <div @click="$dispatch('select-sticker', '{{ $sticker->sticker_number }}')"
+                                @php
+                                    $__payload = [
+                                        'id' => $sticker->id,
+                                        'sticker_number' => $sticker->sticker_number,
+                                        'underwriter_sticker_no' => $sticker->underwriter_sticker_no,
+                                        'quotation_number' => $sticker->quotation?->quotation_number,
+                                        'customer_name' => $sticker->customer_name,
+                                        'vehicle_registration' => $sticker->vehicle_registration,
+                                        'chassis_number' => $sticker->chassis_number,
+                                        'engine_number' => $sticker->engine_number,
+                                        'car_make' => $sticker->car_make,
+                                        'car_model' => $sticker->car_model,
+                                        'car_year' => $sticker->car_year,
+                                        'premium' => $sticker->premium,
+                                        'cover_type' => $sticker->cover_type,
+                                        'status' => $sticker->status,
+                                        'company' => $sticker->company->name ?? 'N/A',
+                                        'issued_by' => $sticker->issuedBy?->name ?? 'N/A',
+                                        'completed_by' => null,
+                                        'completed_at' => null,
+                                        'is_completed' => false,
+                                    ];
+                                @endphp
+                                <div @click="foundSticker = {{ Illuminate\Support\Js::from($__payload) }}; searchResults = []; underwriterStickerNo = ''"
                                      class="p-3 rounded-xl border border-gray-200 dark:border-gray-600 hover:border-blue-300 dark:hover:border-blue-600 bg-gray-50 dark:bg-gray-700/50 hover:bg-blue-50 dark:hover:bg-blue-900/10 cursor-pointer transition-all duration-200">
                                     <div class="flex items-center justify-between gap-2">
                                         <div class="min-w-0">
-                                            <p class="text-[11px] font-bold text-gray-800 dark:text-white" x-text="'{{ $sticker->sticker_number }}'"></p>
-                                            <p class="text-[10px] text-gray-500 dark:text-gray-400" x-text="'{{ $sticker->customer_name }}'"></p>
+                                            <p class="text-[11px] font-bold text-gray-800 dark:text-white">{{ $sticker->quotation?->quotation_number ?: $sticker->vehicle_registration ?: 'No reference' }}</p>
+                                            <p class="text-[10px] text-gray-500 dark:text-gray-400">{{ $sticker->customer_name }}</p>
                                         </div>
                                         <span class="text-[8px] font-semibold px-1.5 py-0.5 rounded-full bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300 shrink-0">ISSUED</span>
                                     </div>
@@ -166,21 +220,16 @@ function updateStickerApp() {
         searchQuery: '',
         searching: false,
         searchError: '',
+        searchResults: [],
         foundSticker: null,
         completing: false,
         underwriterStickerNo: '',
-
-        init() {
-            this.$on('select-sticker', (stickerNumber) => {
-                this.searchQuery = stickerNumber;
-                this.searchSticker();
-            });
-        },
 
         async searchSticker() {
             if (!this.searchQuery.trim()) return;
             this.searching = true;
             this.searchError = '';
+            this.searchResults = [];
             this.foundSticker = null;
             this.underwriterStickerNo = '';
 
@@ -196,7 +245,11 @@ function updateStickerApp() {
 
                 const data = await response.json();
                 if (data.success) {
-                    this.foundSticker = data.sticker;
+                    if (data.stickers.length === 1) {
+                        this.foundSticker = data.stickers[0];
+                    } else {
+                        this.searchResults = data.stickers;
+                    }
                 } else {
                     this.searchError = data.error || 'Sticker not found.';
                 }

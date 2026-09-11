@@ -160,90 +160,20 @@ function renderCompanyLogo(e) {
           }))
         : r && (r.style.display = "none");
 }
-function cardBenefits(company) {
-    var candidates = [
-        company.minSumInsuredText
-            ? "Min. Sum Insured: " + company.minSumInsuredText.replace(/^Minimum Sum Insured-?\s*/i, "")
-            : null,
-        company.maxAgeText && company.maxAgeText !== "—"
-            ? "Max Vehicle Age: " + company.maxAgeText.replace(/^Maximum Age New [Bb]usiness-?\s*/i, "")
-            : null,
-        company.excessProtector ? "Excess Protector: " + company.excessProtector : null,
-        company.geoArea ? "Cover Area: " + company.geoArea : null,
-    ].filter(Boolean);
-    return candidates.slice(0, 3).map(function (text) {
-        return text.length > 46 ? text.slice(0, 44) + "…" : text;
-    });
-}
-function renderComparisonGrid(companies, value, selectedSlug) {
-    var grid = document.getElementById("comparison-grid");
-    if (!grid) return;
-    var cheapest = companies.reduce(function (min, c) {
-        var total = calcPremiums(value, c, window.quotationNumPassengers).total;
-        return min === null || total < min ? total : min;
-    }, null);
-    grid.innerHTML = companies
-        .map(function (company) {
-            var premiums = calcPremiums(value, company, window.quotationNumPassengers),
-                isSelected = company.slug === selectedSlug,
-                isCheapest = premiums.total === cheapest,
-                logo = company.logo || "",
-                benefits = cardBenefits(company);
-            var badge = isSelected
-                ? '<span class="absolute top-3 right-3 text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-blue-500 text-white">Selected</span>'
-                : isCheapest
-                  ? '<span class="absolute top-3 right-3 text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-emerald-500 text-white">Lowest Premium</span>'
-                  : "";
-            var benefitsHtml = benefits.length
-                ? '<div class="mt-3 pt-3 border-t border-gray-100 dark:border-gray-700 space-y-1.5">' +
-                  '<p class="text-[9px] font-semibold uppercase tracking-wider text-gray-400 mb-1.5">Key Benefits</p>' +
-                  benefits
-                      .map(function (b) {
-                          return (
-                              '<div class="flex items-start gap-1.5 text-[10.5px] text-gray-600 dark:text-gray-300 leading-snug">' +
-                              '<svg class="w-3 h-3 mt-0.5 text-emerald-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>' +
-                              "<span>" + b + "</span></div>"
-                          );
-                      })
-                      .join("") +
-                  "</div>"
-                : "";
-            return (
-                '<button type="button" onclick="downloadQuote(\'' + company.slug + '\')" class="group relative text-left rounded-2xl border bg-white dark:bg-gray-800 shadow-sm p-5 transition hover:-translate-y-0.5 hover:shadow-lg flex flex-col ' +
-                (isSelected
-                    ? "border-blue-500 ring-2 ring-blue-500/20"
-                    : "border-gray-200 dark:border-gray-700") +
-                '">' +
-                badge +
-                '<div class="flex items-center gap-3 mb-3 h-10 overflow-hidden">' +
-                (logo
-                    ? '<img src="' + logo + '" alt="' + company.name + '" class="max-h-9 max-w-[120px] object-contain" onerror="fallbackLogo(this,\'' + company.slug + '\')">'
-                    : "") +
-                '<span class="text-[11px] font-extrabold tracking-wider text-blue-600 dark:text-blue-400" style="' +
-                (logo ? "display:none" : "") +
-                '">' +
-                (company.prefix || company.slug.toUpperCase()) +
-                '</span></div>' +
-                '<div class="flex items-baseline justify-between">' +
-                '<span class="text-[10px] font-semibold uppercase tracking-wider text-gray-400">Total Premium</span>' +
-                '<span class="text-lg font-extrabold text-blue-600 dark:text-blue-400">' + fmt(premiums.total) + '</span>' +
-                '</div>' +
-                '<div class="mt-1 text-[10.5px] text-gray-400">Rate ' + (company.rate * 100).toFixed(1) + '% &middot; Basic ' + fmt(premiums.basic) + '</div>' +
-                benefitsHtml +
-                '<div class="mt-4 pt-3 border-t border-gray-100 dark:border-gray-700 flex items-center justify-between">' +
-                '<span class="text-[10.5px] font-semibold text-blue-600 dark:text-blue-400 group-hover:underline">View &amp; Download</span>' +
-                '<svg class="w-3.5 h-3.5 text-blue-600 dark:text-blue-400 transition group-hover:translate-x-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 12h14M13 6l6 6-6 6"/></svg>' +
-                "</div></button>"
-            );
-        })
-        .join("");
-}
 function renderCompareTable(e, t) {
     for (var a = 3, r = 0; r < a; r++) {
         var n = document.getElementById("cmp-head-" + r),
             o = document.getElementById("cmp-total-" + r);
         if (e[r]) {
-            n && (n.textContent = e[r].name);
+            if (n) {
+                var logo = e[r].logo || "";
+                n.innerHTML =
+                    '<div class="flex flex-col items-end gap-1">' +
+                    (logo
+                        ? '<img src="' + logo + '" alt="' + e[r].name + '" class="h-5 max-w-[80px] object-contain" onerror="this.style.display=\'none\'">'
+                        : "") +
+                    "<span>" + e[r].name + "</span></div>";
+            }
             var s = calcPremiums(t, e[r], window.quotationNumPassengers);
             o && (o.textContent = fmt(s.total));
         } else
@@ -320,6 +250,27 @@ function renderCompareTable(e, t) {
             })
             .join(""));
 }
+function compareAllCardHtml(insurerCount) {
+    var logo = window.compareAllLogoUrl || "";
+    return (
+        '<button type="button" onclick="compareAllPdf(\'download\')" class="company-card no-underline text-left" style="cursor:pointer;display:block;width:100%;border:2px solid #D0021B;position:relative;overflow:hidden;transition:all .25s ease;border-radius:16px;box-shadow:0 4px 20px rgba(0,0,0,0.08);background:#fff;padding:16px">' +
+        '<div style="position:absolute;top:0;left:0;right:0;height:4px;background:#D0021B"></div>' +
+        '<div class="company-logo-box" style="height:48px;margin-bottom:12px;display:flex;align-items:center;justify-content:center">' +
+        (logo
+            ? '<img src="' + logo + '" alt="Compare All" style="max-height:40px" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'block\'">'
+            : "") +
+        '<span style="display:' + (logo ? "none" : "block") + ';font-size:18px">📊</span>' +
+        "</div>" +
+        '<div class="company-name" style="font-size:14px;font-weight:700;margin-bottom:4px;color:#1a1a2e;text-align:center">Compare All</div>' +
+        '<div style="display:flex;align-items:center;justify-content:center;gap:16px;margin-bottom:12px">' +
+        '<div style="text-align:center">' +
+        '<div style="font-size:10px;color:#6b7280;font-weight:500">Insurers</div>' +
+        '<div style="font-size:13px;font-weight:800;color:#D0021B">' + insurerCount + "</div>" +
+        "</div></div>" +
+        '<span class="btn btn-primary" style="display:block;width:100%;text-align:center;box-sizing:border-box;font-size:12px;padding:8px 10px;background:#D0021B;border-color:#D0021B;border-radius:10px;font-weight:700;color:#fff">Download All ↓</span>' +
+        "</button>"
+    );
+}
 function renderDownloadCards(e, t, a, r, n) {
     var o = document.getElementById("dl-cards"),
         s = getCompanyData(),
@@ -363,63 +314,195 @@ function renderDownloadCards(e, t, a, r, n) {
                 );
             })
             .join("");
-    o.innerHTML = d;
+    o.innerHTML = d + compareAllCardHtml(s.length);
 }
-function buildPDFPreview(e, t, a, r, n) {
-    var o =
-            [r.salutation, r.firstName, r.lastName].filter(Boolean).join(" ") ||
-            "\u2014",
-        s = new Date().toLocaleString("en-KE", {
-            dateStyle: "long",
-            timeStyle: "short",
-        }),
-        d = e.logo || "",
-        i =
-            '<div class="rounded-xl overflow-hidden border border-gray-200 dark:border-gray-700 mb-6"><div class="flex justify-between items-stretch min-h-[130px]"><div class="flex items-center p-5">' +
-            (d
-                ? '<img src="' +
-                  d +
-                  '" alt="' +
-                  e.name +
-                  `" class="max-h-20 max-w-[260px] object-contain" onerror="fallbackLogo(this,'` +
-                  e.slug +
-                  `')">`
-                : "") +
-            '<span class="text-gray-800 dark:text-white text-2xl font-extrabold" style="display:' +
-            (d ? "none" : "block") +
-            '">' +
-            (e.prefix || e.slug) +
-            '</span></div><div class="flex items-center justify-end p-5 text-right"><p class="text-[12px] leading-7 text-gray-600 dark:text-gray-300 m-0">' +
-            e.name +
-            '</p></div></div></div><div class="px-2"><p class="text-[13px]">' +
-            s +
-            '</p><p class="text-gray-800 dark:text-white">Dear ' +
-            o +
-            '</p><h2 class="text-[15px] font-bold uppercase tracking-wider mb-1">RE: PRIVATE CAR INSURANCE QUOTE</h2><p class="text-[12px] text-gray-500 mb-4">Quotation Reference: <strong>' +
-            n +
-            `</strong></p><p class="text-[13px] leading-7 mb-4 text-gray-700 dark:text-gray-300">Thank you for requesting us to provide a quote for the above mentioned. We are pleased to submit the quote</p><table class="w-full text-[13px] border-collapse mb-4"><thead><tr><th class="bg-gray-100 dark:bg-gray-700 text-left p-2 border border-gray-200 dark:border-gray-600">Owner's Name</th><th class="bg-gray-100 dark:bg-gray-700 text-left p-2 border border-gray-200 dark:border-gray-600">Vehicle Make</th><th class="bg-gray-100 dark:bg-gray-700 text-left p-2 border border-gray-200 dark:border-gray-600">Year of Manufacture</th></tr></thead><tbody><tr><td class="p-2 border border-gray-200 dark:border-gray-600">` +
-            o +
-            '</td><td class="p-2 border border-gray-200 dark:border-gray-600">' +
-            (r.make || "\u2014") +
-            '</td><td class="p-2 border border-gray-200 dark:border-gray-600">' +
-            (r.year || "\u2014") +
-            '</td></tr></tbody></table><table class="w-full text-[13px] border-collapse mb-4"><thead><tr><th class="bg-gray-100 dark:bg-gray-700 text-left p-2 border border-gray-200 dark:border-gray-600">Registration Number</th><th class="bg-gray-100 dark:bg-gray-700 text-left p-2 border border-gray-200 dark:border-gray-600">Vehicle Estimated Price</th><th class="bg-gray-100 dark:bg-gray-700 text-left p-2 border border-gray-200 dark:border-gray-600">Phone Number</th></tr></thead><tbody><tr><td class="p-2 border border-gray-200 dark:border-gray-600">' +
-            (r.reg || "\u2014") +
-            '</td><td class="p-2 border border-gray-200 dark:border-gray-600">' +
-            fmt(t) +
-            '</td><td class="p-2 border border-gray-200 dark:border-gray-600">' +
-            (r.phone || "\u2014") +
-            '</td></tr></tbody></table><table class="w-full text-[13px] border-collapse mb-4"><thead><tr><th colspan="2" class="text-left p-2 border text-white" style="background:' +
-            e.color +
-            '">COVER TYPE</th></tr></thead><tbody><tr><td class="p-2 border border-gray-200 dark:border-gray-600">Scope of Cover</td><td class="p-2 border border-gray-200 dark:border-gray-600">Comprehensive</td></tr><tr><td class="p-2 border border-gray-200 dark:border-gray-600">Frequency</td><td class="p-2 border border-gray-200 dark:border-gray-600">Annually</td></tr></tbody></table><table class="w-full text-[13px] border-collapse mb-4"><thead><tr><th colspan="2" class="text-left p-2 border text-white" style="background:' +
-            e.color +
-            '">SCHEDULE OF INSURANCE</th></tr></thead><tbody><tr><td class="p-2 border border-gray-200 dark:border-gray-600">Basic Annual Premium</td><td class="p-2 border border-gray-200 dark:border-gray-600">' +
-            fmt(a.basic) +
-            '</td></tr><tr><td class="p-2 border border-gray-200 dark:border-gray-600">Annual Premium + Taxes</td><td class="p-2 border border-gray-200 dark:border-gray-600">' +
-            fmt(a.total) +
-            '</td></tr><tr><td class="p-2 border border-gray-200 dark:border-gray-600">Windscreen Annual Premium</td><td class="p-2 border border-gray-200 dark:border-gray-600">KES 0</td></tr><tr><td class="p-2 border border-gray-200 dark:border-gray-600">Radio Cassette Premium</td><td class="p-2 border border-gray-200 dark:border-gray-600">KES 0</td></tr></tbody></table></div><div class="px-5 py-4 bg-gray-50 dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 text-[11px] leading-7 text-gray-400">KENYA | UGANDA | TANZANIA | Rate subject to satisfactory valuation report</div>',
-        l = document.getElementById("pdf-preview");
-    ((l.innerHTML = i), (l.style.display = "none"));
+function renderSingleDownloadCard(company, value, premiums) {
+    var el = document.getElementById("dl-card-single");
+    if (!el) return;
+    var logo = company.logo || "";
+    el.innerHTML =
+        '<div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border-2 border-blue-500 ring-2 ring-blue-500/20 p-5 text-center max-w-sm">' +
+        '<div class="h-11 flex items-center justify-center mb-3">' +
+        (logo
+            ? '<img src="' + logo + '" alt="' + company.name + '" class="max-h-10 max-w-[110px] object-contain" onerror="fallbackLogo(this,\'' + company.slug + '\')">'
+            : "") +
+        '<span class="text-xs font-extrabold tracking-wider text-blue-600 dark:text-blue-400" style="display:' + (logo ? "none" : "block") + '">' +
+        (company.prefix || company.slug) +
+        "</span></div>" +
+        '<div class="text-xs font-bold text-gray-800 dark:text-white mb-1">' + company.name + "</div>" +
+        '<div class="text-[11px] text-gray-400 mb-3.5">Rate: <strong>' + (company.rate * 100).toFixed(1) + '%</strong> of vehicle value</div>' +
+        '<div class="text-lg font-extrabold text-blue-600 dark:text-blue-400 mb-3.5">' +
+        fmt(premiums.total) +
+        '<small class="block text-[10px] font-semibold text-gray-400">Total incl. taxes</small></div>' +
+        '<button type="button" onclick="actionDownload()" class="block w-full py-2.5 rounded-lg text-xs font-bold text-white transition bg-blue-600 hover:bg-blue-500">Download Quote ↓</button>' +
+        "</div>";
+}
+var _pdfContext = null;
+var _pdfPreviewLoaded = false;
+var _previewLoader = null;
+
+function pdfFieldsFor(company, value, formData, numPassengers) {
+    return {
+        company_slug: company.slug,
+        vehicle_type: formData.vehicleType || window.quotationVehicleType || "private",
+        car_valuation: value,
+        num_passengers: numPassengers || window.quotationNumPassengers || 1,
+        salutation: formData.salutation || "",
+        first_name: formData.firstName || "",
+        middle_name: "",
+        last_name: formData.lastName || "",
+        phone: formData.phone || "",
+        email: formData.email || "",
+        car_registration: formData.reg || "",
+        chassis_number: formData.chassis || "",
+        engine_number: formData.engine || "",
+        car_make: formData.make || "",
+        car_model: formData.model || "",
+        body_type: formData.body || "",
+        car_year: formData.year || "",
+        color: formData.color || "",
+    };
+}
+
+function postToTarget(url, fields, target) {
+    function submitWithToken(token) {
+        var form = document.createElement("form");
+        form.method = "POST";
+        form.action = url;
+        if (target) form.target = target;
+        var csrf = document.createElement("input");
+        csrf.type = "hidden";
+        csrf.name = "_token";
+        csrf.value =
+            (document.querySelector('meta[name="csrf-token"]') || {}).content || "";
+        form.appendChild(csrf);
+        if (token) {
+            var captcha = document.createElement("input");
+            captcha.type = "hidden";
+            captcha.name = "g-recaptcha-response";
+            captcha.value = token;
+            form.appendChild(captcha);
+        }
+        Object.keys(fields).forEach(function (key) {
+            var input = document.createElement("input");
+            input.type = "hidden";
+            input.name = key;
+            input.value = fields[key] == null ? "" : fields[key];
+            form.appendChild(input);
+        });
+        document.body.appendChild(form);
+        form.submit();
+        document.body.removeChild(form);
+    }
+
+    if (typeof grecaptcha !== "undefined" && window.mvipRecaptchaSiteKey) {
+        grecaptcha.ready(function () {
+            grecaptcha
+                .execute(window.mvipRecaptchaSiteKey, { action: "generate_quotation" })
+                .then(submitWithToken)
+                .catch(function () {
+                    submitWithToken(null);
+                });
+        });
+    } else {
+        submitWithToken(null);
+    }
+}
+
+function loadPdfPreview() {
+    if (!_pdfContext) return;
+    postToTarget("/quotation/pdf/preview", _pdfContext, "pdf-preview-frame");
+    _pdfPreviewLoaded = true;
+}
+
+function setPdfContext(company, value, formData, numPassengers) {
+    _pdfContext = pdfFieldsFor(company, value, formData, numPassengers);
+    _pdfPreviewLoaded = false;
+    _previewLoader = loadPdfPreview;
+    var wrap = document.getElementById("pdf-preview");
+    if (wrap && wrap.style.display === "block") loadPdfPreview();
+}
+
+function compareAllFieldsFromForm() {
+    var formData = getFormData(),
+        value = Number(formData.value) || 8e5,
+        numPassengers = formData.numPassengers || window.quotationNumPassengers || 1;
+    return {
+        vehicle_type: formData.vehicleType || window.quotationVehicleType || "private",
+        car_valuation: value,
+        num_passengers: numPassengers,
+        salutation: formData.salutation || "",
+        first_name: formData.firstName || "",
+        middle_name: "",
+        last_name: formData.lastName || "",
+        phone: formData.phone || "",
+        email: formData.email || "",
+        car_registration: formData.reg || "",
+        chassis_number: formData.chassis || "",
+        engine_number: formData.engine || "",
+        car_make: formData.make || "",
+        car_model: formData.model || "",
+        body_type: formData.body || "",
+        car_year: formData.year || "",
+        color: formData.color || "",
+    };
+}
+
+function loadCompareAllPreview() {
+    postToTarget("/quotation/compare-all/pdf/preview", compareAllFieldsFromForm(), "pdf-preview-frame");
+    _pdfPreviewLoaded = true;
+}
+
+function compareAllPdf(mode) {
+    var fields = compareAllFieldsFromForm();
+    if (mode === "preview") {
+        var wrap = document.getElementById("pdf-preview"),
+            btn = document.getElementById("btn-preview");
+        _previewLoader = loadCompareAllPreview;
+        loadCompareAllPreview();
+        wrap.style.display = "block";
+        if (btn) {
+            btn.classList.add("active", "bg-purple-800");
+            btn.classList.remove("bg-purple-600", "hover:bg-purple-500");
+        }
+        wrap.scrollIntoView({ behavior: "smooth", block: "start" });
+        showToast("Comparing all insurers", "success");
+    } else if (mode === "download") {
+        postToTarget("/quotation/compare-all/pdf/download", fields, null);
+        showToast("Combined quotation downloaded", "success");
+    } else if (mode === "print") {
+        postToTarget("/quotation/compare-all/pdf/preview", fields, "_blank");
+        showToast("Combined quotation opened for printing", "success");
+    } else if (mode === "email") {
+        var defaultEmail = fields.email || "";
+        var target = window.prompt("Send this comparison to which email address?", defaultEmail);
+        if (!target) return;
+        fields.email = target;
+        fetch("/quotation/compare-all/pdf/email", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "X-CSRF-TOKEN":
+                    (document.querySelector('meta[name="csrf-token"]') || {}).content || "",
+            },
+            body: JSON.stringify(fields),
+        })
+            .then(function (r) {
+                return r.json().then(function (json) {
+                    return { ok: r.ok, json: json };
+                });
+            })
+            .then(function (res) {
+                if (res.ok && res.json.success) {
+                    showToast(res.json.message || "Comparison emailed", "success");
+                } else {
+                    showToast(res.json.message || "We could not send the email. Please try again.", "error");
+                }
+            })
+            .catch(function () {
+                showToast("We could not send the email. Please try again.", "error");
+            });
+    }
 }
 function saveSessionQuotation(e, t) {
     if (!window.quotationDbData && window.MIC_AUTH)
@@ -429,73 +512,109 @@ function saveSessionQuotation(e, t) {
             var r = JSON.parse(a),
                 n = t ? getCompanyBySlug(t) : null;
             if (!n) return;
-            fetch("/api/quotation/from-session", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    "X-CSRF-TOKEN":
-                        document.querySelector('meta[name="csrf-token"]')
-                            ?.content || "",
-                },
-                body: JSON.stringify({
-                    company_slug: t,
-                    car_make: r.make || "",
-                    car_model: r.model || "",
-                    car_year: r.year || "",
-                    car_registration: r.reg || "",
-                    color: r.color || "",
-                    car_valuation: Number(r.value) || 0,
-                    vehicle_type:
-                        r.vehicleType ||
-                        window.quotationVehicleType ||
-                        "private",
-                    num_passengers: Number(r.numPassengers) || 1,
-                    salutation: r.salutation || "",
-                    first_name: r.firstName || "",
-                    last_name: r.lastName || "",
-                    phone: r.phone || "",
-                    email: r.email || "",
-                    chassis_number: r.chassis || "",
-                    engine_number: r.engine || "",
-                    body_type: r.body || "",
-                }),
-            })
-                .then(function (o) {
-                    return o.json().then(function (s) {
-                        return { ok: o.ok, json: s };
+            var payload = {
+                company_slug: t,
+                car_make: r.make || "",
+                car_model: r.model || "",
+                car_year: r.year || "",
+                car_registration: r.reg || "",
+                color: r.color || "",
+                car_valuation: Number(r.value) || 0,
+                vehicle_type:
+                    r.vehicleType || window.quotationVehicleType || "private",
+                num_passengers: Number(r.numPassengers) || 1,
+                salutation: r.salutation || "",
+                first_name: r.firstName || "",
+                last_name: r.lastName || "",
+                phone: r.phone || "",
+                email: r.email || "",
+                chassis_number: r.chassis || "",
+                engine_number: r.engine || "",
+                body_type: r.body || "",
+            };
+            var doSave = function (token) {
+                if (token) payload["g-recaptcha-response"] = token;
+                fetch("/api/quotation/from-session", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "X-CSRF-TOKEN":
+                            document.querySelector('meta[name="csrf-token"]')
+                                ?.content || "",
+                    },
+                    body: JSON.stringify(payload),
+                })
+                    .then(function (o) {
+                        return o.json().then(function (s) {
+                            return { ok: o.ok, json: s };
+                        });
+                    })
+                    .then(function (o) {
+                        var s = o.json;
+                        if (o.ok && s.success) {
+                            try {
+                                sessionStorage.removeItem("micQuoteData");
+                            } catch {}
+                            try {
+                                sessionStorage.removeItem("pending_quote_company");
+                            } catch {}
+                            window.location.href =
+                                "/quotations/" + s.quotation.id + "?generated=1";
+                        } else {
+                            var d = s.errors ? Object.values(s.errors)[0] : null,
+                                i =
+                                    (d && d[0]) ||
+                                    s.message ||
+                                    "We could not save your quotation. Please try again from your dashboard.";
+                            (console.warn("Failed to save quotation:", i),
+                                showToast(i, "error"));
+                        }
+                    })
+                    .catch(function (o) {
+                        (console.warn("Failed to save quotation:", o),
+                            showToast(
+                                "We could not save your quotation. Please try again from your dashboard.",
+                                "error",
+                            ));
                     });
-                })
-                .then(function (o) {
-                    var s = o.json;
-                    if (o.ok && s.success) {
-                        try {
-                            sessionStorage.removeItem("micQuoteData");
-                        } catch {}
-                        try {
-                            sessionStorage.removeItem("pending_quote_company");
-                        } catch {}
-                        window.location.href =
-                            "/quotations/" + s.quotation.id + "?generated=1";
-                    } else {
-                        var d = s.errors ? Object.values(s.errors)[0] : null,
-                            i =
-                                (d && d[0]) ||
-                                s.message ||
-                                "We could not save your quotation. Please try again from your dashboard.";
-                        (console.warn("Failed to save quotation:", i),
-                            showToast(i, "error"));
-                    }
-                })
-                .catch(function (o) {
-                    (console.warn("Failed to save quotation:", o),
-                        showToast(
-                            "We could not save your quotation. Please try again from your dashboard.",
-                            "error",
-                        ));
+            };
+            if (typeof grecaptcha !== "undefined" && window.mvipRecaptchaSiteKey) {
+                grecaptcha.ready(function () {
+                    grecaptcha
+                        .execute(window.mvipRecaptchaSiteKey, { action: "generate_quotation" })
+                        .then(doSave)
+                        .catch(function () {
+                            doSave(null);
+                        });
                 });
+            } else {
+                doSave(null);
+            }
         } catch {}
 }
-function init() {
+function populateVehicleSummary(formData, value) {
+    var ids = {
+        "s-name": [formData.salutation, formData.firstName, formData.lastName].filter(Boolean).join(" ") || "\u2014",
+        "s-phone": formData.phone || "\u2014",
+        "s-email": formData.email || "\u2014",
+        "s-reg": formData.reg || "\u2014",
+        "s-make": ((formData.make || "") + " " + (formData.model || "")).trim() || "\u2014",
+        "s-year": formData.year || "\u2014",
+        "s-chassis": formData.chassis || "\u2014",
+        "s-value": fmt(value),
+    };
+    Object.keys(ids).forEach(function (id) {
+        var el = document.getElementById(id);
+        if (el) el.textContent = ids[id];
+    });
+    var compactVehicle = document.getElementById("compact-vehicle");
+    if (compactVehicle) {
+        compactVehicle.textContent =
+            ((formData.make || "") + " " + (formData.model || "")).trim() || "\u2014";
+    }
+}
+
+function initSingleView() {
     var e = getFormData(),
         t = getCompanyData(),
         a = window.selectedCompanySlug,
@@ -515,27 +634,11 @@ function init() {
         try {
             window.Alpine.$data(i).selectedName = n.name;
         } catch {}
-    (renderCompanyLogo(a),
-        (document.getElementById("hero-quote-num").textContent = d),
-        (document.getElementById("s-name").textContent =
-            [e.salutation, e.firstName, e.lastName].filter(Boolean).join(" ") ||
-            "\u2014"),
-        (document.getElementById("s-phone").textContent = e.phone || "\u2014"),
-        (document.getElementById("s-email").textContent = e.email || "\u2014"),
-        (document.getElementById("s-company").textContent = n.name),
-        (document.getElementById("s-reg").textContent = e.reg || "\u2014"),
-        (document.getElementById("s-make").textContent =
-            ((e.make || "") + " " + (e.model || "")).trim() || "\u2014"),
-        (document.getElementById("s-year").textContent =
-            (e.year || "\u2014") + "  \u2022  " + (e.body || "\u2014")),
-        (document.getElementById("s-color").textContent = e.color || "\u2014"),
-        (document.getElementById("s-chassis").textContent =
-            e.chassis || "\u2014"),
-        (document.getElementById("s-value").textContent = fmt(r)),
-        (document.getElementById("single-breakdown-wrap").style.display = ""),
-        (document.getElementById("compare-all-wrap").style.display = ""),
-        (document.getElementById("breakdown-company-label").textContent =
-            n.name));
+    renderCompanyLogo(a);
+    document.getElementById("hero-quote-num").textContent = d;
+    populateVehicleSummary(e, r);
+    document.getElementById("s-company").textContent = n.name;
+    document.getElementById("breakdown-company-label").textContent = n.name;
     var l = [
             ["Estimated Vehicle Value", "\u2014", fmt(r)],
             [
@@ -577,50 +680,51 @@ function init() {
         })
         .join("")),
         (document.getElementById("breakdown-total").textContent = fmt(s.total)),
-        renderComparisonGrid(t, r, a),
-        renderCompareTable(t, r),
-        renderDownloadCards(n, r, s, e, d),
-        buildPDFPreview(n, r, s, e, d));
-    var u = document.getElementById("compact-vehicle"),
-        b = document.getElementById("compact-company");
-    (u &&
-        (u.textContent =
-            ((e.make || "") + " " + (e.model || "")).trim() || "\u2014"),
-        b && (b.textContent = n.name));
+        renderSingleDownloadCard(n, r, s),
+        setPdfContext(n, r, e, o));
+    var b = document.getElementById("compact-company");
+    if (b) b.textContent = n.name;
+    var qEl = document.getElementById("compact-quote");
+    if (qEl) qEl.textContent = d;
     try {
         var g = sessionStorage.getItem("micQuoteData");
         g && showToast("Quotation generated", "success");
     } catch {}
 }
+
+function initCompareView() {
+    var e = getFormData(),
+        t = getCompanyData(),
+        r = Number(e.value) || 8e5;
+    populateVehicleSummary(e, r);
+    renderCompareTable(t, r);
+    renderDownloadCards({ slug: null }, r);
+    _previewLoader = loadCompareAllPreview;
+}
+
+function init() {
+    if (document.getElementById("single-breakdown-wrap")) {
+        initSingleView();
+    } else if (document.getElementById("compare-all-wrap")) {
+        initCompareView();
+    }
+}
 function actionDownload() {
-    var e = document.getElementById("pdf-preview");
-    e.innerHTML.trim() &&
-        ((e.style.display = "block"),
-        setTimeout(function () {
-            (window.print(),
-                setTimeout(function () {
-                    document
-                        .getElementById("btn-preview")
-                        .classList.contains("active") ||
-                        (e.style.display = "none");
-                }, 500));
-        }, 150),
-        showToast("Quotation downloaded", "success"));
+    if (!_pdfContext) return;
+    postToTarget("/quotation/pdf/download", _pdfContext, null);
+    showToast("Quotation downloaded", "success");
 }
 function actionPrint() {
-    var e = document.getElementById("pdf-preview");
-    e.innerHTML.trim() &&
-        ((e.style.display = "block"),
-        setTimeout(function () {
-            window.print();
-        }, 150),
-        showToast("Quotation printed", "success"));
+    if (!_pdfContext) return;
+    postToTarget("/quotation/pdf/preview", _pdfContext, "_blank");
+    showToast("Quotation opened for printing", "success");
 }
 function actionTogglePreview() {
     var e = document.getElementById("pdf-preview"),
         t = document.getElementById("btn-preview");
     e.style.display === "none" || !e.style.display
-        ? ((e.style.display = "block"),
+        ? (!_pdfPreviewLoaded && _previewLoader && _previewLoader(),
+          (e.style.display = "block"),
           t.classList.add("active", "bg-purple-800"),
           t.classList.remove("bg-purple-600", "hover:bg-purple-500"),
           e.scrollIntoView({ behavior: "smooth", block: "start" }))
@@ -634,20 +738,9 @@ function downloadQuote(e) {
         var a = getFormData(),
             r = Number(a.value) || 8e5,
             n = a.numPassengers || window.quotationNumPassengers || 1,
-            o = calcPremiums(r, t, n),
-            s = a.quoteNum || genQuoteNum(t);
-        (buildPDFPreview(t, r, o, a, s),
-            document
-                .getElementById("btn-preview")
-                .classList.remove("active", "bg-purple-800"),
-            document
-                .getElementById("btn-preview")
-                .classList.add("bg-purple-600", "hover:bg-purple-500"),
-            showActionBar(),
-            (document.getElementById("pdf-preview").style.display = "block"),
-            setTimeout(function () {
-                window.print();
-            }, 150),
+            fields = pdfFieldsFor(t, r, a, n);
+        (showActionBar(),
+            postToTarget("/quotation/pdf/download", fields, null),
             showToast("Quotation downloaded", "success"));
     }
 }

@@ -32,7 +32,7 @@ class ScanDocumentJob implements ShouldQueue
             return;
         }
 
-        $fullPath = storage_path('app/public/' . $document->path);
+        $fullPath = storage_path('app/private/' . $document->path);
         if (!file_exists($fullPath)) {
             $document->update([
                 'scan_status' => 'error',
@@ -47,7 +47,7 @@ class ScanDocumentJob implements ShouldQueue
             $securityResult = $fileSecurity->validate($uploadedFile, $document->document_type);
 
             if (!$securityResult['valid']) {
-                Storage::disk('public')->delete($document->path);
+                Storage::disk('local')->delete($document->path);
                 $threatMsg = $securityResult['threat']
                     ? 'Flagged as potentially malicious.'
                     : 'Failed security validation.';
@@ -71,7 +71,7 @@ class ScanDocumentJob implements ShouldQueue
             if (!$isClean) {
                 $scanStatus = 'infected';
                 $scanResult = 'Potential threat detected by ClamAV.';
-                Storage::disk('public')->delete($document->path);
+                Storage::disk('local')->delete($document->path);
             }
         } catch (\Exception $e) {
             $scanStatus = 'clean';

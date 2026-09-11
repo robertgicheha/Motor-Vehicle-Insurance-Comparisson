@@ -76,9 +76,9 @@
 
             <div>
                 <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Upload Log Book *</label>
-                <input type="file" name="log_book" required accept=".pdf,.jpg,.jpeg,.png"
+                <input type="file" name="log_book" required accept=".pdf,.jpg,.jpeg"
                        class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-800 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                <p class="text-[10px] text-gray-400 mt-1">Accepted formats: PDF, JPG, PNG (Max 10MB)</p>
+                <p class="text-[10px] text-gray-400 mt-1">Accepted formats: PDF, JPG, JPEG (Max 5MB)</p>
             </div>
 
             <div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-lg p-4">

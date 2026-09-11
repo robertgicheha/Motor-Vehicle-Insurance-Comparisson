@@ -47,4 +47,31 @@ class Rate extends Model
     {
         return rtrim(rtrim(number_format((float) $value, 4), '0'), '.');
     }
+
+    /**
+     * Resolves this rate item's actual KES amount for a given vehicle
+     * valuation: percentage of the valuation, floored at min_value and
+     * capped at max_value. Mirrors the floor/cap logic
+     * PremiumCalculationService already applies for excess_own_damage and
+     * excess_theft, generalized so any percentage-based rate item can show
+     * its real computed amount instead of the raw "10%, min KES 50,000"
+     * configuration string.
+     */
+    public function computeAmountFor(float $valuation): ?float
+    {
+        if (!$this->percentage || $this->percentage <= 0) {
+            return null;
+        }
+
+        $amount = $valuation * ((float) $this->percentage / 100);
+
+        if ($this->min_value && $this->min_value > 0 && $amount < $this->min_value) {
+            $amount = (float) $this->min_value;
+        }
+        if ($this->max_value && $this->max_value > 0 && $amount > $this->max_value) {
+            $amount = (float) $this->max_value;
+        }
+
+        return round($amount, 2);
+    }
 }

@@ -346,25 +346,43 @@ function compareAllApp() {
             var routeUrl = mode === 'download'
                 ? '{{ route("quotations.compare-all.pdf.download") }}'
                 : '{{ route("quotations.compare-all.pdf.preview") }}';
-            var form = document.createElement('form');
-            form.method = 'POST';
-            form.action = routeUrl;
-            if (newTab) form.target = '_blank';
-            var csrf = document.createElement('input');
-            csrf.type = 'hidden';
-            csrf.name = '_token';
-            csrf.value = document.querySelector('meta[name="csrf-token"]')?.content || '';
-            form.appendChild(csrf);
-            Object.keys(fields).forEach(function (key) {
-                var input = document.createElement('input');
-                input.type = 'hidden';
-                input.name = key;
-                input.value = fields[key];
-                form.appendChild(input);
-            });
-            document.body.appendChild(form);
-            form.submit();
-            document.body.removeChild(form);
+            function doSubmit(token) {
+                var form = document.createElement('form');
+                form.method = 'POST';
+                form.action = routeUrl;
+                if (newTab) form.target = '_blank';
+                var csrf = document.createElement('input');
+                csrf.type = 'hidden';
+                csrf.name = '_token';
+                csrf.value = document.querySelector('meta[name="csrf-token"]')?.content || '';
+                form.appendChild(csrf);
+                if (token) {
+                    var captcha = document.createElement('input');
+                    captcha.type = 'hidden';
+                    captcha.name = 'g-recaptcha-response';
+                    captcha.value = token;
+                    form.appendChild(captcha);
+                }
+                Object.keys(fields).forEach(function (key) {
+                    var input = document.createElement('input');
+                    input.type = 'hidden';
+                    input.name = key;
+                    input.value = fields[key];
+                    form.appendChild(input);
+                });
+                document.body.appendChild(form);
+                form.submit();
+                document.body.removeChild(form);
+            }
+            if (typeof grecaptcha !== 'undefined' && window.mvipRecaptchaSiteKey) {
+                grecaptcha.ready(function () {
+                    grecaptcha.execute(window.mvipRecaptchaSiteKey, { action: 'generate_quotation' })
+                        .then(doSubmit)
+                        .catch(function () { doSubmit(null); });
+                });
+            } else {
+                doSubmit(null);
+            }
         },
     };
 }

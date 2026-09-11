@@ -40,8 +40,8 @@
   <div class="border-t border-white/10 px-6 sm:px-10 py-[18px] max-w-[1200px] mx-auto flex flex-col sm:flex-row gap-2 sm:gap-0 justify-between items-center text-[12px] text-white/50 text-center sm:text-left">
     <span>&copy; 2026 MIC Global Risks Insurance (Kenya) Limited</span>
     <div>
-      <a href="#" class="text-white/60 no-underline ml-0 sm:ml-5 mr-2.5 sm:mr-0 hover:text-white py-1.5 inline-block">Privacy Policy</a>
-      <a href="#" class="text-white/60 no-underline ml-0 sm:ml-5 mr-2.5 sm:mr-0 hover:text-white py-1.5 inline-block">Terms &amp; Conditions</a>
+      <a href="{{ route('legal.privacy') }}" class="text-white/60 no-underline ml-0 sm:ml-5 mr-2.5 sm:mr-0 hover:text-white py-1.5 inline-block">Privacy Policy</a>
+      <a href="{{ route('legal.terms') }}" class="text-white/60 no-underline ml-0 sm:ml-5 mr-2.5 sm:mr-0 hover:text-white py-1.5 inline-block">Terms &amp; Conditions</a>
       <a href="#" class="text-white/60 no-underline ml-0 sm:ml-5 hover:text-white py-1.5 inline-block">Contact Us</a>
     </div>
   </div>

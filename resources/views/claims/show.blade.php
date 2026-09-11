@@ -5,7 +5,7 @@
             <div>
                 <p class="text-[10px] font-semibold uppercase tracking-widest text-blue-400">Claim Details</p>
                 <div class="flex items-center gap-3 mt-0.5">
-                    <h1 class="text-2xl font-bold text-white tracking-tight" style="font-size:26px">{{ $claim->claim_number }}</h1>
+                    <h1 class="text-2xl font-bold text-white tracking-tight" style="font-size:26px">{{ $isAdmin ? $claim->claim_number : ($claim->underwriter_claim_number ?: $claim->registration_number) }}</h1>
                     @php
                         $statusColor = match($claim->status) {
                             \App\Models\Claim::STATUS_REPORTED => 'bg-gray-500/20 text-gray-300',
@@ -14,7 +14,12 @@
                     @endphp
                     <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-semibold {{ $statusColor }}">{{ \App\Models\Claim::statuses()[$claim->status] ?? ucfirst($claim->status) }}</span>
                 </div>
-                <p class="mt-1 text-xs text-slate-400">{{ $claim->registration_number }} &middot; Logged {{ $claim->created_at->format('d M Y, h:i A') }}</p>
+                <p class="mt-1 text-xs text-slate-400">
+                    {{ $claim->registration_number }} &middot; Logged {{ $claim->created_at->format('d M Y, h:i A') }}
+                    @if(!$isAdmin && !$claim->underwriter_claim_number)
+                        &middot; Awaiting the underwriter's claim number
+                    @endif
+                </p>
             </div>
             <div class="flex items-center gap-2 shrink-0">
                 <a href="{{ $isAdmin ? route('admin.claims.index') : route('claims.index') }}" class="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold border border-white/20 text-white/80 hover:bg-white/10 rounded-lg transition">

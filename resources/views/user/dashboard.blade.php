@@ -579,7 +579,7 @@
                         </div>
                         <div class="flex-1 min-w-0">
                             <div class="flex items-center gap-2">
-                                <span class="text-xs font-bold text-gray-800 dark:text-white">{{ $claim->claim_number }}</span>
+                                <span class="text-xs font-bold text-gray-800 dark:text-white">{{ $claim->underwriter_claim_number ?: $claim->registration_number }}</span>
                                 <span class="text-[9px] font-semibold px-1.5 py-0.5 rounded {{ $claim->status === 'settled' ? 'bg-emerald-100 text-emerald-700' : ($claim->status === 'declined' ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-700') }}">{{ \App\Models\Claim::statuses()[$claim->status] ?? $claim->status }}</span>
                             </div>
                             <p class="text-[11px] text-gray-500 mt-0.5">

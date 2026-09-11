@@ -53,6 +53,7 @@
                 <div class="label">Total Premium</div>
                 <div class="amount">KES {{ $premium }}</div>
             </div>
+            <p style="font-size:11px;color:#94a3b8;text-align:center;margin-top:-10px">The amount above is subject to the underwriter's confirmation.</p>
 
             <h2>Owner Details</h2>
             <table class="details-table">
@@ -82,7 +83,11 @@
             </table>
 
             <h2>Attached Documents</h2>
-            <p>The following documents are attached for your perusal: the quotation, the KYC documents uploaded and virus-scanned by the client{{ $client_type === 'corporate' ? ' (KRA PIN, Certificate of Incorporation, and supporting documents)' : ' (ID, KRA PIN, and logbook)' }}. Please respond to this thread with the Sticker and Policy Document.</p>
+            <p>The following documents are attached for your perusal: the quotation, the KYC documents uploaded and virus-scanned by the client{{ $client_type === 'corporate' ? ' (KRA PIN, Certificate of Incorporation, Vehicle Logbook / Import Documents, and any additional supporting documents)' : ' (ID, KRA PIN, logbook, and any additional supporting documents)' }}. Please respond to this thread with the Sticker and Policy Document.</p>
+
+            <div class="alert-box">
+                <strong>Note:</strong> Authenticity of the documents submitted will be subject to verification by the bank.
+            </div>
         </div>
 
         <div class="footer">

@@ -17,7 +17,7 @@
     <div class="rounded-2xl bg-micblue px-6 py-7 shadow-sm">
         <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
             <div>
-                <p class="text-[10px] font-semibold uppercase tracking-widest text-blue-300">Quotation / <span id="hero-company-name" x-text="selectedName">All Insurers</span></p>
+                <p class="text-[10px] font-semibold uppercase tracking-widest text-blue-300">Quotation / <span id="hero-company-name" x-text="selectedName">{{ $selectedCompany->name }}</span></p>
                 <div class="flex items-center gap-3 mt-0.5">
                     <h1 class="text-2xl font-bold text-white tracking-tight" style="font-size:26px">Motor Insurance Quotation</h1>
                     <img id="hero-company-logo" src="" alt="" class="hidden h-9 w-auto" onerror="this.style.display='none'">
@@ -37,7 +37,7 @@
             <div class="flex items-center gap-2 shrink-0">
                 <a href="{{ route('motor.quotation') }}"
                    class="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold border border-white/20 text-white/80 hover:bg-white/10 rounded-lg transition">
-                    All Insurers
+                    Compare All Insurers
                 </a>
                 <button class="action-btn action-btn-download inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold bg-blue-500 hover:bg-blue-400 text-white rounded-lg transition"
                         onclick="actionDownload()">
@@ -91,12 +91,8 @@
                 <span class="block font-medium text-gray-800 dark:text-white mt-1" id="s-make">—</span>
             </div>
             <div>
-                <span class="block text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Year / Body</span>
+                <span class="block text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Year</span>
                 <span class="block font-medium text-gray-800 dark:text-white mt-1" id="s-year">—</span>
-            </div>
-            <div>
-                <span class="block text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Colour</span>
-                <span class="block font-medium text-gray-800 dark:text-white mt-1" id="s-color">—</span>
             </div>
             <div>
                 <span class="block text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Chassis No.</span>
@@ -135,51 +131,66 @@
         </div>
     </div>
 
-    {{-- ─── COMPARE PREMIUMS ACROSS INSURERS ────────────────────────────── --}}
+    {{-- ─── BENEFITS & COVER DETAILS ──────────────────────────────────────── --}}
+    @if(!empty($rateCategories) && collect($rateCategories)->flatten(1)->isNotEmpty())
     <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
         <div class="px-6 py-4 border-b border-gray-100 dark:border-gray-700">
-            <p class="text-[10px] font-semibold uppercase tracking-widest text-gray-400">Comparison</p>
-            <h2 class="text-xs font-bold text-gray-800 dark:text-white mt-0.5">Compare Premiums Across Insurers</h2>
-        </div>
-        <div id="comparison-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 p-6"></div>
-    </div>
-
-    {{-- ─── DETAILED COMPARE TABLE ──────────────────────────────────────── --}}
-    <div id="compare-all-wrap" class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
-        <div class="px-6 py-4 border-b border-gray-100 dark:border-gray-700">
             <p class="text-[10px] font-semibold uppercase tracking-widest text-gray-400">Detailed</p>
-            <h2 class="text-xs font-bold text-gray-800 dark:text-white mt-0.5">Premium Comparison — All Insurers</h2>
+            <h2 class="text-xs font-bold text-gray-800 dark:text-white mt-0.5">Benefits &amp; Cover Details</h2>
         </div>
-        <div class="p-6 overflow-x-auto">
-            <table class="w-full text-xs">
-                <thead>
-                    <tr class="text-gray-400 uppercase tracking-wider text-[10px]">
-                        <th class="text-left font-semibold pb-2">Description</th>
-                        <th id="cmp-head-0" class="text-right font-semibold pb-2">Insurer 1</th>
-                        <th id="cmp-head-1" class="text-right font-semibold pb-2">Insurer 2</th>
-                        <th id="cmp-head-2" class="text-right font-semibold pb-2">Insurer 3</th>
-                    </tr>
-                </thead>
-                <tbody id="compare-rows" class="divide-y divide-gray-100 dark:divide-gray-700"></tbody>
-                <tfoot>
-                    <tr class="border-t-2 border-gray-200 dark:border-gray-600">
-                        <td class="pt-3 font-bold text-gray-800 dark:text-white">Total Premium (incl. taxes)</td>
-                        <td id="cmp-total-0" class="pt-3 text-right font-extrabold text-blue-600 dark:text-blue-400">—</td>
-                        <td id="cmp-total-1" class="pt-3 text-right font-extrabold text-blue-600 dark:text-blue-400">—</td>
-                        <td id="cmp-total-2" class="pt-3 text-right font-extrabold text-blue-600 dark:text-blue-400">—</td>
-                    </tr>
-                </tfoot>
-            </table>
+        <div class="p-6 space-y-6">
+            @foreach($rateCategories as $categoryLabel => $items)
+                @if($items->isNotEmpty())
+                <div>
+                    <h4 class="text-[10px] font-bold uppercase tracking-widest text-blue-600 dark:text-blue-400 mb-2">{{ $categoryLabel }}</h4>
+                    <div class="overflow-x-auto rounded-xl border border-gray-100 dark:border-gray-700">
+                        <table class="w-full text-xs">
+                            <thead>
+                                <tr class="text-gray-400 uppercase tracking-wider text-[10px]">
+                                    <th class="text-left font-semibold pb-2 px-4 pt-3">Description</th>
+                                    <th class="text-left font-semibold pb-2 px-4 pt-3">Rate / Notes</th>
+                                    <th class="text-right font-semibold pb-2 px-4 pt-3">Amount (KES)</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
+                                @foreach($items as $item)
+                                <tr class="hover:bg-blue-50 dark:hover:bg-blue-900/20">
+                                    <td class="px-4 py-2.5 text-gray-600 dark:text-gray-300 w-1/3">{{ $item->item_name }}</td>
+                                    <td class="px-4 py-2.5 text-gray-400 text-[11px]">{{ $item->notes ?: '—' }}</td>
+                                    <td class="px-4 py-2.5 text-right font-semibold text-gray-800 dark:text-white tabular-nums">
+                                        @if($item->item_name === 'Max Age New Business' && $item->value)
+                                            {{ number_format($item->value, 0) }} years
+                                        @elseif($item->percentage)
+                                            @if(($carValuation ?? 0) > 0)
+                                                KES {{ number_format($item->computeAmountFor((float) $carValuation), 2) }}
+                                            @else
+                                                {{ \App\Models\Rate::fmtPercent($item->percentage) }}%
+                                            @endif
+                                        @elseif($item->value)
+                                            KES {{ number_format($item->value, 0) }}
+                                        @else
+                                            —
+                                        @endif
+                                    </td>
+                                </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                @endif
+            @endforeach
         </div>
     </div>
+    @endif
 
-    {{-- ─── DOWNLOAD CARDS ──────────────────────────────────────────────── --}}
+    {{-- ─── DOWNLOAD CARD ──────────────────────────────────────────────── --}}
     <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
         <div class="px-6 py-4 border-b border-gray-100 dark:border-gray-700">
             <p class="text-[10px] font-semibold uppercase tracking-widest text-gray-400">Actions</p>
-            <h2 class="text-xs font-bold text-gray-800 dark:text-white mt-0.5" id="dl-cards-label">Download Quote</h2>
+            <h2 class="text-xs font-bold text-gray-800 dark:text-white mt-0.5">Download Quote</h2>
         </div>
-        <div id="dl-cards" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 p-6"></div>
+        <div id="dl-card-single" class="p-6"></div>
     </div>
 
     {{-- ─── ACTION BAR ──────────────────────────────────────────────────── --}}
@@ -213,8 +224,16 @@
         </div>
     </div>
 
-    {{-- ─── PDF PREVIEW (print target) ──────────────────────────────────── --}}
-    <div class="pdf-preview" id="pdf-preview" style="display:none"></div>
+    {{-- ─── PDF PREVIEW (real, streamed from the server) ─────────────────── --}}
+    <div class="pdf-preview" id="pdf-preview" style="display:none">
+        <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+            <div class="px-6 py-3 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between">
+                <p class="text-xs font-bold text-gray-800 dark:text-white">Quotation Preview</p>
+                <button onclick="actionTogglePreview()" class="text-gray-400 hover:text-gray-600 text-lg leading-none">&times;</button>
+            </div>
+            <iframe id="pdf-preview-frame" name="pdf-preview-frame" style="width:100%;height:80vh;border:0;display:block"></iframe>
+        </div>
+    </div>
 
 </div>
 
@@ -229,8 +248,8 @@ window.quotationVehicleType = '{{ $vehicleType ?? 'psv' }}';
 window.quotationNumPassengers = {{ $numPassengers ?? 1 }};
 window.quotationCompanies = @json($companies->map(fn($c) => ['slug' => $c->slug, 'name' => $c->name, 'logo' => $c->logoUrl()]));
 window.hardcodedLogos  = @json($hardcodedLogos ?? []);
-window.selectedCompanySlug = {{ $selectedCompany ? json_encode($selectedCompany->slug) : 'null' }};
-window.MIC_QUOTATION_SLUG  = {{ $selectedCompany ? json_encode($selectedCompany->slug) : 'null' }};
+window.selectedCompanySlug = {{ json_encode($selectedCompany->slug) }};
+window.MIC_QUOTATION_SLUG  = {{ json_encode($selectedCompany->slug) }};
 </script>
 
 @php

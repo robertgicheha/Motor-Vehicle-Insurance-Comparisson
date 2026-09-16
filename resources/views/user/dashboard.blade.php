@@ -1,5 +1,5 @@
 <x-app-layout>
-<div class="space-y-6 pt-10 fade-in">
+<div class="space-y-6 pt-16 md:pt-10 fade-in">
 
     {{-- ─── HERO ─────────────────────────────────────────────────────────── --}}
     <div class="rounded-2xl bg-micblue px-6 py-7 shadow-sm">

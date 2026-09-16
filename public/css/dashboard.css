@@ -45,6 +45,12 @@ body {
   box-sizing: border-box;
 }
 
+/* On mobile the fixed top nav bar sits closer to the greeting heading than on
+   desktop, so give it extra clearance there specifically. */
+@media (max-width: 767px) {
+  .db-root { margin-top: 56px; }
+}
+
 .db-top-bar {
   display: flex;
   align-items: center;

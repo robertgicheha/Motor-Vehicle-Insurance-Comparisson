@@ -26,6 +26,14 @@ class SecurityHeaders
         // break: no plugin/object embeds, no <base> tag, no external form
         // actions, no framing by another site.
         //
+        // 'unsafe-eval' is required by Alpine.js (used throughout the sidebar,
+        // dashboards, and every x-data/x-show/x-on directive): its standard
+        // build evaluates those attribute strings via `new Function()`.
+        // Without it every Alpine expression throws a CSP violation and fails
+        // silently — most visibly, x-show bindings never resolve to false, so
+        // modals/dropdowns that should default to closed (e.g. quick search,
+        // the dashboard's quotation-calendar modal) render stuck open instead.
+        //
         // Skipped in 'local' — Vite's dev server (@vite() with public/hot
         // present) serves assets from its own host:port over a WebSocket
         // connection for HMR, which a locked-down CSP blocks outright
@@ -36,7 +44,7 @@ class SecurityHeaders
         if (!app()->environment('local')) {
             $response->headers->set('Content-Security-Policy', implode('; ', [
                 "default-src 'self'",
-                "script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://www.google.com https://www.gstatic.com",
+                "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://www.google.com https://www.gstatic.com",
                 "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
                 "font-src 'self' https://fonts.gstatic.com data:",
                 "img-src 'self' data: https:",

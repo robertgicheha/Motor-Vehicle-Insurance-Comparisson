@@ -179,6 +179,7 @@
                     <input type="hidden" name="car_registration" :value="data.reg">
                     <input type="hidden" name="chassis_number" :value="data.chassis">
                     <input type="hidden" name="engine_number" :value="data.engine">
+                    <input type="hidden" name="body_type" :value="data.body">
                     <input type="hidden" name="car_valuation" :value="vehicleValue">
                     <input type="hidden" name="vehicle_type" :value="data.vehicle_type || 'private'">
                     <input type="hidden" name="num_passengers" :value="data.numPassengers || data.num_passengers || 1">

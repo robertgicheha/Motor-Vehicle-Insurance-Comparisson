@@ -74,7 +74,7 @@
     <div id="compare-all-wrap" class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
         <div class="px-6 py-4 border-b border-gray-100 dark:border-gray-700">
             <p class="text-[10px] font-semibold uppercase tracking-widest text-gray-400">Detailed</p>
-            <h2 class="text-xs font-bold text-gray-800 dark:text-white mt-0.5">Premium Comparison — All Insurers</h2>
+            <h2 class="text-xs font-bold text-gray-800 dark:text-white mt-0.5">Premium Comparison — All Underwriters</h2>
         </div>
         <div class="p-6 overflow-x-auto">
             <table class="w-full text-xs">
@@ -132,7 +132,7 @@
                             <tr class="hover:bg-blue-50 dark:hover:bg-blue-900/20">
                                 <td class="px-4 py-2.5 text-gray-600 dark:text-gray-300 w-1/3">{{ $row['item'] }}</td>
                                 @foreach($section['companies'] as $company)
-                                <td class="px-4 py-2.5 text-right font-semibold text-gray-800 dark:text-white tabular-nums">{{ $row['values'][$company['slug']] }}</td>
+                                <td class="px-4 py-2.5 text-right font-semibold text-gray-800 dark:text-white tabular-nums">{!! $row['values'][$company['slug']] !!}</td>
                                 @endforeach
                             </tr>
                             @endforeach

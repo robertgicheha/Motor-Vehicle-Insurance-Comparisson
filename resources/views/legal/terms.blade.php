@@ -39,7 +39,7 @@
 
         <section>
             <h2 class="text-base font-bold text-[#1a1a2e] mb-2">4. Quotations</h2>
-            <p>Premium quotations generated on the Portal are computed from rate tables configured by each participating underwriter and are provided for indicative and comparison purposes only. <strong>All amounts calculated are subject to the underwriter's final confirmation</strong> and may change following the underwriter's own review of the vehicle, the proposed insured, and any supporting documentation. A quotation does not constitute a binding offer of cover, and cover only takes effect once the relevant underwriter has issued a policy or sticker.</p>
+            <p>Premium quotations generated on the Portal are computed from rate tables configured by each participating underwriter. <strong>All amounts calculated are subject to the underwriter's final confirmation.</strong>. A quotation does not constitute a binding offer of cover, and cover only takes effect once the relevant underwriter has issued a policy or sticker.</p>
         </section>
 
         <section>
@@ -55,12 +55,12 @@
 
         <section>
             <h2 class="text-base font-bold text-[#1a1a2e] mb-2">7. Accuracy of Information</h2>
-            <p>You are responsible for the accuracy and completeness of any information and documentation submitted through the Portal, including customer details, vehicle details, and supporting documents. Inaccurate or incomplete information may result in delays, a revised quotation, or a declined request by the underwriter.</p>
+            <p>The user is responsible for the accuracy and completeness of any information and documentation submitted through the Portal, including customer details, vehicle details, and supporting documents. Inaccurate or incomplete information may result in delays, a revised quotation, or a declined request by the underwriter.</p>
         </section>
 
         <section>
             <h2 class="text-base font-bold text-[#1a1a2e] mb-2">8. Role of Underwriters</h2>
-            <p>Participating insurance underwriters are independent third parties. MIC Global Risks and LOLC are not responsible for an underwriter's decision to accept, decline, price, or delay any quotation, sticker request, or claim. Any dispute regarding cover, pricing, or claims settlement is between the customer/User and the relevant underwriter.</p>
+            <p>Participating insurance underwriters are independent third parties. MIC Global Risks and LOLC are not responsible for an underwriter's decision to accept, decline, price, or delay any quotation, sticker request, or claim. Any dispute regarding cover, pricing, or claims settlement is between the customer/user and the relevant underwriter.</p>
         </section>
 
         <section>
@@ -77,7 +77,7 @@
 
         <section>
             <h2 class="text-base font-bold text-[#1a1a2e] mb-2">11. Portal Availability, Maintenance &amp; Changes</h2>
-            <p>We aim to keep the Portal continuously available, and monitor its core services on an ongoing automated basis. Planned maintenance is scheduled outside business hours where practicable and communicated to LOLC in advance. We may release fixes, updates, and new functionality to the Portal from time to time; material changes affecting how LOLC staff use the Portal, or how customer/KYC data is handled, will be communicated to LOLC in advance of release wherever practicable, while minor fixes and non-functional changes may be released without prior notice. Emergency security patches may be applied without advance notice where necessary to protect the Portal, followed by prompt notification to LOLC.</p>
+            <p>We aim to keep the Portal continuously available, and monitor its core services on an ongoing automated basis. Planned maintenance is scheduled outside business hours where practicable and communicated to LOLC in advance. We may release fixes, updates, and new functionality to the Portal from time to time; material changes affecting how LOLC staff use the Portal, or how customer/KYC data is handled, will be communicated to LOLC in advance of release wherever practicable. Emergency security patches may be applied without advance notice where necessary to protect the Portal, followed by prompt notification to LOLC.</p>
         </section>
 
         <section>

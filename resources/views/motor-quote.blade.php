@@ -193,7 +193,7 @@
         </div>
       </div>
       <div class="btn-group">
-        <button class="btn btn-primary" onclick="goStep(2)">Continue to Vehicle Details →</button>
+        <button class="btn btn-primary" onclick="validateStep1AndProceed('', function(){ goStep(2) })">Continue to Vehicle Details →</button>
       </div>
     </div>
 
@@ -201,7 +201,7 @@
       <div class="form-grid">
         <div class="form-group">
           <label>Registration Number <span class="req">*</span></label>
-          <input type="text" id="f-reg" placeholder="e.g. KDH 724V" oninput="validateReg(this)">
+          <input type="text" id="f-reg" placeholder="e.g. KDH 724V" oninput="validateReg('', this)">
           <div class="reg-error" id="f-reg-error" style="color:var(--red);font-size:11px;display:none;margin-top:2px">Invalid Kenyan registration format (e.g. KDH 291H)</div>
         </div>
         <div class="form-group" id="f-pax-group" style="display:none">
@@ -243,16 +243,19 @@
           <div class="value-error" id="f-year-error" style="display:none;color:var(--red);font-size:11px;margin-top:4px"></div>
         </div>
         <div class="form-group">
+          <label>Body Type <span class="req">*</span></label>
+          <input type="text" id="f-body" placeholder="e.g. Saloon, SUV, Pick-up" pattern="[A-Za-z\s\-]{2,50}" title="Letters only, 2-50 characters" autocomplete="off">
+          <div class="value-error" id="f-body-error" style="display:none">Please enter a valid body type (letters only).</div>
+        </div>
+        <div class="form-group">
           <label>Value of Vehicle (KES) <span class="req">*</span></label>
           <input type="text" id="f-value" placeholder="e.g. 800,000" autocomplete="off">
-          <div class="value-range-hint" id="f-value-hint">Enter the value of your vehicle</div>
           <div class="value-error" id="f-value-error" style="display:none"></div>
-          <div class="min-sum-hint" id="f-min-sum-hint" style="font-size:11px;color:var(--text-muted);margin-top:4px"></div>
         </div>
       </div>
       <div class="btn-group">
         <button class="btn btn-secondary" onclick="goStep(1)">← Back</button>
-        <button class="btn btn-primary" onclick="goStep(3)">Continue to Quote Generation →</button>
+        <button class="btn btn-primary" onclick="validateStep2AndProceed()">Continue to Quote Generation →</button>
       </div>
     </div>
 
@@ -278,6 +281,8 @@
 
 <x-public-footer/>
 
+<script src="{{ asset('js/mic-toast.js') }}"></script>
+<script src="{{ asset('js/home.js') }}"></script>
 <script>
 window.MIC_COMPANIES_PRIVATE = @json($__privateCompanyData);
 window.MIC_COMPANIES_PSV = @json($__psvCompanyData);
@@ -313,28 +318,9 @@ function closeQuoteFlow() {
   document.getElementById('vehicle-type-section').scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
-function goStep(n) {
-  for (var i = 1; i <= 3; i++) {
-    var tab = document.getElementById('step-tab-' + i);
-    var panel = document.getElementById('panel-' + i);
-    if (tab) tab.classList.toggle('active', i === n);
-    if (panel) panel.classList.toggle('active', i === n);
-  }
-}
-
 function toggleOtherColor(sel) {
   var other = document.getElementById('f-color-other');
   if (other) other.style.display = sel.value === 'Other' ? 'block' : 'none';
-}
-
-function validateReg(input) {
-  var pattern = /^[A-Za-z]{3}\s?\d{3}[A-Za-z]$/;
-  var error = document.getElementById('f-reg-error');
-  if (!pattern.test(input.value)) {
-    if (error) error.style.display = 'block';
-  } else {
-    if (error) error.style.display = 'none';
-  }
 }
 </script>
 </body>

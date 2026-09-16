@@ -185,7 +185,7 @@
             </div>
             <div class="flex justify-end gap-2 mt-6 pt-4 border-t border-gray-100 dark:border-gray-700">
                 <a href="{{ route('quotations.index') }}" class="px-4 py-2 text-xs font-medium border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition">← Cancel</a>
-                <button onclick="goStep(2)" class="px-5 py-2 text-xs font-semibold bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition">Continue to Vehicle Details →</button>
+                <button onclick="validateStep1AndProceed()" class="px-5 py-2 text-xs font-semibold bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition">Continue to Vehicle Details →</button>
             </div>
         </div>
 
@@ -236,18 +236,22 @@
                     <select id="f-year" class="w-full px-3 py-2 text-xs rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none"></select>
                 </div>
                 <div>
+                    <label class="block text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1" for="f-body">Body Type <span class="text-rose-500">*</span></label>
+                    <input type="text" id="f-body" value="{{ $prefill['body'] }}" class="w-full px-3 py-2 text-xs rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none" placeholder="e.g. Saloon, SUV, Pick-up" pattern="[A-Za-z\s\-]{2,50}" title="Letters only, 2-50 characters" autocomplete="off">
+                    <div class="text-[10px] text-red-500 font-semibold mt-1" id="f-body-error" style="display:none">Please enter a valid body type (letters only).</div>
+                </div>
+                <div>
                     <label class="block text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Value of Vehicle (KES) <span class="text-rose-500">*</span></label>
                     <div class="relative">
                         <span class="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-bold text-gray-400">KES</span>
                         <input type="text" id="f-value" value="{{ $prefill['value'] ? number_format((float) $prefill['value']) : '' }}" class="w-full pl-11 pr-3 py-2 text-xs rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none" placeholder="800,000" autocomplete="off">
                     </div>
-                    <div class="text-[10px] text-gray-400 mt-1" id="f-value-hint">Enter between KES 800,000 and KES 1,300,000</div>
                     <div class="text-[10px] text-red-500 font-semibold mt-1" id="f-value-error" style="display:none"></div>
                 </div>
             </div>
             <div class="flex justify-between gap-2 mt-6 pt-4 border-t border-gray-100 dark:border-gray-700">
                 <button onclick="goStep(1)" class="px-4 py-2 text-xs font-medium border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition">← Back</button>
-                <button onclick="goStep(3)" class="px-5 py-2 text-xs font-semibold bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition">Continue to Quote Generation →</button>
+                <button onclick="validateStep2AndProceed()" class="px-5 py-2 text-xs font-semibold bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition">Continue to Quote Generation →</button>
             </div>
         </div>
 
@@ -454,6 +458,43 @@ function goStep(n) {
     panel.style.display = 'block';
     window.scrollTo({ top: 0, behavior: 'smooth' });
 }
+
+function validateStep1AndProceed() {
+    var first = (document.getElementById('f-first').value || '').trim();
+    var last = (document.getElementById('f-last').value || '').trim();
+    var phone = (document.getElementById('f-phone').value || '').trim();
+    var email = (document.getElementById('f-email').value || '').trim();
+    if (!first) { micToastError('Please enter the first name.'); return; }
+    if (!last) { micToastError('Please enter the last name.'); return; }
+    if (phone.replace(/\D/g, '').length < 9) { micToastError('Please enter a valid phone number.'); return; }
+    if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { micToastError('Please enter a valid email address.'); return; }
+    micToastSuccess('Personal Details entered successfully');
+    goStep(2);
+}
+
+function validateStep2AndProceed() {
+    var reg = (document.getElementById('f-reg').value || '').trim();
+    var make = (document.getElementById('f-make-value').value || document.getElementById('f-make').value || '').trim();
+    var model = (document.getElementById('f-model-value').value || document.getElementById('f-model').value || '').trim();
+    var body = (document.getElementById('f-body').value || '').trim();
+    var bodyErr = document.getElementById('f-body-error');
+    var year = document.getElementById('f-year').value;
+    var valNum = parseInt((document.getElementById('f-value').value || '').replace(/,/g, ''), 10) || 0;
+    if (!reg) { micToastError('Please enter the registration number.'); return; }
+    if (!year) { micToastError('Please select the year of manufacture.'); return; }
+    if (!make || !model) { micToastError('Please enter the vehicle make and model.'); return; }
+    if (!body || !/^[A-Za-z\s-]{2,50}$/.test(body)) {
+        if (bodyErr) bodyErr.style.display = '';
+        micToastError('Please enter a valid body type.');
+        return;
+    }
+    if (bodyErr) bodyErr.style.display = 'none';
+    if (!valNum) { micToastError('Please enter the value of the vehicle.'); return; }
+    if (valNum < 800000) { micToastError('Minimum vehicle value is KES 800,000'); return; }
+    if (valNum > 1300000) { micToastError('Maximum vehicle value is KES 1,300,000'); return; }
+    micToastSuccess('Vehicle Details entered successfully');
+    goStep(3);
+}
 document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('panel-1').style.display = 'block';
     document.getElementById('panel-2').style.display = 'none';
@@ -575,22 +616,28 @@ function openQuotePage(insurer) {
     var valFieldEl = document.getElementById('f-value');
     var valRaw = (valFieldEl.value || '').replace(/,/g, '');
     var valNum = parseInt(valRaw, 10) || 0;
-    var valHint = document.getElementById('f-value-hint');
     var valErr = document.getElementById('f-value-error');
     if (valNum < 800000 || valNum > 1300000) {
+        var msg = valNum < 800000 ? 'Minimum vehicle value is KES 800,000' : 'Maximum vehicle value is KES 1,300,000';
         if (valErr) {
-            valErr.textContent = 'Vehicle value must be between KES 800,000 and KES 1,300,000';
+            valErr.textContent = msg;
             valErr.style.display = '';
         }
         valFieldEl.style.borderColor = '#e53e3e';
-        if (valHint) valHint.style.display = 'none';
+        micToastError(msg);
         valFieldEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
         valFieldEl.focus();
         return;
     }
+    var bodyVal = (document.getElementById('f-body').value || '').trim();
+    if (!bodyVal || !/^[A-Za-z\s-]{2,50}$/.test(bodyVal)) {
+        var bodyErr = document.getElementById('f-body-error');
+        if (bodyErr) bodyErr.style.display = '';
+        micToastError('Please enter a valid body type.');
+        return;
+    }
     if (valErr) valErr.style.display = 'none';
     valFieldEl.style.borderColor = '';
-    if (valHint) valHint.style.display = '';
 
     var userId = document.getElementById('f-user-id')?.value || null;
     var makeHidden = (document.getElementById('f-make-value') || {}).value || '';
@@ -630,6 +677,7 @@ function openQuotePage(insurer) {
     };
     sessionStorage.setItem('micQuoteData', JSON.stringify(data));
     clearDraft();
+    micFlagFlashToast('Quote generated successfully');
     var params = '?insurer=' + insurer;
     if (userId) params += '&on_behalf_of=' + userId;
     var destination = insurer === 'ALL' ? "{{ route('quotations.compare-all') }}" : "{{ route('quotations.preview') }}";
@@ -762,18 +810,15 @@ function openQuotePage(insurer) {
     valInput.addEventListener('blur', function() {
         var raw = this.value.replace(/,/g, '');
         var val = parseInt(raw, 10) || 0;
-        var hint = document.getElementById('f-value-hint');
         var err = document.getElementById('f-value-error');
         if (!err) return;
         if (val > 0 && (val < 800000 || val > 1300000)) {
-            err.textContent = 'Vehicle value must be between KES 800,000 and KES 1,300,000';
+            err.textContent = val < 800000 ? 'Minimum vehicle value is KES 800,000' : 'Maximum vehicle value is KES 1,300,000';
             err.style.display = '';
             this.style.borderColor = '#e53e3e';
-            if (hint) hint.style.display = 'none';
         } else {
             err.style.display = 'none';
             this.style.borderColor = '';
-            if (hint) hint.style.display = '';
         }
     });
 })();

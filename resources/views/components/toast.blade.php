@@ -68,13 +68,14 @@ function toastManager(messages = []) {
                 .replace(/'/g, '&#039;');
         },
         // isHtml: opt-in, for trusted markup built in our own code only.
-        addToast(message, type, isHtml) {
+        // duration: optional auto-dismiss override in ms (defaults to 5000).
+        addToast(message, type, isHtml, duration) {
             if (!message) return;
             var toast = { message: message, type: type || 'success', html: isHtml === true, show: true };
             this.toasts.push(toast);
             setTimeout(() => {
                 this.removeToast(this.toasts.indexOf(toast));
-            }, 5000);
+            }, duration || 5000);
         },
         removeToast(index) {
             if (index >= 0 && index < this.toasts.length) {
@@ -88,14 +89,14 @@ function toastManager(messages = []) {
         }
     }
 }
-function showToastError(message) {
+function showToastError(message, duration) {
     if (window._toastManager) {
-        window._toastManager.addToast(message, 'error');
+        window._toastManager.addToast(message, 'error', false, duration);
     }
 }
-function showToastSuccess(message) {
+function showToastSuccess(message, duration) {
     if (window._toastManager) {
-        window._toastManager.addToast(message, 'success');
+        window._toastManager.addToast(message, 'success', false, duration);
     }
 }
 </script>

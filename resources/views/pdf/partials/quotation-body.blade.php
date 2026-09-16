@@ -25,10 +25,6 @@
     $now = now()->format('d F Y');
     $customerName = $quotation->customer_name;
     $isPsv = strtoupper($quotation->vehicle_type ?? 'private') === 'PSV';
-
-    // Any rate item whose notes literally say it isn't covered shouldn't be
-    // printed at all — it's noise, not information a customer needs.
-    $notCovered = fn($r) => $r->notes && stripos($r->notes, 'no cover') !== false;
 @endphp
 
 {{-- MIC GLOBAL RISKS BANNER --}}
@@ -176,8 +172,9 @@
             <tr><td>Training Levy</td><td style="text-align:right">{{ \App\Models\Rate::fmtPercent($_trainingLevyRate) }}%</td><td style="text-align:right">{{ number_format($_trainingLevy, 2) }}</td></tr>
             <tr><td>Policy Holder Fund</td><td style="text-align:right">{{ \App\Models\Rate::fmtPercent($_policyHolderFundRate) }}%</td><td style="text-align:right">{{ number_format($_policyHolderFund, 2) }}</td></tr>
             <tr><td>Stamp Duty</td><td style="text-align:right">-</td><td style="text-align:right">{{ number_format($_stampDuty, 2) }}</td></tr>
-            <tr><td>Excess - Own Damage</td><td style="text-align:right">—</td><td style="text-align:right">0.00</td></tr>
-            <tr><td>Excess - Theft</td><td style="text-align:right">—</td><td style="text-align:right">0.00</td></tr>
+            <tr><td>Excess Protector (Own Damage)</td><td style="text-align:right">—</td><td style="text-align:right">No Cover</td></tr>
+            <tr><td>Excess Protector (Theft)</td><td style="text-align:right">—</td><td style="text-align:right">No Cover</td></tr>
+            <tr><td>Loss of Use</td><td style="text-align:right">—</td><td style="text-align:right">Not Applicable</td></tr>
         </tbody>
         <tfoot>
             <tr class="total-row"><td>Total Premium (incl. taxes)</td><td style="text-align:right">—</td><td style="text-align:right">{{ number_format($_breakdown['total_premium'] ?? $quotation->total_premium, 2) }}</td></tr>
@@ -187,11 +184,10 @@
     @php
         $_benefitsItems = $__companyRates->get('Cover Limits', collect())
             ->merge($__companyRates->get('Extras', collect()))
-            ->reject(fn($r) => $r->item_name === 'Geographical Area')
-            ->reject($notCovered);
-        $_thirdPartyItems = $__companyRates->get('Third Party Limits', collect())->reject($notCovered);
-        $_excessItems = $__companyRates->get('Excess', collect())->reject($notCovered);
-        $_specialConditionItems = $__companyRates->get('Additional Cover', collect())->reject($notCovered);
+            ->reject(fn($r) => $r->item_name === 'Geographical Area');
+        $_thirdPartyItems = $__companyRates->get('Third Party Limits', collect());
+        $_excessItems = $__companyRates->get('Excess', collect());
+        $_specialConditionItems = $__companyRates->get('Additional Cover', collect());
     @endphp
 
     <div class="page-break"></div>
@@ -259,18 +255,14 @@
     @php
         $_maxAgeRatePDF = $__companyRates->get('Premium Rate') ? $__companyRates->get('Premium Rate')->firstWhere('item_name', 'Max Age New Business') : null;
         $_excessProtectorPDF = $__companyRates->get('Additional Cover') ? $__companyRates->get('Additional Cover')->firstWhere('item_name', 'Excess Protector') : null;
-        if ($_excessProtectorPDF && $notCovered($_excessProtectorPDF)) { $_excessProtectorPDF = null; }
-        $_minSumInsuredPDF = $quotation->vehicle_type === 'private' ? $quotation->company->min_sum_insured_private : $quotation->company->min_sum_insured_psv;
-        $_minSumInsuredRatePDF = $__companyRates->get('Premium Rate') ? $__companyRates->get('Premium Rate')->firstWhere('item_name', 'Minimum Sum Insured') : null;
         $_geoAreaPDF = $__companyRates->get('Cover Limits') ? $__companyRates->get('Cover Limits')->firstWhere('item_name', 'Geographical Area') : null;
-        $_optionalBenefitsPDF = $__companyRates->get('Optional Benefits', collect())->reject($notCovered);
+        $_optionalBenefitsPDF = $__companyRates->get('Optional Benefits', collect());
     @endphp
 
     <div class="section-title">ADDITIONAL INFO</div>
     <table>
         <tbody>
-            <tr><td style="width:40%;font-weight:bold">Minimum Sum Insured</td><td style="text-align:right">{{ $_minSumInsuredPDF ? 'KES ' . number_format($_minSumInsuredPDF, 0) : ($_minSumInsuredRatePDF?->notes ?? '—') }}</td></tr>
-            <tr><td style="font-weight:bold">Max Age New Business</td><td style="text-align:right">{{ $_maxAgeRatePDF ? number_format($_maxAgeRatePDF->value, 0) . ' Years' : '—' }}</td></tr>
+            <tr><td style="width:40%;font-weight:bold">Max Age New Business</td><td style="text-align:right">{{ $_maxAgeRatePDF ? number_format($_maxAgeRatePDF->value, 0) . ' Years' : '—' }}</td></tr>
             @if($_excessProtectorPDF)
             <tr><td style="font-weight:bold">Excess Protector</td><td style="text-align:right;font-size:10px">{{ $_excessProtectorPDF->notes ?? '—' }}</td></tr>
             @endif

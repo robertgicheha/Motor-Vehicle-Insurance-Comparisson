@@ -205,11 +205,14 @@ class PublicController extends Controller
             ->get()
             ->groupBy('category');
 
-        $notCovered = fn($r) => $r->notes && stripos($r->notes, 'no cover') !== false;
+        // Excess Protector and Loss of Use are always shown with the fixed
+        // wording below (see SPECIAL CONDITIONS) instead of whatever the rate
+        // settings say for these two items, so drop the real rows here.
+        $isExcessProtectorOrLossOfUse = fn($r) => stripos($r->item_name, 'excess protector') !== false || stripos($r->item_name, 'loss of use') !== false;
 
         $additionalInfo = $rates->get('Optional Benefits', collect())
             ->merge($rates->get('Premium Rate', collect())->whereIn('item_name', ['Max Age New Business', 'Minimum Sum Insured']))
-            ->reject($notCovered);
+            ->reject($isExcessProtectorOrLossOfUse);
 
         // The authoritative minimum sum insured lives on the Company record
         // (min_sum_insured_private/psv) — not the "Minimum Sum Insured" Rate
@@ -228,15 +231,25 @@ class PublicController extends Controller
             }
         }
 
+        $specialConditions = $rates->get('Additional Cover', collect())
+            ->reject($isExcessProtectorOrLossOfUse);
+
+        // Excess Protector and Loss of Use are not offered as standard cover
+        // by any underwriter in this comparison, so always show these fixed
+        // rows rather than each company's (often absent or inconsistent)
+        // rate-settings text for them.
+        $specialConditions->push(new Rate(['item_name' => 'Excess Protector (Own Damage)', 'notes' => 'No Cover']));
+        $specialConditions->push(new Rate(['item_name' => 'Excess Protector (Theft)', 'notes' => 'No Cover']));
+        $specialConditions->push(new Rate(['item_name' => 'Loss of Use', 'notes' => 'Not Applicable']));
+
         return [
             'BENEFITS / COVER LIMITS' => $rates->get('Cover Limits', collect())
                 ->merge($rates->get('Extras', collect()))
-                ->reject(fn($r) => $r->item_name === 'Geographical Area')
-                ->reject($notCovered),
-            'THIRD PARTY LIMITS OF LIABILITY' => $rates->get('Third Party Limits', collect())->reject($notCovered),
-            'POLICY EXCESSES' => $rates->get('Excess', collect())->reject($notCovered),
-            'SPECIAL CONDITIONS' => $rates->get('Additional Cover', collect())->reject($notCovered),
-            'ADDITIONAL INFO' => $additionalInfo,
+                ->reject(fn($r) => $r->item_name === 'Geographical Area'),
+            'THIRD PARTY LIMITS OF LIABILITY' => $rates->get('Third Party Limits', collect()),
+            'POLICY EXCESSES' => $rates->get('Excess', collect()),
+            'SPECIAL CONDITIONS' => $specialConditions,
+            'ADDITIONAL INFO' => $additionalInfo->reject(fn($r) => $r->item_name === 'Minimum Sum Insured'),
         ];
     }
 
@@ -248,12 +261,21 @@ class PublicController extends Controller
      */
     private function benefitsComparisonMatrix($companiesForType, string $vehicleType, float $valuation = 0): array
     {
-        $perCompany = $companiesForType->values()->map(fn($c) => [
-            'slug' => $c->slug,
-            'name' => $c->name,
-            'logo' => $c->logoUrl(),
-            'categories' => $this->rateCategoriesFor($c, $vehicleType),
-        ]);
+        // Excess Protector (Own Damage/Theft) and Loss of Use now live in the
+        // Detailed Compare Table (Premium Comparison) instead, so drop them
+        // here to avoid showing them twice.
+        $movedToDetailedTable = ['Excess Protector (Own Damage)', 'Excess Protector (Theft)', 'Loss of Use'];
+
+        $perCompany = $companiesForType->values()->map(function ($c) use ($vehicleType, $movedToDetailedTable) {
+            $categories = $this->rateCategoriesFor($c, $vehicleType);
+            $categories['SPECIAL CONDITIONS'] = $categories['SPECIAL CONDITIONS']->reject(fn($r) => in_array($r->item_name, $movedToDetailedTable));
+            return [
+                'slug' => $c->slug,
+                'name' => $c->name,
+                'logo' => $c->logoUrl(),
+                'categories' => $categories,
+            ];
+        });
 
         if ($perCompany->isEmpty()) {
             return [];
@@ -282,7 +304,7 @@ class PublicController extends Controller
                     'item' => $itemName,
                     'values' => $perCompany->mapWithKeys(function ($company) use ($itemName, $label, $valuation) {
                         $match = $company['categories'][$label]->firstWhere('item_name', $itemName);
-                        return [$company['slug'] => $this->formatRateItemValue($match, $valuation)];
+                        return [$company['slug'] => $this->formatRateItemValue($match, $valuation, $itemName)];
                     }),
                 ];
             })->values();
@@ -293,24 +315,44 @@ class PublicController extends Controller
         return $matrix;
     }
 
-    private function formatRateItemValue(?Rate $item, float $valuation = 0): string
+    private function formatRateItemValue(?Rate $item, float $valuation = 0, ?string $itemName = null): string
     {
+        // A benefit that another underwriter has but this one doesn't isn't
+        // "unknown" (a dash) — it means this underwriter simply doesn't offer
+        // it, so say so explicitly instead of leaving a blank-looking dash.
         if (!$item) {
-            return '—';
+            return 'No Cover';
         }
-        if ($item->item_name === 'Max Age New Business' && $item->value) {
-            return number_format($item->value, 0) . ' years';
+        // Decimal-cast columns (value/percentage) come back as numeric strings
+        // (e.g. "0.00"), which PHP treats as truthy — so a real 0 must be
+        // compared numerically, not with a bare truthiness check, or a
+        // company with no cover for an item shows a bogus "KES 0" instead of
+        // falling through to its Notes wording (No Cover, Covered, etc.).
+        $value = (float) ($item->value ?? 0);
+        $percentage = (float) ($item->percentage ?? 0);
+
+        if ($item->item_name === 'Max Age New Business' && $value > 0) {
+            return number_format($value, 0) . ' years';
         }
-        if ($item->percentage) {
+        if ($percentage > 0) {
             if ($valuation > 0) {
-                return 'KES ' . number_format($item->computeAmountFor($valuation), 2);
+                $formula = $item->notes ?: (Rate::fmtPercent($item->percentage) . '% Min KES ' . number_format((float) ($item->min_value ?? 0), 0));
+                return 'KES ' . number_format((float) ($item->computeAmountFor($valuation) ?? 0), 2)
+                    . ' <span class="text-[10px] text-gray-400 font-normal">(' . e($formula) . ')</span>';
             }
             return Rate::fmtPercent($item->percentage) . '%';
         }
-        if ($item->value) {
-            return 'KES ' . number_format($item->value, 0);
+        if ($value > 0) {
+            $additional = (stripos($item->item_name, 'novice') !== false || stripos($item->item_name, 'young driver') !== false) ? ' additional' : '';
+            return 'KES ' . number_format($value, 0) . $additional;
         }
-        return $item->notes ?: '—';
+        if ($item->notes) {
+            return $item->notes;
+        }
+        if (stripos($item->item_name, 'tracking device') !== false) {
+            return 'No Cover';
+        }
+        return '—';
     }
 
     public function lookupQuotation(Request $request)

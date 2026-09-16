@@ -3,7 +3,8 @@
 
     {{-- ─── SUCCESS ALERT ──────────────────────────────────────────────── --}}
     @if(!empty($showSuccess))
-    <div class="rounded-2xl bg-emerald-500/10 border border-emerald-500/30 px-6 py-5 shadow-sm flex items-center gap-4 print:hidden">
+    <div x-data="{ show: true }" x-init="setTimeout(() => show = false, 5000)" x-show="show" x-transition.opacity
+         class="rounded-2xl bg-emerald-500/10 border border-emerald-500/30 px-6 py-5 shadow-sm flex items-center gap-4 print:hidden">
         <div class="w-10 h-10 rounded-full bg-emerald-500/20 flex items-center justify-center shrink-0">
             <svg class="w-5 h-5 text-emerald-400" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
         </div>
@@ -135,14 +136,7 @@
                     </span>
                 </div>
 
-                {{-- Color --}}
-                <div class="flex justify-between items-start gap-2">
-                    <span class="text-gray-400 shrink-0">Color</span>
-                    <span class="font-medium text-gray-800 dark:text-white text-right">
-                        {{ $quotation->color ?: '—' }}
-                    </span>
-                </div>
-
+                
                 {{-- Chassis No --}}
                 <div class="flex justify-between items-start gap-2">
                     <span class="text-gray-400 shrink-0">Chassis No</span>
@@ -201,7 +195,7 @@
                 <thead>
                     <tr class="text-gray-400 uppercase tracking-wider text-[10px]">
                         <th class="text-left font-semibold pb-2">Description</th>
-                        <th class="text-left font-semibold pb-2">Rate / Notes</th>
+                        <th class="text-left font-semibold pb-2">Rate</th>
                         <th class="text-right font-semibold pb-2">Amount (KES)</th>
                     </tr>
                 </thead>
@@ -243,7 +237,21 @@
                         <td class="px-4 py-3 text-gray-400 text-xs">Fixed</td>
                         <td class="px-4 py-3 text-right font-semibold tabular-nums">{{ number_format($breakdown['stamp_duty'] ?? 0, 2) }}</td>
                     </tr>
-                    
+                    <tr class="hover:bg-blue-50 dark:hover:bg-blue-900/20">
+                        <td class="px-4 py-3">Excess Protector (Own Damage)</td>
+                        <td class="px-4 py-3 text-gray-400 text-xs">—</td>
+                        <td class="px-4 py-3 text-right font-semibold">No Cover</td>
+                    </tr>
+                    <tr class="hover:bg-blue-50 dark:hover:bg-blue-900/20">
+                        <td class="px-4 py-3">Excess Protector (Theft)</td>
+                        <td class="px-4 py-3 text-gray-400 text-xs">—</td>
+                        <td class="px-4 py-3 text-right font-semibold">No Cover</td>
+                    </tr>
+                    <tr class="hover:bg-blue-50 dark:hover:bg-blue-900/20">
+                        <td class="px-4 py-3">Loss of Use</td>
+                        <td class="px-4 py-3 text-gray-400 text-xs">—</td>
+                        <td class="px-4 py-3 text-right font-semibold">Not Applicable</td>
+                    </tr>
                 </tbody>
                 <tfoot>
                     <tr class="border-t-2 border-gray-200 dark:border-gray-600">
@@ -267,22 +275,28 @@
                         <thead>
                             <tr class="text-gray-400 uppercase tracking-wider text-[10px]">
                                 <th class="text-left font-semibold pb-2 px-4 pt-3">Description</th>
-                                <th class="text-left font-semibold pb-2 px-4 pt-3">Rate / Notes</th>
                                 <th class="text-right font-semibold pb-2 px-4 pt-3">Amount (KES)</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
                             @foreach($items as $item)
+                            @php
+                                $itemValue = (float) ($item->value ?? 0);
+                                $itemPercentage = (float) ($item->percentage ?? 0);
+                            @endphp
                             <tr class="hover:bg-blue-50 dark:hover:bg-blue-900/20">
-                                <td class="px-4 py-2.5 text-gray-600 dark:text-gray-300 w-1/3">{{ $item->item_name }}</td>
-                                <td class="px-4 py-2.5 text-gray-400 text-[11px]">{{ $item->notes ?: '—' }}</td>
+                                <td class="px-4 py-2.5 text-gray-600 dark:text-gray-300 w-1/2">{{ $item->item_name }}</td>
                                 <td class="px-4 py-2.5 text-right font-semibold text-gray-800 dark:text-white tabular-nums">
-                                    @if($item->item_name === 'Max Age New Business' && $item->value)
-                                        {{ number_format($item->value, 0) }} years
-                                    @elseif($item->percentage)
-                                        KES {{ number_format($item->computeAmountFor((float) $quotation->car_valuation), 2) }}
-                                    @elseif($item->value)
-                                        KES {{ number_format($item->value, 0) }}
+                                    @if($item->item_name === 'Max Age New Business' && $itemValue > 0)
+                                        {{ number_format($itemValue, 0) }} years
+                                    @elseif($itemPercentage > 0)
+                                        KES {{ number_format((float) ($item->computeAmountFor((float) $quotation->car_valuation) ?? 0), 2) }}
+                                    @elseif($itemValue > 0)
+                                        KES {{ number_format($itemValue, 0) }}{{ (stripos($item->item_name, 'novice') !== false || stripos($item->item_name, 'young driver') !== false) ? ' additional' : '' }}
+                                    @elseif($item->notes)
+                                        {{ $item->notes }}
+                                    @elseif(stripos($item->item_name, 'tracking device') !== false)
+                                        No Cover
                                     @else
                                         —
                                     @endif
@@ -300,7 +314,7 @@
             <table class="w-full text-xs">
                 <tfoot>
                     <tr class="border-t-2 border-gray-200 dark:border-gray-600">
-                        <td colspan="2" class="px-4 py-3 font-bold text-gray-800 dark:text-white">Total Premium (incl. taxes)</td>
+                        <td class="px-4 py-3 font-bold text-gray-800 dark:text-white">Total Premium (incl. taxes)</td>
                         <td class="px-4 py-3 text-right font-extrabold text-lg text-blue-600 dark:text-blue-400">KES {{ number_format($breakdown['total_premium'] ?? $quotation->total_premium, 2) }}</td>
                     </tr>
                 </tfoot>

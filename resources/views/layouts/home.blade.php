@@ -454,7 +454,7 @@
         </div>
       </div>
       <div class="btn-group">
-        <button class="btn btn-primary" onclick="goStepMain(2)">Continue to Vehicle Details →</button>
+        <button class="btn btn-primary" onclick="validateStep1AndProceed('', function(){ goStepMain(2) })">Continue to Vehicle Details →</button>
       </div>
     </div>
 
@@ -505,11 +505,14 @@
           <div class="value-error" id="f-year-error" style="display:none;color:var(--red);font-size:11px;margin-top:4px"></div>
         </div>
         <div class="form-group">
+          <label for="f-body">Body Type <span class="req">*</span></label>
+          <input type="text" id="f-body" placeholder="e.g. Saloon, SUV, Pick-up" pattern="[A-Za-z\s\-]{2,50}" title="Letters only, 2-50 characters" autocomplete="off">
+          <div class="value-error" id="f-body-error" style="display:none">Please enter a valid body type (letters only).</div>
+        </div>
+        <div class="form-group">
           <label for="f-value">Value of Vehicle (KES) <span class="req">*</span></label>
           <input type="text" id="f-value" placeholder="e.g. 800,000" autocomplete="off">
-          <div class="value-range-hint" id="f-value-hint">Enter the value of your vehicle</div>
           <div class="value-error" id="f-value-error" style="display:none"></div>
-          <div class="min-sum-hint" id="f-min-sum-hint" style="font-size:11px;color:var(--text-muted);margin-top:4px"></div>
         </div>
       </div>
       <div class="btn-group">
@@ -657,7 +660,7 @@
         </div>
       </div>
       <div class="btn-group">
-        <button class="btn btn-primary" onclick="goStep('psv',2)">Continue to Vehicle Details →</button>
+        <button class="btn btn-primary" onclick="validateStep1AndProceed('psv', function(){ goStep('psv',2) })">Continue to Vehicle Details →</button>
       </div>
     </div>
 
@@ -708,11 +711,14 @@
           <div class="value-error" id="f-year-error-psv" style="display:none;color:var(--red);font-size:11px;margin-top:4px"></div>
         </div>
         <div class="form-group">
+          <label for="f-body-psv">Body Type <span class="req">*</span></label>
+          <input type="text" id="f-body-psv" placeholder="e.g. Saloon, SUV, Pick-up" pattern="[A-Za-z\s\-]{2,50}" title="Letters only, 2-50 characters" autocomplete="off">
+          <div class="value-error" id="f-body-error-psv" style="display:none">Please enter a valid body type (letters only).</div>
+        </div>
+        <div class="form-group">
           <label for="f-value-psv">Value of Vehicle (KES) <span class="req">*</span></label>
           <input type="text" id="f-value-psv" placeholder="e.g. 800,000" autocomplete="off">
-          <div class="value-range-hint" id="f-value-hint-psv">Enter the value of your vehicle</div>
           <div class="value-error" id="f-value-error-psv" style="display:none"></div>
-          <div class="min-sum-hint" id="f-min-sum-hint-psv" style="font-size:11px;color:var(--text-muted);margin-top:4px"></div>
         </div>
       </div>
       <div class="btn-group">
@@ -916,7 +922,7 @@
         </div>
       </div>
       <div class="btn-group">
-        <button class="btn btn-primary" onclick="goStep('private',2)">Continue to Vehicle Details →</button>
+        <button class="btn btn-primary" onclick="validateStep1AndProceed('private', function(){ goStep('private',2) })">Continue to Vehicle Details →</button>
       </div>
     </div>
 
@@ -962,11 +968,14 @@
           <div class="value-error" id="f-year-error-private" style="display:none;color:var(--red);font-size:11px;margin-top:4px"></div>
         </div>
         <div class="form-group">
+          <label for="f-body-private">Body Type <span class="req">*</span></label>
+          <input type="text" id="f-body-private" placeholder="e.g. Saloon, SUV, Pick-up" pattern="[A-Za-z\s\-]{2,50}" title="Letters only, 2-50 characters" autocomplete="off">
+          <div class="value-error" id="f-body-error-private" style="display:none">Please enter a valid body type (letters only).</div>
+        </div>
+        <div class="form-group">
           <label for="f-value-private">Value of Vehicle (KES) <span class="req">*</span></label>
           <input type="text" id="f-value-private" placeholder="e.g. 800,000" autocomplete="off">
-          <div class="value-range-hint" id="f-value-hint-private">Enter the value of your vehicle</div>
           <div class="value-error" id="f-value-error-private" style="display:none"></div>
-          <div class="min-sum-hint" id="f-min-sum-hint-private" style="font-size:11px;color:var(--text-muted);margin-top:4px"></div>
         </div>
       </div>
       <div class="btn-group">
@@ -1191,7 +1200,7 @@
         </div>
       </div>
       <div class="btn-group">
-        <button class="btn btn-primary" onclick="goStepVT(2)">Continue to Vehicle Details →</button>
+        <button class="btn btn-primary" onclick="validateStep1AndProceed('vt', function(){ goStepVT(2) })">Continue to Vehicle Details →</button>
       </div>
     </div>
   
@@ -1242,11 +1251,14 @@
           <div class="value-error" id="f-year-error-vt" style="display:none;color:var(--red);font-size:11px;margin-top:4px"></div>
         </div>
         <div class="form-group">
+          <label for="f-body-vt">Body Type <span class="req">*</span></label>
+          <input type="text" id="f-body-vt" placeholder="e.g. Saloon, SUV, Pick-up" pattern="[A-Za-z\s\-]{2,50}" title="Letters only, 2-50 characters" autocomplete="off">
+          <div class="value-error" id="f-body-error-vt" style="display:none">Please enter a valid body type (letters only).</div>
+        </div>
+        <div class="form-group">
           <label for="f-value-vt">Value of Vehicle (KES) <span class="req">*</span></label>
           <input type="text" id="f-value-vt" placeholder="e.g. 800,000" autocomplete="off">
-          <div class="value-range-hint" id="f-value-hint-vt">Enter the value of your vehicle</div>
           <div class="value-error" id="f-value-error-vt" style="display:none"></div>
-          <div class="min-sum-hint" id="f-min-sum-hint-vt" style="font-size:11px;color:var(--text-muted);margin-top:4px"></div>
         </div>
       </div>
       <div class="btn-group">
@@ -1833,33 +1845,6 @@ function selectVehicleType(type) {
     subtitle.textContent = 'Complete the form below for your private motor vehicle insurance quotation.';
   }
 
-  var minHints = [];
-  if (type === 'psv') {
-    var slugs = ['sanlam-allianz', 'ga-insurance-ltd', 'definite-insurance'];
-    slugs.forEach(function(s) {
-      var val = window.MIC_MIN_SUM_PSV[s];
-      if (val) {
-        var name = companies.find(function(c) { return c.slug === s; });
-        minHints.push((name ? name.name : s) + ': KES ' + Number(val).toLocaleString('en-KE'));
-      }
-    });
-  } else {
-    var slugs = ['sanlam-allianz', 'ga-insurance-ltd', 'britam'];
-    slugs.forEach(function(s) {
-      var val = window.MIC_MIN_SUM_PRIVATE[s];
-      if (val) {
-        var name = companies.find(function(c) { return c.slug === s; });
-        minHints.push((name ? name.name : s) + ': KES ' + Number(val).toLocaleString('en-KE'));
-      }
-    });
-  }
-  var hintEl = document.getElementById('f-min-sum-hint-vt');
-  if (minHints.length) {
-    hintEl.innerHTML = '<strong>Minimum Sum Insured:</strong> ' + minHints.join(' | ');
-  } else {
-    hintEl.innerHTML = '';
-  }
-
   goStepVT(1);
   vtForm.scrollIntoView({behavior: 'smooth', block: 'start'});
 }
@@ -1899,6 +1884,7 @@ function validateStep2AndProceedVT() {
     {id: 'f-make-value-vt', label: 'Make of Vehicle'},
     {id: 'f-model-value-vt', label: 'Model Name'},
     {id: 'f-year-vt', label: 'Year of Manufacture'},
+    {id: 'f-body-vt', label: 'Body Type'},
     {id: 'f-value-vt', label: 'Value of Vehicle'}
   ];
   var missing = [];
@@ -1907,15 +1893,28 @@ function validateStep2AndProceedVT() {
     if (!el || !el.value.trim()) missing.push(r.label);
   });
   if (missing.length) {
-    alert('Please fill in the following required fields:\n\u2022 ' + missing.join('\n\u2022 '));
+    micToastError('Please fill in the following required fields: ' + missing.join(', '));
     return;
   }
+  var bodyVal = document.getElementById('f-body-vt').value.trim();
+  var bodyErr = document.getElementById('f-body-error-vt');
+  if (!/^[A-Za-z\s-]{2,50}$/.test(bodyVal)) {
+    if (bodyErr) bodyErr.style.display = 'block';
+    micToastError('Please enter a valid body type.');
+    return;
+  }
+  if (bodyErr) bodyErr.style.display = 'none';
   var type = window.MIC_VEHICLE_TYPE;
   var companies = window.MIC_COMPANIES || [];
   var vehicleValue = parseFloat(document.getElementById('f-value-vt').value.replace(/[^0-9.]/g, ''));
-  var vehicleYear = parseInt(document.getElementById('f-year-vt').value);
-  var currentYear = new Date().getFullYear();
-  var minHints = [];
+  if (vehicleValue < 800000) {
+    micToastError('Minimum vehicle value is KES 800,000');
+    return;
+  }
+  if (vehicleValue > 1300000) {
+    micToastError('Maximum vehicle value is KES 1,300,000');
+    return;
+  }
   var errors = [];
   if (type === 'psv') {
     var slugs = ['sanlam-allianz', 'ga-insurance-ltd', 'definite-insurance'];
@@ -1937,15 +1936,10 @@ function validateStep2AndProceedVT() {
     });
   }
   if (errors.length) {
-    alert('The following insurers cannot accept your vehicle value:\n\u2022 ' + errors.join('\n\u2022 '));
+    micToastError('The following insurers cannot accept your vehicle value: ' + errors.join('; '));
     return;
   }
-  var hintEl = document.getElementById('f-min-sum-hint-vt');
-  if (minHints.length) {
-    hintEl.innerHTML = '<strong>Minimum Sum Insured:</strong> ' + minHints.join(' | ');
-  } else {
-    hintEl.innerHTML = '';
-  }
+  micToastSuccess('Vehicle Details entered successfully');
   if (typeof updatePremiumPreview === 'function') updatePremiumPreview('vt');
   goStepVT(3);
 }
@@ -1995,6 +1989,7 @@ function fallbackLogo(el, slug) {
   if (el.nextElementSibling) el.nextElementSibling.style.display = 'block';
 }
 </script>
+<script src="{{ asset('js/mic-toast.js') }}"></script>
 <script src="{{ asset('js/home.js') }}"></script>
 <script>
 // Init value input listeners for suffixed forms, plus the bare main form ('')

@@ -204,9 +204,12 @@ function renderCompareTable(e, t) {
             {
                 label: "PVT Premium",
                 vals: e.map(function (l) {
-                    return fmt(
-                        calcPremiums(t, l, window.quotationNumPassengers).pvt,
-                    );
+                    return l.isPvtInclusive
+                        ? "Inclusive"
+                        : fmt(
+                              calcPremiums(t, l, window.quotationNumPassengers)
+                                  .pvt,
+                          );
                 }),
             },
             {
@@ -222,6 +225,24 @@ function renderCompareTable(e, t) {
                 vals: e.map(function (l) {
                     var c = calcPremiums(t, l, window.quotationNumPassengers);
                     return fmt(c.levis + c.stampDuty);
+                }),
+            },
+            {
+                label: "Excess Protector (Own Damage)",
+                vals: e.map(function () {
+                    return "No Cover";
+                }),
+            },
+            {
+                label: "Excess Protector (Theft)",
+                vals: e.map(function () {
+                    return "No Cover";
+                }),
+            },
+            {
+                label: "Loss of Use",
+                vals: e.map(function () {
+                    return "Not Applicable";
                 }),
             },
         ],
@@ -648,11 +669,13 @@ function initSingleView() {
             ],
             ["Windscreen Premium", "Included", "KES 0"],
             ["Radio / Cassette Premium", "Included", "KES 0"],
-            [
-                "PVT Premium",
-                "@ " + (n.pvtRate * 100).toFixed(2) + "%",
-                fmt(s.pvt),
-            ],
+            n.isPvtInclusive
+                ? ["PVT Premium", "Inclusive", "Inclusive"]
+                : [
+                      "PVT Premium",
+                      "@ " + (n.pvtRate * 100).toFixed(2) + "%",
+                      fmt(s.pvt),
+                  ],
             [
                 "PLL Premium",
                 "@ KES " +

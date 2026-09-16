@@ -17,9 +17,11 @@ class CompareAllQuotationsMail extends Mailable
 
     /**
      * @param Collection $quotations Unsaved Quotation instances (one per insurer), as built by
-     *                                QuotationController::buildCompareAllQuotations().
+     *                                QuotationController::buildCompareAllQuotations() — used for the email body summary table.
+     * @param array $pdfData Combined comparison data built by QuotationController::buildCompareAllPdfData(),
+     *                        used to render the same side-by-side comparison PDF as quotation-compare.blade.php.
      */
-    public function __construct(public Collection $quotations, public string $customerName)
+    public function __construct(public Collection $quotations, public string $customerName, public array $pdfData = [])
     {
     }
 
@@ -43,7 +45,8 @@ class CompareAllQuotationsMail extends Mailable
 
     public function attachments(): array
     {
-        $pdf = Pdf::loadView('pdf.compare-all-quotations', ['quotations' => $this->quotations]);
+        $pdf = Pdf::loadView('pdf.compare-all-quotations', $this->pdfData ?: ['quotations' => $this->quotations])
+            ->setPaper('a4', 'landscape');
 
         return [
             Attachment::fromData(

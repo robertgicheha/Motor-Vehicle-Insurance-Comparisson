@@ -71,8 +71,13 @@
                 </select>
             </div>
             <div>
+                <label class="block text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1" for="dash-f-body">Body Type <span class="text-rose-500">*</span></label>
+                <input type="text" id="dash-f-body" class="w-full px-3 py-2 text-xs rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none" placeholder="e.g. Saloon, SUV, Pick-up" pattern="[A-Za-z\s\-]{2,50}" title="Letters only, 2-50 characters" autocomplete="off">
+            </div>
+            <div>
                 <label class="block text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1" for="dash-f-value">Value (KES) <span class="text-rose-500">*</span></label>
                 <input type="text" id="dash-f-value" class="w-full px-3 py-2 text-xs rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none" placeholder="e.g. 800,000">
+                <div class="text-[10px] text-red-500 font-semibold mt-1" id="dash-f-value-error" style="display:none"></div>
             </div>
             <div id="dash-f-pax-wrap" style="display:none">
                 <label class="block text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1" for="dash-f-pax">Passengers <span class="text-rose-500">*</span></label>

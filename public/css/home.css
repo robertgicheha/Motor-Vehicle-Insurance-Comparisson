@@ -329,12 +329,23 @@
   input,select,textarea{width:100%;padding:11px 14px;border:none;border-radius:6px;font-family:'Inter',sans-serif;font-size:14.5px;color:var(--text);background:var(--white);transition:border-color .2s;outline:none}
   input:focus,select:focus,textarea:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(0,102,179,.08)}
   input::placeholder{color:#9CA3AF}
+  /* Higher specificity than @tailwindcss/forms' :where()-based reset (which
+     otherwise wins the padding tie on every quote form, see the .mic-motor
+     note further down), so this padding bump actually applies everywhere
+     .form-group is used instead of being silently overridden. */
+  .form-group input,.form-group select{padding:14px 16px}
 
   /* ── VEHICLE SEARCH DROPDOWN ── */
   .vehicle-search-wrap{position:relative}
   .vehicle-dropdown{display:none;position:absolute;top:100%;left:0;right:0;z-index:50;background:#fff;border:1px solid #D1D5DB;border-radius:0 0 var(--radius) var(--radius);max-height:220px;overflow-y:auto;box-shadow:0 4px 16px rgba(0,0,0,.1)}
   .vehicle-dropdown.open{display:block}
-  .vehicle-option{padding:10px 14px;font-size:14px;cursor:pointer;border-bottom:1px solid #F3F4F6;transition:background .15s}
+  /* ".vehicle-dropdown " prefix (not just ".vehicle-option") is deliberate: a
+     bare single-class selector here ties in specificity with the .mic-motor
+     reset further down (.mic-motor *{padding:0}), and since that reset comes
+     later in the file it would win the tie and zero out this padding for the
+     PSV/Private forms specifically — the same bug class as the input padding
+     above, just for the make/model suggestion dropdown instead. */
+  .vehicle-dropdown .vehicle-option{padding:14px 16px;font-size:14px;cursor:pointer;border-bottom:1px solid #F3F4F6;transition:background .15s}
   .vehicle-option:last-child{border-bottom:none}
   .vehicle-option:hover{background:#EFF6FF;color:var(--blue)}
   .vehicle-option-other{border-top:1px solid #E5E7EB;color:var(--text-muted);font-style:italic;font-size:13px}
@@ -1135,15 +1146,13 @@
 .mic-motor .modern-section.quote-form .form-group{display:flex;flex-direction:column;gap:6px}
 .mic-motor .modern-section.quote-form label{font-size:13px;font-weight:600;color:var(--text)}
 .mic-motor .modern-section.quote-form label .req{color:var(--red)}
-.mic-motor .modern-section.quote-form input,.mic-motor .modern-section.quote-form select{
-  width:100%;padding:11px 14px;border:none;border-radius:6px;
-  font-family:'Inter',sans-serif;font-size:14.5px;color:var(--text);background:var(--white);
-  transition:border-color .2s;outline:none;
-}
-.mic-motor .modern-section.quote-form input:focus,.mic-motor .modern-section.quote-form select:focus{
-  border-color:var(--blue);box-shadow:0 0 0 3px rgba(0,102,179,.08);
-}
-.mic-motor .modern-section.quote-form input::placeholder{color:#9CA3AF}
+/* No input/select rule here on purpose: the PSV and Private forms (wrapped in
+   .mic-motor) must render inputs identically to the main and VT quote forms,
+   which sit outside .mic-motor and so pick up the site-wide @tailwindcss/forms
+   input styling loaded after this file. A ".mic-motor ..." selector has enough
+   specificity to beat that plugin's :where()-based rules, so having one here
+   made the PSV/Private inputs look different (bordered, square corners) from
+   every other quote form on the site, which all fall through to Tailwind. */
 .mic-motor .modern-section.quote-form .valuation-box{
   background:linear-gradient(135deg,var(--blue-light),#F0F9FF);
   border:1.5px solid var(--blue);border-radius:var(--radius-lg);padding:28px;margin-top:8px;

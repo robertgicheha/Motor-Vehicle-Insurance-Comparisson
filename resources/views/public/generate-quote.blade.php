@@ -281,7 +281,7 @@ Compare All Insurers
         </div>
       </div>
       <div class="btn-group">
-        <button class="btn btn-primary" onclick="goStep(2)">Continue to Vehicle Details →</button>
+        <button class="btn btn-primary" onclick="validateStep1AndProceed('', function(){ goStep(2) })">Continue to Vehicle Details →</button>
       </div>
     </div>
 
@@ -323,25 +323,19 @@ Compare All Insurers
           <select id="f-year"><option value="">Select year...</option></select>
         </div>
         <div class="form-group">
+          <label>Body Type <span class="req">*</span></label>
+          <input type="text" id="f-body" placeholder="e.g. Saloon, SUV, Pick-up" pattern="[A-Za-z\s\-]{2,50}" title="Letters only, 2-50 characters" autocomplete="off">
+          <div class="value-error" id="f-body-error" style="display:none">Please enter a valid body type (letters only).</div>
+        </div>
+        <div class="form-group">
           <label>Value of Vehicle (KES) <span class="req">*</span></label>
           <input type="text" id="f-value" placeholder="e.g. 800,000" autocomplete="off">
-          <div class="value-range-hint" id="f-value-hint">
-            @if($mode === 'single' && $selectedCompany)
-              @php
-                $__minVal = $minSumInsured ?? 0;
-                $__maxVal = $maxSumInsured ?? 10000000;
-              @endphp
-              Enter between KES {{ number_format($__minVal) }} and KES {{ number_format($__maxVal) }}
-            @else
-              Enter between KES 800,000 and KES 10,000,000
-            @endif
-          </div>
           <div class="value-error" id="f-value-error" style="display:none"></div>
         </div>
       </div>
       <div class="btn-group">
         <button class="btn btn-secondary" onclick="goStep(1)">← Back</button>
-        <button class="btn btn-primary" onclick="goStep(3)">Continue to Quote Generation →</button>
+        <button class="btn btn-primary" onclick="validateStep2AndProceed()">Continue to Quote Generation →</button>
       </div>
     </div>
 
@@ -541,7 +535,7 @@ Compare All Insurers
         <div class="form-group">
           <label>Value of Vehicle (KES) <span class="req">*</span></label>
           <input type="text" id="f-value" placeholder="e.g. 800,000" autocomplete="off">
-          <div class="value-range-hint" id="f-value-hint">Enter the value of your vehicle</div>
+          <!-- <div class="value-range-hint" id="f-value-hint">Enter the value of your vehicle</div> -->
           <div class="value-error" id="f-value-error" style="display:none"></div>
           <div class="min-sum-hint" id="f-min-sum-hint" style="font-size:11px;color:var(--text-muted);margin-top:4px"></div>
         </div>
@@ -772,6 +766,7 @@ function guestGuard(callback) {
 
 if (typeof initValueInput === 'function') initValueInput('');
 </script>
+<script src="{{ asset('js/mic-toast.js') }}"></script>
 <script src="{{ asset('js/home.js') }}"></script>
 </body>
 </html>

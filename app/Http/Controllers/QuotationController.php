@@ -496,13 +496,8 @@ class QuotationController extends Controller
             ->get()
             ->groupBy('category');
 
-        // Any rate item whose notes literally say it isn't covered is dropped —
-        // it's noise, not information the customer needs to see.
-        $notCovered = fn($r) => $r->notes && stripos($r->notes, 'no cover') !== false;
-
         $additionalInfo = $rates->get('Optional Benefits', collect())
-            ->merge($rates->get('Premium Rate', collect())->whereIn('item_name', ['Max Age New Business', 'Minimum Sum Insured']))
-            ->reject($notCovered);
+            ->merge($rates->get('Premium Rate', collect())->whereIn('item_name', ['Max Age New Business', 'Minimum Sum Insured']));
 
         // The authoritative minimum sum insured lives on the Company record
         // (min_sum_insured_private/psv) — not the "Minimum Sum Insured" Rate
@@ -524,12 +519,11 @@ class QuotationController extends Controller
         return [
             'BENEFITS / COVER LIMITS' => $rates->get('Cover Limits', collect())
                 ->merge($rates->get('Extras', collect()))
-                ->reject(fn($r) => $r->item_name === 'Geographical Area')
-                ->reject($notCovered),
-            'THIRD PARTY LIMITS OF LIABILITY' => $rates->get('Third Party Limits', collect())->reject($notCovered),
-            'POLICY EXCESSES' => $rates->get('Excess', collect())->reject($notCovered),
-            'SPECIAL CONDITIONS' => $rates->get('Additional Cover', collect())->reject($notCovered),
-            'ADDITIONAL INFO' => $additionalInfo,
+                ->reject(fn($r) => $r->item_name === 'Geographical Area'),
+            'THIRD PARTY LIMITS OF LIABILITY' => $rates->get('Third Party Limits', collect()),
+            'POLICY EXCESSES' => $rates->get('Excess', collect()),
+            'SPECIAL CONDITIONS' => $rates->get('Additional Cover', collect()),
+            'ADDITIONAL INFO' => $additionalInfo->reject(fn($r) => $r->item_name === 'Minimum Sum Insured'),
         ];
     }
 
@@ -880,17 +874,211 @@ class QuotationController extends Controller
         })->values();
     }
 
-    public function compareAllPdfPreview(Request $request)
+    /**
+     * Groups one company's rate settings the same way the public "Compare
+     * All" web page does (PublicController::rateCategoriesFor), so the
+     * combined comparison PDF always shows the exact same benefit wording
+     * as quotation-compare.blade.php. Kept as its own copy (rather than a
+     * shared helper) to match this codebase's existing pattern of one
+     * rate-categorization method per controller.
+     */
+    private function compareRateCategoriesFor(Company $company, string $vehicleType): array
+    {
+        $rates = $company->rates()
+            ->where('vehicle_type', $vehicleType)
+            ->get()
+            ->groupBy('category');
+
+        $isExcessProtectorOrLossOfUse = fn($r) => stripos($r->item_name, 'excess protector') !== false || stripos($r->item_name, 'loss of use') !== false;
+
+        $additionalInfo = $rates->get('Optional Benefits', collect())
+            ->merge($rates->get('Premium Rate', collect())->whereIn('item_name', ['Max Age New Business', 'Minimum Sum Insured']))
+            ->reject($isExcessProtectorOrLossOfUse);
+
+        $minSumInsured = $vehicleType === 'psv' ? (float) $company->min_sum_insured_psv : (float) $company->min_sum_insured_private;
+        if ($minSumInsured > 0) {
+            $minSumInsuredItem = $additionalInfo->firstWhere('item_name', 'Minimum Sum Insured');
+            if ($minSumInsuredItem) {
+                $minSumInsuredItem->value = $minSumInsured;
+                $minSumInsuredItem->percentage = null;
+            } else {
+                $additionalInfo->push(new Rate(['item_name' => 'Minimum Sum Insured', 'value' => $minSumInsured]));
+            }
+        }
+
+        $specialConditions = $rates->get('Additional Cover', collect())
+            ->reject($isExcessProtectorOrLossOfUse);
+
+        $specialConditions->push(new Rate(['item_name' => 'Excess Protector (Own Damage)', 'notes' => 'No Cover']));
+        $specialConditions->push(new Rate(['item_name' => 'Excess Protector (Theft)', 'notes' => 'No Cover']));
+        $specialConditions->push(new Rate(['item_name' => 'Loss of Use', 'notes' => 'Not Applicable']));
+
+        return [
+            'BENEFITS / COVER LIMITS' => $rates->get('Cover Limits', collect())
+                ->merge($rates->get('Extras', collect()))
+                ->reject(fn($r) => $r->item_name === 'Geographical Area'),
+            'THIRD PARTY LIMITS OF LIABILITY' => $rates->get('Third Party Limits', collect()),
+            'POLICY EXCESSES' => $rates->get('Excess', collect()),
+            'SPECIAL CONDITIONS' => $specialConditions,
+            'ADDITIONAL INFO' => $additionalInfo->reject(fn($r) => $r->item_name === 'Minimum Sum Insured'),
+        ];
+    }
+
+    /**
+     * Pivots each underwriter's rate categories into a side-by-side matrix —
+     * one table per category, one row per benefit, one column per insurer —
+     * for the combined "Compare All" PDF. Mirrors
+     * PublicController::benefitsComparisonMatrix() so the PDF matches the
+     * web comparison page exactly.
+     */
+    private function compareBenefitsMatrix($companies, string $vehicleType, float $valuation = 0): array
+    {
+        // Excess Protector (Own Damage/Theft) and Loss of Use now live in the
+        // Premium Comparison table instead, so drop them here to avoid
+        // showing them twice.
+        $movedToDetailedTable = ['Excess Protector (Own Damage)', 'Excess Protector (Theft)', 'Loss of Use'];
+
+        $perCompany = $companies->values()->map(function ($c) use ($vehicleType, $movedToDetailedTable) {
+            $categories = $this->compareRateCategoriesFor($c, $vehicleType);
+            $categories['SPECIAL CONDITIONS'] = $categories['SPECIAL CONDITIONS']->reject(fn($r) => in_array($r->item_name, $movedToDetailedTable));
+            return [
+                'slug' => $c->slug,
+                'name' => $c->name,
+                'logo' => $c->logoPath(),
+                'categories' => $categories,
+            ];
+        });
+
+        if ($perCompany->isEmpty()) {
+            return [];
+        }
+
+        $categoryLabels = array_keys($perCompany->first()['categories']);
+        $companyColumns = $perCompany->map(fn($c) => ['slug' => $c['slug'], 'name' => $c['name'], 'logo' => $c['logo']])->values();
+
+        $matrix = [];
+        foreach ($categoryLabels as $label) {
+            $itemNames = collect();
+            foreach ($perCompany as $company) {
+                foreach ($company['categories'][$label] as $item) {
+                    if (!$itemNames->contains($item->item_name)) {
+                        $itemNames->push($item->item_name);
+                    }
+                }
+            }
+
+            if ($itemNames->isEmpty()) {
+                continue;
+            }
+
+            $rows = $itemNames->map(function ($itemName) use ($perCompany, $label, $valuation) {
+                return [
+                    'item' => $itemName,
+                    'values' => $perCompany->mapWithKeys(function ($company) use ($itemName, $label, $valuation) {
+                        $match = $company['categories'][$label]->firstWhere('item_name', $itemName);
+                        return [$company['slug'] => $this->compareFormatRateItemValue($match, $valuation, $itemName)];
+                    }),
+                ];
+            })->values();
+
+            $matrix[$label] = ['companies' => $companyColumns, 'rows' => $rows];
+        }
+
+        return $matrix;
+    }
+
+    /**
+     * Same formatting rules as PublicController::formatRateItemValue(), but
+     * with the small-font formula note as an inline style rather than a
+     * Tailwind class, since the PDF is rendered by DomPDF without Tailwind.
+     */
+    private function compareFormatRateItemValue(?Rate $item, float $valuation = 0, ?string $itemName = null): string
+    {
+        // A benefit that another underwriter has but this one doesn't isn't
+        // "unknown" (a dash) — it means this underwriter simply doesn't offer
+        // it, so say so explicitly instead of leaving a blank-looking dash.
+        if (!$item) {
+            return 'No Cover';
+        }
+        // Decimal-cast columns (value/percentage) come back as numeric strings
+        // (e.g. "0.00"), which PHP treats as truthy — so a real 0 must be
+        // compared numerically, not with a bare truthiness check, or a
+        // company with no cover for an item shows a bogus "KES 0" instead of
+        // falling through to its Notes wording (No Cover, Covered, etc.).
+        $value = (float) ($item->value ?? 0);
+        $percentage = (float) ($item->percentage ?? 0);
+
+        if ($item->item_name === 'Max Age New Business' && $value > 0) {
+            return number_format($value, 0) . ' years';
+        }
+        if ($percentage > 0) {
+            if ($valuation > 0) {
+                $formula = $item->notes ?: (Rate::fmtPercent($item->percentage) . '% Min KES ' . number_format((float) ($item->min_value ?? 0), 0));
+                return 'KES ' . number_format((float) ($item->computeAmountFor($valuation) ?? 0), 2)
+                    . ' <span style="font-size:8px;color:#8a8f98">(' . e($formula) . ')</span>';
+            }
+            return Rate::fmtPercent($item->percentage) . '%';
+        }
+        if ($value > 0) {
+            $additional = (stripos($item->item_name, 'novice') !== false || stripos($item->item_name, 'young driver') !== false) ? ' additional' : '';
+            return 'KES ' . number_format($value, 0) . $additional;
+        }
+        if ($item->notes) {
+            return $item->notes;
+        }
+        if (stripos($item->item_name, 'tracking device') !== false) {
+            return 'No Cover';
+        }
+        return '—';
+    }
+
+    /**
+     * Builds the data for one combined comparison-style PDF: a premium
+     * breakdown table and a benefits/cover matrix, both side-by-side across
+     * every matching underwriter — the same shape as quotation-compare.blade.php
+     * — instead of each insurer's full quotation document pasted back to back.
+     */
+    private function buildCompareAllPdfData(Request $request): array
     {
         $quotations = $this->buildCompareAllQuotations($request);
-        $pdf = Pdf::loadView('pdf.compare-all-quotations', ['quotations' => $quotations]);
+        $companies = $quotations->pluck('company')->filter()->values();
+        $vehicleType = $quotations->first()->vehicle_type ?? ($request->vehicle_type ?? 'private');
+        $valuation = (float) ($quotations->first()->car_valuation ?? $request->car_valuation ?? 0);
+
+        return [
+            'quotations' => $quotations,
+            'companies' => $companies,
+            'vehicleType' => $vehicleType,
+            'valuation' => $valuation,
+            'numPassengers' => $quotations->first()->num_passengers ?? (int) $request->input('num_passengers', 1),
+            'benefitsComparison' => $this->compareBenefitsMatrix($companies, $vehicleType, $valuation),
+            'customer' => [
+                'name' => trim(($request->first_name ?? '') . ' ' . ($request->last_name ?? '')) ?: null,
+                'phone' => $request->phone,
+                'email' => $request->email,
+            ],
+            'vehicle' => [
+                'reg' => $request->car_registration,
+                'make' => $request->car_make,
+                'model' => $request->car_model,
+                'year' => $request->car_year,
+                'chassis' => $request->chassis_number,
+                'body_type' => $request->body_type,
+            ],
+        ];
+    }
+
+    public function compareAllPdfPreview(Request $request)
+    {
+        $data = $this->buildCompareAllPdfData($request);
+        $pdf = Pdf::loadView('pdf.compare-all-quotations', $data)->setPaper('a4', 'landscape');
         return $pdf->stream('compare-all-insurers-' . now()->format('Ymd-His') . '.pdf');
     }
 
     public function compareAllPdfDownload(Request $request)
     {
-        $quotations = $this->buildCompareAllQuotations($request);
-        $pdf = Pdf::loadView('pdf.compare-all-quotations', ['quotations' => $quotations]);
+        $data = $this->buildCompareAllPdfData($request);
+        $pdf = Pdf::loadView('pdf.compare-all-quotations', $data)->setPaper('a4', 'landscape');
         return $pdf->download('compare-all-insurers-' . now()->format('Ymd-His') . '.pdf');
     }
 
@@ -906,7 +1094,7 @@ class QuotationController extends Controller
         $customerName = trim(($request->first_name ?? '') . ' ' . ($request->last_name ?? '')) ?: 'Customer';
 
         try {
-            Mail::to($request->email)->send(new CompareAllQuotationsMail($quotations, $customerName));
+            Mail::to($request->email)->send(new CompareAllQuotationsMail($quotations, $customerName, $this->buildCompareAllPdfData($request)));
         } catch (\Exception $e) {
             \Illuminate\Support\Facades\Log::warning('Failed to email compare-all quotation: ' . $e->getMessage());
             return response()->json(['success' => false, 'message' => 'We could not send the email. Please try again.'], 500);

@@ -2,7 +2,8 @@
 <div class="max-w-5xl mx-auto space-y-5 pt-10 fade-in font-montserrat" x-data="{ expanded: true }">
 
     @if(!empty($showSuccess))
-    <div class="rounded-2xl bg-emerald-500/10 border border-emerald-500/30 px-6 py-5 shadow-sm flex items-center gap-4">
+    <div x-data="{ show: true }" x-init="setTimeout(() => show = false, 5000)" x-show="show" x-transition.opacity
+         class="rounded-2xl bg-emerald-500/10 border border-emerald-500/30 px-6 py-5 shadow-sm flex items-center gap-4">
         <div class="w-10 h-10 rounded-full bg-emerald-500/20 flex items-center justify-center shrink-0">
             <svg class="w-5 h-5 text-emerald-400" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
         </div>
@@ -60,7 +61,7 @@
     <div x-show="expanded" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 -translate-y-1" x-transition:enter-end="opacity-100 translate-y-0" class="space-y-5">
 
     {{-- ─── CUSTOMER & VEHICLE SUMMARY ──────────────────────────────────── --}}
-    <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+    <!-- <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
         <div class="px-6 py-4 border-b border-gray-100 dark:border-gray-700">
             <p class="text-[10px] font-semibold uppercase tracking-widest text-gray-400">Summary</p>
             <h2 class="text-xs font-bold text-gray-800 dark:text-white mt-0.5">Customer &amp; Vehicle</h2>
@@ -103,7 +104,7 @@
                 <span class="block font-medium text-gray-800 dark:text-white mt-1" id="s-value">—</span>
             </div>
         </div>
-    </div>
+    </div> -->
 
     {{-- ─── QUOTATION BREAKDOWN (selected company) ──────────────────────── --}}
     <div id="single-breakdown-wrap" class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
@@ -157,17 +158,30 @@
                                 <tr class="hover:bg-blue-50 dark:hover:bg-blue-900/20">
                                     <td class="px-4 py-2.5 text-gray-600 dark:text-gray-300 w-1/3">{{ $item->item_name }}</td>
                                     <td class="px-4 py-2.5 text-gray-400 text-[11px]">{{ $item->notes ?: '—' }}</td>
+                                    @php
+                                        // Decimal-cast columns (value/percentage) come back as numeric
+                                        // strings (e.g. "0.00"), which PHP treats as truthy — compare
+                                        // numerically so a real 0 falls through to the Notes wording
+                                        // (No Cover, Covered, etc.) instead of showing "KES 0".
+                                        $itemValue = (float) ($item->value ?? 0);
+                                        $itemPercentage = (float) ($item->percentage ?? 0);
+                                    @endphp
                                     <td class="px-4 py-2.5 text-right font-semibold text-gray-800 dark:text-white tabular-nums">
-                                        @if($item->item_name === 'Max Age New Business' && $item->value)
-                                            {{ number_format($item->value, 0) }} years
-                                        @elseif($item->percentage)
+                                        @if($item->item_name === 'Max Age New Business' && $itemValue > 0)
+                                            {{ number_format($itemValue, 0) }} years
+                                        @elseif($itemPercentage > 0)
                                             @if(($carValuation ?? 0) > 0)
-                                                KES {{ number_format($item->computeAmountFor((float) $carValuation), 2) }}
+                                                KES {{ number_format((float) ($item->computeAmountFor((float) $carValuation) ?? 0), 2) }}
+                                                <span class="text-[10px] text-gray-400 font-normal">({{ $item->notes ?: (\App\Models\Rate::fmtPercent($item->percentage) . '% Min KES ' . number_format((float) ($item->min_value ?? 0), 0)) }})</span>
                                             @else
                                                 {{ \App\Models\Rate::fmtPercent($item->percentage) }}%
                                             @endif
-                                        @elseif($item->value)
-                                            KES {{ number_format($item->value, 0) }}
+                                        @elseif($itemValue > 0)
+                                            KES {{ number_format($itemValue, 0) }}{{ (stripos($item->item_name, 'novice') !== false || stripos($item->item_name, 'young driver') !== false) ? ' additional' : '' }}
+                                        @elseif($item->notes)
+                                            {{ $item->notes }}
+                                        @elseif(stripos($item->item_name, 'tracking device') !== false)
+                                            No Cover
                                         @else
                                             —
                                         @endif

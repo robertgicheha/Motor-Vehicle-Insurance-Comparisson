@@ -256,7 +256,7 @@
         </div>
       </div>
       <div class="btn-group">
-        <button class="btn btn-primary" onclick="goStep('private',2)">Continue to Vehicle Details →</button>
+        <button class="btn btn-primary" onclick="validateStep1AndProceed('private', function(){ goStep('private',2) })">Continue to Vehicle Details →</button>
       </div>
     </div>
 
@@ -292,11 +292,14 @@
           <div class="value-error" id="f-year-error-private" style="display:none;color:var(--red);font-size:11px;margin-top:4px"></div>
         </div>
         <div class="form-group">
+          <label>Body Type <span class="req">*</span></label>
+          <input type="text" id="f-body-private" placeholder="e.g. Saloon, SUV, Pick-up" pattern="[A-Za-z\s\-]{2,50}" title="Letters only, 2-50 characters" autocomplete="off">
+          <div class="value-error" id="f-body-error-private" style="display:none">Please enter a valid body type (letters only).</div>
+        </div>
+        <div class="form-group">
           <label>Value of Vehicle (KES) <span class="req">*</span></label>
           <input type="text" id="f-value-private" placeholder="e.g. 800,000" autocomplete="off">
-          <div class="value-range-hint" id="f-value-hint-private">Enter the value of your vehicle</div>
           <div class="value-error" id="f-value-error-private" style="display:none"></div>
-          <div class="min-sum-hint" id="f-min-sum-hint-private" style="font-size:11px;color:var(--text-muted);margin-top:4px"></div>
         </div>
       </div>
       <div class="btn-group">
@@ -427,6 +430,7 @@
 </section>
 
 <x-public-footer/>
+<script src="{{ asset('js/mic-toast.js') }}"></script>
 <script src="{{ asset('js/home.js') }}"></script>
 <script>
 window.MIC_COMPANIES = @json($companyData);

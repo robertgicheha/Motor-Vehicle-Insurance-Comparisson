@@ -77,6 +77,7 @@
     </div>
 
     <x-toast />
+    <script src="{{ asset('js/mic-toast.js') }}"></script>
     @auth
         <x-quick-search />
     @endauth

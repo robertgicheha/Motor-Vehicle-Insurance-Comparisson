@@ -768,7 +768,7 @@
     .why-choose-grid{grid-template-columns:1fr !important}
   }
   @media(max-width:900px) and (min-width:701px){
-    .why-choose-grid{grid-template-columns:repeat(2,1fr) !important}
+    .why-choose-grid{grid-template-columns:1fr !important}
   }
 
   .quote-type-toggle{
@@ -943,7 +943,7 @@
 .mic-motor .indicator-line{flex:1;height:1.5px;background:rgba(255,255,255,0.3);margin:0 10px;margin-bottom:24px;}
  
 @media (max-width: 900px){
-  .mic-motor .steps-grid{grid-template-columns:repeat(2,1fr);gap:34px;}
+  .mic-motor .steps-grid{grid-template-columns:1fr;gap:34px;}
   .mic-motor .step-arrow{display:none;}
 }
 @media (max-width: 560px){
@@ -1060,7 +1060,7 @@
     }
     .flip-card.psv .flip-card-back .btn-flip:hover{ color:#D0021B; }
 
-    @media (max-width:720px){
+    @media (max-width:900px){
       #vehicle-type-section .vt-grid{ grid-template-columns:1fr; max-width:400px; }
       .flip-card{ height:400px; }
     }
@@ -1215,5 +1215,64 @@
     transform: translate(-50%, -50%);
     width: 32px;
     height: 32px;
+  }
+}
+
+/* Homepage — mobile & tablet: every section that lays two things side by side
+   (feature list + image, or two/three form fields per row) stacks to a single
+   column, and headings/eyebrows that are centred on desktop move to the left,
+   matching how the rest of the page reads on a narrow screen. 900px covers
+   phones and portrait/landscape tablets alike. */
+@media (max-width: 900px) {
+  /* PSV / Private promo sections (feature list + image) */
+  .mic-motor .modern-grid {
+    grid-template-columns: 1fr;
+    gap: 28px;
+  }
+  .mic-motor .modern-section.psv .modern-image {
+    order: 0;
+  }
+  .mic-motor .modern-image img {
+    height: 220px;
+  }
+  .mic-motor .modern-head {
+    text-align: left;
+    margin-left: 0;
+    margin-right: 0;
+  }
+  .mic-motor .modern-head .eyebrow {
+    justify-content: flex-start;
+  }
+
+  /* Main / VT / PSV / Private quote forms: one field per row, left-aligned
+     headings, and buttons that wrap instead of overflowing off-screen. */
+  .modern-section.quote-form .modern-head,
+  .mic-motor .modern-section.quote-form .modern-head {
+    text-align: left;
+  }
+  .modern-section.quote-form .eyebrow,
+  .mic-motor .modern-section.quote-form .eyebrow {
+    justify-content: flex-start;
+  }
+  .modern-section.quote-form .quote-type-toggle {
+    margin: 0 0 28px;
+  }
+  .mic-motor .modern-section.quote-form .form-grid,
+  .mic-motor .modern-section.quote-form .form-grid.three {
+    grid-template-columns: 1fr;
+  }
+  .btn-group,
+  .mic-motor .modern-section.quote-form .btn-group {
+    flex-wrap: wrap;
+    justify-content: flex-start;
+  }
+
+  /* Retrieve/Regenerate quote box */
+  .regen-box {
+    text-align: left;
+    padding: 24px;
+  }
+  .regen-input-row {
+    flex-direction: column;
   }
 }

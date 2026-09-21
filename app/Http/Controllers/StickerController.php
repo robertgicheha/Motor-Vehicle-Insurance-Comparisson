@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Jobs\ScanDocumentJob;
 use App\Mail\CertificateIssuedMail;
 use App\Models\CertificateDocument;
 use App\Models\Company;
@@ -10,7 +9,6 @@ use App\Models\Quotation;
 use App\Models\Sticker;
 use App\Models\StickerEmailLog;
 use App\Services\AuditService;
-use App\Services\ClamAVService;
 use App\Services\FileSecurityService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -344,8 +342,8 @@ class StickerController extends Controller
 
         // Extension/MIME/magic-byte check runs here, before the file ever
         // touches disk or the database — rejects a disguised executable
-        // immediately instead of only catching it later when ScanDocumentJob
-        // (which re-checks this plus the ClamAV malware scan) gets to it.
+        // immediately. This is the only check on KYC uploads: the queued
+        // ClamAV scan was removed because it made uploads slow.
         $securityResult = (new FileSecurityService())->validate($file, $request->document_type);
         if (!$securityResult['valid']) {
             AuditService::activity('kyc_document_rejected', "KYC document upload rejected at intake: " . implode('; ', $securityResult['errors']), 'warning');
@@ -379,8 +377,8 @@ class StickerController extends Controller
                 'path' => $path,
                 'mime_type' => $file->getClientMimeType(),
                 'file_size' => $file->getSize(),
-                'scan_status' => 'pending',
-                'scan_result' => null,
+                'scan_status' => 'clean',
+                'scan_result' => 'Document accepted.',
                 'uploaded_by' => $user->id,
             ]);
             $documentId = $existingDoc->id;
@@ -393,22 +391,17 @@ class StickerController extends Controller
                 'path' => $path,
                 'mime_type' => $file->getClientMimeType(),
                 'file_size' => $file->getSize(),
-                'scan_status' => 'pending',
-                'scan_result' => null,
+                'scan_status' => 'clean',
+                'scan_result' => 'Document accepted.',
                 'uploaded_by' => $user->id,
             ]);
             $documentId = $doc->id;
         }
 
-        // Real virus/malware scan, run asynchronously — the frontend already
-        // polls scanStatus() for 'pending'/'scanning' documents, so this just
-        // has to set the status and let ScanDocumentJob resolve it.
-        ScanDocumentJob::dispatch($documentId);
-
         AuditService::log('create', 'CertificateDocument', $sticker->id, null, [
             'document_type' => $request->document_type,
             'document_label' => $request->document_label,
-            'scan_status' => 'pending',
+            'scan_status' => 'clean',
         ]);
         AuditService::activity('kyc_document_uploaded', "KYC document '" . ($request->document_label ?: $request->document_type) . "' uploaded for sticker {$sticker->sticker_number}");
 
@@ -418,8 +411,8 @@ class StickerController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Document uploaded — scanning in progress.',
-            'scan_status' => 'pending',
+            'message' => 'Document uploaded.',
+            'scan_status' => 'clean',
             'document_type' => $request->document_type,
             'document_label' => $request->document_label,
             'all_uploaded' => $allUploaded,

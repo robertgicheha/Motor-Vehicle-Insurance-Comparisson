@@ -339,7 +339,6 @@
   </div>
 </section>
 
-{{--
 <!-- ── REGENERATE QUOTE CHOICE (only for logged-in users with a previous quotation) ── -->
 @auth
   @php
@@ -350,7 +349,7 @@
     $__lastQuotation = auth()->user()->quotations()->latest()->first();
   @endphp
   @if ($__lastQuotation)
-  <!-- <section class="section" style="background:#F9F9FF;padding-bottom:0">
+  <section class="section" style="background:#F9F9FF;padding-bottom:0">
     <div class="form-container" id="regenerate-choice">
       <div class="section-head">
         <div class="section-title" style="text-align:center">Welcome back{{ !empty($__lastQuotation->first_name) ? ', ' . $__lastQuotation->first_name : '' }}!</div>
@@ -376,10 +375,9 @@
         </div>
       </div>
     </div>
-  </section> -->
+  </section>
   @endif
 @endauth
---}}
 
 
 

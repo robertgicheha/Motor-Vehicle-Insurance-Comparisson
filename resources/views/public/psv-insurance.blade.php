@@ -1,9 +1,9 @@
 @inject('settingModel', 'App\Models\Setting')
 @php
-    $__logoPath = $settingModel->getValue('logo_path', 'images/MIC-Global-Risks_logo.png');
-    $__logoUrl = $__logoPath ? (str_starts_with($__logoPath, 'images/') ? asset($__logoPath) : asset('storage/' . $__logoPath)) : asset('images/MIC-Global-Risks_logo.png');
-    $__primaryColor = '#D0021B';
-    $__primaryDark = '#a00015';
+    $__logoPath = $settingModel->getValue('logo_path', 'images/LOLC-Kenya.webp');
+    $__logoUrl = $__logoPath ? (str_starts_with($__logoPath, 'images/') ? asset($__logoPath) : asset('storage/' . $__logoPath)) : asset('images/LOLC-Kenya.webp');
+    $__primaryColor = '#ED1D25';
+    $__primaryDark = '#B6161C';
 @endphp
 <!DOCTYPE html>
 <html lang="en">
@@ -11,7 +11,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="csrf-token" content="{{ csrf_token() }}">
-<title>{{ $selectedCompany->name }} PSV Insurance | MIC Global Risks</title>
+<title>{{ $selectedCompany->name }} PSV Insurance | LOLC Microfinance Bank</title>
 <meta name="description" content="Get a PSV motor insurance quote from {{ $selectedCompany->name }}. Comprehensive cover for public service vehicles.">
 <link rel="icon" type="image/x-icon" href="{{ asset('Favicon.png') }}">
 <link rel="preconnect" href="https://fonts.googleapis.com">

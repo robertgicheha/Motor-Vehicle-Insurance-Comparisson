@@ -8,6 +8,7 @@ use Illuminate\Mail\Mailables\Attachment;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\Log;
 
 class ClaimLoggedMail extends Mailable
 {
@@ -24,8 +25,19 @@ class ClaimLoggedMail extends Mailable
 
     public function attachments(): array
     {
+        // Only documents that survived the ESET scan at upload and are still
+        // present on disk are attached; anything missing is skipped (with a
+        // warning) so the underwriter email never fails over a bad path.
         return collect($this->attachmentPaths)
-            ->filter(fn($path) => file_exists($path))
+            ->filter(function ($path) {
+                if (! file_exists($path) || filesize($path) === 0) {
+                    Log::warning('Claim email attachment skipped (missing or empty): ' . $path);
+
+                    return false;
+                }
+
+                return true;
+            })
             ->map(fn($path) => Attachment::fromPath($path))
             ->values()
             ->all();
@@ -33,12 +45,11 @@ class ClaimLoggedMail extends Mailable
 
     public function envelope(): Envelope
     {
-        // No internal claim number in the subject — like sticker requests,
-        // this reference never leaves our system, so it can't help the
-        // underwriter identify anything. They reference the thread by the
-        // vehicle/customer details in the body instead.
+        // The subject references the vehicle registration only — no personal
+        // customer data (and the internal claim number is just a fallback,
+        // since the vehicle is the identity the underwriter knows the case by).
         return new Envelope(
-            subject: 'New Claim Logged - ' . ($this->claim['registration_number'] ?? $this->claim['customer_name'] ?? ''),
+            subject: 'New Claim Logged - ' . ($this->claim['registration_number'] ?? ($this->claim['claim_number'] ?? '')),
         );
     }
 

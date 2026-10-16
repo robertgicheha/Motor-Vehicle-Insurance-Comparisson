@@ -161,9 +161,9 @@
                                         <div>
                                             <label class="block text-[10px] font-medium text-gray-400 mb-1">Accent Color</label>
                                             <div class="flex items-center gap-2">
-                                                <input type="color" name="letterhead_color" value="{{ old('letterhead_color', $setting->letterhead_color ?? '#004f8c') }}"
+                                                <input type="color" name="letterhead_color" value="{{ old('letterhead_color', $setting->letterhead_color ?? '#263B8B') }}"
                                                        class="lh-color h-9 w-12 border border-gray-300 dark:border-gray-600 rounded-lg cursor-pointer bg-white dark:bg-gray-700">
-                                                <span class="lh-color-text text-xs font-mono text-gray-500 dark:text-gray-400">{{ $setting->letterhead_color ?? '#004f8c' }}</span>
+                                                <span class="lh-color-text text-xs font-mono text-gray-500 dark:text-gray-400">{{ $setting->letterhead_color ?? '#263B8B' }}</span>
                                             </div>
                                         </div>
                                         <div>
@@ -216,19 +216,19 @@
                                 </div>
                                 <div class="rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden shadow-sm" style="max-width:520px;margin:0 auto;background:#eef2f7;padding:14px;">
                                     <div class="mx-auto" style="max-width:460px;background:#ffffff;border-radius:10px;overflow:hidden;">
-                                        <div class="lh-preview" style="background:#004f8c;padding:18px 22px;">
+                                        <div class="lh-preview" style="background:#263B8B;padding:18px 22px;">
                                             <div class="lh-preview-img" style="display:none;margin-bottom:6px;">
                                                 <img class="lh-preview-logo" src="" alt="" style="max-height:32px;max-width:130px;display:block;">
                                             </div>
-                                            <div class="lh-preview-brand" style="color:#fff;font-size:18px;font-weight:800;">MIC Global Risks</div>
-                                            <div class="lh-preview-meta" style="color:rgba(255,255,255,.9);font-size:10px;line-height:1.6;margin-top:8px;padding-top:8px;border-top:1px solid rgba(255,255,255,.25);">MIC Global Risks (Kenya) Limited, P.O. Box 10000 - 00100 Nairobi, Kenya<br>www.micglobalrisks.com</div>
+                                            <div class="lh-preview-brand" style="color:#fff;font-size:18px;font-weight:800;">LOLC Microfinance Bank</div>
+                                            <div class="lh-preview-meta" style="color:rgba(255,255,255,.9);font-size:10px;line-height:1.6;margin-top:8px;padding-top:8px;border-top:1px solid rgba(255,255,255,.25);">LOLC Microfinance Bank, P.O. Box 10000 - 00100 Nairobi, Kenya<br>www.micglobalrisks.com</div>
                                         </div>
                                         <div class="body-preview" style="padding:22px;color:#475569;font-size:12px;line-height:1.7;"></div>
                                         <div class="lh-preview-footer" style="background:#f8fafc;padding:12px 22px;text-align:center;border-top:1px solid #e2e8f0;color:#94a3b8;font-size:10px;">
                                             <div class="lh-preview-footer-img" style="display:none;margin-bottom:4px;">
                                                 <img class="lh-preview-logo" src="" alt="" style="max-height:24px;max-width:110px;display:block;margin:0 auto;">
                                             </div>
-                                            <div class="lh-preview-footer-text">MIC Global Risks<br>www.micglobalrisks.com</div>
+                                            <div class="lh-preview-footer-text">LOLC Microfinance Bank<br>www.micglobalrisks.com</div>
                                         </div>
                                     </div>
                                 </div>
@@ -272,9 +272,9 @@ function openLetterheadPicker(btn) {
     function renderPreview(panel) {
         const input = panel.querySelector('.editor-body');
         const color = panel.querySelector('.lh-color').value;
-        const company = panel.querySelector('.lh-company').value || 'MIC Global Risks';
+        const company = panel.querySelector('.lh-company').value || 'LOLC Microfinance Bank';
         const website = panel.querySelector('.lh-website').value || 'www.micglobalrisks.com';
-        const address = panel.querySelector('.lh-address').value || 'MIC Global Risks (Kenya) Limited, P.O. Box 10000 - 00100 Nairobi, Kenya';
+        const address = panel.querySelector('.lh-address').value || 'LOLC Microfinance Bank, P.O. Box 10000 - 00100 Nairobi, Kenya';
         const logo = panel.querySelector('.lh-logo').value;
         const showHeader = panel.querySelector('.lh-logo-header').checked;
         const showFooter = panel.querySelector('.lh-logo-footer').checked;
@@ -291,7 +291,7 @@ function openLetterheadPicker(btn) {
 
         const applyLogo = (img) => {
             img.style.display = 'block';
-            img.src = logo ? (logo.startsWith('images/') ? ('/' + logo) : ('/storage/' + logo)) : '/images/MIC-Global-Risks_logo_no_background.png';
+            img.src = logo ? (logo.startsWith('images/') ? ('/' + logo) : ('/storage/' + logo)) : '/images/LOLC-Kenya.webp';
             img.onerror = () => { img.style.display = 'none'; };
         };
         const headerWrap = panel.querySelector('.lh-preview-img');

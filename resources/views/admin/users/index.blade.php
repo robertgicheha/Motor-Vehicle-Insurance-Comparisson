@@ -47,8 +47,13 @@
                         <svg class="w-5 h-5 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
                     </div>
                     <div>
-                        <p class="text-sm font-bold text-emerald-600 dark:text-emerald-400">User created successfully!</p>
-                        <p class="text-xs text-emerald-500/70 mt-0.5">Login username is the email. Save this password — it will not be shown again.</p>
+                        @if(session('generated_password_for'))
+                            <p class="text-sm font-bold text-emerald-600 dark:text-emerald-400">Password reset for {{ session('generated_password_for') }}</p>
+                            <p class="text-xs text-emerald-500/70 mt-0.5">Share this new password with the user — it will not be shown again. It expires in 30 days.</p>
+                        @else
+                            <p class="text-sm font-bold text-emerald-600 dark:text-emerald-400">User created successfully!</p>
+                            <p class="text-xs text-emerald-500/70 mt-0.5">Login username is generated from the branch. Save this password — it will not be shown again.</p>
+                        @endif
                     </div>
                 </div>
                 <div class="flex items-center gap-2">
@@ -57,10 +62,6 @@
                         <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
                         Copy
                     </button>
-                    <button onclick="sendPasswordEmail()" class="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold bg-blue-500 hover:bg-blue-400 text-white rounded-lg transition">
-                        <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
-                        Send via Email
-                    </button>
                 </div>
             </div>
         </div>
@@ -68,7 +69,7 @@
 
     {{-- Stat strip --}}
         {{-- KPI row --}}
-            <div class="mt-6 grid grid-cols-2 md:grid-cols-4 gap-3">
+            <div class="mt-6 grid grid-cols-2 gap-3">
                 <a href="{{ route('admin.users.index') }}" class="kpi-card p-4 block hover:opacity-80 transition">
                     <div class="accent-bar"></div>
                     <p class="kpi-eyebrow">Total Users</p>
@@ -95,28 +96,6 @@
                         </span>
                     @endif
                 </div>
-
-                <a href="{{ route('admin.users.index', ['gender' => 'male']) }}" class="kpi-card p-4 block hover:opacity-80 transition">
-                    <div class="accent-bar"
-                        style="background:linear-gradient(90deg,#818cf8,#a5b4fc)">
-                    </div>
-                    <p class="kpi-eyebrow">Male Users</p>
-                    <p class="kpi-value mt-1">{{ $maleCount }}</p>
-                    <span class="kpi-delta up mt-1.5 inline-block">
-                        {{ $totalUsers > 0 ? round(($maleCount / $totalUsers) * 100) : 0 }}% of users
-                    </span>
-                </a>
-
-                <a href="{{ route('admin.users.index', ['gender' => 'female']) }}" class="kpi-card p-4 block hover:opacity-80 transition">
-                    <div class="accent-bar"
-                        style="background:linear-gradient(90deg,#fb7185,#fda4af)">
-                    </div>
-                    <p class="kpi-eyebrow">Female Users</p>
-                    <p class="kpi-value mt-1">{{ $femaleCount }}</p>
-                    <span class="kpi-delta up mt-1.5 inline-block">
-                        {{ $totalUsers > 0 ? round(($femaleCount / $totalUsers) * 100) : 0 }}% of users
-                    </span>
-                </a>
             </div>
     </div>
 
@@ -130,18 +109,18 @@
         <div class="grid grid-cols-4 sm:grid-cols-5 lg:grid-cols-6 xl:grid-cols-6 gap-3" id="cardsGrid">
             @foreach($users->take(15) as $u)
             <div class="aspect-square bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 flex flex-col items-center justify-center gap-1.5 p-3 hover:shadow-md hover:border-blue-300 dark:hover:border-blue-700 transition group cursor-pointer"
-                 title="{{ $u->name }}">
+                 title="{{ $u->username }}">
                 {{-- Avatar --}}
                 <div class="relative">
                     <div class="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white text-xs font-bold select-none">
-                        {{ strtoupper(substr($u->name, 0, 2)) }}
+                        {{ strtoupper(substr($u->username, 0, 2)) }}
                     </div>
                     @if($u->isOnline())
                         <span class="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-emerald-500 border-2 border-white dark:border-gray-800 rounded-full"></span>
                     @endif
                 </div>
-                {{-- Name --}}
-                <p class="text-[11px] font-semibold text-gray-800 dark:text-white text-center leading-tight line-clamp-1 w-full">{{ $u->name }}</p>
+                {{-- Username --}}
+                <p class="text-[11px] font-mono font-semibold text-gray-800 dark:text-white text-center leading-tight line-clamp-1 w-full">{{ $u->username }}</p>
                 {{-- Role badge --}}
                 @php $firstRole = $u->roles->first(); @endphp
                 @if($firstRole)
@@ -159,6 +138,11 @@
                     <a href="{{ route('admin.users.toggle-status', $u) }}" class="text-[9px] font-medium {{ $u->is_active ? 'text-rose-500' : 'text-emerald-600' }} hover:underline">
                         {{ $u->is_active ? 'Disable' : 'Enable' }}
                     </a>
+                    <span class="text-gray-300 dark:text-gray-600">·</span>
+                    <form action="{{ route('admin.users.reset-password', $u) }}" method="POST" onsubmit="return confirm('Reset password for {{ $u->username }}? A new password will be generated.')" class="inline">
+                        @csrf
+                        <button type="submit" class="text-[9px] font-medium text-amber-600 hover:underline">Reset</button>
+                    </form>
                 </div>
             </div>
             @endforeach
@@ -186,11 +170,6 @@
             <form method="GET" class="flex flex-wrap items-center gap-2">
                 <input type="text" name="search" placeholder="Search…" value="{{ request('search') }}"
                        class="px-3 py-1.5 text-xs rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200 focus:ring-2 focus:ring-blue-500 outline-none w-44">
-                <select name="gender" class="px-3 py-1.5 text-xs rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200">
-                    <option value="">All genders</option>
-                    <option value="male"   {{ request('gender') === 'male'   ? 'selected' : '' }}>Male</option>
-                    <option value="female" {{ request('gender') === 'female' ? 'selected' : '' }}>Female</option>
-                </select>
                 <select name="status" class="px-3 py-1.5 text-xs rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200">
                     <option value="">All status</option>
                     <option value="active"   {{ request('status') === 'active'   ? 'selected' : '' }}>Active</option>
@@ -205,10 +184,8 @@
             <table class="w-full text-xs">
                 <thead>
                     <tr class="bg-gray-50 dark:bg-gray-700/40">
-                        <th class="px-5 py-2.5 text-left font-semibold text-gray-400 uppercase tracking-wider text-[10px]">User</th>
-                        <th class="px-5 py-2.5 text-left font-semibold text-gray-400 uppercase tracking-wider text-[10px]">Email</th>
-                        <th class="px-5 py-2.5 text-left font-semibold text-gray-400 uppercase tracking-wider text-[10px]">Mobile</th>
-                        <th class="px-5 py-2.5 text-center font-semibold text-gray-400 uppercase tracking-wider text-[10px]">Gender</th>
+                        <th class="px-5 py-2.5 text-left font-semibold text-gray-400 uppercase tracking-wider text-[10px]">Username</th>
+                        <th class="px-5 py-2.5 text-left font-semibold text-gray-400 uppercase tracking-wider text-[10px]">Branch</th>
                         <th class="px-5 py-2.5 text-center font-semibold text-gray-400 uppercase tracking-wider text-[10px]">Role</th>
                         <th class="px-5 py-2.5 text-center font-semibold text-gray-400 uppercase tracking-wider text-[10px]">Status</th>
                         <th class="px-5 py-2.5 text-center font-semibold text-gray-400 uppercase tracking-wider text-[10px]">Online</th>
@@ -221,14 +198,12 @@
                             <td class="px-5 py-2.5">
                                 <div class="flex items-center gap-2.5">
                                     <div class="w-7 h-7 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white text-[10px] font-bold shrink-0">
-                                        {{ strtoupper(substr($u->name, 0, 2)) }}
+                                        {{ strtoupper(substr($u->username, 0, 2)) }}
                                     </div>
-                                    <span class="font-medium text-gray-800 dark:text-white">{{ $u->name }}</span>
+                                    <span class="font-mono font-medium text-gray-800 dark:text-white">{{ $u->username }}</span>
                                 </div>
                             </td>
-                            <td class="px-5 py-2.5 text-gray-500 dark:text-gray-400">{{ $u->email }}</td>
-                            <td class="px-5 py-2.5 text-gray-500 dark:text-gray-400">{{ $u->mobile ?? '—' }}</td>
-                            <td class="px-5 py-2.5 text-center capitalize text-gray-500 dark:text-gray-400">{{ $u->gender ?? '—' }}</td>
+                            <td class="px-5 py-2.5 text-gray-500 dark:text-gray-400">{{ $u->branch ?? '—' }}</td>
                             <td class="px-5 py-2.5 text-center">
                                 @foreach($u->roles as $role)
                                     <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300">{{ $role->name }}</span>
@@ -269,6 +244,12 @@
                                             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                                         @endif
                                     </a>
+                                    <form action="{{ route('admin.users.reset-password', $u) }}" method="POST" onsubmit="return confirm('Reset password for {{ $u->username }}? A new password will be generated.')" class="inline">
+                                        @csrf
+                                        <button type="submit" class="p-1.5 text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-900/20 rounded-md transition" title="Reset password">
+                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/></svg>
+                                        </button>
+                                    </form>
                                     @if(!$u->hasRole('super-admin'))
                                         <form action="{{ route('admin.users.destroy', $u) }}" method="POST" onsubmit="return confirm('Delete this user?')" class="inline">
                                             @csrf @method('DELETE')
@@ -281,7 +262,7 @@
                             </td>
                         </tr>
                     @empty
-                        <tr><td colspan="8" class="px-5 py-10 text-center text-xs text-gray-400">No users found.</td></tr>
+                        <tr><td colspan="6" class="px-5 py-10 text-center text-xs text-gray-400">No users found.</td></tr>
                     @endforelse
                 </tbody>
             </table>
@@ -317,45 +298,10 @@
                 @csrf
 
                 <div>
-                    <label class="block text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Full Name <span class="text-rose-500">*</span></label>
-                    <input type="text" name="name" required placeholder="e.g. Jane Wanjiku"
+                    <label class="block text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Branch <span class="text-rose-500">*</span></label>
+                    <input type="text" name="branch" required placeholder="e.g. Westlands"
                            class="w-full px-3 py-2 text-xs rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none">
-                </div>
-
-                <div>
-                    <label class="block text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Email Address <span class="text-rose-500">*</span></label>
-                    <input type="email" name="email" required placeholder="jane@example.com"
-                           class="w-full px-3 py-2 text-xs rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none">
-                </div>
-
-                <div class="grid grid-cols-2 gap-3">
-                    <div>
-                        <label class="block text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">First Name <span class="text-rose-500">*</span></label>
-                        <input type="text" name="first_name" required placeholder="Jane"
-                            class="w-full px-3 py-2 text-xs rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none">
-                    </div>
-                    <div>
-                        <label class="block text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Last Name <span class="text-rose-500">*</span></label>
-                        <input type="text" name="last_name" required placeholder="Wanjiku"
-                            class="w-full px-3 py-2 text-xs rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none">
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-2 gap-3">
-                    <div>
-                        <label class="block text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Mobile</label>
-                        <input type="text" name="mobile" placeholder="+254 700 000 000"
-                               class="w-full px-3 py-2 text-xs rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none">
-                    </div>
-                    <div>
-                        <label class="block text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Gender</label>
-                        <select name="gender"
-                                class="w-full px-3 py-2 text-xs rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none">
-                            <option value="">Select</option>
-                            <option value="male">Male</option>
-                            <option value="female">Female</option>
-                        </select>
-                    </div>
+                    <p class="text-[10px] text-gray-400 mt-1">User-role accounts get a branch-based username, e.g. <span class="font-mono">user1_westlands</span>. Admin/Super Admin accounts use a fixed username.</p>
                 </div>
 
                 <div>
@@ -474,26 +420,6 @@ function copyPassword() {
         document.body.removeChild(textarea);
         alert('Password copied to clipboard!');
     });
-}
-
-function sendPasswordEmail() {
-    var password = document.getElementById('generated-password')?.textContent;
-    if (!password) return;
-    var form = document.createElement('form');
-    form.method = 'POST';
-    form.action = '{{ route("admin.users.send-credentials") }}';
-    var csrf = document.createElement('input');
-    csrf.type = 'hidden';
-    csrf.name = '_token';
-    csrf.value = '{{ csrf_token() }}';
-    form.appendChild(csrf);
-    var passwordInput = document.createElement('input');
-    passwordInput.type = 'hidden';
-    passwordInput.name = 'password';
-    passwordInput.value = password;
-    form.appendChild(passwordInput);
-    document.body.appendChild(form);
-    form.submit();
 }
 </script>
 </x-app-layout>

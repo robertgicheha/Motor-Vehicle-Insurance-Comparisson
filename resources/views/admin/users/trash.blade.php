@@ -23,8 +23,7 @@
             <table class="w-full text-xs">
                 <thead>
                     <tr class="bg-gray-50 dark:bg-gray-700/40">
-                        <th class="px-5 py-2.5 text-left font-semibold text-gray-400 uppercase tracking-wider text-[10px]">User</th>
-                        <th class="px-5 py-2.5 text-left font-semibold text-gray-400 uppercase tracking-wider text-[10px]">Email</th>
+                        <th class="px-5 py-2.5 text-left font-semibold text-gray-400 uppercase tracking-wider text-[10px]">Username</th>
                         <th class="px-5 py-2.5 text-center font-semibold text-gray-400 uppercase tracking-wider text-[10px]">Role</th>
                         <th class="px-5 py-2.5 text-left font-semibold text-gray-400 uppercase tracking-wider text-[10px]">Deleted by</th>
                         <th class="px-5 py-2.5 text-left font-semibold text-gray-400 uppercase tracking-wider text-[10px]">Deleted at</th>
@@ -37,18 +36,17 @@
                             <td class="px-5 py-2.5">
                                 <div class="flex items-center gap-2.5">
                                     <div class="w-7 h-7 rounded-full bg-gray-300 dark:bg-gray-600 flex items-center justify-center text-white text-[10px] font-bold shrink-0">
-                                        {{ strtoupper(substr($u->name, 0, 2)) }}
+                                        {{ strtoupper(substr($u->username, 0, 2)) }}
                                     </div>
-                                    <span class="font-medium text-gray-800 dark:text-white">{{ $u->name }}</span>
+                                    <span class="font-mono font-medium text-gray-800 dark:text-white">{{ $u->username }}</span>
                                 </div>
                             </td>
-                            <td class="px-5 py-2.5 text-gray-500 dark:text-gray-400">{{ $u->email }}</td>
                             <td class="px-5 py-2.5 text-center">
                                 @foreach($u->roles as $role)
                                     <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300">{{ $role->name }}</span>
                                 @endforeach
                             </td>
-                            <td class="px-5 py-2.5 text-gray-500 dark:text-gray-400">{{ $u->deletedBy->name ?? '—' }}</td>
+                            <td class="px-5 py-2.5 text-gray-500 dark:text-gray-400">{{ $u->deletedBy->username ?? '—' }}</td>
                             <td class="px-5 py-2.5 text-gray-500 dark:text-gray-400">{{ $u->deleted_at->diffForHumans() }}</td>
                             <td class="px-5 py-2.5 text-right">
                                 <form action="{{ route('admin.users.restore', $u->id) }}" method="POST" onsubmit="return confirm('Restore this user?')" class="inline">
@@ -61,7 +59,7 @@
                             </td>
                         </tr>
                     @empty
-                        <tr><td colspan="6" class="px-5 py-10 text-center text-xs text-gray-400">No deleted users.</td></tr>
+                        <tr><td colspan="5" class="px-5 py-10 text-center text-xs text-gray-400">No deleted users.</td></tr>
                     @endforelse
                 </tbody>
             </table>

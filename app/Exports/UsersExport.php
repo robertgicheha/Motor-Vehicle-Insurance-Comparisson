@@ -22,15 +22,13 @@ class UsersExport
         $sheet->setName('Users');
 
         $writer->addRow(\OpenSpout\Common\Entity\Row::fromValues([
-            'Name', 'Email', 'Mobile', 'Gender', 'Role', 'Status', 'Last Online', 'Registered'
+            'Username', 'Branch', 'Role', 'Status', 'Last Online', 'Registered'
         ]));
 
         foreach ($users as $user) {
             $writer->addRow(\OpenSpout\Common\Entity\Row::fromValues([
-                $user->name,
-                $user->email,
-                $user->mobile ?? '',
-                $user->gender ?? '',
+                $user->username,
+                $user->branch ?? '',
                 $user->roles->pluck('name')->implode(', '),
                 $user->is_active ? 'Active' : 'Inactive',
                 $user->last_online_at ? $user->last_online_at->format('Y-m-d H:i') : 'Never',

@@ -52,8 +52,8 @@ class EmailSetting extends Model
     {
         return [
             'company' => $this->letterhead_company ?: config('app.name'),
-            'color' => $this->letterhead_color ?: '#004f8c',
-            'address' => $this->letterhead_address ?: 'MIC Global Risks (Kenya) Limited, P.O. Box 10000 - 00100 Nairobi, Kenya',
+            'color' => $this->letterhead_color ?: '#263B8B',
+            'address' => $this->letterhead_address ?: 'LOLC Microfinance Bank, P.O. Box 10000 - 00100 Nairobi, Kenya',
             'website' => $this->letterhead_website ?: 'www.micglobalrisks.com',
         ];
     }
@@ -69,7 +69,7 @@ class EmailSetting extends Model
             }
         }
 
-        $default = public_path('images/MIC-Global-Risks_logo_no_background.png');
+        $default = public_path('images/LOLC-Kenya.webp');
 
         return file_exists($default) ? $default : null;
     }

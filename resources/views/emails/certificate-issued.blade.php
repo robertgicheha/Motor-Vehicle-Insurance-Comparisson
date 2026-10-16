@@ -91,7 +91,7 @@
         </div>
 
         <div class="footer">
-            <p><strong>MIC Global Risks Insurance (Kenya) Limited</strong></p>
+            <p><strong>LOLC Microfinance Bank</strong></p>
             <p>www.micglobalrisks.com | This is an automated sticker issuance notification.</p>
         </div>
     </div>

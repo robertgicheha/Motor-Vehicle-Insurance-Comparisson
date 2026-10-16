@@ -125,8 +125,6 @@ class StickerSettingsController extends Controller
         StickerEmailLog::create([
             'sticker_id' => $sticker->id,
             'type' => 'inbound_from_underwriter',
-            'recipient' => config('mail.from.address'),
-            'sender' => $sticker->underwriter_email,
             'subject' => 'Re: Sticker Issuance Request - ' . $sticker->sticker_number,
             'status' => 'received',
             'attachments' => $data['response_document_path'] ?? null,

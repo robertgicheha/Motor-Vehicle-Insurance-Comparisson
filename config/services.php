@@ -35,12 +35,6 @@ return [
         ],
     ],
 
-    'google' => [
-        'client_id' => env('GOOGLE_CLIENT_ID'),
-        'client_secret' => env('GOOGLE_CLIENT_SECRET'),
-        'redirect' => env('GOOGLE_REDIRECT_URI'),
-    ],
-
     'openweather' => [
         'key' => env('OPENWEATHER_API_KEY'),
     ],
@@ -50,9 +44,12 @@ return [
         'secret_key' => env('RECAPTCHA_SECRET_KEY'),
     ],
 
-    'clamav' => [
-        'host' => env('CLAMAV_HOST', '127.0.0.1'),
-        'port' => (int) env('CLAMAV_PORT', 3310),
+    'eset' => [
+        // ESET Server Security for Linux scanner binary (odscan) on the same
+        // host as the portal. Files are scanned locally on upload.
+        'enabled' => (bool) env('ESET_SCAN_ENABLED', true),
+        'binary' => env('ESET_SCANNER_BINARY', '/opt/eset/efs/bin/odscan'),
+        'timeout' => (int) env('ESET_SCAN_TIMEOUT', 60),
     ],
 
     'ai_document' => [

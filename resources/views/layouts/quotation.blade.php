@@ -5,8 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="csrf-token" content="{{ csrf_token() }}">
 @yield('title')
-<title>Motor Insurance Quotation | MIC Global Risks</title>
-<meta name="description" content="View and download your motor vehicle insurance quotation from MIC Global Risks, comparing Kenya's leading insurers.">
+<title>Motor Insurance Quotation | LOLC Microfinance Bank</title>
+<meta name="description" content="View and download your motor vehicle insurance quotation from LOLC Microfinance Bank, comparing Kenya's leading insurers.">
 <link rel="stylesheet" href="{{ asset('css/quotation.css') }}">
 @vite(['resources/css/app.css'])
 <link rel="preconnect" href="https://fonts.googleapis.com">

@@ -10,9 +10,6 @@ class ClaimEmailLog extends Model
     protected $fillable = [
         'claim_id',
         'type',
-        'recipient',
-        'cc',
-        'sender',
         'subject',
         'status',
         'error_message',

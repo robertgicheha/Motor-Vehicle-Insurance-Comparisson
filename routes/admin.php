@@ -4,7 +4,6 @@ use App\Http\Controllers\Admin\NotificationController as AdminNotificationContro
 use App\Http\Controllers\Admin\StickerAdminController;
 use App\Http\Controllers\Admin\StickerSettingsController;
 use App\Http\Controllers\Admin\UserController;
-use App\Http\Controllers\Admin\PendingUserController;
 use App\Http\Controllers\Admin\RoleController;
 use App\Http\Controllers\Admin\CompanyController;
 use App\Http\Controllers\Admin\ReportController;
@@ -33,15 +32,11 @@ Route::middleware(['auth', 'online', 'role:super-admin|admin'])->prefix('admin')
 
     Route::get('/email-analytics', [EmailAnalyticsController::class, 'index'])->name('email-analytics.index');
 
-    Route::get('/pending-users', [PendingUserController::class, 'index'])->name('pending-users.index');
-    Route::post('/pending-users/{user}/activate', [PendingUserController::class, 'activate'])->name('pending-users.activate');
-    Route::post('/pending-users/bulk-activate', [PendingUserController::class, 'bulkActivate'])->name('pending-users.bulk-activate');
-
     Route::resource('users', UserController::class)->middlewareFor('destroy', 'role:super-admin');
     Route::patch('/users/{user}/toggle-status', [UserController::class, 'toggleStatus'])->name('users.toggle-status');
     Route::get('/users/export', [UserController::class, 'export'])->name('users.export');
     Route::post('/users/import', [UserController::class, 'import'])->name('users.import')->middleware('throttle:3,1');
-    Route::post('/users/send-credentials', [UserController::class, 'sendCredentials'])->name('users.send-credentials');
+    Route::post('/users/{user}/reset-password', [UserController::class, 'resetPassword'])->name('users.reset-password');
 
     Route::resource('roles', RoleController::class);
 

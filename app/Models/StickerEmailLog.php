@@ -10,10 +10,7 @@ class StickerEmailLog extends Model
     protected $fillable = [
         'sticker_id',
         'type',
-        'recipient',
-        'sender',
         'subject',
-        'body',
         'status',
         'error_message',
         'attachments',

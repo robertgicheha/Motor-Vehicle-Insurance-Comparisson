@@ -34,7 +34,7 @@ class AppServiceProvider extends ServiceProvider
         // Sensitive data (KYC documents, customer PII) must never transit in
         // plaintext — force every generated URL, and any request already
         // reaching the app, onto https:// in production.
-        if (config('app.env') === 'production') {
+        if (config('app.env') === 'production' || config('app.force_https')) {
             URL::forceScheme('https');
         }
 

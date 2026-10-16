@@ -7,7 +7,7 @@
                 <div>
                     <p class="text-[10px] font-semibold uppercase tracking-widest text-blue-400">User Management</p>
                     <h1 class="mt-0.5 text-xl font-bold text-white">Edit User</h1>
-                    <p class="mt-0.5 text-xs text-slate-400">Update {{ $user->first_name }} {{ $user->last_name }}'s account information and access.</p>
+                    <p class="mt-0.5 text-xs text-slate-400">Update {{ $user->username }}'s account information and access.</p>
                 </div>
                 <a href="{{ route('admin.users.index') }}"
                    class="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-medium text-white/80 hover:text-white border border-white/20 hover:bg-white/10 rounded-lg transition shrink-0">
@@ -45,13 +45,9 @@
 
                 <div class="kpi-card p-4">
                     <div class="accent-bar" style="background:linear-gradient(90deg,#fb7185,#fda4af)"></div>
-                    <p class="kpi-eyebrow">Email</p>
-                    <p class="kpi-value text-sm mt-1">{{ $user->hasVerifiedEmail() ? 'Verified' : 'Unverified' }}</p>
-                    @if($user->hasVerifiedEmail())
-                        <span class="kpi-delta up mt-1.5 inline-block">Confirmed</span>
-                    @else
-                        <span class="kpi-delta neutral mt-1.5 inline-block">Pending</span>
-                    @endif
+                    <p class="kpi-eyebrow">Username</p>
+                    <p class="kpi-value text-sm mt-1 font-mono">{{ $user->username }}</p>
+                    <span class="kpi-delta neutral mt-1.5 inline-block">Login ID</span>
                 </div>
             </div>
         </div>
@@ -66,7 +62,7 @@
                 </div>
                 <div>
                     <h2 class="text-sm font-semibold text-gray-900 dark:text-white">Account details</h2>
-                    <p class="text-xs text-gray-400 dark:text-gray-500 mt-0.5">Edit this user's personal details, role and access</p>
+                    <p class="text-xs text-gray-400 dark:text-gray-500 mt-0.5">Edit this user's role and access</p>
                 </div>
             </div>
 
@@ -75,38 +71,16 @@
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                        <label class="block text-[11px] font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500 mb-1.5">First name</label>
-                        <input type="text" name="first_name" value="{{ old('first_name', $user->first_name) }}" required
+                        <label class="block text-[11px] font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500 mb-1.5">Branch</label>
+                        <input type="text" name="branch" value="{{ old('branch', $user->branch) }}" required placeholder="e.g. Westlands"
                                class="w-full px-3.5 py-2.5 text-sm rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition">
-                        @error('first_name') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
+                        @error('branch') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
+                        <p class="text-[10px] text-gray-400 mt-1">Changing the branch or role regenerates the login username.</p>
                     </div>
                     <div>
-                        <label class="block text-[11px] font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500 mb-1.5">Last name</label>
-                        <input type="text" name="last_name" value="{{ old('last_name', $user->last_name) }}" required
-                               class="w-full px-3.5 py-2.5 text-sm rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition">
-                        @error('last_name') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
-                    </div>
-                    <div>
-                        <label class="block text-[11px] font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500 mb-1.5">Email address</label>
-                        <input type="email" name="email" value="{{ old('email', $user->email) }}" required
-                               class="w-full px-3.5 py-2.5 text-sm rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition">
-                        @error('email') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
-                    </div>
-                    <div>
-                        <label class="block text-[11px] font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500 mb-1.5">Mobile number</label>
-                        <input type="text" name="mobile" value="{{ old('mobile', $user->mobile) }}" required
-                               class="w-full px-3.5 py-2.5 text-sm rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition">
-                        @error('mobile') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
-                    </div>
-                    <div>
-                        <label class="block text-[11px] font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500 mb-1.5">Gender</label>
-                        <select name="gender"
-                                class="w-full px-3.5 py-2.5 text-sm rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition">
-                            <option value="">Select gender</option>
-                            <option value="male"   {{ old('gender', $user->gender) === 'male'   ? 'selected' : '' }}>Male</option>
-                            <option value="female" {{ old('gender', $user->gender) === 'female' ? 'selected' : '' }}>Female</option>
-                        </select>
-                        @error('gender') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
+                        <label class="block text-[11px] font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500 mb-1.5">Username</label>
+                        <input type="text" value="{{ $user->username }}" readonly
+                               class="w-full px-3.5 py-2.5 text-sm rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-100 dark:bg-gray-600/50 text-gray-500 dark:text-gray-300 cursor-not-allowed font-mono">
                     </div>
                     <div>
                         <label class="block text-[11px] font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500 mb-1.5">Status</label>

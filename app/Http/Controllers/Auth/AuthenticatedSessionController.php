@@ -31,6 +31,20 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerate();
 
+        // Credentials were valid but the password is older than the 30-day
+        // limit: hold the user at their profile until they set a new one. The
+        // notice is a plain string (no exception) so this can never break the
+        // login flow.
+        if ($request->session()->get('force_password_change')) {
+            $notice = $request->session()->get('password_expiry_notice', 'Your password has expired. Please set a new password to continue.');
+
+            if ($request->wantsJson()) {
+                return response()->json(['redirect' => route('profile.edit'), 'message' => $notice]);
+            }
+
+            return redirect()->route('profile.edit')->with('password_expiry_notice', $notice);
+        }
+
          // Detect city from IP for weather personalisation
         try {
             $ip = request()->ip();

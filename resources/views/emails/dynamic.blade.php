@@ -1,8 +1,8 @@
 @php
     $config = $emailSetting?->letterheadConfig() ?? [
         'company' => config('app.name'),
-        'color' => '#004f8c',
-        'address' => 'MIC Global Risks (Kenya) Limited, P.O. Box 10000 - 00100 Nairobi, Kenya',
+        'color' => '#263B8B',
+        'address' => 'LOLC Microfinance Bank, P.O. Box 10000 - 00100 Nairobi, Kenya',
         'website' => 'www.micglobalrisks.com',
     ];
     $logo = $emailSetting?->logoPath();

@@ -34,7 +34,7 @@
             font-size: 9px; color: #6b7280; line-height: 1.4;
         }
         .section-title { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: #1a1a2e; margin: 8px 0 3px; padding-bottom: 3px; border-bottom: 1.5px solid #dde3ed; }
-        .total-row { background: #004f8c; color: white; font-weight: bold; }
+        .total-row { background: #263B8B; color: white; font-weight: bold; }
         .total-row td { padding: 5px 8px; font-size: 11px; }
         .company-logo { max-height: 40px; max-width: 140px; }
         .grid-2col td { width: 25%; }

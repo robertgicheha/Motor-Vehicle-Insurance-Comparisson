@@ -25,6 +25,10 @@ return Application::configure(basePath: dirname(__DIR__))
         // here, matching the standard setup for apps behind a managed PaaS.
         $middleware->trustProxies(at: '*');
         $middleware->append(\App\Http\Middleware\SecurityHeaders::class);
+        $middleware->append(\App\Http\Middleware\ForceHttps::class);
+        $middleware->web(append: [
+            \App\Http\Middleware\EnsurePasswordIsFresh::class,
+        ]);
         $middleware->alias([
             'online' => \App\Http\Middleware\LogUserOnline::class,
             'log.activity' => \App\Http\Middleware\LogActivity::class,

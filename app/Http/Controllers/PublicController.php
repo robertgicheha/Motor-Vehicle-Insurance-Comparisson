@@ -30,7 +30,7 @@ class PublicController extends Controller
     {
         $companies = Company::active()->with('rates')->get();
         $vehicleType = 'private';
-        $companyColors = ['#003087', '#0066B3', '#00205B', '#D0021B'];
+        $companyColors = ['#003087', '#0066B3', '#00205B', '#ED1D25'];
         $companyData = $companies->filter(fn($c) => in_array($c->company_type, ['private', 'both']))->map(function ($c, $i) use ($companyColors, $vehicleType) {
             $rate = $c->rates->where('vehicle_type', $vehicleType)->firstWhere('item_name', 'Premium Rate');
             $pvtRate = $c->rates->where('vehicle_type', $vehicleType)->firstWhere('item_name', 'PVT Rate');
@@ -65,7 +65,7 @@ class PublicController extends Controller
     {
         $companies = Company::active()->with('rates')->get();
         $vehicleType = 'psv';
-        $companyColors = ['#003087', '#0066B3', '#00205B', '#D0021B'];
+        $companyColors = ['#003087', '#0066B3', '#00205B', '#ED1D25'];
         $companyData = $companies->filter(fn($c) => in_array($c->company_type, ['psv', 'both']))->map(function ($c, $i) use ($companyColors, $vehicleType) {
             $rate = $c->rates->where('vehicle_type', $vehicleType)->firstWhere('item_name', 'Premium Rate');
             $pvtRate = $c->rates->where('vehicle_type', $vehicleType)->firstWhere('item_name', 'PVT Rate');
@@ -110,7 +110,7 @@ class PublicController extends Controller
         $companiesForType = $companies->filter(fn($c) => in_array($c->company_type, ['both', $vehicleType]));
         $coverage = $this->getCoverageData($companiesForType);
 
-        $companyColors = ['#003087', '#0066B3', '#00205B', '#D0021B'];
+        $companyColors = ['#003087', '#0066B3', '#00205B', '#ED1D25'];
         $companyData = $companiesForType->values()->map(function ($c, $i) use ($companyColors, $vehicleType) {
             $rate = $c->rates->where('vehicle_type', $vehicleType)->firstWhere('item_name', 'Premium Rate');
             $pvtRate = $c->rates->where('vehicle_type', $vehicleType)->firstWhere('item_name', 'PVT Rate');
@@ -405,6 +405,8 @@ class PublicController extends Controller
             ->with(['user', 'company'])
             ->firstOrFail();
 
+        \App\Services\AuditService::activity('quotation_downloaded', "Quotation {$quotation->quotation_number} downloaded as PDF");
+
         $pdf = Pdf::loadView('pdf.quotation', ['quotation' => $quotation]);
         return $pdf->download("quotation-{$quotation->quotation_number}.pdf");
     }
@@ -422,10 +424,10 @@ class PublicController extends Controller
 
         try {
             Mail::to($request->email)->send(new QuotationMail($quotation));
-            \App\Services\AuditService::activity('quotation_emailed', "Quotation {$quotation->quotation_number} emailed to {$request->email}");
+            \App\Services\AuditService::activity('quotation_emailed', "Quotation {$quotation->quotation_number} emailed to the address provided by the requester");
             return back()->with('success', 'Quotation sent to ' . $request->email);
         } catch (\Exception $e) {
-            \App\Services\AuditService::activity('quotation_email_failed', "Failed to email quotation {$quotation->quotation_number} to {$request->email}: {$e->getMessage()}", 'error');
+            \App\Services\AuditService::activity('quotation_email_failed', "Failed to email quotation {$quotation->quotation_number} to the address provided by the requester", 'error');
             return back()->with('error', 'Failed to send email. Please try again.');
         }
     }
@@ -442,12 +444,6 @@ class PublicController extends Controller
             'car_valuation' => 'required|numeric|min:800000|max:1300000',
             'vehicle_type' => 'sometimes|string|in:psv,private',
             'num_passengers' => 'sometimes|integer|min:1',
-            'salutation' => 'nullable|string|max:20',
-            'first_name' => 'nullable|string|max:255',
-            'middle_name' => 'nullable|string|max:255',
-            'last_name' => 'nullable|string|max:255',
-            'phone' => 'nullable|string|max:50',
-            'email' => 'nullable|email|max:255',
             'chassis_number' => 'nullable|string|max:100',
             'engine_number' => 'nullable|string|max:100',
             'body_type' => 'nullable|string|max:100',
@@ -470,12 +466,6 @@ class PublicController extends Controller
 
         $user = auth()->user();
         $quotation = $user->quotations()->create([
-            'salutation' => $request->salutation,
-            'first_name' => $request->filled('first_name') ? $request->first_name : $user->first_name,
-            'middle_name' => $request->middle_name,
-            'last_name' => $request->filled('last_name') ? $request->last_name : $user->last_name,
-            'phone' => $request->filled('phone') ? $request->phone : $user->mobile,
-            'email' => $request->filled('email') ? $request->email : $user->email,
             'company_id' => $company->id,
             'quotation_number' => Quotation::generateNumber($company),
             'car_make' => $request->car_make,
@@ -497,6 +487,9 @@ class PublicController extends Controller
             'status' => 'generated',
             'breakdown' => $result,
         ]);
+
+        \App\Services\AuditService::log('create', 'Quotation', $quotation->id, null, $quotation->toArray());
+        \App\Services\AuditService::activity('quotation_generated', "Quotation {$quotation->quotation_number} generated for {$company->name}");
 
         return response()->json([
             'success' => true,
@@ -548,7 +541,6 @@ class PublicController extends Controller
 
         $stickers = Sticker::where(function ($query) use ($q) {
                 $query->where('sticker_number', 'like', "%{$q}%")
-                    ->orWhere('customer_name', 'like', "%{$q}%")
                     ->orWhereLikeCI('vehicle_registration', $q)
                     ->orWhere('car_make', 'like', "%{$q}%")
                     ->orWhere('car_model', 'like', "%{$q}%");
@@ -563,7 +555,7 @@ class PublicController extends Controller
                 return $query->where('issued_by', $user->id);
             })
             ->limit(5)
-            ->get(['id', 'sticker_number', 'customer_name', 'car_make', 'car_model']);
+            ->get(['id', 'sticker_number', 'vehicle_registration', 'car_make', 'car_model']);
 
         return response()->json([
             'quotations' => $quotations,
@@ -588,7 +580,7 @@ class PublicController extends Controller
             $mode = 'compare';
         }
 
-        $companyColors = ['#003087', '#0066B3', '#00205B', '#D0021B', '#7c3aed', '#0f7a65'];
+        $companyColors = ['#003087', '#0066B3', '#00205B', '#ED1D25', '#7c3aed', '#0f7a65'];
 
         $buildData = function($companies, $vehicleType) use ($companyColors) {
             return $companies->filter(function($c) use ($vehicleType) {
@@ -703,7 +695,7 @@ class PublicController extends Controller
         }
 
         $vehicleType = 'psv';
-        $companyColors = ['#003087', '#0066B3', '#00205B', '#D0021B', '#7c3aed', '#0f7a65'];
+        $companyColors = ['#003087', '#0066B3', '#00205B', '#ED1D25', '#7c3aed', '#0f7a65'];
         $numPassengers = request()->query('num_passengers', 1);
 
         $buildData = function($companies, $vehicleType) use ($companyColors) {
@@ -757,7 +749,7 @@ class PublicController extends Controller
         }
 
         $vehicleType = 'private';
-        $companyColors = ['#003087', '#0066B3', '#00205B', '#D0021B', '#7c3aed', '#0f7a65'];
+        $companyColors = ['#003087', '#0066B3', '#00205B', '#ED1D25', '#7c3aed', '#0f7a65'];
 
         $buildData = function($companies, $vehicleType) use ($companyColors) {
             return $companies->filter(function($c) use ($vehicleType) {

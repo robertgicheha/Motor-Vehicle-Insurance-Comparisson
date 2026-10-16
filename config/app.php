@@ -58,6 +58,20 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Force HTTPS
+    |--------------------------------------------------------------------------
+    |
+    | When true, every generated URL is forced to https:// and any plain-HTTP
+    | request is redirected to its secure equivalent, so all traffic between
+    | the frontend and backend is encrypted in transit (TLS). Forced
+    | automatically in the production environment regardless of this value.
+    |
+    */
+
+    'force_https' => env('FORCE_HTTPS', false),
+
+    /*
+    |--------------------------------------------------------------------------
     | Application Timezone
     |--------------------------------------------------------------------------
     |

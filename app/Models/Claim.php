@@ -12,9 +12,6 @@ class Claim extends Model
         'underwriter_claim_number',
         'user_id',
         'on_behalf_of_user_id',
-        'customer_name',
-        'customer_email',
-        'customer_phone',
         'registration_number',
         'vehicle_details',
         'incident_date',
@@ -100,6 +97,39 @@ class Claim extends Model
     }
 
    
+    /**
+     * Non-personal vehicle identity drawn from the stored registration number
+     * and vehicle_details snapshot, used wherever the removed customer_name
+     * used to be shown.
+     */
+    public function getVehicleDescriptionAttribute(): string
+    {
+        $details = is_array($this->vehicle_details) ? $this->vehicle_details : [];
+        $description = trim(collect([$details['make'] ?? null, $details['model'] ?? null])->filter()->implode(' '));
+        $registration = $this->registration_number;
+
+        if ($description !== '' && $registration) {
+            return $description . ' (' . $registration . ')';
+        }
+
+        return $description !== '' ? $description : ($registration ?: 'Vehicle');
+    }
+
+    public function getCustomerNameAttribute(): string
+    {
+        return $this->vehicle_description;
+    }
+
+    public function getCustomerEmailAttribute(): ?string
+    {
+        return null;
+    }
+
+    public function getCustomerPhoneAttribute(): ?string
+    {
+        return null;
+    }
+
     public static function generateNumber(): string
     {
         $prefix = 'CLM';

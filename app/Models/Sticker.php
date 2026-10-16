@@ -7,8 +7,8 @@ use Illuminate\Database\Eloquent\Model;
 class Sticker extends Model
 {
     protected $fillable = [
-        'company_id', 'quotation_id', 'issued_by', 'sticker_number', 'underwriter_sticker_no', 'customer_name',
-        'customer_email', 'customer_phone', 'vehicle_registration',
+        'company_id', 'quotation_id', 'issued_by', 'sticker_number', 'underwriter_sticker_no',
+        'vehicle_registration',
         'car_make', 'car_model', 'car_year', 'chassis_number', 'engine_number', 'color', 'car_valuation',
         'premium', 'premium_rate', 'cover_type', 'cover_start_date', 'cover_end_date',
         'cover_duration_unit', 'cover_duration_value',
@@ -16,7 +16,7 @@ class Sticker extends Model
         'created_via', 'breakdown', 'generated_at', 'completed_by',
         'download_count', 'last_downloaded_at',
         'kyc_documents', 'underwriter_email', 'admin_notes',
-        'email_subject', 'email_body', 'email_from_address', 'email_from_name',
+        'email_subject', 'email_from_address',
         'reply_to_address', 'last_email_status', 'last_email_error', 'email_sent_at',
         'response_received_at', 'response_status', 'response_notes', 'response_document_path',
     ];
@@ -42,6 +42,37 @@ class Sticker extends Model
     public function company()
     {
         return $this->belongsTo(Company::class);
+    }
+
+    /**
+     * Non-personal vehicle identity, used wherever the removed
+     * customer_name used to be shown.
+     */
+    public function getVehicleDescriptionAttribute(): string
+    {
+        $description = trim(collect([$this->car_make, $this->car_model])->filter()->implode(' '));
+        $registration = $this->vehicle_registration ?: $this->car_registration;
+
+        if ($description !== '' && $registration) {
+            return $description . ' (' . $registration . ')';
+        }
+
+        return $description !== '' ? $description : ($registration ?: 'Vehicle');
+    }
+
+    public function getCustomerNameAttribute(): string
+    {
+        return $this->vehicle_description;
+    }
+
+    public function getCustomerEmailAttribute(): ?string
+    {
+        return null;
+    }
+
+    public function getCustomerPhoneAttribute(): ?string
+    {
+        return null;
     }
 
     public function quotation()

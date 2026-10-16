@@ -268,11 +268,6 @@ window.MIC_QUOTATION_SLUG  = {{ json_encode($selectedCompany->slug) }};
 
 @php
     $_quotationDbData = $userQuotation ? [
-        'firstName' => $userQuotation->customer_first_name ?? '',
-        'lastName'  => $userQuotation->customer_last_name ?? '',
-        'salutation' => $userQuotation->customer_salutation ?? '',
-        'phone'     => $userQuotation->customer_phone ?? '',
-        'email'     => $userQuotation->customer_email ?? '',
         'reg'       => $userQuotation->car_registration ?? '',
         'chassis'   => $userQuotation->chassis_number ?? '',
         'make'      => $userQuotation->car_make ?? '',
@@ -338,10 +333,6 @@ function closeAuthModal() {
         if (!raw) {
           var fd = getFormData();
           sessionStorage.setItem('micQuoteData', JSON.stringify({
-            firstName: fd.firstName || '',
-            lastName: fd.lastName || '',
-            salutation: fd.salutation || '',
-            phone: fd.phone || '',
             email: fd.email || '',
             reg: fd.reg || '',
             chassis: fd.chassis || '',

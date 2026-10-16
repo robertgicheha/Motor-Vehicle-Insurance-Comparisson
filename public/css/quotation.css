@@ -2,10 +2,10 @@
 /* ── RESET & BASE ── */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 :root {
-  --blue:        #0066B3;
-  --blue-dark:   #004f8c;
-  --blue-light:  #e8f2fa;
-  --red:         #D0021B;
+  --blue:        #263B8B;
+  --blue-dark:   #1b2c6b;
+  --blue-light:  #e9ecf7;
+  --red:         #ED1D25;
   --compare:     #333;
   --text:        #1a1a2e;
   --text-muted:  #6b7280;

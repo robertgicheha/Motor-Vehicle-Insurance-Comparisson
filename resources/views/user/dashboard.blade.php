@@ -1,6 +1,35 @@
 <x-app-layout>
 <div class="space-y-6 pt-16 md:pt-10 fade-in">
 
+    {{-- ─── PASSWORD EXPIRY REMINDER ────────────────────────────────────── --}}
+    @if(auth()->user()->isPasswordExpired() || auth()->user()->isPasswordExpiringSoon())
+        @php $__days = auth()->user()->daysUntilPasswordExpiry(); @endphp
+        <div class="rounded-2xl border px-6 py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 {{ auth()->user()->isPasswordExpired() ? 'bg-red-50 border-red-200 dark:bg-red-900/20 dark:border-red-800' : 'bg-amber-50 border-amber-200 dark:bg-amber-900/20 dark:border-amber-800' }}">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 {{ auth()->user()->isPasswordExpired() ? 'bg-red-100 dark:bg-red-900/40' : 'bg-amber-100 dark:bg-amber-900/40' }}">
+                    <svg class="w-5 h-5 {{ auth()->user()->isPasswordExpired() ? 'text-red-600 dark:text-red-400' : 'text-amber-600 dark:text-amber-400' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                </div>
+                <div>
+                    <p class="text-sm font-bold {{ auth()->user()->isPasswordExpired() ? 'text-red-700 dark:text-red-300' : 'text-amber-700 dark:text-amber-300' }}">
+                        {{ auth()->user()->isPasswordExpired() ? 'Your password has expired' : 'Your password expires soon' }}
+                    </p>
+                    <p class="text-xs {{ auth()->user()->isPasswordExpired() ? 'text-red-600/80 dark:text-red-400/80' : 'text-amber-600/80 dark:text-amber-400/80' }}">
+                        @if(auth()->user()->isPasswordExpired())
+                            Please change your password now to keep your account secure.
+                        @else
+                            It will expire {{ $__days === 0 ? 'today' : 'in '.$__days.' day'.($__days === 1 ? '' : 's') }}.
+                        @endif
+                    </p>
+                </div>
+            </div>
+            <a href="{{ route('profile.edit') }}"
+               class="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold text-white rounded-lg transition shrink-0 {{ auth()->user()->isPasswordExpired() ? 'bg-red-600 hover:bg-red-500' : 'bg-amber-600 hover:bg-amber-500' }}">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/></svg>
+                Change password
+            </a>
+        </div>
+    @endif
+
     {{-- ─── HERO ─────────────────────────────────────────────────────────── --}}
     <div class="rounded-2xl bg-micblue px-6 py-7 shadow-sm">
         <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
@@ -803,7 +832,7 @@
 
 @push('scripts')
 @php
-    $_companyColors = ['#003087', '#0066B3', '#00205B', '#D0021B'];
+    $_companyColors = ['#003087', '#0066B3', '#00205B', '#ED1D25'];
     $_idx = 0;
     $_companyData = $companies->map(function($c) use ($_companyColors, &$_idx) {
         $rate = $c->rates->firstWhere('item_name', 'Premium Rate');

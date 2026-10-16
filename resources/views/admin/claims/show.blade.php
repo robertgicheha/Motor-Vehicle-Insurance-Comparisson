@@ -28,26 +28,26 @@
         <div class="lg:col-span-2 space-y-6">
             <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
                 <div class="px-6 py-4 border-b border-gray-100 dark:border-gray-700">
-                    <p class="text-[10px] font-semibold uppercase tracking-widest text-gray-400">Customer</p>
-                    <h2 class="text-xs font-bold text-gray-800 dark:text-white mt-0.5">Customer Details</h2>
+                    <p class="text-[10px] font-semibold uppercase tracking-widest text-gray-400">Claim</p>
+                    <h2 class="text-xs font-bold text-gray-800 dark:text-white mt-0.5">Claim Reference</h2>
                 </div>
                 <div class="grid grid-cols-2 md:grid-cols-4 gap-5 p-6 text-xs">
                     <div>
-                        <span class="block text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Name</span>
-                        <span class="block font-medium text-gray-800 dark:text-white mt-1">{{ $claim->customer_name ?? 'N/A' }}</span>
+                        <span class="block text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Claim Number</span>
+                        <span class="block font-medium text-gray-800 dark:text-white mt-1">{{ $claim->claim_number }}</span>
                     </div>
                     <div>
-                        <span class="block text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Email</span>
-                        <span class="block font-medium text-gray-800 dark:text-white mt-1">{{ $claim->customer_email ?? 'N/A' }}</span>
+                        <span class="block text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Registration No</span>
+                        <span class="block font-medium text-gray-800 dark:text-white mt-1">{{ $claim->registration_number ?? 'N/A' }}</span>
                     </div>
                     <div>
-                        <span class="block text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Phone</span>
-                        <span class="block font-medium text-gray-800 dark:text-white mt-1">{{ $claim->customer_phone ?? 'N/A' }}</span>
+                        <span class="block text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Vehicle</span>
+                        <span class="block font-medium text-gray-800 dark:text-white mt-1">{{ $claim->vehicle_description }}</span>
                     </div>
                     @if($claim->onBehalfOfUser)
                         <div>
                             <span class="block text-[10px] font-semibold text-gray-400 uppercase tracking-wider">On Behalf Of</span>
-                            <span class="block font-medium text-gray-800 dark:text-white mt-1">{{ $claim->onBehalfOfUser->name }}</span>
+                            <span class="block font-medium text-gray-800 dark:text-white mt-1">{{ $claim->onBehalfOfUser->username }}</span>
                         </div>
                     @endif
                 </div>

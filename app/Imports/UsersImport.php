@@ -27,21 +27,13 @@ class UsersImport
 
                 $cells = $row->toArray();
                 $data = [
-                    'first_name' => $cells[0] ?? '',
-                    'last_name' => $cells[1] ?? '',
-                    'email' => $cells[2] ?? '',
-                    'mobile' => $cells[3] ?? '',
-                    'gender' => strtolower($cells[4] ?? ''),
-                    'password' => $cells[5] ?? 'password',
+                    'branch' => $cells[0] ?? '',
+                    'password' => $cells[1] ?? 'password',
                 ];
 
                 $validator = Validator::make($data, [
-                    'first_name' => 'required|string|max:255',
-                    'last_name' => 'required|string|max:255',
-                    'email' => 'required|email|unique:users,email',
-                    'mobile' => 'required|string|max:20',
-                    'gender' => 'nullable|in:male,female,other',
-                    'password' => 'required|min:6',
+                    'branch' => 'required|string|max:255',
+                    'password' => 'required|min:12',
                 ]);
 
                 if ($validator->fails()) {
@@ -50,15 +42,13 @@ class UsersImport
                 }
 
                 $user = User::create([
-                    'first_name' => $data['first_name'],
-                    'last_name' => $data['last_name'],
-                    'name' => $data['first_name'] . ' ' . $data['last_name'],
-                    'email' => $data['email'],
-                    'mobile' => $data['mobile'],
-                    'gender' => $data['gender'] ?: null,
+                    'username' => User::generateUsername($data['branch'], 'user'),
+                    'branch' => $data['branch'],
                     'password' => Hash::make($data['password']),
                     'is_active' => true,
+                    'verified_at' => now(),
                     'profile_completed' => true,
+                    'password_changed_at' => now(),
                 ]);
 
                 $user->syncRoles(['user']);

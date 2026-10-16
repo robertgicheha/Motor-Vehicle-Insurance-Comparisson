@@ -21,10 +21,8 @@ class NewEnquiry extends Notification
     {
         return [
             'enquiry_id' => $this->enquiry->id,
-            'name' => $this->enquiry->name,
-            'email' => $this->enquiry->email,
             'subject' => $this->enquiry->subject,
-            'message' => "New enquiry from {$this->enquiry->name}: \"{$this->enquiry->subject}\"",
+            'message' => "New enquiry received: \"{$this->enquiry->subject}\"",
         ];
     }
 }

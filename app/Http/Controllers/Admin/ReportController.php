@@ -220,7 +220,7 @@ class ReportController extends Controller
         $callback = function () use ($quotations) {
             $handle = fopen('php://output', 'w');
             fputcsv($handle, [
-                'Quotation #', 'User', 'Company', 'Car Make', 'Car Model',
+                'Quotation #', 'Username', 'Company', 'Registration', 'Car Make', 'Car Model',
                 'Car Year', 'Valuation (KES)', 'Premium (KES)', 'PVT (KES)',
                 'Total Premium (KES)', 'Excess OD (KES)', 'Excess Theft (KES)',
                 'Status', 'Date'
@@ -229,8 +229,9 @@ class ReportController extends Controller
             foreach ($quotations as $q) {
                 fputcsv($handle, [
                     $q->quotation_number,
-                    $q->customer_name,
+                    $q->user?->username,
                     $q->company->name,
+                    $q->car_registration ?? '',
                     $q->car_make,
                     $q->car_model,
                     $q->car_year,
@@ -278,7 +279,7 @@ class ReportController extends Controller
         $sheet->setName('Quotations');
 
         $writer->addRow(\OpenSpout\Common\Entity\Row::fromValues([
-            'Quotation #', 'User', 'Company', 'Car Make', 'Car Model',
+            'Quotation #', 'Username', 'Company', 'Registration', 'Car Make', 'Car Model',
             'Car Year', 'Valuation (KES)', 'Premium (KES)', 'PVT (KES)',
             'Total Premium (KES)', 'Excess OD (KES)', 'Excess Theft (KES)',
             'Status', 'Date'
@@ -287,8 +288,9 @@ class ReportController extends Controller
         foreach ($quotations as $q) {
             $writer->addRow(\OpenSpout\Common\Entity\Row::fromValues([
                 $q->quotation_number,
-                $q->customer_name,
+                $q->user?->username,
                 $q->company->name,
+                $q->car_registration ?? '',
                 $q->car_make,
                 $q->car_model,
                 $q->car_year,
@@ -333,7 +335,7 @@ class ReportController extends Controller
         $callback = function () use ($stickers) {
             $handle = fopen('php://output', 'w');
             fputcsv($handle, [
-                'Certificate #', 'Company', 'Customer', 'Email', 'Phone',
+                'Certificate #', 'Company',
                 'Car Make', 'Car Model', 'Car Year', 'Registration',
                 'Valuation (KES)', 'Premium (KES)', 'Rate (%)', 'Cover Type',
                 'Status', 'Downloads', 'Created Via', 'Date'
@@ -343,9 +345,6 @@ class ReportController extends Controller
                 fputcsv($handle, [
                     $s->sticker_number,
                     $s->company->name,
-                    $s->customer_name,
-                    $s->customer_email ?? '',
-                    $s->customer_phone ?? '',
                     $s->car_make,
                     $s->car_model,
                     $s->car_year,
@@ -451,7 +450,7 @@ class ReportController extends Controller
         $sheet->setName('Certificates');
 
         $writer->addRow(\OpenSpout\Common\Entity\Row::fromValues([
-            'Certificate #', 'Company', 'Customer', 'Email', 'Phone',
+            'Certificate #', 'Company',
             'Car Make', 'Car Model', 'Car Year', 'Registration',
             'Valuation (KES)', 'Premium (KES)', 'Rate (%)', 'Cover Type',
             'Status', 'Downloads', 'Created Via', 'Date'
@@ -461,9 +460,6 @@ class ReportController extends Controller
             $writer->addRow(\OpenSpout\Common\Entity\Row::fromValues([
                 $s->sticker_number,
                 $s->company->name,
-                $s->customer_name,
-                $s->customer_email ?? '',
-                $s->customer_phone ?? '',
                 $s->car_make,
                 $s->car_model,
                 $s->car_year,

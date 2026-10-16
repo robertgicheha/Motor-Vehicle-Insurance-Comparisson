@@ -6,7 +6,7 @@
             <div>
                 <p class="text-[10px] font-semibold uppercase tracking-widest text-blue-400">Reporting</p>
                 <h1 class="mt-0.5 text-xl font-bold text-white">Reports</h1>
-                <p class="mt-0.5 text-xs text-slate-400">Generate and export reports for quotations and certificates</p>
+                <p class="mt-0.5 text-xs text-slate-400">Generate and export reports for quotations and stickers</p>
             </div>
         </div>
 
@@ -25,15 +25,15 @@
             </div>
             <div class="kpi-card p-4">
                 <div class="accent-bar" style="background:linear-gradient(90deg,#818cf8,#a5b4fc)"></div>
-                <p class="kpi-eyebrow">Certificates</p>
+                <p class="kpi-eyebrow">Stickers</p>
                 <p class="kpi-value mt-1">{{ $stats->stickers_count ?? 0 }}</p>
-                <span class="kpi-delta up mt-1.5 inline-block">Insurance certificates</span>
+                <span class="kpi-delta up mt-1.5 inline-block">Insurance stickers</span>
             </div>
             <div class="kpi-card p-4">
                 <div class="accent-bar" style="background:linear-gradient(90deg,#fb7185,#fda4af)"></div>
                 <p class="kpi-eyebrow">Report Types</p>
                 <p class="kpi-value mt-1">2</p>
-                <span class="kpi-delta neutral mt-1.5 inline-block">Quotations &amp; Certificates</span>
+                <span class="kpi-delta neutral mt-1.5 inline-block">Quotations &amp; Stickers</span>
             </div>
         </div>
     </div>
@@ -46,7 +46,7 @@
             </div>
             <div class="flex gap-1 bg-gray-100 dark:bg-gray-700 p-0.5 rounded-lg">
                 <button onclick="switchTab('quotations')" id="tab-quotations" class="px-3 py-1.5 text-xs font-semibold rounded-lg transition bg-white dark:bg-gray-600 text-gray-800 dark:text-white shadow-sm">Quotations</button>
-                <button onclick="switchTab('stickers')" id="tab-stickers" class="px-3 py-1.5 text-xs font-semibold rounded-lg transition text-gray-500 dark:text-gray-400 hover:text-gray-700">Certificates</button>
+                <button onclick="switchTab('stickers')" id="tab-stickers" class="px-3 py-1.5 text-xs font-semibold rounded-lg transition text-gray-500 dark:text-gray-400 hover:text-gray-700">Stickers</button>
             </div>
         </div>
         <div class="px-5 py-4 space-y-4">
@@ -227,15 +227,15 @@
     }
 
     function renderStickerReport(d) {
-        document.getElementById('chart1-title').textContent = 'Certificates by Company';
+        document.getElementById('chart1-title').textContent = 'Stickers by Underwriter';
         document.getElementById('chart2-title').textContent = 'Daily Trend';
-        document.getElementById('table-title').textContent = 'Detailed Report - Certificates';
+        document.getElementById('table-title').textContent = 'Detailed Report - Stickers';
         document.getElementById('summaryCards').innerHTML = `
             <div class="kpi-card p-4">
                 <div class="accent-bar"></div>
-                <p class="kpi-eyebrow">Total Certificates</p>
+                <p class="kpi-eyebrow">Total Stickers</p>
                 <p class="kpi-value mt-1">${d.summary.total_stickers}</p>
-                <span class="kpi-delta neutral mt-1.5 inline-block">Generated certificates</span>
+                <span class="kpi-delta neutral mt-1.5 inline-block">Generated stickers</span>
             </div>
             <div class="kpi-card p-4">
                 <div class="accent-bar" style="background:linear-gradient(90deg,#34d399,#6ee7b7)"></div>
@@ -258,8 +258,8 @@
         `;
         const labels = Object.keys(d.by_company);
         const counts = Object.values(d.by_company).map(v => v.count);
-        renderChart('reportCompanyChart', labels, counts, 'bar', 'Certificates');
-        renderChart('reportDailyChart', Object.keys(d.by_day), Object.values(d.by_day).map(v => v.count), 'line', 'Certificates');
+        renderChart('reportCompanyChart', labels, counts, 'bar', 'Stickers');
+        renderChart('reportDailyChart', Object.keys(d.by_day), Object.values(d.by_day).map(v => v.count), 'line', 'Stickers');
         renderStickerTable(d.stickers);
     }
 
@@ -306,11 +306,11 @@
             return;
         }
         let html = '<table class="w-full text-xs"><thead><tr class="bg-gray-50 dark:bg-gray-700/40">';
-        html += '<th class="px-5 py-2.5 text-left font-semibold text-gray-400 uppercase tracking-wider text-[10px]">#</th><th class="px-5 py-2.5 text-left font-semibold text-gray-400 uppercase tracking-wider text-[10px]">User</th><th class="px-5 py-2.5 text-left font-semibold text-gray-400 uppercase tracking-wider text-[10px]">Company</th><th class="px-5 py-2.5 text-left font-semibold text-gray-400 uppercase tracking-wider text-[10px]">Vehicle</th><th class="px-5 py-2.5 text-right font-semibold text-gray-400 uppercase tracking-wider text-[10px]">Valuation</th><th class="px-5 py-2.5 text-right font-semibold text-gray-400 uppercase tracking-wider text-[10px]">Premium</th><th class="px-5 py-2.5 text-center font-semibold text-gray-400 uppercase tracking-wider text-[10px]">Status</th><th class="px-5 py-2.5 text-right font-semibold text-gray-400 uppercase tracking-wider text-[10px]">Date</th></tr></thead><tbody class="divide-y divide-gray-100 dark:divide-gray-700">';
+        html += '<th class="px-5 py-2.5 text-left font-semibold text-gray-400 uppercase tracking-wider text-[10px]">#</th><th class="px-5 py-2.5 text-left font-semibold text-gray-400 uppercase tracking-wider text-[10px]">Username</th><th class="px-5 py-2.5 text-left font-semibold text-gray-400 uppercase tracking-wider text-[10px]">Company</th><th class="px-5 py-2.5 text-left font-semibold text-gray-400 uppercase tracking-wider text-[10px]">Vehicle</th><th class="px-5 py-2.5 text-right font-semibold text-gray-400 uppercase tracking-wider text-[10px]">Valuation</th><th class="px-5 py-2.5 text-right font-semibold text-gray-400 uppercase tracking-wider text-[10px]">Premium</th><th class="px-5 py-2.5 text-center font-semibold text-gray-400 uppercase tracking-wider text-[10px]">Status</th><th class="px-5 py-2.5 text-right font-semibold text-gray-400 uppercase tracking-wider text-[10px]">Date</th></tr></thead><tbody class="divide-y divide-gray-100 dark:divide-gray-700">';
         quotations.forEach(q => {
             html += `<tr class="hover:bg-gray-50 dark:hover:bg-gray-700/30">
                 <td class="px-5 py-2.5 font-medium text-gray-800 dark:text-white">${q.quotation_number}</td>
-                <td class="px-5 py-2.5 text-gray-500 dark:text-gray-400">${q.user?.name || 'N/A'}</td>
+                <td class="px-5 py-2.5 text-gray-500 dark:text-gray-400">${q.user?.username || 'N/A'}</td>
                 <td class="px-5 py-2.5 text-gray-500 dark:text-gray-400">${q.company?.name || 'N/A'}</td>
                 <td class="px-5 py-2.5 text-gray-500 dark:text-gray-400">${q.car_make} ${q.car_model}</td>
                 <td class="px-5 py-2.5 text-right text-gray-500 dark:text-gray-400">${Number(q.car_valuation).toLocaleString()}</td>
@@ -329,12 +329,12 @@
             return;
         }
         let html = '<table class="w-full text-xs"><thead><tr class="bg-gray-50 dark:bg-gray-700/40">';
-        html += '<th class="px-5 py-2.5 text-left font-semibold text-gray-400 uppercase tracking-wider text-[10px]">#</th><th class="px-5 py-2.5 text-left font-semibold text-gray-400 uppercase tracking-wider text-[10px]">Company</th><th class="px-5 py-2.5 text-left font-semibold text-gray-400 uppercase tracking-wider text-[10px]">Customer</th><th class="px-5 py-2.5 text-left font-semibold text-gray-400 uppercase tracking-wider text-[10px]">Vehicle</th><th class="px-5 py-2.5 text-right font-semibold text-gray-400 uppercase tracking-wider text-[10px]">Premium</th><th class="px-5 py-2.5 text-center font-semibold text-gray-400 uppercase tracking-wider text-[10px]">Downloads</th><th class="px-5 py-2.5 text-center font-semibold text-gray-400 uppercase tracking-wider text-[10px]">Via</th><th class="px-5 py-2.5 text-center font-semibold text-gray-400 uppercase tracking-wider text-[10px]">Status</th><th class="px-5 py-2.5 text-right font-semibold text-gray-400 uppercase tracking-wider text-[10px]">Date</th></tr></thead><tbody class="divide-y divide-gray-100 dark:divide-gray-700">';
+        html += '<th class="px-5 py-2.5 text-left font-semibold text-gray-400 uppercase tracking-wider text-[10px]">#</th><th class="px-5 py-2.5 text-left font-semibold text-gray-400 uppercase tracking-wider text-[10px]">Company</th><th class="px-5 py-2.5 text-left font-semibold text-gray-400 uppercase tracking-wider text-[10px]">Reg. No</th><th class="px-5 py-2.5 text-left font-semibold text-gray-400 uppercase tracking-wider text-[10px]">Vehicle</th><th class="px-5 py-2.5 text-right font-semibold text-gray-400 uppercase tracking-wider text-[10px]">Premium</th><th class="px-5 py-2.5 text-center font-semibold text-gray-400 uppercase tracking-wider text-[10px]">Downloads</th><th class="px-5 py-2.5 text-center font-semibold text-gray-400 uppercase tracking-wider text-[10px]">Via</th><th class="px-5 py-2.5 text-center font-semibold text-gray-400 uppercase tracking-wider text-[10px]">Status</th><th class="px-5 py-2.5 text-right font-semibold text-gray-400 uppercase tracking-wider text-[10px]">Date</th></tr></thead><tbody class="divide-y divide-gray-100 dark:divide-gray-700">';
         stickers.forEach(s => {
             html += `<tr class="hover:bg-gray-50 dark:hover:bg-gray-700/30">
                 <td class="px-5 py-2.5 font-mono text-[10px] font-bold text-gray-800 dark:text-white">${s.sticker_number}</td>
                 <td class="px-5 py-2.5 text-gray-500 dark:text-gray-400">${s.company?.name || 'N/A'}</td>
-                <td class="px-5 py-2.5 text-gray-500 dark:text-gray-400">${s.customer_name}</td>
+                <td class="px-5 py-2.5 text-gray-500 dark:text-gray-400">${s.vehicle_registration || '—'}</td>
                 <td class="px-5 py-2.5 text-gray-500 dark:text-gray-400">${s.car_make} ${s.car_model} (${s.car_year})</td>
                 <td class="px-5 py-2.5 text-right font-medium text-gray-800 dark:text-white">KES ${Number(s.premium).toLocaleString()}</td>
                 <td class="px-5 py-2.5 text-center font-semibold text-gray-800 dark:text-white">${s.download_count || 0}</td>

@@ -4,7 +4,6 @@ use App\Http\Controllers\PublicController;
 use App\Http\Controllers\QuotationController;
 use App\Http\Controllers\StickerController;
 use App\Http\Controllers\VehicleDataController;
-use App\Http\Controllers\Auth\GoogleAuthController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -70,6 +69,3 @@ Route::prefix('stickers')->name('stickers.')->group(function () {
     Route::get('/{sticker}', [StickerController::class, 'show'])->name('show');
     Route::get('/{sticker}/print', [StickerController::class, 'printView'])->name('print');
 });
-
-Route::get('auth/google', [GoogleAuthController::class, 'redirect'])->name('auth.google');
-Route::get('auth/google/callback', [GoogleAuthController::class, 'callback']);

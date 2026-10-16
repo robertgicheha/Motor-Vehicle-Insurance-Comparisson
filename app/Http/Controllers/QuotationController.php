@@ -19,7 +19,6 @@ use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
-use Illuminate\Validation\Rule;
 
 class QuotationController extends Controller
 {
@@ -176,7 +175,7 @@ class QuotationController extends Controller
             ];
                 
             // ── Users list for admin "Apply for User" modal ──────────
-            $users = ($isAdmin || $isSuperAdmin) ? \App\Models\User::orderBy('name')->get(['id', 'name', 'email']) : collect();
+            $users = ($isAdmin || $isSuperAdmin) ? \App\Models\User::orderBy('username')->get(['id', 'username', 'email']) : collect();
         
             $companies = Company::active()->with('rates')->get();
             session(['quotations_last_viewed_at' => now()]);
@@ -240,7 +239,7 @@ class QuotationController extends Controller
             ->get()
             ->groupBy('company_id');
 
-        $users = $isAdmin ? User::orderBy('name')->get(['id', 'name', 'email', 'first_name', 'last_name', 'mobile']) : collect();
+        $users = $isAdmin ? User::orderBy('username')->get(['id', 'username', 'email']) : collect();
         $targetUser = null;
         if ($isAdmin && request('on_behalf_of')) {
             $targetUser = User::find(request('on_behalf_of'));
@@ -252,7 +251,8 @@ class QuotationController extends Controller
     }
 
     /**
-     * Prefill personal + vehicle fields from the user's profile and latest quotation.
+     * Prefill vehicle fields from the user's latest quotation. Owner personal
+     * data is never stored, so nothing personal is prefilled.
      */
     protected function buildPrefill(?User $profileUser)
     {
@@ -261,12 +261,7 @@ class QuotationController extends Controller
         $latest = $profileUser->quotations()->latest()->first();
 
         return [
-            'salutation'   => $latest->salutation ?? '',
-            'first_name'   => $profileUser->first_name ?? '',
-            'middle_name'  => $latest->middle_name ?? '',
-            'last_name'    => $profileUser->last_name ?? '',
-            'phone'        => $profileUser->mobile ?? '',
-            'email'        => $profileUser->email ?? '',
+            'email'        => '',
             'reg'          => $latest->car_registration ?? '',
             'chassis'      => $latest->chassis_number ?? '',
             'engine'       => $latest->engine_number ?? '',
@@ -351,12 +346,9 @@ class QuotationController extends Controller
             'is_new_customer' => 'sometimes|boolean',
             'vehicle_type' => 'sometimes|string|in:psv,private',
             'num_passengers' => 'sometimes|integer|min:1',
-            'salutation' => 'nullable|string|max:20',
-            'first_name' => ['nullable', 'string', 'max:255', Rule::requiredIf($request->boolean('is_new_customer'))],
-            'middle_name' => 'nullable|string|max:255',
-            'last_name' => ['nullable', 'string', 'max:255', Rule::requiredIf($request->boolean('is_new_customer'))],
-            'phone' => 'nullable|string|max:50',
-            'email' => ['nullable', 'email', 'max:255', Rule::requiredIf($request->boolean('is_new_customer'))],
+            // The email is used solely to deliver the PDF to the customer and
+            // is never persisted (owner contact details are not stored).
+            'email' => 'nullable|email|max:255',
             'chassis_number' => 'nullable|string|max:100',
             'engine_number' => 'nullable|string|max:100',
             'body_type' => 'nullable|string|max:100',
@@ -374,7 +366,6 @@ class QuotationController extends Controller
             : ($isAdmin && $request->filled('on_behalf_of') ? (int) $request->on_behalf_of : auth()->id());
 
         $company = \App\Models\Company::find($request->company_id);
-        $targetUserForSnapshot = User::find($targetUserId);
 
         // Recompute the premium server-side via PremiumCalculationService — never trust the
         // client-submitted premium/total_premium/breakdown fields, which come from a JS preview
@@ -390,15 +381,9 @@ class QuotationController extends Controller
             false
         );
 
-        $quotation = DB::transaction(function () use ($request, $company, $targetUserId, $targetUserForSnapshot, $breakdown) {
+        $quotation = DB::transaction(function () use ($request, $company, $targetUserId, $breakdown) {
             $quotation = Quotation::create([
                 'user_id' => $targetUserId,
-                'salutation' => $request->salutation,
-                'first_name' => $request->filled('first_name') ? $request->first_name : ($targetUserForSnapshot->first_name ?? null),
-                'middle_name' => $request->middle_name,
-                'last_name' => $request->filled('last_name') ? $request->last_name : ($targetUserForSnapshot->last_name ?? null),
-                'phone' => $request->filled('phone') ? $request->phone : ($targetUserForSnapshot->mobile ?? null),
-                'email' => $request->filled('email') ? $request->email : ($targetUserForSnapshot->email ?? null),
                 'company_id' => $request->company_id,
                 'quotation_number' => Quotation::generateNumber($company),
                 'car_make' => $request->car_make,
@@ -427,8 +412,9 @@ class QuotationController extends Controller
             return $quotation;
         });
 
-        $targetUser = User::find($targetUserId);
-        $recipientEmail = $targetUser->email ?? $quotation->customer_email;
+        // The recipient address is a transient form value only — it is used to
+        // deliver this PDF and is never written to storage.
+        $recipientEmail = $request->filled('email') ? $request->email : null;
         if ($recipientEmail) {
             try {
                 $mailable = new QuotationMail($quotation);
@@ -441,11 +427,6 @@ class QuotationController extends Controller
         $admins = User::role(['super-admin', 'admin'])->get();
         foreach ($admins as $admin) {
             $admin->notify(new QuotationStatusChanged($quotation, 'new', 'generated'));
-            try {
-                Mail::to($admin->email)->send(new \App\Mail\QuotationCreatedAdminMail($quotation, $admin));
-            } catch (\Exception $e) {
-                \Illuminate\Support\Facades\Log::warning("Failed to email admin {$admin->email} about quotation {$quotation->quotation_number}: " . $e->getMessage());
-            }
         }
         try {
             $quotation->user?->notify(new QuotationStatusChanged($quotation, 'new', 'generated'));
@@ -563,6 +544,7 @@ class QuotationController extends Controller
     {
         $this->authorizeView($quotation);
         $quotation->load(['user', 'company']);
+        AuditService::activity('quotation_downloaded', "Quotation {$quotation->quotation_number} downloaded as PDF");
         $pdf = Pdf::loadView('pdf.quotation', ['quotation' => $quotation]);
         $filename = 'quotation-' . str_replace(['/', '\\'], '-', $quotation->quotation_number) . '.pdf';
         return $pdf->download($filename);
@@ -572,6 +554,7 @@ class QuotationController extends Controller
     {
         $this->authorizeView($quotation);
         $quotation->load(['user', 'company']);
+        AuditService::activity('quotation_printed', "Quotation {$quotation->quotation_number} opened for printing/preview");
         $pdf = Pdf::loadView('pdf.quotation', ['quotation' => $quotation]);
         $filename = 'quotation-' . str_replace(['/', '\\'], '-', $quotation->quotation_number) . '.pdf';
         return $pdf->stream($filename);
@@ -582,6 +565,7 @@ class QuotationController extends Controller
         $this->authorizeView($quotation);
 
         $quotation->load(['user', 'company']);
+        AuditService::activity('quotation_downloaded', "Quotation {$quotation->quotation_number} downloaded as PDF");
         $pdf = Pdf::loadView('pdf.quotation', ['quotation' => $quotation]);
         $filename = 'quotation-' . str_replace(['/', '\\'], '-', $quotation->quotation_number) . '.pdf';
         return $pdf->download($filename);
@@ -798,6 +782,8 @@ class QuotationController extends Controller
             ];
         })->values();
 
+        AuditService::activity('quotes_compared', "Compared quotations across {$results->count()} insurer(s) for a {$vehicleType} vehicle (valuation KES " . number_format($valuation, 0) . ')');
+
         return response()->json(['results' => $results]);
     }
 
@@ -817,12 +803,6 @@ class QuotationController extends Controller
             'car_valuation' => 'required|numeric|min:800000|max:1300000',
             'num_passengers' => 'sometimes|integer|min:1',
             'company_slug' => 'nullable|string|max:100',
-            'salutation' => 'nullable|string|max:20',
-            'first_name' => 'nullable|string|max:100',
-            'middle_name' => 'nullable|string|max:100',
-            'last_name' => 'nullable|string|max:100',
-            'phone' => 'nullable|string|max:30',
-            'email' => 'nullable|email|max:150',
             'car_registration' => 'nullable|string|max:30',
             'chassis_number' => 'nullable|string|max:60',
             'engine_number' => 'nullable|string|max:60',
@@ -856,7 +836,6 @@ class QuotationController extends Controller
             );
 
             $quotation = new Quotation($request->only([
-                'salutation', 'first_name', 'middle_name', 'last_name', 'phone', 'email',
                 'car_make', 'car_model', 'car_year', 'car_registration', 'chassis_number',
                 'engine_number', 'body_type', 'color',
             ]));
@@ -1052,11 +1031,6 @@ class QuotationController extends Controller
             'valuation' => $valuation,
             'numPassengers' => $quotations->first()->num_passengers ?? (int) $request->input('num_passengers', 1),
             'benefitsComparison' => $this->compareBenefitsMatrix($companies, $vehicleType, $valuation),
-            'customer' => [
-                'name' => trim(($request->first_name ?? '') . ' ' . ($request->last_name ?? '')) ?: null,
-                'phone' => $request->phone,
-                'email' => $request->email,
-            ],
             'vehicle' => [
                 'reg' => $request->car_registration,
                 'make' => $request->car_make,
@@ -1071,6 +1045,7 @@ class QuotationController extends Controller
     public function compareAllPdfPreview(Request $request)
     {
         $data = $this->buildCompareAllPdfData($request);
+        AuditService::activity('compare_all_previewed', 'Previewed the combined Compare All quotation PDF');
         $pdf = Pdf::loadView('pdf.compare-all-quotations', $data)->setPaper('a4', 'landscape');
         return $pdf->stream('compare-all-insurers-' . now()->format('Ymd-His') . '.pdf');
     }
@@ -1078,6 +1053,7 @@ class QuotationController extends Controller
     public function compareAllPdfDownload(Request $request)
     {
         $data = $this->buildCompareAllPdfData($request);
+        AuditService::activity('compare_all_downloaded', 'Downloaded the combined Compare All quotation PDF');
         $pdf = Pdf::loadView('pdf.compare-all-quotations', $data)->setPaper('a4', 'landscape');
         return $pdf->download('compare-all-insurers-' . now()->format('Ymd-His') . '.pdf');
     }
@@ -1091,15 +1067,15 @@ class QuotationController extends Controller
             return response()->json(['success' => false, 'message' => 'No matching insurers found for this vehicle.'], 422);
         }
 
-        $customerName = trim(($request->first_name ?? '') . ' ' . ($request->last_name ?? '')) ?: 'Customer';
-
         try {
-            Mail::to($request->email)->send(new CompareAllQuotationsMail($quotations, $customerName, $this->buildCompareAllPdfData($request)));
+            Mail::to($request->email)->send(new CompareAllQuotationsMail($quotations, $this->buildCompareAllPdfData($request)));
         } catch (\Exception $e) {
             \Illuminate\Support\Facades\Log::warning('Failed to email compare-all quotation: ' . $e->getMessage());
+            AuditService::activity('compare_all_email_failed', "Failed to email Compare All quotations: {$e->getMessage()}", 'error');
             return response()->json(['success' => false, 'message' => 'We could not send the email. Please try again.'], 500);
         }
 
+        AuditService::activity('compare_all_emailed', 'Compare All quotations emailed to the customer');
         return response()->json(['success' => true, 'message' => 'Quotation comparison sent to ' . $request->email]);
     }
 
@@ -1116,12 +1092,6 @@ class QuotationController extends Controller
             'vehicle_type' => 'required|string|in:psv,private',
             'car_valuation' => 'required|numeric|min:800000|max:1300000',
             'num_passengers' => 'sometimes|integer|min:1',
-            'salutation' => 'nullable|string|max:20',
-            'first_name' => 'nullable|string|max:100',
-            'middle_name' => 'nullable|string|max:100',
-            'last_name' => 'nullable|string|max:100',
-            'phone' => 'nullable|string|max:30',
-            'email' => 'nullable|email|max:150',
             'car_registration' => 'nullable|string|max:30',
             'chassis_number' => 'nullable|string|max:60',
             'engine_number' => 'nullable|string|max:60',
@@ -1148,7 +1118,6 @@ class QuotationController extends Controller
         );
 
         $quotation = new Quotation($request->only([
-            'salutation', 'first_name', 'middle_name', 'last_name', 'phone', 'email',
             'car_make', 'car_model', 'car_year', 'car_registration', 'chassis_number',
             'engine_number', 'body_type', 'color',
         ]));
@@ -1168,6 +1137,7 @@ class QuotationController extends Controller
     public function quotationPdfPreview(Request $request)
     {
         $quotation = $this->buildSingleQuotation($request);
+        AuditService::activity('quotation_printed', "Quotation {$quotation->quotation_number} opened for printing/preview");
         $pdf = Pdf::loadView('pdf.quotation', ['quotation' => $quotation]);
         return $pdf->stream('quotation-preview-' . now()->format('Ymd-His') . '.pdf');
     }
@@ -1175,6 +1145,7 @@ class QuotationController extends Controller
     public function quotationPdfDownload(Request $request)
     {
         $quotation = $this->buildSingleQuotation($request);
+        AuditService::activity('quotation_downloaded', "Quotation {$quotation->quotation_number} downloaded as PDF");
         $pdf = Pdf::loadView('pdf.quotation', ['quotation' => $quotation]);
         return $pdf->download('quotation-' . now()->format('Ymd-His') . '.pdf');
     }
@@ -1215,12 +1186,6 @@ class QuotationController extends Controller
             $company = $existingQuotation->company;
             $quotation = Quotation::create([
                 'user_id' => $user->id,
-                'salutation' => $existingQuotation->salutation,
-                'first_name' => $existingQuotation->first_name,
-                'middle_name' => $existingQuotation->middle_name,
-                'last_name' => $existingQuotation->last_name,
-                'phone' => $existingQuotation->phone,
-                'email' => $existingQuotation->email,
                 'company_id' => $company->id,
                 'quotation_number' => Quotation::generateNumber($company),
                 'car_make' => $existingQuotation->car_make,

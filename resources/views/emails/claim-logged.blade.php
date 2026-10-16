@@ -12,21 +12,16 @@
             A Claim has been successfully logged and the details of the claim are as follows:
         </p>
 
-        <p style="font-size: 11px; font-weight: 700; color: #005F9E; text-transform: uppercase; letter-spacing: 0.05em; margin: 20px 0 6px;">Owner Details</p>
+        <p style="font-size: 11px; font-weight: 700; color: #005F9E; text-transform: uppercase; letter-spacing: 0.05em; margin: 20px 0 6px;">Claim Reference</p>
         <table style="width: 100%; border-collapse: collapse; margin-bottom: 12px;">
             <tr>
-                <td style="padding: 8px 12px; font-size: 12px; color: #6b7280; border-bottom: 1px solid #e5e7eb; font-weight: 600;">Customer Name</td>
-                <td style="padding: 8px 12px; font-size: 12px; color: #111827; border-bottom: 1px solid #e5e7eb; font-weight: 700;">{{ $claim['customer_name'] }}</td>
+                <td style="padding: 8px 12px; font-size: 12px; color: #6b7280; border-bottom: 1px solid #e5e7eb; font-weight: 600;">Claim Number</td>
+                <td style="padding: 8px 12px; font-size: 12px; color: #111827; border-bottom: 1px solid #e5e7eb; font-weight: 700;">{{ $claim['claim_number'] ?? 'N/A' }}</td>
             </tr>
             <tr>
-                <td style="padding: 8px 12px; font-size: 12px; color: #6b7280; border-bottom: 1px solid #e5e7eb; font-weight: 600;">Email</td>
-                <td style="padding: 8px 12px; font-size: 12px; color: #111827; border-bottom: 1px solid #e5e7eb;">{{ $claim['customer_email'] ?: 'N/A' }}</td>
+                <td style="padding: 8px 12px; font-size: 12px; color: #6b7280; border-bottom: 1px solid #e5e7eb; font-weight: 600;">Underwriter</td>
+                <td style="padding: 8px 12px; font-size: 12px; color: #111827; border-bottom: 1px solid #e5e7eb;">{{ $claim['company_name'] ?? 'N/A' }}</td>
             </tr>
-            <tr>
-                <td style="padding: 8px 12px; font-size: 12px; color: #6b7280; border-bottom: 1px solid #e5e7eb; font-weight: 600;">Phone</td>
-                <td style="padding: 8px 12px; font-size: 12px; color: #111827; border-bottom: 1px solid #e5e7eb;">{{ $claim['customer_phone'] ?: 'N/A' }}</td>
-            </tr>
-           
         </table>
 
         <p style="font-size: 11px; font-weight: 700; color: #005F9E; text-transform: uppercase; letter-spacing: 0.05em; margin: 20px 0 6px;">Vehicle Details</p>

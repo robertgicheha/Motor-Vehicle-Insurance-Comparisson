@@ -50,38 +50,8 @@
         </div>
     </div>
 
-    {{-- ─── CUSTOMER & VEHICLE SUMMARY ─────────────────────────────────── --}}
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 print:hidden">
-
-        {{-- Personal Details --}}
-        <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
-            <div class="px-5 py-4 border-b border-gray-100 dark:border-gray-700">
-                <p class="text-[10px] font-semibold uppercase tracking-widest text-gray-400">Customer</p>
-                <h2 class="text-xs font-bold text-gray-800 dark:text-white mt-0.5">Personal Details</h2>
-            </div>
-            <div class="p-5 space-y-3 text-xs">
-            <div class="flex justify-between items-start gap-3">
-                <span class="text-gray-400 shrink-0">Salutation</span>
-                <span class="font-medium text-gray-800 dark:text-white text-right">{{ $quotation->customer_salutation ?: '—' }}</span>
-            </div>
-            <div class="flex justify-between items-start gap-3">
-                <span class="text-gray-400 shrink-0">First Name</span>
-                <span class="font-medium text-gray-800 dark:text-white text-right">{{ $quotation->customer_first_name ?: '—' }}</span>
-            </div>
-            <div class="flex justify-between items-start gap-3">
-                <span class="text-gray-400 shrink-0">Last Name</span>
-                <span class="font-medium text-gray-800 dark:text-white text-right">{{ $quotation->customer_last_name ?: '—' }}</span>
-            </div>
-            <div class="flex justify-between items-start gap-3">
-                <span class="text-gray-400 shrink-0">Phone</span>
-                <span class="font-medium text-gray-800 dark:text-white text-right">{{ $quotation->customer_phone ?: '—' }}</span>
-            </div>
-            <div class="flex justify-between items-start gap-3">
-                <span class="text-gray-400 shrink-0">Email</span>
-                <span class="font-medium text-gray-800 dark:text-white text-right break-all">{{ $quotation->customer_email ?: '—' }}</span>
-            </div>
-        </div>
-        </div>
+    {{-- ─── VEHICLE SUMMARY ────────────────────────────────────────────── --}}
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 print:hidden">
 
         {{-- Vehicle Details --}}
         <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">

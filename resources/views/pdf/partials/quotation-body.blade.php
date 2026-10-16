@@ -23,15 +23,14 @@
     ];
     $meta = $companyMeta[$slug] ?? ['color' => '#0066B3', 'address' => '', 'website' => 'www.micglobalrisks.com', 'img' => $company->logoUrl()];
     $now = now()->format('d F Y');
-    $customerName = $quotation->customer_name;
     $isPsv = strtoupper($quotation->vehicle_type ?? 'private') === 'PSV';
 @endphp
 
-{{-- MIC GLOBAL RISKS BANNER --}}
-@php $__micLogoPath = public_path('images/MIC-Global-Risks_logo_no_background.png'); @endphp
+{{-- LOLC MICROFINANCE BANK BANNER --}}
+@php $__micLogoPath = public_path('images/LOLC-Kenya.webp'); @endphp
 @if(file_exists($__micLogoPath))
 <div class="mic-banner">
-    <img src="{{ $__micLogoPath }}" alt="MIC Global Risks">
+    <img src="{{ $__micLogoPath }}" alt="LOLC Microfinance Bank">
 </div>
 @endif
 
@@ -62,22 +61,12 @@
             <td style="border:none;padding:0;text-align:right">Quotation No: <strong>{{ $quotation->quotation_number }}</strong></td>
         </tr>
     </table>
-    <p>Dear {{ $customerName }},</p>
+    <p>Dear Customer,</p>
     <div class="re-row">
         <h2>RE: {{ $isPsv ? 'Motor PSV(Chauffer Driven) Insurance Quote' : 'Motor Private Insurance Quote' }}</h2>
     </div>
 
-    <div class="section-title" style="margin-top:4px">Insured's Details</div>
-    <table>
-        <thead>
-            <tr><th>Name</th><th>Phone Number</th></tr>
-        </thead>
-        <tbody>
-            <tr><td>{{ $customerName }}</td><td>{{ $quotation->customer_phone ?? 'N/A' }}</td></tr>
-        </tbody>
-    </table>
-
-    <div class="section-title">Vehicle Details</div>
+    <div class="section-title" style="margin-top:4px">Vehicle Details</div>
     <table class="grid-2col">
         <tbody>
             <tr>

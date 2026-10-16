@@ -30,13 +30,13 @@
         ];
     } else {
         $__meta = [
-            'color' => '#004f8c',
-            'address' => 'MIC Global Risks (Kenya) Limited, P.O. Box 10000 - 00100 Nairobi, Kenya',
+            'color' => '#263B8B',
+            'address' => 'LOLC Microfinance Bank, P.O. Box 10000 - 00100 Nairobi, Kenya',
             'website' => 'www.micglobalrisks.com',
-            'img' => asset('images/MIC-Global-Risks_logo_no_background.png'),
+            'img' => asset('images/LOLC-Kenya.webp'),
         ];
     }
-    $__brand = $__company?->name ?? 'MIC Global Risks';
+    $__brand = $__company?->name ?? 'LOLC Microfinance Bank';
 @endphp
 <div class="letterhead" style="background:{{ $__meta['color'] }}">
     <div class="lh-left">

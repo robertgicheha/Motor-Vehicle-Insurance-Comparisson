@@ -27,7 +27,7 @@
     {{-- ─── HERO ───────────────────────────────────────────────────────── --}}
     <div class="rounded-2xl bg-micblue px-6 py-7 shadow-sm print:hidden">
         <p class="text-[10px] font-semibold uppercase tracking-widest text-blue-400">Insurance Sticker</p>
-        <h1 class="mt-0.5 text-2xl font-bold text-white tracking-tight">{{ $sticker->vehicle_registration ?: $sticker->customer_name }}</h1>
+        <h1 class="mt-0.5 text-2xl font-bold text-white tracking-tight">{{ $sticker->vehicle_registration ?: $sticker->vehicle_description }}</h1>
         <p class="mt-1 text-xs text-blue-200">{{ $sticker->company->name }} &mdash; {{ $sticker->car_make }} {{ $sticker->car_model }} ({{ $sticker->car_year }})</p>
         @if($sticker->underwriter_sticker_no)
         <div class="mt-3 inline-flex items-center gap-2 rounded-full bg-white/15 border border-white/25 px-4 py-1.5 text-xs font-bold text-white tracking-wide">
@@ -89,29 +89,29 @@
             </div>
         </div>
 
-        {{-- Customer --}}
+        {{-- Vehicle --}}
         <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
             <div class="px-5 py-4 border-b border-gray-100 dark:border-gray-700">
-                <p class="text-[10px] font-semibold uppercase tracking-widest text-gray-400">Customer</p>
-                <h2 class="text-xs font-bold text-gray-800 dark:text-white mt-0.5">Personal Details</h2>
+                <p class="text-[10px] font-semibold uppercase tracking-widest text-gray-400">Vehicle</p>
+                <h2 class="text-xs font-bold text-gray-800 dark:text-white mt-0.5">Vehicle Identity</h2>
             </div>
             <div class="p-5 space-y-3 text-xs">
                 <div class="flex justify-between items-start gap-3">
-                    <span class="text-gray-400 shrink-0">Name</span>
-                    <span class="font-bold text-gray-800 dark:text-white text-right">{{ $sticker->customer_name }}</span>
+                    <span class="text-gray-400 shrink-0">Registration</span>
+                    <span class="font-bold text-gray-800 dark:text-white text-right">{{ $sticker->vehicle_registration ?? 'N/A' }}</span>
                 </div>
-                @if($sticker->customer_email)
                 <div class="flex justify-between items-start gap-3">
-                    <span class="text-gray-400 shrink-0">Email</span>
-                    <span class="font-medium text-gray-800 dark:text-white text-right break-all">{{ $sticker->customer_email }}</span>
+                    <span class="text-gray-400 shrink-0">Make &amp; Model</span>
+                    <span class="font-medium text-gray-800 dark:text-white text-right">{{ trim(($sticker->car_make ?? '') . ' ' . ($sticker->car_model ?? '')) ?: 'N/A' }}</span>
                 </div>
-                @endif
-                @if($sticker->customer_phone)
                 <div class="flex justify-between items-start gap-3">
-                    <span class="text-gray-400 shrink-0">Phone</span>
-                    <span class="font-medium text-gray-800 dark:text-white text-right">{{ $sticker->customer_phone }}</span>
+                    <span class="text-gray-400 shrink-0">Year</span>
+                    <span class="font-medium text-gray-800 dark:text-white text-right">{{ $sticker->car_year ?? 'N/A' }}</span>
                 </div>
-                @endif
+                <div class="flex justify-between items-start gap-3">
+                    <span class="text-gray-400 shrink-0">Color</span>
+                    <span class="font-medium text-gray-800 dark:text-white text-right">{{ $sticker->color ?? 'N/A' }}</span>
+                </div>
             </div>
         </div>
 

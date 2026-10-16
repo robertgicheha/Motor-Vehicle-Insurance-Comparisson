@@ -35,10 +35,6 @@
                         <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
                         Copy
                     </button>
-                    <button onclick="sendPasswordEmail()" class="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold bg-blue-500 hover:bg-blue-400 text-white rounded-lg transition">
-                        <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
-                        Send via Email
-                    </button>
                 </div>
             </div>
         </div>
@@ -54,33 +50,10 @@
             @csrf
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                    <label class="block text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">First Name *</label>
-                    <input type="text" name="first_name" value="{{ old('first_name') }}" required
+                    <label class="block text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Branch *</label>
+                    <input type="text" name="branch" value="{{ old('branch') }}" required placeholder="e.g. Westlands"
                            class="w-full px-3 py-2 text-xs rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none">
-                </div>
-                <div>
-                    <label class="block text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Last Name *</label>
-                    <input type="text" name="last_name" value="{{ old('last_name') }}" required
-                           class="w-full px-3 py-2 text-xs rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none">
-                </div>
-                <div>
-                    <label class="block text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Email *</label>
-                    <input type="email" name="email" value="{{ old('email') }}" required
-                           class="w-full px-3 py-2 text-xs rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none">
-                </div>
-                <div>
-                    <label class="block text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Mobile *</label>
-                    <input type="text" name="mobile" value="{{ old('mobile') }}" required
-                           class="w-full px-3 py-2 text-xs rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none">
-                </div>
-                <div>
-                    <label class="block text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Gender</label>
-                    <select name="gender"
-                            class="w-full px-3 py-2 text-xs rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none">
-                        <option value="">Select</option>
-                        <option value="male">Male</option>
-                        <option value="female">Female</option>
-                    </select>
+                    <p class="text-[10px] text-gray-400 mt-1">User-role accounts get a branch-based username, e.g. <span class="font-mono">user1_westlands</span>. Admin and Super Admin accounts use a fixed username (<span class="font-mono">admin</span> / <span class="font-mono">superadmin</span>).</p>
                 </div>
                 <div class="md:col-span-2">
                     <label class="block text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Role *</label>
@@ -108,13 +81,6 @@
                         </button>
                     </div>
                     <p class="text-[10px] text-gray-400 mt-1">Auto-generated — you can edit it, or click Generate for a new one. The user can change it later from their profile.</p>
-                </div>
-                <div class="md:col-span-2 flex items-center gap-2">
-                    <input type="checkbox" id="email_credentials" name="email_credentials" value="1" checked
-                           class="rounded border-gray-300 dark:border-gray-600 text-blue-500 focus:ring-blue-500">
-                    <label for="email_credentials" class="text-xs text-gray-600 dark:text-gray-300">
-                        Email login credentials to this user immediately after creation
-                    </label>
                 </div>
             </div>
 
@@ -189,28 +155,6 @@ function copyPassword() {
         document.body.removeChild(textarea);
         alert('Password copied to clipboard!');
     });
-}
-
-function sendPasswordEmail() {
-    var password = document.getElementById('generated-password').textContent;
-    var form = document.createElement('form');
-    form.method = 'POST';
-    form.action = '{{ route("admin.users.send-credentials") }}';
-    
-    var csrf = document.createElement('input');
-    csrf.type = 'hidden';
-    csrf.name = '_token';
-    csrf.value = '{{ csrf_token() }}';
-    form.appendChild(csrf);
-    
-    var passwordInput = document.createElement('input');
-    passwordInput.type = 'hidden';
-    passwordInput.name = 'password';
-    passwordInput.value = password;
-    form.appendChild(passwordInput);
-    
-    document.body.appendChild(form);
-    form.submit();
 }
 </script>
 </x-app-layout>

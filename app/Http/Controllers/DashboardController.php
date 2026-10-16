@@ -146,7 +146,7 @@ class DashboardController extends Controller
             ),
         ];
 
-        $data['recentQuotations'] = Quotation::with(['user:id,name', 'company:id,name'])
+        $data['recentQuotations'] = Quotation::with(['user:id,username', 'company:id,name'])
             ->latest()
             ->take(10)
             ->get();
@@ -161,13 +161,7 @@ class DashboardController extends Controller
             ->map(fn($total, $month) => (object)['month' => $month, 'total' => $total])
             ->values();
 
-        $data['usersByGender'] = User::select('gender', DB::raw('count(*) as total'))
-            ->whereNotNull('gender')
-            ->groupBy('gender')
-            ->get()
-            ->pluck('total', 'gender');
-
-        $data['quotationDates'] = Quotation::with(['user:id,name', 'company:id,name'])
+        $data['quotationDates'] = Quotation::with(['user:id,username', 'company:id,name'])
             ->latest()
             ->take(100)
             ->get()
@@ -178,7 +172,7 @@ class DashboardController extends Controller
                 'items' => $items->map(fn($q) => [
                     'id' => $q->id,
                     'quotation_number' => $q->quotation_number,
-                    'user_name' => $q->customer_name,
+                    'user_name' => $q->user?->username ?? '—',
                     'car' => $q->car_make . ' ' . $q->car_model,
                     'premium' => $q->total_premium,
                     'company' => $q->company->name ?? 'Unknown',
@@ -200,7 +194,7 @@ class DashboardController extends Controller
             ->sortBy('sort_key')
             ->values();
 
-        $data['allActivities'] = ActivityLog::with('user:id,name,avatar')->latest()->take(10)->get();
+        $data['allActivities'] = ActivityLog::with('user:id,username,avatar')->latest()->take(10)->get();
         $data['myActivities'] = ActivityLog::where('user_id', $user->id)->latest()->take(10)->get();
 
         $data['unreadNotifications'] = $user->unreadNotifications()->latest()->take(5)->get();
@@ -212,9 +206,9 @@ class DashboardController extends Controller
             ->take(5)
             ->get();
 
-        $data['recentAlerts'] = AuditLog::with('user:id,name')->latest()->take(5)->get();
+        $data['recentAlerts'] = AuditLog::with('user:id,username')->latest()->take(5)->get();
 
-        $data['abandonedQuoteSessions'] = QuoteSession::with('user:id,name')
+        $data['abandonedQuoteSessions'] = QuoteSession::with('user:id,username')
             ->where('status', 'started')
             ->where('started_at', '<', now()->subMinutes(30))
             ->latest('started_at')
@@ -231,14 +225,14 @@ class DashboardController extends Controller
             ->get();
 
         if ($isSuperAdmin) {
-            $data['pendingChangeRequests'] = ChangeRequest::with('user:id,name')
+            $data['pendingChangeRequests'] = ChangeRequest::with('user:id,username')
                 ->pending()
                 ->latest()
                 ->take(10)
                 ->get();
             $data['pendingChangeCount'] = ChangeRequest::pending()->count();
         } else {
-            $data['pendingChangeRequests'] = ChangeRequest::with('user:id,name')
+            $data['pendingChangeRequests'] = ChangeRequest::with('user:id,username')
                 ->forUser($user->id)
                 ->latest()
                 ->take(5)
@@ -258,12 +252,12 @@ class DashboardController extends Controller
         $data['recentActivities'] = $data['myActivities'];
         $data['recentNotifications'] = $data['unreadNotifications'];
 
-        $filledFields = collect([$user->first_name, $user->last_name, $user->email, $user->mobile, $user->gender, $user->avatar])->filter(fn($v) => !is_null($v) && $v !== '')->count();
-        $data['profileCompletion'] = round(($filledFields / 6) * 100);
+        $filledFields = collect([$user->username, $user->branch, $user->avatar])->filter(fn($v) => !is_null($v) && $v !== '')->count();
+        $data['profileCompletion'] = round(($filledFields / 3) * 100);
 
         $adminClaimQuery = fn($q) => $q->where('user_id', $user->id)->orWhere('on_behalf_of_user_id', $user->id);
         $data['myClaimsCount'] = Claim::where($adminClaimQuery)->count();
-        $data['recentMyClaims'] = Claim::with(['user:id,name', 'onBehalfOfUser:id,name'])
+        $data['recentMyClaims'] = Claim::with(['user:id,username', 'onBehalfOfUser:id,username'])
             ->where($adminClaimQuery)
             ->latest()
             ->take(4)
@@ -383,14 +377,14 @@ class DashboardController extends Controller
             ->whereIn('status', ['reported'])
             ->count();
 
-        $data['recentMyClaims'] = Claim::with(['user:id,name', 'onBehalfOfUser:id,name'])
+        $data['recentMyClaims'] = Claim::with(['user:id,username', 'onBehalfOfUser:id,username'])
             ->where($claimQuery)
             ->latest()
             ->take(4)
             ->get();
 
-        $filledFields = collect([$user->first_name, $user->last_name, $user->email, $user->mobile, $user->gender, $user->avatar])->filter(fn($v) => !is_null($v) && $v !== '')->count();
-        $data['profileCompletion'] = round(($filledFields / 6) * 100);
+        $filledFields = collect([$user->username, $user->branch, $user->avatar])->filter(fn($v) => !is_null($v) && $v !== '')->count();
+        $data['profileCompletion'] = round(($filledFields / 3) * 100);
 
         $data['recentActivities'] = ActivityLog::where('user_id', $userId)->latest()->take(10)->get();
 
@@ -515,7 +509,7 @@ class DashboardController extends Controller
             $scope = 'mine';
         }
 
-        $query = ActivityLog::with('user:id,name');
+        $query = ActivityLog::query();
 
         if ($scope === 'mine') {
             $query->where('user_id', $user->id);
@@ -532,7 +526,7 @@ class DashboardController extends Controller
             return [
                 'text' => $a->description ?? $a->action,
                 'time' => $a->created_at->diffForHumans(),
-                'user' => $a->user->name ?? 'System',
+                'user' => $a->user_name ?? 'System',
                 'dot_color' => $dotColor,
             ];
         });

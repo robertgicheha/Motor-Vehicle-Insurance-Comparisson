@@ -48,7 +48,7 @@
             <div class="px-5 py-4 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between">
                 <div>
                     <h2 class="text-xs font-semibold text-gray-800 dark:text-white">{{ $selectedUser->name }}</h2>
-                    <p class="text-[10px] text-gray-400 mt-0.5">{{ $selectedUser->email }} &middot; {{ $timeline->total() }} events</p>
+                    <p class="text-[10px] text-gray-400 mt-0.5">{{ $selectedUser->username }}@if($selectedUser->branch) &middot; {{ $selectedUser->branch }}@endif &middot; {{ $timeline->total() }} events</p>
                 </div>
             </div>
 

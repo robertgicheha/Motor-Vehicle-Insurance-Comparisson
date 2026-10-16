@@ -1,14 +1,14 @@
 @inject('settingModel', 'App\Models\Setting')
 @php
-    $__logoPath = $settingModel->getValue('logo_path', 'images/MIC-Global-Risks_logo.png');
-    $__logoUrl = $__logoPath ? (str_starts_with($__logoPath, 'images/') ? asset($__logoPath) : asset('storage/' . $__logoPath)) : asset('images/MIC-Global-Risks_logo.png');
+    $__logoPath = $settingModel->getValue('logo_path', 'images/LOLC-Kenya.webp');
+    $__logoUrl = $__logoPath ? (str_starts_with($__logoPath, 'images/') ? asset($__logoPath) : asset('storage/' . $__logoPath)) : asset('images/LOLC-Kenya.webp');
 @endphp
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Private Motor Vehicle Comprehensive Cover | MIC Global Risks</title>
+<title>Private Motor Vehicle Comprehensive Cover | LOLC Microfinance Bank</title>
 <meta name="description" content="Get a comprehensive private motor vehicle insurance quote from Kenya's leading insurers. Compare rates from Sanlam Allianz, GA Insurance and BRITAM.">
 <link rel="icon" type="image/x-icon" href="{{ asset('Favicon.png') }}">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -22,8 +22,8 @@
   .page-hero-eyebrow{color:#93c5fd;font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.12em;margin-bottom:8px}
   .page-hero h1{color:#fff;font-size:32px;font-weight:700;line-height:1.2;margin-bottom:12px}
   .page-hero p{color:rgba(255,255,255,.8);font-size:16px;line-height:1.6;margin-bottom:24px}
-  .page-hero .btn-hero{display:inline-flex;align-items:center;gap:8px;background:#D0021B;color:#fff;padding:12px 28px;border-radius:30px;font-weight:600;font-size:14px;text-decoration:none;transition:background .2s}
-  .page-hero .btn-hero:hover{background:#a00015}
+  .page-hero .btn-hero{display:inline-flex;align-items:center;gap:8px;background:#ED1D25;color:#fff;padding:12px 28px;border-radius:30px;font-weight:600;font-size:14px;text-decoration:none;transition:background .2s}
+  .page-hero .btn-hero:hover{background:#B6161C}
   .page-section{padding:70px 40px;max-width:1200px;margin:0 auto}
   .page-section-alt{background:#F9F9FF}
   .section-label{color:var(--blue);font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.1em;margin-bottom:6px}
@@ -57,11 +57,11 @@
   .step-alt-card h4{font-size:13px;font-weight:600;margin-bottom:6px}
   .step-alt-card p{font-size:11.5px;color:var(--text-muted);line-height:1.5}
   .step-connector{display:flex;align-items:center;justify-content:center;color:var(--border);font-size:20px}
-  .cta-section{background:linear-gradient(105deg,#004f8c,#0066B3);padding:60px 40px;text-align:center;color:#fff}
+  .cta-section{background:linear-gradient(105deg,#263B8B,#0066B3);padding:60px 40px;text-align:center;color:#fff}
   .cta-section h2{font-size:28px;font-weight:700;margin-bottom:12px}
   .cta-section p{font-size:15px;opacity:.85;margin-bottom:24px;max-width:600px;margin-left:auto;margin-right:auto}
-  .cta-section .btn-cta{display:inline-flex;align-items:center;gap:8px;background:#D0021B;color:#fff;padding:14px 36px;border-radius:30px;font-weight:600;font-size:15px;text-decoration:none;transition:background .2s}
-  .cta-section .btn-cta:hover{background:#a00015}
+  .cta-section .btn-cta{display:inline-flex;align-items:center;gap:8px;background:#ED1D25;color:#fff;padding:14px 36px;border-radius:30px;font-weight:600;font-size:15px;text-decoration:none;transition:background .2s}
+  .cta-section .btn-cta:hover{background:#B6161C}
   .contact-grid{display:grid;grid-template-columns:1fr 1fr;gap:40px;align-items:start}
   .contact-info h3{font-size:18px;font-weight:700;margin-bottom:12px}
   .contact-info p{font-size:13px;color:var(--text-muted);line-height:1.7;margin-bottom:16px}

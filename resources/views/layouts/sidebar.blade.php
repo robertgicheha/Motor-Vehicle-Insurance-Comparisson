@@ -51,7 +51,7 @@
             @if($isAdmin && ($isActive('admin.companies*') || $isActive('admin.compare-all*')))
                 this.open.companies = true;
             @endif
-            @if($isAdmin && ($isActive('admin.users*') || $isActive('admin.pending-users*') || $isActive('admin.roles*') || $isActive('admin.stickers*')))
+            @if($isAdmin && ($isActive('admin.users*') || $isActive('admin.roles*') || $isActive('admin.stickers*')))
                 this.open.users = true;
             @endif
             @if($isAdmin && ($isActive('stickers.issue*') || $isActive('stickers.*') || $isActive('admin.stickers*') || $isActive('stickers.user-lookup')))
@@ -83,10 +83,10 @@
     {{-- Logo --}}
     <div class="flex items-center shrink-0" :class="sidebarOpen ? 'px-4 py-4' : 'px-0 py-4 justify-center'">
         <a href="{{ route('dashboard') }}" class="block" :class="sidebarOpen ? '' : 'flex justify-center'">
-            <img src="{{ asset('images/MIC-Global-Risks_logo.png') }}"
-                 alt="MIC Global Risks"
+            <img src="{{ asset('images/LOLC-Kenya.webp') }}"
+                 alt="LOLC Microfinance Bank"
                  class="object-contain transition-all duration-300"
-                 :class="sidebarOpen ? 'h-8 w-auto max-w-[140px]' : 'h-7 w-auto max-w-[36px]'" width="311" height="58">
+                 :class="sidebarOpen ? 'h-8 w-auto max-w-[140px]' : 'h-7 w-auto max-w-[36px]'" width="417" height="67">
         </a>
     </div>
 
@@ -286,7 +286,7 @@
                 <a href="{{ route('admin.users.index') }}" @click.prevent.stop="toggle('users')"
                         class="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-[13px] font-medium transition-all duration-150 group"
                         :class="sidebarOpen ? 'justify-start' : 'justify-center'"
-                        style="{{ ($isActive('admin.users*') || $isActive('admin.pending-users*') || $isActive('admin.roles*') || $isActive('admin.stickers*')) ? $activeStyle : $inactiveStyle }}">
+                        style="{{ ($isActive('admin.users*') || $isActive('admin.roles*') || $isActive('admin.stickers*')) ? $activeStyle : $inactiveStyle }}">
                     <span class="shrink-0 text-white transition-opacity">
                         <svg class="w-[18px] h-[18px]" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
                     </span>
@@ -305,15 +305,6 @@
                        class="sidebar-sub-link flex items-center gap-2 pl-[42px] pr-3 py-1.5 rounded-lg text-[12px] text-white transition-all duration-150
                               {{ $isActive('admin.users.index') ? 'bg-white/[0.16]' : 'hover:bg-white/[0.10]' }}">
                         View All Users
-                    </a>
-                    <a href="{{ route('admin.pending-users.index') }}"
-                       class="sidebar-sub-link flex items-center gap-2 pl-[42px] pr-3 py-1.5 rounded-lg text-[12px] text-white transition-all duration-150
-                              {{ $isActive('admin.pending-users*') ? 'bg-white/[0.16]' : 'hover:bg-white/[0.10]' }}">
-                        <span class="flex-1">Pending Users</span>
-                        @php $__pendingUsersCount = \App\Models\User::where('is_active', false)->whereNull('verified_at')->count(); @endphp
-                        @if($__pendingUsersCount > 0)
-                        <span class="shrink-0 text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-amber-400 text-amber-950">{{ $__pendingUsersCount }}</span>
-                        @endif
                     </a>
                     <a href="{{ route('admin.users.create') }}"
                        class="sidebar-sub-link flex items-center gap-2 pl-[42px] pr-3 py-1.5 rounded-lg text-[12px] text-white transition-all duration-150
@@ -434,8 +425,18 @@
                     </a>
                     <a href="{{ route('admin.audit.index') }}"
                        class="sidebar-sub-link flex items-center gap-2 pl-[42px] pr-3 py-1.5 rounded-lg text-[12px] text-white transition-all duration-150
-                              {{ $isActive('admin.audit*') ? 'bg-white/[0.16]' : 'hover:bg-white/[0.10]' }}">
+                              {{ $isActive('admin.audit.index') ? 'bg-white/[0.16]' : 'hover:bg-white/[0.10]' }}">
                         Audit Trail
+                    </a>
+                    <a href="{{ route('admin.audit.activity') }}"
+                       class="sidebar-sub-link flex items-center gap-2 pl-[42px] pr-3 py-1.5 rounded-lg text-[12px] text-white transition-all duration-150
+                              {{ $isActive('admin.audit.activity') ? 'bg-white/[0.16]' : 'hover:bg-white/[0.10]' }}">
+                        Activity Logs
+                    </a>
+                    <a href="{{ route('admin.audit.story') }}"
+                       class="sidebar-sub-link flex items-center gap-2 pl-[42px] pr-3 py-1.5 rounded-lg text-[12px] text-white transition-all duration-150
+                              {{ $isActive('admin.audit.story') ? 'bg-white/[0.16]' : 'hover:bg-white/[0.10]' }}">
+                        User Story
                     </a>
                     <a href="{{ route('admin.email-analytics.index') }}"
                        class="sidebar-sub-link flex items-center gap-2 pl-[42px] pr-3 py-1.5 rounded-lg text-[12px] text-white transition-all duration-150

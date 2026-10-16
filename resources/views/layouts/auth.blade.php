@@ -18,7 +18,7 @@
         <div class="flex flex-col justify-center w-full lg:w-[40%] px-8 sm:px-16 xl:px-24">
             <div class="mb-10 text-center">
                 <a href="{{ route('home') }}" class="flex flex-col items-center justify-center gap-3">
-                    <img src="{{ asset('images/MarshMIC.png') }}" alt="MIC Global Risks" class="mx-auto mb-3" style="height:56px;width:auto" width="1683" height="143">
+                    <img src="{{ asset('images/LOLC-Kenya.webp') }}" alt="LOLC Microfinance Bank" class="mx-auto mb-3" style="height:56px;width:auto" width="417" height="67">
                     <span>Motor Vehicle Insurance Portal</span>
                 </a>
             </div>

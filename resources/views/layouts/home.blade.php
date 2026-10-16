@@ -11,7 +11,7 @@
         ->get()
         ->keyBy('company_id');
     $__totalQuotes = $__companyStats->sum('total');
-    $companyColors = ['#003087', '#0066B3', '#00205B', '#D0021B', '#7c3aed', '#0f7a65'];
+    $companyColors = ['#003087', '#0066B3', '#00205B', '#ED1D25', '#7c3aed', '#0f7a65'];
     $__vehicleType = request()->query('vehicle_type', 'private');
     $__companyData = $__companies->map(function ($c, $i) use ($companyColors, $__companyStats, $__vehicleType) {
         $rate = $c->rates->where('vehicle_type', $__vehicleType)->firstWhere('item_name', 'Premium Rate');
@@ -118,12 +118,12 @@
      PRIMARY META
      ═══════════════════════════════════════ -->
 
-<title>Motor Vehicle Insurance Portal | MIC Global Risks</title>
+<title>Motor Vehicle Insurance Portal | LOLC Microfinance Bank</title>
 <meta name="description"
       content="Get an instant motor insurance quote in Kenya. Compare comprehensive premiums from {{ $__companies->pluck('name')->implode(', ') }}. Download your quotation in seconds.">
 <meta name="keywords"
       content="motor insurance Kenya, car insurance quote Kenya, comprehensive motor cover, {{ $__companies->pluck('name')->implode(', ') }}, vehicle insurance Nairobi, third party insurance Kenya">
-<meta name="author" content="MIC Global Risks Insurance">
+<meta name="author" content="LOLC Microfinance Bank">
 <meta name="csrf-token" content="{{ csrf_token() }}">
 <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1">
 <meta name="theme-color" content="#0066B3">
@@ -133,14 +133,14 @@
      OPEN GRAPH  (Facebook / LinkedIn / WhatsApp)
      ═══════════════════════════════════════ -->
 <meta property="og:type"        content="website">
-<meta property="og:site_name"   content="MIC Global Risks Insurance">
-<meta property="og:title"       content="Motor Insurance Quote Portal | MIC Global Risks">
+<meta property="og:site_name"   content="LOLC Microfinance Bank">
+<meta property="og:title"       content="Motor Insurance Quote Portal | LOLC Microfinance Bank">
 <meta property="og:description" content="Compare motor insurance premiums from {{ $__companies->pluck('name')->implode(', ') }}. Get your instant quote and download your certificate — all in one place.">
 <meta property="og:url"         content="https://www.micglobalrisks.com/motor-quote/">
-<meta property="og:image"       content="https://www.micglobalrisks.com/img/MIC-Global-Risks_logo.png">
+<meta property="og:image"       content="{{ asset('images/LOLC-Kenya.webp') }}">
 <meta property="og:image:width"  content="1200">
 <meta property="og:image:height" content="630">
-<meta property="og:image:alt"   content="MIC Global Risks Motor Insurance Quote Portal">
+<meta property="og:image:alt"   content="LOLC Microfinance Bank Motor Insurance Quote Portal">
 <meta property="og:locale"      content="en_KE">
 
 <!-- ═══════════════════════════════════════
@@ -149,10 +149,10 @@
 <meta name="twitter:card"        content="summary_large_image">
 <meta name="twitter:site"        content="@MICGlobalRisks">
 <meta name="twitter:creator"     content="@MICGlobalRisks">
-<meta name="twitter:title"       content="Motor Insurance Quote Portal | MIC Global Risks">
+<meta name="twitter:title"       content="Motor Insurance Quote Portal | LOLC Microfinance Bank">
 <meta name="twitter:description" content="Compare motor insurance premiums from {{ $__companies->pluck('name')->implode(', ') }}. Instant quotes, downloadable certificates.">
-<meta name="twitter:image"       content="https://www.micglobalrisks.com/img/MIC-Global-Risks_logo.png">
-<meta name="twitter:image:alt"   content="MIC Global Risks Motor Insurance Quote Portal">
+<meta name="twitter:image"       content="{{ asset('images/LOLC-Kenya.webp') }}">
+<meta name="twitter:image:alt"   content="LOLC Microfinance Bank Motor Insurance Quote Portal">
 
 <!-- ═══════════════════════════════════════
      GEO / REGIONAL
@@ -339,48 +339,6 @@
   </div>
 </section>
 
-<!-- ── REGENERATE QUOTE CHOICE (only for logged-in users with a previous quotation) ── -->
-@auth
-  @php
-    // ASSUMPTION: reusing the same relationship pattern as elsewhere ($user->quotations()).
-    // Adjust column names below (salutation, middle_name, phone, email, registration_number,
-    // chassis_number, car_make, car_model, body_type, year_of_manufacture, color, vehicle_value)
-    // to match your actual Quotation model — these are best guesses.
-    $__lastQuotation = auth()->user()->quotations()->latest()->first();
-  @endphp
-  @if ($__lastQuotation)
-  <section class="section" style="background:#F9F9FF;padding-bottom:0">
-    <div class="form-container" id="regenerate-choice">
-      <div class="section-head">
-        <div class="section-title" style="text-align:center">Welcome back{{ !empty($__lastQuotation->first_name) ? ', ' . $__lastQuotation->first_name : '' }}!</div>
-        <div class="section-sub" style="text-align:center">We found a recent quotation on your account. Would you like to regenerate it for the same car, or start fresh?</div>
-      </div>
-
-      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(280px,100%),1fr));gap:16px;max-width:720px;margin:24px auto 0">
-        <div class="preview-card" onclick="regenerateSameCar()" style="background:white;border:1.5px solid var(--border);border-radius:var(--radius);padding:24px 18px;text-align:center;cursor:pointer;transition:box-shadow .2s,transform .15s">
-          <div style="font-size:28px;margin-bottom:10px">🔁</div>
-          <div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:6px">Yes, regenerate this quote</div>
-          <div style="font-size:12px;color:var(--text-muted);margin-bottom:14px">
-            {{ trim(($__lastQuotation->car_make ?? '') . ' ' . ($__lastQuotation->car_model ?? '')) ?: 'Same car as your last quotation' }}
-            @if(!empty($__lastQuotation->year_of_manufacture)) ({{ $__lastQuotation->year_of_manufacture }}) @endif
-          </div>
-          <div style="font-size:11px;font-weight:700;color:white;background:#1756c8;border-radius:5px;padding:7px 0">Use Same Car ↗</div>
-        </div>
-
-        <div class="preview-card" onclick="startNewQuote()" style="background:white;border:1.5px solid var(--border);border-radius:var(--radius);padding:24px 18px;text-align:center;cursor:pointer;transition:box-shadow .2s,transform .15s">
-          <div style="font-size:28px;margin-bottom:10px">🚗</div>
-          <div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:6px">No, new car</div>
-          <div style="font-size:12px;color:var(--text-muted);margin-bottom:14px">Start a fresh quotation from scratch</div>
-          <div style="font-size:11px;font-weight:700;color:white;background:#005F9E;border-radius:5px;padding:7px 0">Start Fresh ↗</div>
-        </div>
-      </div>
-    </div>
-  </section>
-  @endif
-@endauth
-
-
-
 <!-- ── QUOTE FORM (modern / New-Features style) ── -->
 <section class="modern-section quote-form" id="quote-form-section">
   <div class="form-container">
@@ -551,8 +509,8 @@
 <!-- ============================================================ PSV MOTOR VEHICLE SECTION (modern / New-Features style, mirrored) ============================================================ -->
 <section class="modern-section psv" id="psv-motor-section">
   <div class="modern-head">
-    <div class="eyebrow" style="color:#004F8C">Comprehensive Motor Vehicle Insurance</div>
-    <h2 class="modern-title" style="color:#004F8C">Insuring a PSV?</h2>
+    <div class="eyebrow" style="color:#263B8B">Comprehensive Motor Vehicle Insurance</div>
+    <h2 class="modern-title" style="color:#263B8B">Insuring a PSV?</h2>
     <h3 class="modern-subtitle">Get a Comprehensive PSV (Public Service Vehicle) quote in minutes.</h3>
     <p class="modern-desc">Get comprehensive cover tailored for matatus, buses, taxis and other public service vehicles, with clear visibility into every quotation.</p>
   </div>
@@ -1290,54 +1248,6 @@
   </div>
 </section>
 
-@auth
-@if ($__lastQuotation)
-<script>
-  // ASSUMPTION: field names on $__lastQuotation match the Quotation model's actual
-  // columns. If any of these don't exist on the model, that field will just come
-  // through as blank/undefined below — it won't throw, but won't prefill.
-  function regenerateSameCar() {
-    var q = @json($__lastQuotation);
-
-    var setVal = function (id, val) {
-      var el = document.getElementById(id);
-      if (el && val !== undefined && val !== null) el.value = val;
-    };
-
-    setVal('f-salutation', q.salutation);
-    setVal('f-first', q.first_name);
-    setVal('f-middle', q.middle_name);
-    setVal('f-last', q.last_name);
-    setVal('f-phone', q.phone);
-    setVal('f-email', q.email);
-
-    setVal('f-reg', q.registration_number);
-    setVal('f-chassis', q.chassis_number);
-
-    // Make/model use a hidden "value" input alongside the visible search input —
-    // populate both so the existing search/dropdown logic still treats them as selected.
-    setVal('f-make', q.car_make);
-    setVal('f-make-value', q.car_make);
-    var modelInput = document.getElementById('f-model');
-    if (modelInput) modelInput.disabled = false;
-    setVal('f-model', q.car_model);
-    setVal('f-model-value', q.car_model);
-
-    setVal('f-year', q.year_of_manufacture);
-    setVal('f-value', q.vehicle_value);
-
-    goStep(3);
-    document.getElementById('quote-form-section').scrollIntoView({ behavior: 'smooth', block: 'start' });
-  }
-
-  function startNewQuote() {
-    goStep(1);
-    document.getElementById('quote-form-section').scrollIntoView({ behavior: 'smooth', block: 'start' });
-  }
-</script>
-@endif
-@endauth
-
 <!-- ── QUOTE FORM ── -->
 {{-- <section class="section" style="background:#F9F9FF">
   <div class="form-container">
@@ -1476,15 +1386,15 @@
             @endforeach
 
             <!-- Compare All -->
-            <div class="preview-card" onclick="guestGuard(function(){ openQuotePage('ALL'); })" style="background:white;border:1.5px solid #D0021B;border-radius:var(--radius);padding:16px 14px;text-align:center;cursor:pointer;transition:box-shadow .2s,transform .15s">
+            <div class="preview-card" onclick="guestGuard(function(){ openQuotePage('ALL'); })" style="background:white;border:1.5px solid #ED1D25;border-radius:var(--radius);padding:16px 14px;text-align:center;cursor:pointer;transition:box-shadow .2s,transform .15s">
               <div style="height:36px;display:flex;align-items:center;justify-content:center;margin-bottom:8px">
                 <img src="{{ $__compareAllLogoUrl }}" alt="Compare All" style="max-height:32px;max-width:90px;object-fit:contain" onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
                 <span style="display:none;font-size:18px">📊</span>
               </div>
-              <div style="font-size:11px;color:#D0021B;font-weight:700;margin-bottom:6px">COMPARE ALL</div>
-              <div style="font-size:1.1rem;font-weight:700;color:#D0021B">{{ $__privateCompanyData->count() }} Quotes</div>
+              <div style="font-size:11px;color:#ED1D25;font-weight:700;margin-bottom:6px">COMPARE ALL</div>
+              <div style="font-size:1.1rem;font-weight:700;color:#ED1D25">{{ $__privateCompanyData->count() }} Quotes</div>
               <div style="font-size:11px;color:var(--text-muted);margin-bottom:10px">All insurers</div>
-              <div style="font-size:11px;font-weight:700;color:white;background:#D0021B;border-radius:5px;padding:5px 0">Compare ↗</div>
+              <div style="font-size:11px;font-weight:700;color:white;background:#ED1D25;border-radius:5px;padding:5px 0">Compare ↗</div>
             </div>
 
           </div>
@@ -1499,7 +1409,7 @@
 </section> --}}
 
 <!-- Insuring a PSV? -->
-<section class="section section-alt" style="background-color: #D0021B;">
+<section class="section section-alt" style="background-color: #ED1D25;">
   <div style="text-align:center;margin-bottom:20px">
     <div class="section-title" style="color:#F9F9FF;font-size:20px">🚌 Insuring a PSV?</div>
     <div class="section-sub" style="color:#F9F9FF;font-size:15px;margin-top:4px">Select an insurer below for a tailored PSV insurance quote.</div>
@@ -1520,8 +1430,8 @@
     </a>
     @endforeach
 
-    <a href="{{ route('generate.quote', 'compare-all') }}" class="company-card no-underline" style="cursor:pointer;display:block;border:2px solid #D0021B;position:relative;overflow:hidden;transition:all .25s ease;border-radius:16px;box-shadow:0 4px 20px rgba(0,0,0,0.08)">
-      <div style="position:absolute;top:0;left:0;right:0;height:4px;background:#D0021B"></div>
+    <a href="{{ route('generate.quote', 'compare-all') }}" class="company-card no-underline" style="cursor:pointer;display:block;border:2px solid #ED1D25;position:relative;overflow:hidden;transition:all .25s ease;border-radius:16px;box-shadow:0 4px 20px rgba(0,0,0,0.08)">
+      <div style="position:absolute;top:0;left:0;right:0;height:4px;background:#ED1D25"></div>
       <div class="company-logo-box" style="height:48px;margin-bottom:12px">
         <img src="{{ $__compareAllLogoUrl }}" alt="Compare All" style="max-height:40px" onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
         <span style="display:none;font-size:18px">📊</span>
@@ -1530,10 +1440,10 @@
       <div style="display:flex;align-items:center;justify-content:center;gap:16px;margin-bottom:12px">
         <div style="text-align:center">
           <div style="font-size:10px;color:#6b7280;font-weight:500">Insurers</div>
-          <div style="font-size:13px;font-weight:800;color:#D0021B">{{ $__psvCompanyData->count() }}</div>
+          <div style="font-size:13px;font-weight:800;color:#ED1D25">{{ $__psvCompanyData->count() }}</div>
         </div>
       </div>
-      <button class="btn btn-primary" style="width:100%;justify-content:center;font-size:12px;padding:8px 10px;background:#D0021B;border-color:#D0021B;border-radius:10px;font-weight:700">Compare All ↗</button>
+      <button class="btn btn-primary" style="width:100%;justify-content:center;font-size:12px;padding:8px 10px;background:#ED1D25;border-color:#ED1D25;border-radius:10px;font-weight:700">Compare All ↗</button>
     </a>
   </div>
 </section>
@@ -1602,8 +1512,8 @@
     </a>
     @endforeach
 
-    <a href="{{ route('generate.quote', 'compare-all') }}" class="company-card no-underline" style="cursor:pointer;display:block;border:2px solid #D0021B;position:relative;overflow:hidden;transition:all .25s ease;border-radius:16px;box-shadow:0 4px 20px rgba(0,0,0,0.08)">
-      <div style="position:absolute;top:0;left:0;right:0;height:4px;background:#D0021B"></div>
+    <a href="{{ route('generate.quote', 'compare-all') }}" class="company-card no-underline" style="cursor:pointer;display:block;border:2px solid #ED1D25;position:relative;overflow:hidden;transition:all .25s ease;border-radius:16px;box-shadow:0 4px 20px rgba(0,0,0,0.08)">
+      <div style="position:absolute;top:0;left:0;right:0;height:4px;background:#ED1D25"></div>
       <div class="company-logo-box" style="height:48px;margin-bottom:12px">
         <img src="{{ $__compareAllLogoUrl }}" alt="Compare All" style="max-height:40px" onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
         <span style="display:none;font-size:18px">📊</span>
@@ -1612,10 +1522,10 @@
       <div style="display:flex;align-items:center;justify-content:center;gap:16px;margin-bottom:12px">
         <div style="text-align:center">
           <div style="font-size:10px;color:#6b7280;font-weight:500">Insurers</div>
-          <div style="font-size:13px;font-weight:800;color:#D0021B">{{ $__privateCompanyData->count() }}</div>
+          <div style="font-size:13px;font-weight:800;color:#ED1D25">{{ $__privateCompanyData->count() }}</div>
         </div>
       </div>
-      <button class="btn btn-primary" style="width:100%;justify-content:center;font-size:12px;padding:8px 10px;background:#D0021B;border-color:#D0021B;border-radius:10px;font-weight:700">Compare All ↗</button>
+      <button class="btn btn-primary" style="width:100%;justify-content:center;font-size:12px;padding:8px 10px;background:#ED1D25;border-color:#ED1D25;border-radius:10px;font-weight:700">Compare All ↗</button>
     </a>
   </div>
 </section>

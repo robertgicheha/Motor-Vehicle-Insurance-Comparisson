@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Quotation {{ $quotation->quotation_number }} | MIC Global Risks</title>
+<title>Quotation {{ $quotation->quotation_number }} | LOLC Microfinance Bank</title>
 <link rel="stylesheet" href="{{ asset('css/home.css') }}">
 </head>
 <body>
@@ -13,13 +13,12 @@
     <a href="#">About Us</a><a href="#">Contact Us</a><a href="#">Affiliates</a><a href="#">Careers</a>
   </div>
   <div class="nav-main">
-    <a href="{{ url('/') }}"><img src="{{ asset('images/MIC-Global-Risks_logo.png') }}" alt="MIC Global Risks" class="nav-logo" width="311" height="58"></a>
+    <a href="{{ url('/') }}"><img src="{{ asset('images/LOLC-Kenya.webp') }}" alt="LOLC Microfinance Bank" class="nav-logo" width="417" height="67"></a>
     <div class="nav-links">
       <a href="{{ url('/motor-quote') }}">Motor Quote</a>
       <a href="{{ route('stickers.create') }}">Certificates</a>
       <a href="{{ route('stickers.lookup') }}">Look Up</a>
       <a href="{{ route('login') }}" class="nav-cta">Login</a>
-      <a href="{{ route('register') }}" class="nav-cta" style="background:var(--blue-dark)">Register</a>
     </div>
   </div>
 </nav>
@@ -264,7 +263,7 @@
 <footer>
   <div class="footer-top">
     <div class="footer-brand">
-      <img src="{{ asset('images/MIC-Global-Risks_logo_no_background.png') }}" alt="MIC Global Risks" width="621" height="116">
+      <img src="{{ asset('images/LOLC-Kenya.webp') }}" alt="LOLC Microfinance Bank" width="417" height="67">
       <p>Your trusted insurance intermediary — connecting you to Kenya's leading insurers with transparency, speed and expertise.</p>
     </div>
     <div class="footer-col">
@@ -281,7 +280,7 @@
     </div>
   </div>
   <div class="footer-bottom">
-    <span>&copy; 2026 MIC Global Risks Insurance (Kenya) Limited</span>
+    <span>&copy; 2026 LOLC Microfinance Bank</span>
     <div><a href="#">Privacy Policy</a><a href="#">Terms &amp; Conditions</a><a href="#">Contact Us</a></div>
   </div>
 </footer>

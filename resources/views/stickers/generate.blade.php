@@ -33,22 +33,6 @@
                 </div>
             </div>
 
-            <div class="grid grid-cols-2 gap-6">
-                <div>
-                    <label class="block text-[12px] font-bold text-gray-700 mb-1.5">Customer Name <span class="text-red-500">*</span></label>
-                    <input type="text" name="customer_name" value="{{ old('customer_name') }}" required placeholder="e.g. John Doe"
-                           class="w-full px-4 py-2.5 rounded-lg border border-gray-300 text-sm font-medium focus:border-[#0066B3] focus:ring-2 focus:ring-[#0066B3]/20 outline-none transition">
-                    @error('customer_name') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
-                </div>
-                <div>
-                    <label class="block text-[12px] font-bold text-gray-700 mb-1.5">Customer Email</label>
-                    <input type="email" name="customer_email" value="{{ old('customer_email') }}" placeholder="e.g. john@example.com"
-                           class="w-full px-4 py-2.5 rounded-lg border border-gray-300 text-sm font-medium focus:border-[#0066B3] focus:ring-2 focus:ring-[#0066B3]/20 outline-none transition">
-                    <p class="text-[11px] text-gray-400 mt-1">For your records</p>
-                    @error('customer_email') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
-                </div>
-            </div>
-
             <div class="grid grid-cols-3 gap-6">
                 <div>
                     <label class="block text-[12px] font-bold text-gray-700 mb-1.5">Car Make <span class="text-red-500">*</span></label>
@@ -77,18 +61,13 @@
                            class="w-full px-4 py-2.5 rounded-lg border border-gray-300 text-sm font-medium focus:border-[#0066B3] focus:ring-2 focus:ring-[#0066B3]/20 outline-none transition">
                 </div>
                 <div>
-                    <label class="block text-[12px] font-bold text-gray-700 mb-1.5">Customer Phone</label>
-                    <input type="text" name="customer_phone" value="{{ old('customer_phone') }}" placeholder="e.g. +254 7XX XXX XXX"
-                           class="w-full px-4 py-2.5 rounded-lg border border-gray-300 text-sm font-medium focus:border-[#0066B3] focus:ring-2 focus:ring-[#0066B3]/20 outline-none transition">
-                </div>
-            </div>
-
-            <div class="grid grid-cols-2 gap-6">
-                <div>
                     <label class="block text-[12px] font-bold text-gray-700 mb-1.5">Chassis Number</label>
                     <input type="text" name="chassis_number" value="{{ old('chassis_number') }}" placeholder="e.g. JTDBR32E720123456"
                            class="w-full px-4 py-2.5 rounded-lg border border-gray-300 text-sm font-medium focus:border-[#0066B3] focus:ring-2 focus:ring-[#0066B3]/20 outline-none transition">
                 </div>
+            </div>
+
+            <div class="grid grid-cols-3 gap-6">
                 <div>
                     <label class="block text-[12px] font-bold text-gray-700 mb-1.5">Engine No</label>
                     <input type="text" name="engine_number" value="{{ old('engine_number') }}" placeholder="e.g. CBA1234567"
@@ -123,7 +102,7 @@
 
             <div class="flex items-center gap-4 pt-4 border-t border-gray-200">
                 <button type="submit"
-                        class="inline-flex items-center gap-2 px-8 py-3 rounded-xl text-[13px] font-bold cursor-pointer border-none transition-all hover:-translate-y-0.5 font-montserrat bg-[#0066B3] text-white hover:bg-[#004f8c] shadow-sm">
+                        class="inline-flex items-center gap-2 px-8 py-3 rounded-xl text-[13px] font-bold cursor-pointer border-none transition-all hover:-translate-y-0.5 font-montserrat bg-[#0066B3] text-white hover:bg-[#263B8B] shadow-sm">
                     <svg class="w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                     Generate Sticker
                 </button>

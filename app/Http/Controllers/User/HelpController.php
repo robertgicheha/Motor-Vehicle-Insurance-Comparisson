@@ -25,8 +25,6 @@ class HelpController extends Controller
 
         $enquiry = Enquiry::create([
             'user_id' => auth()->id(),
-            'name' => auth()->user()->name,
-            'email' => auth()->user()->email,
             'subject' => $data['subject'],
             'message' => $data['message'],
             'status' => 'open',

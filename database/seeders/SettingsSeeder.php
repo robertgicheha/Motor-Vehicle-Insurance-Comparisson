@@ -23,7 +23,7 @@ class SettingsSeeder extends Seeder
         Setting::setValue('weather_country', 'KE', 'general');
         Setting::setValue('report_email', 'robertgicheha3@gmail.com', 'general');
         Setting::setValue('admin_email', 'robertgicheha3@gmail.com', 'general');
-        Setting::setValue('company_name', 'MIC Global Risks', 'general');
+        Setting::setValue('company_name', 'LOLC Microfinance Bank', 'general');
         Setting::setValue('company_address', 'Nairobi, Kenya', 'general');
         Setting::setValue('company_phone', '+254 700 000 000', 'general');
         Setting::setValue('pagination_per_page', '20', 'general');
@@ -36,7 +36,7 @@ class SettingsSeeder extends Seeder
         Setting::setValue('mail_password', '', 'email');
         Setting::setValue('mail_encryption', 'tls', 'email');
         Setting::setValue('mail_from_address', 'robertgicheha3@gmail.com', 'email');
-        Setting::setValue('mail_from_name', 'MIC Insurance Portal', 'email');
+        Setting::setValue('mail_from_name', 'LOLC Microfinance Bank', 'email');
 
         // Quotation defaults
         Setting::setValue('default_cover_type', 'comprehensive', 'quotations');
@@ -58,10 +58,10 @@ class SettingsSeeder extends Seeder
         Setting::setValue('notify_admin_email', 'robertgicheha3@gmail.com', 'notifications');
 
         // Appearance
-        Setting::setValue('primary_color', '#1756c8', 'appearance');
+        Setting::setValue('primary_color', '#263B8B', 'appearance');
         Setting::setValue('sidebar_collapsed', 'false', 'appearance');
         Setting::setValue('dark_mode_default', 'false', 'appearance');
-        Setting::setValue('logo_path', 'images/MIC-Global-Risks_logo_no_background.png', 'appearance');
+        Setting::setValue('logo_path', 'images/LOLC-Kenya.webp', 'appearance');
         Setting::setValue('favicon_path', '', 'appearance');
 
         // Security

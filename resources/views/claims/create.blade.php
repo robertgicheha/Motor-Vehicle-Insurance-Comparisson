@@ -581,10 +581,8 @@ function searchVehicle(reg) {
     .then(function(data) {
         if (data.found) {
             statusEl.className = 'rounded-lg p-3 text-xs font-medium bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-700';
-            statusEl.innerHTML = '<span class="font-semibold">Vehicle found!</span> Customer and vehicle details pre-filled from quotation.';
+            statusEl.innerHTML = '<span class="font-semibold">Vehicle found!</span> Vehicle details pre-filled from quotation.';
             statusEl.classList.remove('hidden');
-
-            fillCustomer(data.customer_name, data.customer_email, data.customer_phone);
 
             document.getElementById('vehicle_make').value = data.vehicle.make || '';
             document.getElementById('vehicle_model').value = data.vehicle.model || '';

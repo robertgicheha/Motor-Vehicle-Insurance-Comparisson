@@ -19,11 +19,11 @@ class NewChangeRequest extends Notification
 
     public function toDatabase($notifiable): array
     {
-        $adminName = $this->changeRequest->user->name;
+        $adminUsername = $this->changeRequest->user->username;
 
         return [
             'action' => 'new_change_request',
-            'message' => "{$adminName} requested to {$this->changeRequest->action} {$this->changeRequest->type}.",
+            'message' => "{$adminUsername} requested to {$this->changeRequest->action} {$this->changeRequest->type}.",
             'change_request_id' => $this->changeRequest->id,
             'type' => $this->changeRequest->type,
             'status' => 'pending',

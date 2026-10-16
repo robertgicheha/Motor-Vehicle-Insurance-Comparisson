@@ -11,7 +11,7 @@
         ->get()
         ->keyBy('company_id');
     $__totalQuotes = $__companyStats->sum('total');
-    $companyColors = ['#003087', '#0066B3', '#00205B', '#D0021B', '#7c3aed', '#0f7a65'];
+    $companyColors = ['#003087', '#0066B3', '#00205B', '#ED1D25', '#7c3aed', '#0f7a65'];
     $__vehicleType = request()->query('vehicle_type', 'psv');
 
     $__buildData = function($companies, $vehicleType) use ($companyColors, $__companyStats) {
@@ -64,7 +64,7 @@
 @else
 Compare All Insurers
 @endif
- | Motor Quote | MIC Global Risks</title>
+ | Motor Quote | LOLC Microfinance Bank</title>
 <meta name="description" content="Get an instant motor insurance quote from {{ $mode === 'single' && $selectedCompany ? $selectedCompany->name : 'Kenya\'s leading insurers' }}. Compare premiums and download your quotation.">
 <link rel="canonical" href="{{ url('/generate-quote/' . ($mode === 'compare' ? 'compare-all' : ($selectedCompany?->slug ?? ''))) }}">
 <link rel="stylesheet" href="{{ asset('css/home.css') }}">
@@ -228,7 +228,7 @@ Compare All Insurers
       </a>
       <a href="{{ url()->current() }}?vehicle_type=psv"
          style="padding:10px 32px;border-radius:8px;font-weight:700;font-size:15px;text-decoration:none;transition:all .2s;
-         {{ $__vehicleType === 'psv' ? 'background:#D0021B;color:#fff;box-shadow:0 2px 12px rgba(208,2,27,0.3)' : 'background:#e5e7eb;color:#374151' }}">
+         {{ $__vehicleType === 'psv' ? 'background:#ED1D25;color:#fff;box-shadow:0 2px 12px rgba(237,29,37,0.3)' : 'background:#e5e7eb;color:#374151' }}">
         🚌 PSV (Public Service Vehicle)
       </a>
     </div>
@@ -592,8 +592,8 @@ Compare All Insurers
     </a>
     @endforeach
 
-    <a href="{{ route('generate.quote', 'compare-all') }}" class="company-card no-underline" style="cursor:pointer;display:block;border:2px solid #D0021B;position:relative;overflow:hidden;transition:all .25s ease;border-radius:16px;box-shadow:0 4px 20px rgba(0,0,0,0.08)">
-      <div style="position:absolute;top:0;left:0;right:0;height:4px;background:#D0021B"></div>
+    <a href="{{ route('generate.quote', 'compare-all') }}" class="company-card no-underline" style="cursor:pointer;display:block;border:2px solid #ED1D25;position:relative;overflow:hidden;transition:all .25s ease;border-radius:16px;box-shadow:0 4px 20px rgba(0,0,0,0.08)">
+      <div style="position:absolute;top:0;left:0;right:0;height:4px;background:#ED1D25"></div>
       <div class="company-logo-box" style="height:48px;margin-bottom:12px">
         <img src="{{ $__compareAllLogoUrl }}" alt="Compare All" style="max-height:40px" onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
         <span style="display:none;font-size:18px">📊</span>
@@ -602,10 +602,10 @@ Compare All Insurers
       <div style="display:flex;align-items:center;justify-content:center;gap:16px;margin-bottom:12px">
         <div style="text-align:center">
           <div style="font-size:10px;color:#6b7280;font-weight:500">Insurers</div>
-          <div style="font-size:13px;font-weight:800;color:#D0021B">{{ $__privateCompanyData->count() }}</div>
+          <div style="font-size:13px;font-weight:800;color:#ED1D25">{{ $__privateCompanyData->count() }}</div>
         </div>
       </div>
-      <button class="btn btn-primary" style="width:100%;justify-content:center;font-size:12px;padding:8px 10px;background:#D0021B;border-color:#D0021B;border-radius:10px;font-weight:700">Compare All ↗</button>
+      <button class="btn btn-primary" style="width:100%;justify-content:center;font-size:12px;padding:8px 10px;background:#ED1D25;border-color:#ED1D25;border-radius:10px;font-weight:700">Compare All ↗</button>
     </a>
   </div>
 </section>
@@ -651,7 +651,7 @@ Compare All Insurers
 </section>
 
 <!-- Insuring a PSV? -->
-<section class="section section-alt" style="background-color: #D0021B;">
+<section class="section section-alt" style="background-color: #ED1D25;">
   <div style="text-align:center;margin-bottom:20px">
     <div class="section-title" style="color:#F9F9FF;font-size:20px">🚌 Insuring a PSV?</div>
     <div class="section-sub" style="color:#F9F9FF;font-size:15px;margin-top:4px">Select an insurer below for a tailored PSV insurance quote.</div>
@@ -672,8 +672,8 @@ Compare All Insurers
     </a>
     @endforeach
 
-    <a href="{{ route('generate.quote', 'compare-all') }}" class="company-card no-underline" style="cursor:pointer;display:block;border:2px solid #D0021B;position:relative;overflow:hidden;transition:all .25s ease;border-radius:16px;box-shadow:0 4px 20px rgba(0,0,0,0.08)">
-      <div style="position:absolute;top:0;left:0;right:0;height:4px;background:#D0021B"></div>
+    <a href="{{ route('generate.quote', 'compare-all') }}" class="company-card no-underline" style="cursor:pointer;display:block;border:2px solid #ED1D25;position:relative;overflow:hidden;transition:all .25s ease;border-radius:16px;box-shadow:0 4px 20px rgba(0,0,0,0.08)">
+      <div style="position:absolute;top:0;left:0;right:0;height:4px;background:#ED1D25"></div>
       <div class="company-logo-box" style="height:48px;margin-bottom:12px">
         <img src="{{ $__compareAllLogoUrl }}" alt="Compare All" style="max-height:40px" onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
         <span style="display:none;font-size:18px">📊</span>
@@ -682,10 +682,10 @@ Compare All Insurers
       <div style="display:flex;align-items:center;justify-content:center;gap:16px;margin-bottom:12px">
         <div style="text-align:center">
           <div style="font-size:10px;color:#6b7280;font-weight:500">Insurers</div>
-          <div style="font-size:13px;font-weight:800;color:#D0021B">{{ $__psvCompanyData->count() }}</div>
+          <div style="font-size:13px;font-weight:800;color:#ED1D25">{{ $__psvCompanyData->count() }}</div>
         </div>
       </div>
-      <button class="btn btn-primary" style="width:100%;justify-content:center;font-size:12px;padding:8px 10px;background:#D0021B;border-color:#D0021B;border-radius:10px;font-weight:700">Compare All ↗</button>
+      <button class="btn btn-primary" style="width:100%;justify-content:center;font-size:12px;padding:8px 10px;background:#ED1D25;border-color:#ED1D25;border-radius:10px;font-weight:700">Compare All ↗</button>
     </a>
   </div>
 </section>

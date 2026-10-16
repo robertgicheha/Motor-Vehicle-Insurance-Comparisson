@@ -5,7 +5,7 @@
     <div class="rounded-2xl bg-micblue px-6 py-7 shadow-sm">
         <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
             <div>
-                <p class="text-[10px] font-semibold uppercase tracking-widest text-blue-400">MIC Global Risks · Insurance Management</p>
+                <p class="text-[10px] font-semibold uppercase tracking-widest text-blue-400">LOLC Microfinance Bank · Insurance Management</p>
                 <h1 class="mt-0.5 text-xl font-bold text-white">My Quotations</h1>
                 <p class="mt-0.5 text-xs text-slate-400">All the quotations you have ever generated, in one place.</p>
             </div>

@@ -23,9 +23,6 @@ Route::middleware(['auth', 'online'])->prefix('stickers')->name('stickers.')->gr
     Route::post('/cover-details', [StickerController::class, 'saveCoverDetails'])->name('cover-details');
     Route::post('/calculate-cover-end-date', [StickerController::class, 'calculateCoverEndDate'])->name('calculate-cover-end-date');
     Route::post('/toggle-logbook-na', [StickerController::class, 'toggleLogbookNA'])->name('toggle-logbook-na');
-    Route::post('/upload-document', [StickerController::class, 'uploadDocument'])->name('upload-document');
-    Route::post('/remove-document', [StickerController::class, 'removeDocument'])->name('remove-document');
-    Route::post('/scan-status', [StickerController::class, 'scanStatus'])->name('scan-status');
     Route::post('/issue', [StickerController::class, 'issue'])->name('issue.store');
     Route::get('/generate', [StickerController::class, 'create'])->name('create');
     Route::post('/generate', [StickerController::class, 'store'])->name('store');
@@ -47,7 +44,6 @@ Route::middleware(['auth', 'online'])->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::patch('/profile/password', [ProfileController::class, 'updatePassword'])->name('profile.password');
-    Route::get('/profile/verify-email', [ProfileController::class, 'verifyNewEmail'])->name('profile.verify.email');
 
     Route::get('/quotations/tracker', [QuotationController::class, 'tracker'])->name('quotations.tracker');
     Route::patch('/quotations/{quotation}/update-status', [QuotationController::class, 'updateStatus'])->name('quotations.update-status');

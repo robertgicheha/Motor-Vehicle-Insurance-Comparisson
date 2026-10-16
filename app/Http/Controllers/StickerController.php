@@ -5,15 +5,18 @@ namespace App\Http\Controllers;
 use App\Mail\CertificateIssuedMail;
 use App\Models\CertificateDocument;
 use App\Models\Company;
+use App\Models\ConsentLog;
 use App\Models\Quotation;
 use App\Models\Sticker;
 use App\Models\StickerEmailLog;
 use App\Services\AuditService;
+use App\Services\EsetScanService;
 use App\Services\FileSecurityService;
 use Illuminate\Http\Request;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 
 class StickerController extends Controller
@@ -23,7 +26,7 @@ class StickerController extends Controller
         $quotation = null;
         if ($request->quotation_id) {
             $quotation = Quotation::with(['company', 'stickers' => function ($q) {
-                $q->where('status', 'pending')->with('certificateDocuments');
+                $q->where('status', 'pending');
             }])->findOrFail($request->quotation_id);
             $user = auth()->user();
             if (!$user->hasRole('super-admin') && !$user->hasRole('admin') && $quotation->user_id !== $user->id) {
@@ -46,19 +49,13 @@ class StickerController extends Controller
 
         $quotations = Quotation::with(['company', 'user'])
             ->with(['stickers' => function ($q) {
-                $q->where('status', 'pending')
-                  ->with('certificateDocuments');
+                $q->where('status', 'pending');
             }])
             ->where(function ($query) use ($search) {
-                $query->whereRaw('LOWER(quotation_number) LIKE ?', ["%{$search}%"])
+                $query->whereLikeCI('quotation_number', $search)
                     ->orWhereLikeCI('car_registration', $search)
-                    ->orWhereRaw('LOWER(first_name) LIKE ?', ["%{$search}%"])
-                    ->orWhereRaw('LOWER(last_name) LIKE ?', ["%{$search}%"])
-                    ->orWhereHas('user', function ($q) use ($search) {
-                        $q->whereRaw('LOWER(name) LIKE ?', ["%{$search}%"])
-                          ->orWhereRaw('LOWER(first_name) LIKE ?', ["%{$search}%"])
-                          ->orWhereRaw('LOWER(last_name) LIKE ?', ["%{$search}%"]);
-                    });
+                    ->orWhereLikeCI('chassis_number', $search)
+                    ->orWhereLikeCI('engine_number', $search);
             })
             ->orderByDesc('created_at')
             ->paginate(20);
@@ -80,7 +77,6 @@ class StickerController extends Controller
                 return [
                     'id' => $q->id,
                     'quotation_number' => $q->quotation_number,
-                    'customer_name' => $q->customer_name,
                     'company' => $q->company->name,
                     'company_id' => $q->company->id,
                     'car_make' => $q->car_make,
@@ -107,13 +103,6 @@ class StickerController extends Controller
                     'cover_duration_value' => $q->stickers->first()?->cover_duration_value,
                     'logbook_na' => (bool) ($q->stickers->first()?->logbook_na ?? false),
                     'cover_details_saved' => (bool) $q->stickers->first(),
-                    'existing_documents' => $q->stickers->first()?->certificateDocuments->map(fn($d) => [
-                        'id' => $d->id,
-                        'document_type' => $d->document_type,
-                        'document_label' => $d->document_label,
-                        'scan_status' => $d->scan_status,
-                        'filename' => $d->filename,
-                    ])->toArray() ?? [],
                 ];
             }),
             'total' => $quotations instanceof \Illuminate\Pagination\LengthAwarePaginator ? $quotations->total() : $quotations->count(),
@@ -142,9 +131,6 @@ class StickerController extends Controller
             'quotation_id' => $quotation->id,
             'issued_by' => $user->id,
             'sticker_number' => Sticker::generateNumber($quotation->company),
-            'customer_name' => $quotation->customer_name,
-            'customer_email' => $quotation->customer_email,
-            'customer_phone' => $quotation->customer_phone,
             'vehicle_registration' => $quotation->car_registration,
             'car_make' => $quotation->car_make,
             'car_model' => $quotation->car_model,
@@ -181,29 +167,6 @@ class StickerController extends Controller
      * Feb, not 3 Mar) — the accurate, unsurprising behaviour for a policy
      * period.
      */
-    /**
-     * True once every required KYC slot for this sticker's client type has
-     * at least one document. Shared by uploadDocument()'s response,
-     * scanStatus(), and issue()'s stricter (all-clean) gate, so the three
-     * can never disagree about which slots corporate vs. individual needs.
-     */
-    private function stickerAllRequiredUploaded(Sticker $sticker, $documents): bool
-    {
-        if ($sticker->client_type === 'corporate') {
-            return $documents->contains('document_type', 'kra_pin')
-                && $documents->contains('document_type', 'certificate_of_incorporation')
-                && $documents->contains('document_type', 'logbook_import');
-        }
-
-        $logbookSatisfied = $sticker->logbook_na
-            ? $documents->contains('document_type', 'other')
-            : $documents->contains('document_type', 'logbook');
-
-        return $documents->contains('document_type', 'id_copy')
-            && $documents->contains('document_type', 'kra_pin')
-            && $logbookSatisfied;
-    }
-
     private function calculateCoverEnd(string $startDate, string $unit, int $value): \Carbon\Carbon
     {
         $start = \Carbon\Carbon::parse($startDate);
@@ -320,181 +283,62 @@ class StickerController extends Controller
         ]);
     }
 
-    public function uploadDocument(Request $request)
+    /**
+     * Validate + malware-scan one in-memory upload and produce both the email
+     * attachment payload (['name','mime','data']) and the audit row that
+     * outlives the bytes. Nothing here touches disk: the file lives in
+     * Laravel's volatile request buffer, ESET scans it there, and the bytes
+     * are read straight into memory for the email attachment.
+     *
+     * @return array{error?:string, document_type?:string, rejected?:bool, attachment?:array{name:string,mime:string,data:string}, audit?:array<string,mixed>}
+     */
+    private function screenKycFile(UploadedFile $file, string $documentType, FileSecurityService $security, EsetScanService $eset): array
     {
-        $request->validate([
-            'quotation_id' => 'required|exists:quotations,id',
-            'document_type' => 'required|in:id_copy,kra_pin,logbook,certificate_of_incorporation,logbook_import,other',
-            // Only meaningful (and required) for the open-ended "other" slot —
-            // the three fixed types already have an implicit label.
-            'document_label' => 'required_if:document_type,other|nullable|string|max:255',
-            'document' => 'required|file|mimes:pdf,jpg,jpeg|max:5120',
-        ]);
+        // Extension/MIME/magic-byte check runs first, while the file is still
+        // only a request buffer — a disguised executable is rejected here.
+        $securityResult = $security->validate($file, $documentType);
+        if (!$securityResult['valid']) {
+            AuditService::activity('kyc_document_rejected', "KYC document rejected at intake ({$documentType}): " . implode('; ', $securityResult['errors']), 'warning');
 
-        $quotation = Quotation::with('company')->findOrFail($request->quotation_id);
-        $user = auth()->user();
-
-        if (!$user->hasRole('super-admin') && !$user->hasRole('admin') && $quotation->user_id !== $user->id) {
-            return response()->json(['error' => 'You do not have access to this quotation.'], 403);
+            return [
+                'error' => 'This file could not be accepted: ' . implode(' ', $securityResult['errors']),
+                'document_type' => $documentType,
+                'rejected' => true,
+            ];
         }
 
-        $file = $request->file('document');
+        // ESET Server Security (odscan) scans the file in transit. An infected
+        // file is rejected here — it is never attached to any email and never
+        // written anywhere. A scanner that is unavailable degrades to
+        // "passed intake checks only" (see EsetScanService), matching how the
+        // upload endpoints behaved before.
+        $scan = $eset->scan($file->getRealPath());
+        if ($scan['status'] === EsetScanService::STATUS_INFECTED) {
+            AuditService::activity('kyc_document_rejected', "KYC document rejected by ESET ({$documentType}): {$scan['result']}", 'warning');
 
-        // Extension/MIME/magic-byte check runs here, before the file ever
-        // touches disk or the database — rejects a disguised executable
-        // immediately. This is the only check on KYC uploads: the queued
-        // ClamAV scan was removed because it made uploads slow.
-        $securityResult = (new FileSecurityService())->validate($file, $request->document_type);
-        if (!$securityResult['valid']) {
-            AuditService::activity('kyc_document_rejected', "KYC document upload rejected at intake: " . implode('; ', $securityResult['errors']), 'warning');
-            return response()->json([
-                'error' => 'This file could not be accepted: ' . implode(' ', $securityResult['errors']),
-            ], 422);
+            return [
+                'error' => 'Security threat detected! The uploaded file is unsafe. Please upload a clean file.',
+                'document_type' => $documentType,
+                'rejected' => true,
+            ];
         }
 
         $filename = time() . '_' . uniqid() . '_' . preg_replace('/[^A-Za-z0-9_\-\.]/', '', $file->getClientOriginalName());
-        // Stored on the private 'local' disk, never 'public' — a KYC document
-        // must never be reachable via a direct, unauthenticated URL. See
-        // downloadDocument() for the only (authenticated) way to read one back.
-        $path = $file->storeAs('certificate-documents', $filename, 'local');
 
-        $sticker = $this->findOrCreatePendingSticker($quotation, $user);
-
-        // id_copy/kra_pin/logbook are single slots — a re-upload replaces
-        // whatever's there. "other" has no slot to replace: each row on the
-        // form is its own independent document (e.g. "Driver's Licence" and
-        // "Insurance Cover Note" can both exist at once), so it always inserts.
-        $existingDoc = $request->document_type !== 'other'
-            ? CertificateDocument::where('sticker_id', $sticker->id)
-                ->where('document_type', $request->document_type)
-                ->first()
-            : null;
-
-        if ($existingDoc) {
-            Storage::disk('local')->delete($existingDoc->path);
-            $existingDoc->update([
+        return [
+            'attachment' => [
+                'name' => $filename,
+                'mime' => $file->getClientMimeType() ?: 'application/octet-stream',
+                'data' => (string) file_get_contents($file->getRealPath()),
+            ],
+            'audit' => [
                 'filename' => $filename,
-                'path' => $path,
                 'mime_type' => $file->getClientMimeType(),
                 'file_size' => $file->getSize(),
                 'scan_status' => 'clean',
-                'scan_result' => 'Document accepted.',
-                'uploaded_by' => $user->id,
-            ]);
-            $documentId = $existingDoc->id;
-        } else {
-            $doc = CertificateDocument::create([
-                'sticker_id' => $sticker->id,
-                'document_type' => $request->document_type,
-                'document_label' => $request->document_type === 'other' ? $request->document_label : null,
-                'filename' => $filename,
-                'path' => $path,
-                'mime_type' => $file->getClientMimeType(),
-                'file_size' => $file->getSize(),
-                'scan_status' => 'clean',
-                'scan_result' => 'Document accepted.',
-                'uploaded_by' => $user->id,
-            ]);
-            $documentId = $doc->id;
-        }
-
-        AuditService::log('create', 'CertificateDocument', $sticker->id, null, [
-            'document_type' => $request->document_type,
-            'document_label' => $request->document_label,
-            'scan_status' => 'clean',
-        ]);
-        AuditService::activity('kyc_document_uploaded', "KYC document '" . ($request->document_label ?: $request->document_type) . "' uploaded for sticker {$sticker->sticker_number}");
-
-        $documents = CertificateDocument::where('sticker_id', $sticker->id)->get();
-        $allUploaded = $this->stickerAllRequiredUploaded($sticker, $documents);
-        $allClean = $documents->every(fn($d) => $d->scan_status === 'clean');
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Document uploaded.',
-            'scan_status' => 'clean',
-            'document_type' => $request->document_type,
-            'document_label' => $request->document_label,
-            'all_uploaded' => $allUploaded,
-            'all_clean' => $allClean,
-            'can_issue' => $allUploaded && $allClean,
-            'sticker_number' => $sticker->sticker_number,
-            'sticker_id' => $sticker->id,
-            'filename' => $filename,
-            'document_id' => $documentId,
-        ]);
-    }
-
-    /**
-     * Removes one "other" document row (the fixed id_copy/kra_pin/logbook
-     * slots are removed by simply re-uploading over them, so this endpoint
-     * only needs to handle the open-ended list).
-     */
-    public function removeDocument(Request $request)
-    {
-        $request->validate([
-            'document_id' => 'required|exists:certificate_documents,id',
-        ]);
-
-        $doc = CertificateDocument::findOrFail($request->document_id);
-        $sticker = $doc->sticker;
-        $user = auth()->user();
-
-        if (!$sticker || (!$user->hasRole('super-admin') && !$user->hasRole('admin') && $sticker->issued_by !== $user->id)) {
-            return response()->json(['error' => 'You do not have access to this document.'], 403);
-        }
-
-        Storage::disk('local')->delete($doc->path);
-        $doc->delete();
-
-        return response()->json(['success' => true]);
-    }
-
-    public function scanStatus(Request $request)
-    {
-        $request->validate([
-            'sticker_id' => 'required|exists:stickers,id',
-        ]);
-
-        $sticker = Sticker::find($request->sticker_id);
-        if (!$sticker) {
-            $sticker = Sticker::where('quotation_id', $request->sticker_id)->where('status', 'pending')->first();
-        }
-        if (!$sticker) {
-            return response()->json(['success' => false, 'error' => 'No pending sticker found.'], 404);
-        }
-
-        $user = auth()->user();
-        if (!$user->hasRole('super-admin') && !$user->hasRole('admin') && $sticker->issued_by !== $user->id) {
-            return response()->json(['error' => 'You do not have access to this sticker.'], 403);
-        }
-
-        $documents = CertificateDocument::where('sticker_id', $sticker->id)->get();
-
-        $docs = $documents->map(fn($d) => [
-            'id' => $d->id,
-            'document_type' => $d->document_type,
-            'document_label' => $d->document_label,
-            'scan_status' => $d->scan_status,
-            'scan_result' => $d->scan_result,
-            'filename' => $d->filename,
-        ]);
-
-        $allUploaded = $this->stickerAllRequiredUploaded($sticker, $documents);
-        $allClean = $documents->every(fn($d) => $d->scan_status === 'clean');
-        $anyInfected = $documents->contains('scan_status', 'infected');
-
-        return response()->json([
-            'success' => true,
-            'documents' => $docs,
-            'client_type' => $sticker->client_type,
-            'logbook_na' => $sticker->logbook_na,
-            'all_uploaded' => $allUploaded,
-            'all_clean' => $allClean,
-            'any_infected' => $anyInfected,
-            'can_issue' => $allUploaded && $allClean,
-            'sticker_number' => $sticker->sticker_number,
-        ]);
+                'scan_result' => $scan['result'],
+            ],
+        ];
     }
 
     public function issue(Request $request)
@@ -502,6 +346,13 @@ class StickerController extends Controller
         $request->validate([
             'quotation_id' => 'required|exists:quotations,id',
             'admin_notes' => 'nullable|string|max:2000',
+            'consent' => ['accepted'],
+            'documents' => 'nullable|array',
+            'documents.*' => 'file|mimes:pdf,jpg,jpeg|max:5120',
+            'other_documents' => 'nullable|array',
+            'other_documents.*' => 'file|mimes:pdf,jpg,jpeg|max:5120',
+            'other_labels' => 'nullable|array',
+            'other_labels.*' => 'nullable|string|max:255',
         ]);
 
         $quotation = Quotation::with('company')->findOrFail($request->quotation_id);
@@ -516,18 +367,30 @@ class StickerController extends Controller
             ->first();
 
         if (!$sticker) {
-            return response()->json(['error' => 'No pending certificate found for this quotation. Please upload KYC documents first.'], 404);
+            return response()->json(['error' => 'No pending cover details found for this quotation. Please save the cover details first.'], 404);
         }
 
-        $documents = CertificateDocument::where('sticker_id', $sticker->id)->get();
+        // The client holds every KYC file in browser memory until this single
+        // request — nothing was persisted, so this request is the first (and
+        // only) time the server ever sees the bytes. They arrive in the
+        // request's volatile buffer, are screened and scanned here, then read
+        // straight into memory for the email attachment; the buffer is
+        // released when the request ends.
+        $allowedFixed = ['id_copy', 'kra_pin', 'logbook', 'certificate_of_incorporation', 'logbook_import'];
 
-        // Corporate clients have their own fixed KYC set — KRA PIN,
-        // Certificate of Incorporation, and Logbook/Import Documents (no N/A
-        // concept; that only makes sense for an individual's own vehicle).
-        // Individual clients keep the original id_copy/kra_pin/logbook set,
-        // with logbook_na's "other document instead" fallback. The freeform
-        // "Others" panel is optional extra material for both client types,
-        // never required.
+        $fixedUploads = collect($request->file('documents') ?? [])
+            ->filter(fn ($file) => $file instanceof UploadedFile)
+            ->only($allowedFixed);
+
+        $otherUploads = collect($request->file('other_documents') ?? [])
+            ->filter(fn ($file) => $file instanceof UploadedFile);
+
+        // Required KYC set for this client type — corporate clients have their
+        // own fixed set (KRA PIN, Certificate of Incorporation, Logbook/Import
+        // Documents); individual clients keep id_copy/kra_pin/logbook, with
+        // logbook_na's "other document instead" fallback. The freeform "Others"
+        // panel is optional extra material for both, never required, unless it
+        // is standing in for an N/A logbook.
         if ($sticker->client_type === 'corporate') {
             $requiredTypes = ['kra_pin', 'certificate_of_incorporation', 'logbook_import'];
             $needsOther = false;
@@ -536,10 +399,9 @@ class StickerController extends Controller
             $needsOther = $sticker->logbook_na;
         }
 
-        $uploadedTypes = $documents->pluck('document_type')->toArray();
-        $missingTypes = array_diff($requiredTypes, $uploadedTypes);
+        $missingTypes = array_values(array_diff($requiredTypes, $fixedUploads->keys()->all()));
 
-        if ($needsOther && !$documents->contains('document_type', 'other')) {
+        if ($needsOther && $otherUploads->isEmpty()) {
             $missingTypes[] = 'other (at least one alternate document is required since the logbook is marked N/A)';
         }
 
@@ -550,37 +412,102 @@ class StickerController extends Controller
             ], 422);
         }
 
-        $infectedDocs = $documents->filter(fn($d) => $d->scan_status === 'infected');
-        if ($infectedDocs->isNotEmpty()) {
-            return response()->json([
-                'error' => 'Some documents failed virus scan. Please re-upload clean files.',
-                'infected' => $infectedDocs->pluck('document_type'),
-            ], 422);
+        // Screen + scan every submitted file BEFORE any state change or email.
+        // A single rejected file aborts the whole request — no sticker is
+        // marked issued, nothing is recorded, and no email is dispatched.
+        $security = new FileSecurityService();
+        $eset = new EsetScanService();
+
+        $kycAttachments = [];
+        $auditRows = [];
+
+        foreach ($fixedUploads as $type => $file) {
+            $screened = $this->screenKycFile($file, $type, $security, $eset);
+            if (isset($screened['error'])) {
+                return response()->json($screened, 422);
+            }
+            $kycAttachments[] = $screened['attachment'];
+            $auditRows[] = $screened['audit'] + ['document_type' => $type, 'document_label' => null];
+        }
+
+        foreach ($otherUploads as $index => $file) {
+            $label = trim((string) $request->input("other_labels.{$index}")) ?: 'Supporting document';
+
+            $screened = $this->screenKycFile($file, 'other', $security, $eset);
+            if (isset($screened['error'])) {
+                return response()->json($screened, 422);
+            }
+            $kycAttachments[] = $screened['attachment'];
+            $auditRows[] = $screened['audit'] + ['document_type' => 'other', 'document_label' => $label];
         }
 
         $fromAddress = $this->stickerEmailFromAddress();
         $fromName = $this->stickerEmailFromName();
         $ccAddress = $this->stickerEmailCc($quotation->company);
 
-        $sticker->update([
-            'status' => 'issued',
-            'admin_notes' => $request->admin_notes,
-            'email_subject' => 'Sticker Issuance Request - ' . $sticker->sticker_number,
-            'email_from_address' => $fromAddress,
-            'email_from_name' => $fromName,
-            'reply_to_address' => $fromAddress,
-        ]);
+        // The consent record is written in the same transaction as the sticker
+        // request state change. If it cannot be saved, the whole transaction
+        // is rolled back and the underwriter email — sent only after this
+        // block — is never dispatched.
+        try {
+            DB::transaction(function () use ($sticker, $quotation, $request, $fromAddress, $fromName, $auditRows, $user) {
+                $sticker->update([
+                    'status' => 'issued',
+                    'admin_notes' => $request->admin_notes,
+                    'email_subject' => 'Sticker Issuance Request - ' . $sticker->sticker_number,
+                    'email_from_address' => $fromAddress,
+                    'reply_to_address' => $fromAddress,
+                ]);
 
-        $quotation->update(['status' => 'issued']);
+                $quotation->update(['status' => 'issued']);
 
-        $kycPaths = $documents->map(fn($d) => storage_path('app/private/' . $d->path))->toArray();
+                ConsentLog::create([
+                    'sticker_id' => $sticker->id,
+                    'consent_given' => true,
+                    'consent_version' => config('consent.version'),
+                    'consent_text' => config('consent.sticker_text'),
+                    'clause_reference' => config('consent.clause'),
+                    'ip_address' => $request->ip(),
+                    'user_agent' => $request->userAgent(),
+                    'consented_at' => now(),
+                ]);
+
+                // Audit-only rows: the metadata that outlives the bytes (type,
+                // original filename, MIME, size, scan result). 'path' is always
+                // null and purged_at is stamped now — there was never a file to
+                // purge, the bytes only ever existed in the request buffer.
+                foreach ($auditRows as $row) {
+                    CertificateDocument::create([
+                        'sticker_id' => $sticker->id,
+                        'document_type' => $row['document_type'],
+                        'document_label' => $row['document_label'],
+                        'filename' => $row['filename'],
+                        'path' => null,
+                        'mime_type' => $row['mime_type'],
+                        'file_size' => $row['file_size'],
+                        'scan_status' => $row['scan_status'],
+                        'scan_result' => $row['scan_result'],
+                        'uploaded_by' => $user->id,
+                        'purged_at' => now(),
+                    ]);
+                }
+            });
+        } catch (\Throwable $e) {
+            Log::error("Failed to record consent for sticker {$sticker->sticker_number}: " . $e->getMessage());
+
+            return response()->json(['error' => 'Could not record your consent. Please try again.'], 500);
+        }
 
         $emailStatus = 'queued';
         $emailError = null;
         $emailVia = config('mail.default');
 
         try {
-            $mailable = new CertificateIssuedMail($sticker, $kycPaths, $ccAddress, $fromAddress, $fromName);
+            // KYC bytes are attached straight from memory (Attachment::fromData
+            // inside the mailable). There is no path to read back and nothing
+            // on disk to purge afterwards — the whole point of the zero-storage
+            // lifecycle.
+            $mailable = new CertificateIssuedMail($sticker, $kycAttachments, $ccAddress, $fromAddress, $fromName);
 
             Mail::send($mailable);
 
@@ -597,20 +524,6 @@ class StickerController extends Controller
             foreach ($admins as $admin) {
                 $admin->notify(new \App\Notifications\StickerCompletedReminder($sticker));
             }
-
-            // KYC documents are never retained on the system — the email
-            // carrying them to the underwriter having actually sent is our
-            // assurance they were attached successfully, so the files are
-            // deleted immediately rather than kept for any grace period.
-            // The CertificateDocument row (type, filename, scan result) is
-            // kept for audit; only the file itself and its 'path' are removed.
-            foreach ($documents as $document) {
-                if ($document->path) {
-                    Storage::disk('local')->delete($document->path);
-                    $document->update(['path' => null, 'purged_at' => now()]);
-                }
-            }
-            AuditService::activity('kyc_documents_purged', "KYC document file(s) for sticker {$sticker->sticker_number} deleted immediately after successful dispatch to the underwriter.");
         } catch (\Exception $e) {
             $emailStatus = 'failed';
             $emailError = $e->getMessage();
@@ -620,17 +533,21 @@ class StickerController extends Controller
                 'last_email_status' => 'failed',
                 'last_email_error' => $e->getMessage(),
             ]);
+        } finally {
+            // Drop the in-memory copies of the KYC bytes as soon as the send
+            // attempt is over; the OS reclaims the request buffer at the end of
+            // the request regardless.
+            $kycAttachments = [];
+            gc_collect_cycles();
         }
 
         StickerEmailLog::create([
             'sticker_id' => $sticker->id,
             'type' => 'outbound_to_underwriter',
-            'recipient' => $sticker->underwriter_email,
-            'sender' => $fromAddress,
             'subject' => 'Sticker Issuance Request - ' . $sticker->sticker_number,
             'status' => $emailStatus,
             'error_message' => $emailError,
-            'attachments' => ['kyc_documents' => count($kycPaths), 'certificate_pdf' => true],
+            'attachments' => ['kyc_documents' => count($auditRows), 'certificate_pdf' => true],
             'metadata' => ['cc' => $ccAddress, 'via' => $emailVia],
             'triggered_by' => $user->id,
             'sent_at' => $emailStatus === 'sent' ? now() : null,
@@ -642,7 +559,8 @@ class StickerController extends Controller
             'turnaround_deadline' => now()->addMinutes(config('services.sticker.turnaround_minutes', 30))->toISOString(),
         ]);
         AuditService::activity('sticker_request', "Sticker {$sticker->sticker_number} issued for quotation {$quotation->quotation_number} to underwriter {$sticker->underwriter_email}. Turnaround deadline: " . now()->addMinutes(config('services.sticker.turnaround_minutes', 30))->format('d M Y H:i'));
-        AuditService::activity('kyc_documents_submitted', "KYC documents submitted for sticker {$sticker->sticker_number}: " . $documents->pluck('document_type')->implode(', '));
+        AuditService::activity('consent_captured', "DPA consent (" . config('consent.clause') . ", version " . config('consent.version') . ") captured for sticker {$sticker->sticker_number}.");
+        AuditService::activity('kyc_documents_submitted', "KYC documents submitted (in-memory, zero-storage) for sticker {$sticker->sticker_number}: " . collect($auditRows)->pluck('document_type')->implode(', '));
 
         return response()->json([
             'success' => true,
@@ -667,9 +585,6 @@ class StickerController extends Controller
         $validator = Validator::make($request->all(), [
             'quotation_id' => 'nullable|exists:quotations,id',
             'company_id' => 'required|exists:companies,id',
-            'customer_name' => 'required|string|max:255',
-            'customer_email' => 'nullable|email|max:255',
-            'customer_phone' => 'nullable|string|max:50',
             'vehicle_registration' => 'nullable|string|max:50',
             'car_make' => 'required|string|max:255',
             'car_model' => 'required|string|max:255',
@@ -694,9 +609,6 @@ class StickerController extends Controller
             'quotation_id' => $request->quotation_id,
             'issued_by' => auth()->id(),
             'sticker_number' => Sticker::generateNumber($company),
-            'customer_name' => $request->customer_name,
-            'customer_email' => $request->customer_email,
-            'customer_phone' => $request->customer_phone,
             'vehicle_registration' => $request->vehicle_registration,
             'car_make' => $request->car_make,
             'car_model' => $request->car_model,
@@ -864,10 +776,10 @@ class StickerController extends Controller
 
     /**
      * Public quotation lookup for the "Look Up Sticker" page — search by
-     * quotation number, registration number, or customer name, with no
-     * login required (mirrors how a sticker number is independently
-     * verifiable). If the visitor is logged in and owns the matched
-     * quotation (or is staff), the response flags that they can jump
+     * quotation number, registration number, chassis number, or engine
+     * number, with no login required (mirrors how a sticker number is
+     * independently verifiable). If the visitor is logged in and owns the
+     * matched quotation (or is staff), the response flags that they can jump
      * straight into sticker issuance without re-searching there.
      */
     public function searchQuotationPublic(Request $request)
@@ -878,15 +790,10 @@ class StickerController extends Controller
 
         $quotation = Quotation::with(['company', 'user'])
             ->where(function ($query) use ($search) {
-                $query->whereRaw('LOWER(quotation_number) LIKE ?', ["%{$search}%"])
+                $query->whereLikeCI('quotation_number', $search)
                     ->orWhereLikeCI('car_registration', $search)
-                    ->orWhereRaw('LOWER(first_name) LIKE ?', ["%{$search}%"])
-                    ->orWhereRaw('LOWER(last_name) LIKE ?', ["%{$search}%"])
-                    ->orWhereHas('user', function ($q) use ($search) {
-                        $q->whereRaw('LOWER(name) LIKE ?', ["%{$search}%"])
-                          ->orWhereRaw('LOWER(first_name) LIKE ?', ["%{$search}%"])
-                          ->orWhereRaw('LOWER(last_name) LIKE ?', ["%{$search}%"]);
-                    });
+                    ->orWhereLikeCI('chassis_number', $search)
+                    ->orWhereLikeCI('engine_number', $search);
             })
             ->latest()
             ->first();
@@ -904,7 +811,6 @@ class StickerController extends Controller
             'quotation' => [
                 'id' => $quotation->id,
                 'quotation_number' => $quotation->quotation_number,
-                'customer_name' => $quotation->customer_name,
                 'company' => $quotation->company->name ?? 'Unknown',
                 'company_logo' => $quotation->company?->logoUrl(),
                 'car_make' => $quotation->car_make,
@@ -932,6 +838,8 @@ class StickerController extends Controller
         $sticker->load('company');
         $sticker->increment('download_count');
         $sticker->update(['last_downloaded_at' => now()]);
+
+        AuditService::activity('sticker_printed', "Sticker/certificate {$sticker->sticker_number} printed or downloaded");
 
         return view('stickers.print', compact('sticker'));
     }
@@ -1007,8 +915,8 @@ class StickerController extends Controller
     /**
      * Searches the caller's own issued stickers by whatever the underwriter's
      * email thread will actually reference — quotation number, registration,
-     * chassis/engine number, or owner name — never by our internal Sticker ID
-     * (that number never leaves this system, so nobody would be searching
+     * chassis/engine number, or sticker number — never by our internal Sticker
+     * ID (that number never leaves this system, so nobody would be searching
      * for it). Returns every match so the issuer can pick the right one
      * before recording the underwriter's real sticker number.
      */
@@ -1023,7 +931,8 @@ class StickerController extends Controller
                 $q->whereLikeCI('vehicle_registration', $search)
                   ->orWhereLikeCI('chassis_number', $search)
                   ->orWhereLikeCI('engine_number', $search)
-                  ->orWhereLikeCI('customer_name', $search)
+                  ->orWhereLikeCI('sticker_number', $search)
+                  ->orWhereLikeCI('underwriter_sticker_no', $search)
                   ->orWhereHas('quotation', function ($q) use ($search) {
                       $q->whereLikeCI('quotation_number', $search);
                   });
@@ -1033,7 +942,7 @@ class StickerController extends Controller
             ->get();
 
         if ($stickers->isEmpty()) {
-            return response()->json(['success' => false, 'error' => 'No sticker found among your issued stickers. Search by quotation number, registration, chassis number, engine number, or owner name.']);
+            return response()->json(['success' => false, 'error' => 'No sticker found among your issued stickers. Search by quotation number, registration, chassis number, engine number, or sticker number.']);
         }
 
         return response()->json([
@@ -1051,7 +960,6 @@ class StickerController extends Controller
             'sticker_number' => $sticker->sticker_number,
             'underwriter_sticker_no' => $sticker->underwriter_sticker_no,
             'quotation_number' => $sticker->quotation?->quotation_number,
-            'customer_name' => $sticker->customer_name,
             'vehicle_registration' => $sticker->vehicle_registration,
             'chassis_number' => $sticker->chassis_number,
             'engine_number' => $sticker->engine_number,

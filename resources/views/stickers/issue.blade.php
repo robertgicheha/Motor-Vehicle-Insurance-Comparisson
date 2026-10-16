@@ -55,13 +55,13 @@
                     </div>
                     <div>
                         <h2 class="text-xs font-semibold text-gray-800 dark:text-white">Search Quotation</h2>
-                        <p class="text-[10px] text-gray-400 mt-0.5">Search by quotation number, customer name, or vehicle registration</p>
+                        <p class="text-[10px] text-gray-400 mt-0.5">Search by quotation number or vehicle registration</p>
                     </div>
                 </div>
                 <div class="p-5">
                     <div class="flex gap-3">
                         <div class="relative flex-1">
-                            <input type="text" placeholder="e.g. QT-20250101-001, KCA 123B, John Doe..."
+                            <input type="text" placeholder="e.g. QT-20250101-001, KCA 123B..."
                                 class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 pl-9 pr-9"
                                 x-ref="searchInput" @input="onSearchInput()" @keydown.enter="searchQuotation()">
                             <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
@@ -95,7 +95,7 @@
                                             <span class="text-[9px] font-semibold px-1.5 py-0.5 rounded-full bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300" x-text="q.status"></span>
                                             <span class="text-[9px] font-semibold px-1.5 py-0.5 rounded-full bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300" x-text="q.vehicle_type === 'psv' ? 'PSV' : 'Private'"></span>
                                         </div>
-                                        <p class="text-[11px] text-gray-500 dark:text-gray-400 mt-0.5" x-text="q.customer_name + ' - ' + q.car_make + ' ' + q.car_model + ' (' + q.car_year + ')'"></p>
+                                        <p class="text-[11px] text-gray-500 dark:text-gray-400 mt-0.5" x-text="q.car_make + ' ' + q.car_model + ' (' + q.car_year + ')'"></p>
                                         <p class="text-[10px] text-gray-400 dark:text-gray-500" x-text="q.company + (q.car_registration ? ' | Reg: ' + q.car_registration : '')"></p>
                                     </div>
                                     <div class="text-right shrink-0">
@@ -109,7 +109,7 @@
 
                     <div x-show="searchResults.length === 0 && !searching && !searchError" class="mt-4 text-center py-6 text-gray-400 dark:text-gray-500 text-xs">
                         <svg class="w-8 h-8 mx-auto text-gray-300 dark:text-gray-600 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
-                        Type at least 3 characters to search by quotation number, name, or registration
+                        Type at least 3 characters to search by quotation number or registration
                     </div>
                 </div>
             </div>
@@ -321,10 +321,10 @@
                                 <template x-for="row in otherDocuments" :key="row.rowId">
                                     <div class="flex items-center gap-2 p-2 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-600">
                                         <input type="text" x-model="row.label" placeholder="Document name, e.g. Driver's Licence"
-                                            :disabled="!!row.documentId"
+                                            :disabled="!!row.file"
                                             class="flex-1 min-w-0 px-2.5 py-1.5 text-xs border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 disabled:opacity-60 disabled:cursor-not-allowed">
 
-                                        <template x-if="!row.documentId">
+                                        <template x-if="!row.file">
                                             <span>
                                                 <input type="file" :id="'other-doc-' + row.rowId" accept=".pdf,.jpg,.jpeg" class="hidden" @change="uploadOtherDocument($event, row)">
                                                 <label :for="'other-doc-' + row.rowId" x-show="!row.uploading"
@@ -339,7 +339,7 @@
                                             </span>
                                         </template>
 
-                                        <span x-show="row.documentId && row.scanStatus === 'clean'" class="inline-flex items-center gap-1 px-2.5 py-1.5 text-[10px] font-semibold text-emerald-700 dark:text-emerald-400 whitespace-nowrap">
+                                        <span x-show="row.file && row.scanStatus === 'clean'" class="inline-flex items-center gap-1 px-2.5 py-1.5 text-[10px] font-semibold text-emerald-700 dark:text-emerald-400 whitespace-nowrap">
                                             <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
                                             <span x-text="row.filename" class="truncate max-w-[120px]"></span>
                                         </span>
@@ -371,7 +371,21 @@
 
                             <textarea x-model="adminNotes" rows="2" placeholder="Notes for the underwriter (optional)..."
                                 class="w-full px-3 py-2 text-xs border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 mb-3"></textarea>
-                           <button @click="issueCertificate()" :disabled="issuing"
+
+                            @php
+                                $__consentText = config('consent.sticker_text');
+                                $__consentParts = explode('Data Protection Policy', $__consentText, 2);
+                            @endphp
+                            <label class="flex items-start gap-2 mb-3 cursor-pointer select-none">
+                                <input type="checkbox" x-model="consent" name="consent" value="1"
+                                    class="mt-0.5 h-3.5 w-3.5 shrink-0 rounded border-gray-300 dark:border-gray-600 text-emerald-600 focus:ring-emerald-500">
+                                <span class="text-[10px] leading-relaxed text-gray-600 dark:text-gray-400">
+                                    {{ $__consentParts[0] }}<a href="{{ config('consent.privacy_policy_url') }}" target="_blank" rel="noopener" class="font-semibold text-blue-600 dark:text-blue-400 underline hover:no-underline">Data Protection Policy</a>{{ $__consentParts[1] ?? '' }}
+                                </span>
+                            </label>
+                            <p x-show="consentError" x-text="consentError" x-cloak class="text-[10px] text-red-600 dark:text-red-400 mb-2"></p>
+
+                           <button @click="issueCertificate()" :disabled="issuing || !consent"
                                 class="w-auto whitespace-nowrap inline-flex items-center justify-center px-4 py-2.5 bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white text-xs font-bold rounded-lg transition-all duration-200 disabled:opacity-50 shadow-md hover:shadow-lg">
                                 <svg x-show="!issuing" class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
                                 <svg x-show="issuing" class="animate-spin w-4 h-4 mr-1.5" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
@@ -402,10 +416,6 @@
                     </div>
 
                     <div class="border-t border-gray-100 dark:border-gray-700 pt-3 space-y-2">
-                        <div class="flex justify-between text-[11px]">
-                            <span class="text-gray-500 dark:text-gray-400">Customer</span>
-                            <span class="font-medium text-gray-800 dark:text-white" x-text="selectedQuotation?.customer_name"></span>
-                        </div>
                         <div class="flex justify-between text-[11px]">
                             <span class="text-gray-500 dark:text-gray-400">Vehicle</span>
                             <span class="font-medium text-gray-800 dark:text-white text-right" x-text="(selectedQuotation?.car_make || '') + ' ' + (selectedQuotation?.car_model || '') + ' (' + (selectedQuotation?.car_year || '') + ')'"></span>
@@ -487,7 +497,6 @@ function certificateIssue() {
         selectedQuotation: {{ Illuminate\Support\Js::from($quotation ? [
             'id' => $quotation->id,
             'quotation_number' => $quotation->quotation_number,
-            'customer_name' => $quotation->customer_name,
             'company' => $quotation->company->name,
             'company_id' => $quotation->company_id,
             'car_make' => $quotation->car_make,
@@ -514,20 +523,14 @@ function certificateIssue() {
             'cover_duration_value' => $quotation->stickers->first()?->cover_duration_value,
             'logbook_na' => (bool) ($quotation->stickers->first()?->logbook_na ?? false),
             'cover_details_saved' => (bool) $quotation->stickers->first(),
-            'existing_documents' => $quotation->stickers->first()?->certificateDocuments->map(fn($d) => [
-                'id' => $d->id,
-                'document_type' => $d->document_type,
-                'document_label' => $d->document_label,
-                'scan_status' => $d->scan_status,
-                'filename' => $d->filename,
-            ])->toArray() ?? [],
         ] : null) }},
         documents: {},
         otherDocuments: [],
         uploading: { id_copy: false, kra_pin: false, logbook: false },
-        polling: { id_copy: false, kra_pin: false, logbook: false },
         issuing: false,
         adminNotes: '',
+        consent: {{ old('consent') ? 'true' : 'false' }},
+        consentError: '',
         searchTimeout: null,
         stickerId: null,
 
@@ -584,23 +587,13 @@ function certificateIssue() {
             this.coverDetailsSaved = !!q.cover_details_saved;
             this.logbookNA = !!q.logbook_na;
 
-            (q.existing_documents || []).forEach(doc => {
-                if (doc.document_type === 'other') {
-                    this.otherDocuments.push({
-                        rowId: this.nextOtherRowId++,
-                        label: doc.document_label || '',
-                        documentId: doc.id,
-                        filename: doc.filename,
-                        scanStatus: doc.scan_status,
-                        uploading: false,
-                    });
-                } else {
-                    this.documents[doc.document_type] = { scan_status: doc.scan_status, filename: doc.filename };
-                    if (doc.scan_status === 'pending' || doc.scan_status === 'scanning') {
-                        this.pollScanStatus(doc.document_type);
-                    }
-                }
-            });
+            // Zero-storage lifecycle: KYC files are held only in browser memory
+            // and are never persisted server-side, so a previously-saved sticker
+            // has no file bytes to restore here. The user re-attaches any
+            // documents they need on this visit; only the cover details, client
+            // type and logbook-N/A flag survive from the pending sticker.
+            this.documents = {};
+            this.otherDocuments = [];
 
             // Seed one starter row only when "Others" is actually required —
             // an individual client's logbook marked N/A. Otherwise it's
@@ -706,79 +699,31 @@ function certificateIssue() {
             return this.getDocumentStatus(docType);
         },
 
-        async uploadDocument(event, docType) {
+        // Zero-storage: the chosen file never leaves the browser here. It is
+        // held in memory until issueCertificate() sends every document in a
+        // single request, where the server screens + scans and attaches it
+        // straight from memory. 'clean' here means "accepted into the browser
+        // buffer", not "scanned yet" — the scan happens at send time.
+        uploadDocument(event, docType) {
             const file = event.target.files[0];
             if (!file || !this.selectedQuotation) return;
 
-            this.uploading[docType] = true;
-
-            const formData = new FormData();
-            formData.append('document', file);
-            formData.append('document_type', docType);
-            formData.append('quotation_id', this.selectedQuotation.id);
-
-            try {
-                const response = await fetch('{{ route("stickers.upload-document") }}', {
-                    method: 'POST',
-                    headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
-                    body: formData,
-                });
-
-                const data = await response.json();
-
-                if (data.success) {
-                    this.documents[docType] = { scan_status: data.scan_status, filename: data.filename };
-                    if (data.sticker_id) {
-                        this.stickerId = data.sticker_id;
-                    }
-                    if (typeof showToastSuccess === 'function') showToastSuccess(data.message || 'Document uploaded.');
-                    if (data.scan_status === 'pending' || data.scan_status === 'scanning') {
-                        this.pollScanStatus(docType);
-                    }
-                } else {
-                    this.documents[docType] = { scan_status: data.scan_status || 'error', filename: null };
-                    if (typeof showToastError === 'function') showToastError(data.error || 'Upload failed.');
-                    else alert(data.error || 'Upload failed.');
-                }
-            } catch (e) {
-                this.documents[docType] = { scan_status: 'error', filename: null };
-                if (typeof showToastError === 'function') showToastError('Upload error. Please try again.');
-                else alert('Upload error. Please try again.');
-            } finally {
-                this.uploading[docType] = false;
+            const MAX_BYTES = 5 * 1024 * 1024;
+            const okType = /\.(pdf|jpe?g)$/i.test(file.name);
+            if (!okType) {
+                if (typeof showToastError === 'function') showToastError('Only PDF, JPG or JPEG files are accepted.');
                 event.target.value = '';
+                return;
             }
-        },
+            if (file.size > MAX_BYTES) {
+                if (typeof showToastError === 'function') showToastError('File is larger than the 5MB limit.');
+                event.target.value = '';
+                return;
+            }
 
-        async pollScanStatus(docType) {
-            if (this.polling[docType]) return;
-            this.polling[docType] = true;
-
-            const poll = async () => {
-                try {
-                    const response = await fetch('{{ route("stickers.scan-status") }}', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
-                        body: JSON.stringify({ sticker_id: this.stickerId || this.selectedQuotation?.id }),
-                    });
-                    const data = await response.json();
-                    if (data.success && data.documents) {
-                        for (const doc of data.documents) {
-                            if (doc.document_type === docType && doc.scan_status !== 'pending' && doc.scan_status !== 'scanning') {
-                                this.documents[docType] = { scan_status: doc.scan_status, filename: doc.filename };
-                                this.polling[docType] = false;
-                                return;
-                            }
-                        }
-                        setTimeout(poll, 1500);
-                    } else {
-                        this.polling[docType] = false;
-                    }
-                } catch (e) {
-                    this.polling[docType] = false;
-                }
-            };
-            setTimeout(poll, 1500);
+            this.documents[docType] = { file: file, filename: file.name, scan_status: 'clean' };
+            if (typeof showToastSuccess === 'function') showToastSuccess('Attached. It will be scanned and sent with the request.');
+            event.target.value = '';
         },
 
         removeDocument(docType) {
@@ -942,7 +887,7 @@ function certificateIssue() {
             this.otherDocuments.push({
                 rowId: this.nextOtherRowId++,
                 label: defaultLabel,
-                documentId: null,
+                file: null,
                 filename: null,
                 scanStatus: null,
                 uploading: false,
@@ -960,76 +905,96 @@ function certificateIssue() {
                 return;
             }
 
-            row.uploading = true;
-
-            const formData = new FormData();
-            formData.append('document', file);
-            formData.append('document_type', 'other');
-            formData.append('document_label', row.label.trim());
-            formData.append('quotation_id', this.selectedQuotation.id);
-
-            try {
-                const response = await fetch('{{ route("stickers.upload-document") }}', {
-                    method: 'POST',
-                    headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
-                    body: formData,
-                });
-                const data = await response.json();
-
-                if (data.success) {
-                    row.documentId = data.document_id;
-                    row.filename = data.filename;
-                    row.scanStatus = data.scan_status;
-                    if (data.sticker_id) this.stickerId = data.sticker_id;
-                    if (typeof showToastSuccess === 'function') showToastSuccess(data.message || 'Document uploaded.');
-                } else {
-                    row.scanStatus = data.scan_status || 'error';
-                    if (typeof showToastError === 'function') showToastError(data.error || 'Upload failed.');
-                    else alert(data.error || 'Upload failed.');
-                }
-            } catch (e) {
-                row.scanStatus = 'error';
-                if (typeof showToastError === 'function') showToastError('Upload error. Please try again.');
-                else alert('Upload error. Please try again.');
-            } finally {
-                row.uploading = false;
+            const MAX_BYTES = 5 * 1024 * 1024;
+            const okType = /\.(pdf|jpe?g)$/i.test(file.name);
+            if (!okType) {
+                if (typeof showToastError === 'function') showToastError('Only PDF, JPG or JPEG files are accepted.');
                 event.target.value = '';
+                return;
             }
+            if (file.size > MAX_BYTES) {
+                if (typeof showToastError === 'function') showToastError('File is larger than the 5MB limit.');
+                event.target.value = '';
+                return;
+            }
+
+            // Held in memory only, same as the fixed slots — sent with the
+            // request and scanned at that point.
+            row.file = file;
+            row.filename = file.name;
+            row.scanStatus = 'clean';
+            row.uploading = false;
+            if (typeof showToastSuccess === 'function') showToastSuccess('Attached. It will be scanned and sent with the request.');
+            event.target.value = '';
         },
 
         async removeOtherRow(row) {
-            if (row.documentId) {
-                try {
-                    await fetch('{{ route("stickers.remove-document") }}', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
-                        body: JSON.stringify({ document_id: row.documentId }),
-                    });
-                } catch (e) { /* row is removed from the UI regardless */ }
-            }
+            // Nothing on the server to delete — the file only ever existed in
+            // this browser tab's memory.
             this.otherDocuments = this.otherDocuments.filter(r => r.rowId !== row.rowId);
             if (this.logbookNA && this.otherDocuments.length === 0) this.addOtherRow();
         },
 
         async issueCertificate() {
             if (!this.canIssue || !this.selectedQuotation) return;
+            this.consentError = '';
+            if (!this.consent) {
+                this.consentError = 'Please confirm your consent before submitting.';
+                return;
+            }
             this.issuing = true;
+
+            // Every document travels in this one multipart request. This is the
+            // only time the server ever sees the bytes: they are screened and
+            // scanned in the request buffer, attached to the underwriter email
+            // straight from memory, and released when the request ends. Nothing
+            // is written to disk.
+            const formData = new FormData();
+            formData.append('quotation_id', this.selectedQuotation.id);
+            formData.append('admin_notes', this.adminNotes || '');
+            formData.append('consent', this.consent ? '1' : '');
+
+            Object.entries(this.documents).forEach(([type, doc]) => {
+                if (doc && doc.file) formData.append(`documents[${type}]`, doc.file, doc.filename);
+            });
+
+            let otherIndex = 0;
+            this.otherDocuments.forEach((row) => {
+                if (row.file) {
+                    formData.append(`other_documents[${otherIndex}]`, row.file, row.filename);
+                    formData.append(`other_labels[${otherIndex}]`, row.label || '');
+                    otherIndex++;
+                }
+            });
 
             try {
                 const response = await fetch('{{ route("stickers.issue.store") }}', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
-                    body: JSON.stringify({ quotation_id: this.selectedQuotation.id, admin_notes: this.adminNotes }),
+                    headers: { 'Accept': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
+                    body: formData,
                 });
 
                 const data = await response.json();
 
                 if (data.success) {
+                    // Drop the in-memory file references immediately so the
+                    // browser can garbage-collect the bytes.
+                    this.documents = {};
+                    this.otherDocuments = [];
                     if (typeof showToastSuccess === 'function') showToastSuccess(data.message || 'Sticker issued!');
                     setTimeout(() => { window.location.href = data.redirect_url; }, 800);
                 } else {
-                    if (typeof showToastError === 'function') showToastError(data.error || 'Failed to issue.');
-                    else alert(data.error || 'Failed to issue.');
+                    // If the server rejected a specific fixed document (failed
+                    // its intake check or the ESET scan), surface that slot's
+                    // retry state so only that file needs re-picking.
+                    if (data.document_type && data.document_type !== 'other' && this.documents[data.document_type]) {
+                        this.documents[data.document_type].scan_status = data.rejected ? 'infected' : 'error';
+                    }
+                    const consentMsg = data.errors && data.errors.consent ? data.errors.consent[0] : null;
+                    if (consentMsg) this.consentError = consentMsg;
+                    const msg = data.error || consentMsg || (data.errors ? Object.values(data.errors).flat()[0] : null) || data.message || 'Failed to issue.';
+                    if (typeof showToastError === 'function') showToastError(msg);
+                    else alert(msg);
                 }
             } catch (e) {
                 if (typeof showToastError === 'function') showToastError('An error occurred.');

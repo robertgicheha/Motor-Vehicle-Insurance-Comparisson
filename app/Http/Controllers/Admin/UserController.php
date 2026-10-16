@@ -39,15 +39,7 @@ class UserController extends Controller
         }
 
         if ($request->search) {
-            $query->where(function ($q) use ($request) {
-                $q->where('name', 'like', "%{$request->search}%")
-                  ->orWhere('email', 'like', "%{$request->search}%")
-                  ->orWhere('mobile', 'like', "%{$request->search}%");
-            });
-        }
-
-        if ($request->gender) {
-            $query->where('gender', $request->gender);
+            $query->where('username', 'like', "%{$request->search}%");
         }
 
         if ($request->status === 'active') {
@@ -68,11 +60,9 @@ class UserController extends Controller
 
         $totalUsers = $statsBase()->count();
         $onlineUsers = $statsBase()->where('last_online_at', '>=', now()->subMinutes(5))->count();
-        $maleCount = $statsBase()->where('gender', 'male')->count();
-        $femaleCount = $statsBase()->where('gender', 'female')->count();
         $roles = $isSuperAdmin ? Role::all() : Role::where('name', 'user')->get();
 
-        return view('admin.users.index', compact('users', 'totalUsers', 'onlineUsers', 'maleCount', 'femaleCount', 'roles'));
+        return view('admin.users.index', compact('users', 'totalUsers', 'onlineUsers', 'roles'));
     }
 
     public function create()
@@ -85,13 +75,9 @@ class UserController extends Controller
     public function store(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'first_name' => 'required|string|max:255',
-            'last_name' => 'required|string|max:255',
-            'email' => 'required|email|unique:users',
-            'mobile' => 'required|string|max:20',
-            'gender' => 'nullable|in:male,female,other',
+            'branch' => 'required|string|max:255',
             'role' => 'required|exists:roles,id',
-            'password' => 'nullable|string|min:8',
+            'password' => 'nullable|string|min:12',
         ]);
 
         if ($validator->fails()) {
@@ -107,41 +93,22 @@ class UserController extends Controller
         $generatedPassword = $request->filled('password') ? $request->password : $this->generateStrongPassword();
 
         $user = User::create([
-            'first_name' => $request->first_name,
-            'last_name' => $request->last_name,
-            'name' => $request->first_name . ' ' . $request->last_name,
-            'email' => $request->email,
+            'username' => User::generateUsername($request->branch, $requestedRole->name),
+            'branch' => $request->branch,
             'password' => Hash::make($generatedPassword),
-            'mobile' => $request->mobile,
-            'gender' => $request->gender,
             'is_active' => true,
             'verified_at' => now(),
             'profile_completed' => true,
+            'password_changed_at' => now(),
         ]);
 
         $user->syncRoles([$requestedRole->name]);
 
-        session(['last_created_user_id' => $user->id]);
-
         AuditService::log('create', 'User', $user->id, null, $user->toArray());
-        AuditService::activity('user_created', "User {$user->name} created by admin");
-
-        $emailStatus = '';
-        if ($request->boolean('email_credentials')) {
-            try {
-                \Mail::to($user->email)->send(new \App\Mail\UserCredentialsMail($user, $generatedPassword));
-                AuditService::activity('credentials_emailed', "Login credentials emailed to new user {$user->name} ({$user->email})");
-                $emailStatus = ' Credentials emailed to ' . $user->email . '.';
-            } catch (\Throwable $e) {
-                AuditService::activity('credentials_email_failed', "Failed to email login credentials to {$user->name} ({$user->email}): {$e->getMessage()}");
-                $emailStatus = ' However, the credentials email failed to send — use "Send via Email" below to retry.';
-            }
-
-            $this->notifyAdminsOfCredentials($user, $generatedPassword, auth()->user());
-        }
+        AuditService::activity('user_created', "User {$user->username} created by admin");
 
         return redirect()->route('admin.users.index')
-            ->with('success', 'User created successfully.' . $emailStatus)
+            ->with('success', 'User created successfully. Login username: ' . $user->username)
             ->with('generated_password', $generatedPassword);
     }
 
@@ -160,11 +127,7 @@ class UserController extends Controller
         $this->assertCanManage($user);
 
         $validator = Validator::make($request->all(), [
-            'first_name' => 'required|string|max:255',
-            'last_name' => 'required|string|max:255',
-            'email' => 'required|email|unique:users,email,' . $user->id,
-            'mobile' => 'required|string|max:20',
-            'gender' => 'nullable|in:male,female,other',
+            'branch' => 'required|string|max:255',
             'role' => 'required|exists:roles,id',
             'is_active' => 'boolean',
         ]);
@@ -174,18 +137,25 @@ class UserController extends Controller
         }
 
         $oldData = $user->toArray();
-        $user->update([
-            'first_name' => $request->first_name,
-            'last_name' => $request->last_name,
-            'name' => $request->first_name . ' ' . $request->last_name,
-            'email' => $request->email,
-            'mobile' => $request->mobile,
-            'gender' => $request->gender,
-            'is_active' => $request->boolean('is_active', true),
-        ]);
 
-        if ($request->role) {
-            $requestedRole = Role::findById($request->role);
+        $requestedRole = $request->role ? Role::findById($request->role) : null;
+
+        $data = [
+            'branch' => $request->branch,
+            'is_active' => $request->boolean('is_active', true),
+        ];
+
+        // super-admin/admin usernames are fixed (superadmin/admin); the plain
+        // "user" role is numbered per branch. Regenerate the login ID when the
+        // branch or role changes so it always matches the account.
+        $roleName = $requestedRole?->name ?? $user->getRoleNames()->first() ?? 'user';
+        if ($user->branch !== $request->branch || !$user->hasRole($roleName)) {
+            $data['username'] = User::generateUsername($request->branch, $roleName);
+        }
+
+        $user->update($data);
+
+        if ($requestedRole) {
             $isAdmin = auth()->user()->hasRole('admin');
             if ($isAdmin && $requestedRole->name !== 'user') {
                 return back()->with('error', 'You can only assign the User role.')->withInput();
@@ -194,7 +164,7 @@ class UserController extends Controller
         }
 
         AuditService::log('update', 'User', $user->id, $oldData, $user->toArray());
-        AuditService::activity('user_updated', "User {$user->name} updated by admin");
+        AuditService::activity('user_updated', "User {$user->username} updated by admin");
 
         return redirect()->route('admin.users.index')->with('success', 'User updated successfully.');
     }
@@ -208,7 +178,7 @@ class UserController extends Controller
         AuditService::log($user->is_active ? 'activate' : 'deactivate', 'User', $user->id);
         AuditService::activity(
             $user->is_active ? 'user_activated' : 'user_deactivated',
-            "User {$user->name} " . ($user->is_active ? 'activated' : 'deactivated')
+            "User {$user->username} " . ($user->is_active ? 'activated' : 'deactivated')
         );
 
         return back()->with('success', 'User status updated.');
@@ -228,7 +198,7 @@ class UserController extends Controller
         $user->delete();
 
         AuditService::log('delete', 'User', $user->id, $userData, null);
-        AuditService::activity('user_deleted', "User {$user->name} deleted by {$actor->name}");
+        AuditService::activity('user_deleted', "User {$user->username} deleted by {$actor->username}");
 
         foreach (User::role('super-admin')->get() as $superAdmin) {
             $superAdmin->notify(new \App\Notifications\UserDeleted($user, $actor));
@@ -254,7 +224,7 @@ class UserController extends Controller
         $user->update(['deleted_by' => null]);
 
         AuditService::log('restore', 'User', $user->id, null, $user->toArray());
-        AuditService::activity('user_restored', "User {$user->name} restored by " . auth()->user()->name);
+        AuditService::activity('user_restored', "User {$user->username} restored by " . auth()->user()->username);
 
         return back()->with('success', 'User restored.');
     }
@@ -290,6 +260,30 @@ class UserController extends Controller
         return back()->with('success', $message);
     }
 
+    /**
+     * Fallback for a user who has completely forgotten their password: an
+     * administrator generates a new strong password and reads it to them. The
+     * plaintext is flashed back once so the admin can copy it. Like every
+     * password change this restarts the 30-day expiry clock.
+     */
+    public function resetPassword(User $user)
+    {
+        $this->assertCanManage($user);
+
+        $generatedPassword = $this->generateStrongPassword();
+
+        $user->update(['password' => Hash::make($generatedPassword)]);
+        $user->markPasswordChanged();
+
+        AuditService::log('password_reset', 'User', $user->id, null, null, auth()->id());
+        AuditService::activity('password_reset_admin', "Password reset for {$user->username} by " . auth()->user()->username, 'info', $user->id);
+
+        return redirect()->route('admin.users.index')
+            ->with('success', "Password reset for {$user->username}.")
+            ->with('generated_password', $generatedPassword)
+            ->with('generated_password_for', $user->username);
+    }
+
     protected function generateStrongPassword(int $length = 12): string
     {
         $upper = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
@@ -309,43 +303,5 @@ class UserController extends Controller
         }
 
         return str_shuffle($password);
-    }
-
-    public function sendCredentials(Request $request)
-    {
-        $request->validate([
-            'password' => 'required|string',
-        ]);
-
-        $user = User::find(session('last_created_user_id'));
-
-        if (!$user) {
-            return back()->with('error', 'No recently created user found.');
-        }
-
-        \Mail::to($user->email)->send(new \App\Mail\UserCredentialsMail($user, $request->password));
-        \App\Services\AuditService::activity('credentials_emailed', "Login credentials emailed to new user {$user->name} ({$user->email})");
-
-        $this->notifyAdminsOfCredentials($user, $request->password, auth()->user());
-
-        return back()->with('success', 'Login credentials sent to ' . $user->email);
-    }
-
-    /**
-     * The admin/superadmin get their own copy of a newly created account's
-     * credentials — separate from the recipient's own email, and never
-     * allowed to fail the request it's called from.
-     */
-    protected function notifyAdminsOfCredentials(User $user, string $password, User $actor): void
-    {
-        $admins = User::role(['super-admin', 'admin'])->get();
-
-        foreach ($admins as $admin) {
-            try {
-                \Mail::to($admin->email)->send(new \App\Mail\UserCredentialsAdminMail($user, $password, $admin));
-            } catch (\Throwable $e) {
-                AuditService::activity('credentials_admin_email_failed', "Failed to notify admin {$admin->email} of credentials for {$user->name} ({$user->email}): {$e->getMessage()}");
-            }
-        }
     }
 }

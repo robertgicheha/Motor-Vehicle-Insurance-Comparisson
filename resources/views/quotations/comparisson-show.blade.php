@@ -34,29 +34,8 @@
         <template x-if="!loading && data">
         <div class="space-y-5">
 
-            {{-- ─── CUSTOMER & VEHICLE SUMMARY ─────────────────────────── --}}
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 print:hidden">
-                <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
-                    <div class="px-5 py-4 border-b border-gray-100 dark:border-gray-700">
-                        <p class="text-[10px] font-semibold uppercase tracking-widest text-gray-400">Customer</p>
-                        <h2 class="text-xs font-bold text-gray-800 dark:text-white mt-0.5">Personal Details</h2>
-                    </div>
-                    <div class="p-5 space-y-3 text-xs">
-                        <div class="flex justify-between items-start gap-3">
-                            <span class="text-gray-400 shrink-0">Full Name</span>
-                            <span class="font-medium text-gray-800 dark:text-white text-right" x-text="personalName"></span>
-                        </div>
-                        <div class="flex justify-between items-start gap-3">
-                            <span class="text-gray-400 shrink-0">Phone</span>
-                            <span class="font-medium text-gray-800 dark:text-white text-right" x-text="data.phone || '—'"></span>
-                        </div>
-                        <div class="flex justify-between items-start gap-3">
-                            <span class="text-gray-400 shrink-0">Email</span>
-                            <span class="font-medium text-gray-800 dark:text-white text-right break-all" x-text="data.email || '—'"></span>
-                        </div>
-                    </div>
-                </div>
-
+            {{-- ─── VEHICLE SUMMARY ────────────────────────────────────── --}}
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 print:hidden">
                 <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
                     <div class="px-5 py-4 border-b border-gray-100 dark:border-gray-700">
                         <p class="text-[10px] font-semibold uppercase tracking-widest text-gray-400">Vehicle</p>
@@ -283,13 +262,6 @@ function compareAllApp() {
         get vehicleValue() {
             return parseFloat((this.data?.value || '0').toString().replace(/,/g, '')) || 0;
         },
-        get personalName() {
-            if (!this.data) return '—';
-            var first = this.data.first || this.data.first_name || this.data.firstName || '';
-            var middle = this.data.middle || this.data.middle_name || '';
-            var last = this.data.last || this.data.last_name || this.data.lastName || '';
-            return [this.data.salutation, first, middle, last].filter(Boolean).join(' ') || '—';
-        },
         fmt(n) {
             n = Number(n) || 0;
             return 'KES ' + n.toLocaleString('en-KE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -321,19 +293,10 @@ function compareAllApp() {
         submitCompareAllPdf(mode, newTab) {
             if (!this.data) return;
             var d = this.data;
-            var first = d.first || d.first_name || d.firstName || '';
-            var middle = d.middle || d.middle_name || '';
-            var last = d.last || d.last_name || d.lastName || '';
             var fields = {
                 vehicle_type: this.vehicleType,
                 car_valuation: this.vehicleValue,
                 num_passengers: Number(d.numPassengers || d.num_passengers) || 1,
-                salutation: d.salutation || '',
-                first_name: first,
-                middle_name: middle,
-                last_name: last,
-                phone: d.phone || '',
-                email: d.email || '',
                 car_registration: d.reg || '',
                 chassis_number: d.chassis || '',
                 engine_number: d.engine || '',

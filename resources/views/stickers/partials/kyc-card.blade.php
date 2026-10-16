@@ -64,7 +64,7 @@
                 </div>
                 <div class="min-w-0 flex-1">
                     <p class="text-[10px] font-semibold text-emerald-700 dark:text-emerald-400 truncate" x-text="getDocumentFilename('{{ $type }}')"></p>
-                    <p class="text-[9px] text-emerald-600 dark:text-emerald-500">Verified</p>
+                    <p class="text-[9px] text-emerald-600 dark:text-emerald-500">Ready to send</p>
                 </div>
                 <button @click="removeDocument('{{ $type }}')" class="text-emerald-600 hover:text-red-500 dark:text-emerald-400 dark:hover:text-red-400 transition-colors p-0.5">
                     <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>

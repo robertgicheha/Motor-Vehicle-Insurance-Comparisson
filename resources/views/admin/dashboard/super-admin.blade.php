@@ -2,7 +2,7 @@
     <div class="db-root fade-in">
       <div class="db-layout">
       <div class="db-main-content">
-      <h2 class="sr-only">MIC Global Risks Motor Insurance Admin Dashboard</h2>
+      <h2 class="sr-only">LOLC Microfinance Bank Motor Insurance Admin Dashboard</h2>
 
       <div class="db-top-bar">
         <div class="db-greeting">

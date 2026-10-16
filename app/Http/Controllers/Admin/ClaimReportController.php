@@ -95,7 +95,7 @@ class ClaimReportController extends Controller
         $byClaimType = $claims->groupBy(fn($c) => Claim::claimTypes()[$c->claim_type] ?? ($c->claim_type ?: 'Not specified'))
             ->map(fn($items) => ['count' => $items->count()]);
 
-        $byUser = $claims->groupBy(fn($c) => $c->onBehalfOfUser?->name ?? $c->user?->name ?? 'Unknown')
+        $byUser = $claims->groupBy(fn($c) => $c->onBehalfOfUser?->username ?? $c->user?->username ?? 'Unknown')
             ->map(fn($items) => ['count' => $items->count()]);
 
         return compact('claims', 'summary', 'byCompany', 'byDay', 'byStatus', 'byClaimType', 'byUser');
@@ -104,7 +104,7 @@ class ClaimReportController extends Controller
     public function index()
     {
         $companies = Company::active()->get();
-        $users = User::orderBy('name')->get(['id', 'name', 'email']);
+        $users = User::orderBy('username')->get(['id', 'username']);
         $claimTypes = Claim::claimTypes();
         $statuses = Claim::statuses();
 
@@ -139,7 +139,7 @@ class ClaimReportController extends Controller
         $callback = function () use ($claims) {
             $handle = fopen('php://output', 'w');
             fputcsv($handle, [
-                'Claim #', 'Filed By', 'Customer', 'Registration', 'Underwriter',
+                'Claim #', 'Filed By', 'Vehicle', 'Registration', 'Underwriter',
                 'Claim Type', 'Incident Date', 'Police Notified', 'Status',
                 'Settlement (KES)', 'Date Logged',
             ]);
@@ -147,8 +147,8 @@ class ClaimReportController extends Controller
             foreach ($claims as $c) {
                 fputcsv($handle, [
                     $c->claim_number,
-                    $c->user?->name ?? 'N/A',
-                    $c->onBehalfOfUser?->name ?? $c->customer_name,
+                    $c->user?->username ?? 'N/A',
+                    $c->vehicle_description,
                     $c->registration_number,
                     $this->companyNameFor($c->vehicle_details['insurance_company_id'] ?? null),
                     Claim::claimTypes()[$c->claim_type] ?? $c->claim_type,
@@ -180,7 +180,7 @@ class ClaimReportController extends Controller
         $sheet->setName('Claims');
 
         $writer->addRow(\OpenSpout\Common\Entity\Row::fromValues([
-            'Claim #', 'Filed By', 'Customer', 'Registration', 'Underwriter',
+            'Claim #', 'Filed By', 'Vehicle', 'Registration', 'Underwriter',
             'Claim Type', 'Incident Date', 'Police Notified', 'Status',
             'Settlement (KES)', 'Date Logged',
         ]));
@@ -188,8 +188,8 @@ class ClaimReportController extends Controller
         foreach ($claims as $c) {
             $writer->addRow(\OpenSpout\Common\Entity\Row::fromValues([
                 $c->claim_number,
-                $c->user?->name ?? 'N/A',
-                $c->onBehalfOfUser?->name ?? $c->customer_name,
+                $c->user?->username ?? 'N/A',
+                $c->vehicle_description,
                 $c->registration_number,
                 $this->companyNameFor($c->vehicle_details['insurance_company_id'] ?? null),
                 Claim::claimTypes()[$c->claim_type] ?? $c->claim_type,

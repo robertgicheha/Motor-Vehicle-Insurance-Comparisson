@@ -1,13 +1,13 @@
 @inject('settingModel', 'App\Models\Setting')
 @php
-    $__footerLogo = $settingModel->getValue('logo_path', 'images/MIC-Global-Risks_logo_no_background.png');
-    $__footerLogoUrl = $__footerLogo ? (str_starts_with($__footerLogo, 'images/') ? asset($__footerLogo) : asset('storage/' . $__footerLogo)) : asset('images/MIC-Global-Risks_logo_no_background.png');
+    $__footerLogo = $settingModel->getValue('logo_path', 'images/LOLC-Kenya.webp');
+    $__footerLogoUrl = $__footerLogo ? (str_starts_with($__footerLogo, 'images/') ? asset($__footerLogo) : asset('storage/' . $__footerLogo)) : asset('images/LOLC-Kenya.webp');
 @endphp
 
-<footer class="bg-[#004f8c] text-white mt-auto">
+<footer class="bg-[#263B8B] text-white mt-auto">
   <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-[1.5fr_1fr_1fr_1fr] gap-8 md:gap-10 px-6 sm:px-10 py-10 md:py-[50px] pb-9 max-w-[1200px] mx-auto">
     <div>
-      <img src="{{ $__footerLogoUrl }}" alt="MIC Global Risks" class="h-10 object-contain mb-4 brightness-0 invert">
+      <img src="{{ $__footerLogoUrl }}" alt="LOLC Microfinance Bank" class="h-10 object-contain mb-4 brightness-0 invert">
       <p class="text-[12.5px] text-white/60 leading-relaxed">Your trusted insurance intermediary &mdash; connecting you to Kenya&rsquo;s leading insurers with transparency, speed and expertise.</p>
       <div class="flex gap-2 flex-wrap mt-3">
         <span class="bg-white/10 border border-white/20 rounded-full px-3 py-1 text-[11px] font-bold text-white/85">Kenya</span>
@@ -38,7 +38,7 @@
     </div>
   </div>
   <div class="border-t border-white/10 px-6 sm:px-10 py-[18px] max-w-[1200px] mx-auto flex flex-col sm:flex-row gap-2 sm:gap-0 justify-between items-center text-[12px] text-white/50 text-center sm:text-left">
-    <span>&copy; 2026 MIC Global Risks Insurance (Kenya) Limited</span>
+    <span>&copy; 2026 LOLC Microfinance Bank</span>
     <div>
       <a href="{{ route('legal.privacy') }}" class="text-white/60 no-underline ml-0 sm:ml-5 mr-2.5 sm:mr-0 hover:text-white py-1.5 inline-block">Privacy Policy</a>
       <a href="{{ route('legal.terms') }}" class="text-white/60 no-underline ml-0 sm:ml-5 mr-2.5 sm:mr-0 hover:text-white py-1.5 inline-block">Terms &amp; Conditions</a>

@@ -22,13 +22,13 @@
         table.cmp-table th .th-name { text-align: center; }
         table.cmp-table td { padding: 3px 6px; border: 1px solid #dde3ed; text-align: right; }
         table.cmp-table tbody tr:nth-child(even) { background: #fafbfc; }
-        table.cmp-table tfoot td { background: #004f8c; color: #fff; font-weight: bold; font-size: 9.5px; }
+        table.cmp-table tfoot td { background: #263B8B; color: #fff; font-weight: bold; font-size: 9.5px; }
         .pdf-footer-text { padding: 8px 24px; background: #f8f9fb; border-top: 1px solid #dde3ed; font-size: 8px; color: #6b7280; line-height: 1.4; }
     </style>
 </head>
 <body>
     <div class="letterhead">
-        <img src="{{ public_path('images/MIC-Global-Risks_logo_no_background.png') }}" alt="MIC Global Risks">
+        <img src="{{ public_path('images/LOLC-Kenya.webp') }}" alt="LOLC Microfinance Bank">
         <h1>Underwriters Benefits/Cover Comparison - Motor Insurance Quotation</h1>
         <p>Side-by-side premium and benefits comparison across every underwriter that covers this vehicle. Generated {{ now()->format('d F Y, H:i') }}.</p>
     </div>
@@ -36,9 +36,6 @@
     <div class="pdf-body">
         <table class="summary-table">
             <tr>
-                <td class="label">Customer</td>
-                <td class="label">Phone</td>
-                <td class="label">Email</td>
                 <td class="label">Registration</td>
                 <td class="label">Make / Model</td>
                 <td class="label">Year</td>
@@ -47,9 +44,6 @@
                 <td class="label">Estimated Value</td>
             </tr>
             <tr>
-                <td>{{ $customer['name'] ?? '—' }}</td>
-                <td>{{ $customer['phone'] ?? '—' }}</td>
-                <td>{{ $customer['email'] ?? '—' }}</td>
                 <td>{{ $vehicle['reg'] ?? '—' }}</td>
                 <td>{{ trim(($vehicle['make'] ?? '') . ' ' . ($vehicle['model'] ?? '')) ?: '—' }}</td>
                 <td>{{ $vehicle['year'] ?? '—' }}</td>

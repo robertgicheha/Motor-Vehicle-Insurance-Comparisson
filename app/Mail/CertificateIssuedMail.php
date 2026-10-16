@@ -18,16 +18,26 @@ class CertificateIssuedMail extends Mailable
     use Queueable, SerializesModels, UsesEmailTemplate;
 
     public Sticker $sticker;
-    public array $kycPaths;
+
+    /**
+     * KYC documents held entirely in memory, never on disk. Each entry is
+     * ['name' => string, 'mime' => string, 'data' => string(binary)]. The
+     * upload is scanned while still in Laravel's volatile request buffer, the
+     * bytes are attached straight from memory (Attachment::fromData), and the
+     * buffer is released when the request ends — the zero-storage lifecycle.
+     *
+     * @var array<int, array{name:string, mime:string, data:string}>
+     */
+    public array $kycAttachments;
     public ?string $ccAddress;
     public ?string $fromAddress;
     public ?string $fromName;
     public ?string $toOverride;
 
-    public function __construct(Sticker $sticker, array $kycPaths = [], ?string $ccAddress = null, ?string $fromAddress = null, ?string $fromName = null, ?string $toOverride = null)
+    public function __construct(Sticker $sticker, array $kycAttachments = [], ?string $ccAddress = null, ?string $fromAddress = null, ?string $fromName = null, ?string $toOverride = null)
     {
         $this->sticker = $sticker;
-        $this->kycPaths = $kycPaths;
+        $this->kycAttachments = $kycAttachments;
         $this->ccAddress = $ccAddress;
         $this->fromAddress = $fromAddress;
         $this->fromName = $fromName;
@@ -70,7 +80,6 @@ class CertificateIssuedMail extends Mailable
             with: array_merge($this->variables(), [
                 'sticker' => $this->sticker,
                 'quotation' => $this->sticker->quotation,
-                'kycPaths' => $this->kycPaths,
             ]),
         );
     }
@@ -98,8 +107,6 @@ class CertificateIssuedMail extends Mailable
         return [
             'sticker_number' => $this->sticker->sticker_number,
             'underwriter_name' => $this->sticker->company?->underwriter_name ?: 'Underwriter',
-            'salutation' => $quotation?->customer_salutation ?: '',
-            'customer_name' => $this->sticker->customer_name,
             'client_type' => $isCorporate ? 'corporate' : 'individual',
             'client_type_label' => $isCorporate ? 'Corporate' : 'Individual',
             'company' => $this->sticker->company?->name ?? 'N/A',
@@ -141,16 +148,22 @@ class CertificateIssuedMail extends Mailable
             )->withMime('application/pdf');
         }
 
-        foreach ($this->kycPaths as $index => $path) {
-            if (!file_exists($path)) {
+        foreach ($this->kycAttachments as $attachment) {
+            // Attached straight from the in-memory bytes captured during the
+            // request — there is no file on disk to read back, which is the
+            // whole point of the zero-storage lifecycle. An empty payload is
+            // skipped (with a warning) rather than failing the whole send.
+            $data = $attachment['data'] ?? '';
+            if ($data === '') {
+                \Illuminate\Support\Facades\Log::warning('Sticker email KYC attachment skipped (empty payload): ' . ($attachment['name'] ?? 'unknown'));
+
                 continue;
             }
 
-            $filename = basename($path);
-            $mimeType = mime_content_type($path) ?: 'application/octet-stream';
+            $filename = $attachment['name'] ?? 'kyc-document';
+            $mimeType = $attachment['mime'] ?? 'application/octet-stream';
 
-            $attachments[] = Attachment::fromPath($path)
-                ->as($filename)
+            $attachments[] = Attachment::fromData(fn () => $data, $filename)
                 ->withMime($mimeType);
         }
 

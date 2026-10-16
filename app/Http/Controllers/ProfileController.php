@@ -2,20 +2,11 @@
 
 namespace App\Http\Controllers;
 
-use App\Mail\EmailChangedMail;
-use App\Mail\PasswordChangedMail;
-use App\Mail\PendingEmailVerification;
-use App\Models\User;
-use App\Notifications\UserEmailChanged;
-use App\Notifications\UserPasswordChanged;
 use App\Services\AuditService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Mail;
-use Illuminate\Support\Facades\Notification;
-use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\Rules\Password;
 
 class ProfileController extends Controller
 {
@@ -30,11 +21,6 @@ class ProfileController extends Controller
         $user = auth()->user();
 
         $validator = Validator::make($request->all(), [
-            'first_name' => 'required|string|max:255',
-            'last_name' => 'required|string|max:255',
-            'mobile' => 'required|string|max:20',
-            'gender' => 'nullable|in:male,female,other',
-            'email' => 'nullable|email|max:255|unique:users,email,' . $user->id,
             'avatar' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
         ]);
 
@@ -45,11 +31,6 @@ class ProfileController extends Controller
         $oldData = $user->toArray();
 
         $data = [
-            'first_name' => $request->first_name,
-            'last_name' => $request->last_name,
-            'name' => $request->first_name . ' ' . $request->last_name,
-            'mobile' => $request->mobile,
-            'gender' => $request->gender,
             'profile_completed' => true,
         ];
 
@@ -63,109 +44,38 @@ class ProfileController extends Controller
         $user->update($data);
 
         AuditService::log('update', 'User', $user->id, $oldData, $user->toArray());
-        AuditService::activity('profile_updated', "User {$user->name} updated profile");
-
-        if ($request->filled('email') && $request->email !== $user->email) {
-            $token = bin2hex(random_bytes(32));
-
-            $user->update([
-                'pending_email' => $request->email,
-                'email_verify_token' => $token,
-            ]);
-
-            $verificationUrl = URL::temporarySignedRoute(
-                'profile.verify.email',
-                now()->addMinutes(60),
-                ['token' => $token]
-            );
-
-            Mail::to($request->email)->send(new PendingEmailVerification($user, $verificationUrl));
-            AuditService::activity('email_verification_sent', "Verification link emailed to {$request->email} for pending email change");
-
-            return back()->with('profile_success', 'A verification link has been sent to your new email address. Your email will be updated once you verify it.');
-        }
+        AuditService::activity('profile_updated', "User {$user->username} updated profile");
 
         return back()->with('profile_success', 'Profile updated successfully.');
-    }
-
-    public function verifyNewEmail(Request $request)
-    {
-        $request->validate([
-            'token' => 'required|string',
-        ]);
-
-        if (!URL::hasValidSignature($request)) {
-            return redirect()->route('profile.edit')->withErrors(['email' => 'The verification link is invalid or has expired.']);
-        }
-
-        $user = auth()->user();
-
-        if ($user->email_verify_token !== $request->token) {
-            return redirect()->route('profile.edit')->withErrors(['email' => 'Invalid verification token.']);
-        }
-
-        if (!$user->pending_email) {
-            return redirect()->route('profile.edit')->withErrors(['email' => 'No pending email change found.']);
-        }
-
-        $previousEmail = $user->email;
-
-        $user->update([
-            'email' => $user->pending_email,
-            'pending_email' => null,
-            'email_verify_token' => null,
-        ]);
-
-        AuditService::activity('email_changed', "User {$user->name} changed email address");
-
-        try {
-            Mail::to($user->email)->send(new EmailChangedMail($user, $previousEmail));
-        } catch (\Throwable $e) {
-            Log::warning("Failed to send email-changed confirmation to {$user->email}: " . $e->getMessage());
-        }
-
-        $admins = User::role(['super-admin', 'admin'])->get();
-        if ($admins->isNotEmpty()) {
-            try {
-                Notification::send($admins, new UserEmailChanged($user, $previousEmail));
-            } catch (\Throwable $e) {
-                Log::warning("Failed to notify admins that {$user->email} changed their email: " . $e->getMessage());
-            }
-        }
-
-        return redirect()->route('profile.edit')->with('profile_success', 'Your email address has been updated successfully.');
     }
 
     public function updatePassword(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'current_password' => 'required|current_password',
-            'password' => 'required|min:8|confirmed',
+            'current_password' => ['required', 'current_password'],
+            'password' => ['required', 'confirmed', Password::min(12)->mixedCase()->numbers()->symbols()],
+        ], [
+            'password.min' => 'Your new password must be at least 12 characters long.',
+            'password.mixed' => 'Your new password must contain both uppercase and lowercase letters.',
+            'password.numbers' => 'Your new password must contain at least one number.',
+            'password.symbols' => 'Your new password must contain at least one symbol.',
+            'password.confirmed' => 'The new password confirmation does not match.',
         ]);
 
         if ($validator->fails()) {
-            return back()->withErrors($validator);
+            return back()->withErrors($validator, 'default')->withInput();
         }
 
         $user = auth()->user();
         $user->update(['password' => Hash::make($request->password)]);
-        AuditService::activity('password_changed', 'User changed password');
+        $user->markPasswordChanged();
 
-        try {
-            Mail::to($user->email)->send(new PasswordChangedMail($user));
-        } catch (\Throwable $e) {
-            Log::warning("Failed to send password-changed confirmation to {$user->email}: " . $e->getMessage());
-        }
+        // The user has now satisfied the expiry requirement — release them
+        // from the forced-change lock so the rest of the app is reachable.
+        $request->session()->forget(['force_password_change', 'password_expiry_notice']);
 
-        $admins = User::role(['super-admin', 'admin'])->get();
-        if ($admins->isNotEmpty()) {
-            try {
-                Notification::send($admins, new UserPasswordChanged($user));
-            } catch (\Throwable $e) {
-                Log::warning("Failed to notify admins that {$user->email} changed their password: " . $e->getMessage());
-            }
-        }
+        AuditService::activity('password_changed', "User {$user->username} changed their password");
 
-        return back()->with('password_success', 'Password updated.');
+        return back()->with('password_success', 'Password updated successfully.');
     }
 }

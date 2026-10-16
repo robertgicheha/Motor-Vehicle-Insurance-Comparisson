@@ -7,7 +7,6 @@ use App\Models\AuditLog;
 use App\Models\ActivityLog;
 use App\Models\User;
 use Illuminate\Http\Request;
-use Illuminate\Pagination\LengthAwarePaginator;
 
 class AuditLogController extends Controller
 {
@@ -19,9 +18,6 @@ class AuditLogController extends Controller
         }
         if ($request->model) {
             $query->where('model', $request->model);
-        }
-        if ($request->level) {
-            $query->where('level', $request->level);
         }
         $logs = $query->latest()->paginate(30);
 
@@ -51,12 +47,14 @@ class AuditLogController extends Controller
     }
 
     /**
-     * A single user's full story — every audit + activity entry for that
-     * user, merged into one chronological timeline.
+     * A single user's full story — a chronological, de-duplicated timeline of
+     * every action they took. Sourced from the human-readable activity log
+     * only (not merged with the audit trail), so each event appears exactly
+     * once. The structured before/after changes live on the Audit Trail view.
      */
     public function userStory(Request $request)
     {
-        $users = User::orderBy('name')->get(['id', 'name', 'email']);
+        $users = User::orderBy('username')->get(['id', 'username']);
         $selectedUser = null;
         $timeline = null;
         $perPage = 25;
@@ -66,50 +64,24 @@ class AuditLogController extends Controller
         }
 
         if ($selectedUser) {
-            $auditEntries = AuditLog::where('user_id', $selectedUser->id)->get()->map(function ($log) {
-                return (object) [
-                    'type' => 'audit',
-                    'action' => $log->action,
-                    'description' => trim(($log->action ? ucfirst(str_replace('_', ' ', $log->action)) : 'Action') . ($log->model ? " on {$log->model}" . ($log->model_id ? " #{$log->model_id}" : '') : '')),
-                    'model' => $log->model,
-                    'model_id' => $log->model_id,
-                    'old_values' => $log->old_values,
-                    'new_values' => $log->new_values,
-                    'level' => null,
-                    'ip_address' => $log->ip_address,
-                    'user_agent' => $log->user_agent,
-                    'created_at' => $log->created_at,
-                ];
-            });
-
-            $activityEntries = ActivityLog::where('user_id', $selectedUser->id)->get()->map(function ($log) {
-                return (object) [
-                    'type' => 'activity',
-                    'action' => $log->action,
-                    'description' => $log->description ?? $log->action,
-                    'model' => null,
-                    'model_id' => null,
-                    'old_values' => null,
-                    'new_values' => null,
-                    'level' => $log->level,
-                    'ip_address' => $log->ip_address,
-                    'user_agent' => $log->user_agent,
-                    'created_at' => $log->created_at,
-                ];
-            });
-
-            $allEntries = $auditEntries->concat($activityEntries)->sortByDesc('created_at')->values();
-
-            $page = (int) $request->get('page', 1);
-            $slice = $allEntries->forPage($page, $perPage)->values();
-
-            $timeline = new LengthAwarePaginator(
-                $slice,
-                $allEntries->count(),
-                $perPage,
-                $page,
-                ['path' => $request->url(), 'query' => $request->query()]
-            );
+            $timeline = ActivityLog::where('user_id', $selectedUser->id)
+                ->latest()
+                ->paginate($perPage)
+                ->through(function ($log) {
+                    return (object) [
+                        'type' => 'activity',
+                        'action' => $log->action,
+                        'description' => $log->description ?? $log->action,
+                        'model' => null,
+                        'model_id' => null,
+                        'old_values' => null,
+                        'new_values' => null,
+                        'level' => $log->level,
+                        'ip_address' => $log->ip_address,
+                        'user_agent' => $log->user_agent,
+                        'created_at' => $log->created_at,
+                    ];
+                });
         }
 
         return view('admin.audit.story', compact('users', 'selectedUser', 'timeline'));

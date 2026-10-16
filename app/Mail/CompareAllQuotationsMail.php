@@ -21,7 +21,7 @@ class CompareAllQuotationsMail extends Mailable
      * @param array $pdfData Combined comparison data built by QuotationController::buildCompareAllPdfData(),
      *                        used to render the same side-by-side comparison PDF as quotation-compare.blade.php.
      */
-    public function __construct(public Collection $quotations, public string $customerName, public array $pdfData = [])
+    public function __construct(public Collection $quotations, public array $pdfData = [])
     {
     }
 
@@ -38,7 +38,6 @@ class CompareAllQuotationsMail extends Mailable
             view: 'emails.compare-all-quotations',
             with: [
                 'quotations' => $this->quotations,
-                'customerName' => $this->customerName,
             ],
         );
     }

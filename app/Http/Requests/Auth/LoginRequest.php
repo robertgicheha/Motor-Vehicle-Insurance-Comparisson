@@ -2,10 +2,12 @@
 
 namespace App\Http\Requests\Auth;
 
+use App\Models\User;
 use Illuminate\Auth\Events\Lockout;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
@@ -28,7 +30,7 @@ class LoginRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'email' => ['required', 'string', 'email'],
+            'username' => ['required', 'string'],
             'password' => ['required', 'string'],
         ];
     }
@@ -42,22 +44,22 @@ class LoginRequest extends FormRequest
     {
         $this->ensureIsNotRateLimited();
 
-        $email = $this->string('email')->toString();
+        $username = $this->string('username')->toString();
         $password = $this->string('password')->toString();
 
-        $user = \App\Models\User::where('email', $email)->first();
+        $user = User::where('username', $username)->first();
 
         if (!$user) {
             RateLimiter::hit($this->throttleKey());
-            \App\Services\AuditService::activity('login_failed', "Failed login attempt for unknown email '{$email}'", 'warning');
+            \App\Services\AuditService::activity('login_failed', "Failed login attempt for unknown username '{$username}' from IP {$this->ip()}", 'warning');
             throw ValidationException::withMessages([
-                'email' => 'Username is not valid, try again',
+                'username' => 'Username is not valid, try again',
             ]);
         }
 
-        if (!\Illuminate\Support\Facades\Hash::check($password, $user->password)) {
+        if (!Hash::check($password, $user->password)) {
             RateLimiter::hit($this->throttleKey());
-            \App\Services\AuditService::activity('login_failed', "Failed login attempt for {$user->email} (wrong password)", 'warning', $user->id);
+            \App\Services\AuditService::activity('login_failed', "Failed login attempt for {$user->username} (wrong password)", 'warning', $user->id);
             throw ValidationException::withMessages([
                 'password' => 'Password is not correct, please try again',
             ]);
@@ -65,13 +67,27 @@ class LoginRequest extends FormRequest
 
         if (!$user->is_active) {
             RateLimiter::hit($this->throttleKey());
-            \App\Services\AuditService::activity('login_failed', "Login blocked for {$user->email} (account inactive)", 'warning', $user->id);
+            \App\Services\AuditService::activity('login_failed', "Login blocked for {$user->username} (account inactive)", 'warning', $user->id);
             throw ValidationException::withMessages([
-                'email' => 'Your account is inactive. Please contact support.',
+                'username' => 'Your account is inactive. Please contact support.',
             ]);
         }
 
-        \Illuminate\Support\Facades\Auth::login($user, $this->boolean('remember'));
+        // An expired password can no longer be used to sign in: the user must
+        // reset it from the login page (username + current password), which
+        // restarts the 30-day clock. Checked before Auth::login so no session
+        // is ever established with an expired credential. isPasswordExpired()
+        // is fail-open (a bad timestamp reads as "not expired"), so a corrupt
+        // value can never take the login flow down.
+        if ($user->isPasswordExpired()) {
+            \App\Services\AuditService::activity('password_expired_login', "Login blocked for {$user->username} (password expired)", 'warning', $user->id);
+
+            throw ValidationException::withMessages([
+                'username' => 'Your password has expired and can no longer be used to sign in. Please reset it using the "Reset password" link below.',
+            ]);
+        }
+
+        Auth::login($user, $this->boolean('remember'));
 
         RateLimiter::clear($this->throttleKey());
 
@@ -92,18 +108,18 @@ class LoginRequest extends FormRequest
 
         event(new Lockout($this));
 
-        $email = $this->string('email')->toString();
-        \App\Services\AuditService::activity('login_lockout', "Account locked out after repeated failed attempts for '{$email}' from IP {$this->ip()}", 'error');
+        $username = $this->string('username')->toString();
+        \App\Services\AuditService::activity('login_lockout', "Account locked out after repeated failed attempts for '{$username}' from IP {$this->ip()}", 'error');
 
         $admins = \App\Models\User::role(['super-admin', 'admin'])->get();
         if ($admins->isNotEmpty()) {
-            \Illuminate\Support\Facades\Notification::send($admins, new \App\Notifications\FailedLoginLockout($email, $this->ip()));
+            \Illuminate\Support\Facades\Notification::send($admins, new \App\Notifications\FailedLoginLockout($username, $this->ip()));
         }
 
         $seconds = RateLimiter::availableIn($this->throttleKey());
 
         throw ValidationException::withMessages([
-            'email' => trans('auth.throttle', [
+            'username' => trans('auth.throttle', [
                 'seconds' => $seconds,
                 'minutes' => ceil($seconds / 60),
             ]),
@@ -115,6 +131,6 @@ class LoginRequest extends FormRequest
      */
     public function throttleKey(): string
     {
-        return Str::transliterate(Str::lower($this->string('email')).'|'.$this->ip());
+        return Str::transliterate(Str::lower($this->string('username')).'|'.$this->ip());
     }
 }

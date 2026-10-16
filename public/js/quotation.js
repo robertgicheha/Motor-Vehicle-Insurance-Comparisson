@@ -274,8 +274,8 @@ function renderCompareTable(e, t) {
 function compareAllCardHtml(insurerCount) {
     var logo = window.compareAllLogoUrl || "";
     return (
-        '<button type="button" onclick="compareAllPdf(\'download\')" class="company-card no-underline text-left" style="cursor:pointer;display:block;width:100%;border:2px solid #D0021B;position:relative;overflow:hidden;transition:all .25s ease;border-radius:16px;box-shadow:0 4px 20px rgba(0,0,0,0.08);background:#fff;padding:16px">' +
-        '<div style="position:absolute;top:0;left:0;right:0;height:4px;background:#D0021B"></div>' +
+        '<button type="button" onclick="compareAllPdf(\'download\')" class="company-card no-underline text-left" style="cursor:pointer;display:block;width:100%;border:2px solid #ED1D25;position:relative;overflow:hidden;transition:all .25s ease;border-radius:16px;box-shadow:0 4px 20px rgba(0,0,0,0.08);background:#fff;padding:16px">' +
+        '<div style="position:absolute;top:0;left:0;right:0;height:4px;background:#ED1D25"></div>' +
         '<div class="company-logo-box" style="height:48px;margin-bottom:12px;display:flex;align-items:center;justify-content:center">' +
         (logo
             ? '<img src="' + logo + '" alt="Compare All" style="max-height:40px" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'block\'">'
@@ -286,9 +286,9 @@ function compareAllCardHtml(insurerCount) {
         '<div style="display:flex;align-items:center;justify-content:center;gap:16px;margin-bottom:12px">' +
         '<div style="text-align:center">' +
         '<div style="font-size:10px;color:#6b7280;font-weight:500">Insurers</div>' +
-        '<div style="font-size:13px;font-weight:800;color:#D0021B">' + insurerCount + "</div>" +
+        '<div style="font-size:13px;font-weight:800;color:#ED1D25">' + insurerCount + "</div>" +
         "</div></div>" +
-        '<span class="btn btn-primary" style="display:block;width:100%;text-align:center;box-sizing:border-box;font-size:12px;padding:8px 10px;background:#D0021B;border-color:#D0021B;border-radius:10px;font-weight:700;color:#fff">Download All ↓</span>' +
+        '<span class="btn btn-primary" style="display:block;width:100%;text-align:center;box-sizing:border-box;font-size:12px;padding:8px 10px;background:#ED1D25;border-color:#ED1D25;border-radius:10px;font-weight:700;color:#fff">Download All ↓</span>' +
         "</button>"
     );
 }

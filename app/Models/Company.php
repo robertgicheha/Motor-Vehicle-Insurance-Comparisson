@@ -100,7 +100,7 @@ class Company extends Model
             }
         }
 
-        $default = public_path('images/MIC-Global-Risks_logo_no_background.png');
+        $default = public_path('images/LOLC-Kenya.webp');
 
         return file_exists($default) ? $default : null;
     }

@@ -10,54 +10,49 @@ class AdminUserSeeder extends Seeder
     public function run(): void
     {
         // Super Admin
-        $superAdmin = User::firstOrCreate(
-            ['email' => 'superadmin@insurance.com'],
-            [
-                'first_name' => 'Super',
-                'last_name' => 'Admin',
-                'name' => 'Super Admin',
-                'password' => bcrypt('SAdmin@123456'),
-                'mobile' => '+254710351517',
-                'gender' => 'male',
-                'is_active' => true,
-                'profile_completed' => true,
-            ]
-        );
-
-        $superAdmin->assignRole('super-admin');
+        $this->seedUser('superadmin', 'super-admin', 'SAdmin@123456', [
+            'branch' => 'Head Office',
+            'is_active' => true,
+            'verified_at' => now(),
+            'profile_completed' => true,
+        ]);
 
         // Admin
-        $admin = User::firstOrCreate(
-            ['email' => 'admin@insurance.com'],
-            [
-                'first_name' => 'Admin',
-                'last_name' => 'User',
-                'name' => 'Admin User',
-                'password' => bcrypt('Admin@123456'),
-                'mobile' => '+254710351517',
-                'gender' => 'male',
-                'is_active' => true,
-                'profile_completed' => true,
-            ]
-        );
-
-        $admin->assignRole('admin');
+        $this->seedUser('admin', 'admin', 'Admin@123456', [
+            'branch' => 'Head Office',
+            'is_active' => true,
+            'verified_at' => now(),
+            'profile_completed' => true,
+        ]);
 
         // Test User
-        $user = User::firstOrCreate(
-            ['email' => 'user@insurance.com'],
-            [
-                'first_name' => 'Test',
-                'last_name' => 'User',
-                'name' => 'Test User',
-                'password' => bcrypt('User@123456'),
-                'mobile' => '+254711000000',
-                'gender' => 'female',
-                'is_active' => true,
-                'profile_completed' => false,
-            ]
+        $this->seedUser('user1_westlands', 'user', 'User@1234567', [
+            'branch' => 'Westlands',
+            'is_active' => true,
+            'verified_at' => now(),
+            'profile_completed' => false,
+        ]);
+    }
+
+    /**
+     * Create or update a seeded account identified by its username.
+     *
+     * Re-running the seeder updates the account's details so its username and
+     * profile stay canonical, but never resets the password: the password is
+     * only written when the account is first created. Matching includes
+     * soft-deleted rows so the unique username index is never hit.
+     */
+    protected function seedUser(string $username, string $role, string $password, array $attributes): User
+    {
+        $exists = User::withTrashed()->where('username', $username)->exists();
+
+        $user = User::withTrashed()->updateOrCreate(
+            ['username' => $username],
+            $exists ? $attributes : array_merge($attributes, ['password' => bcrypt($password)]),
         );
 
-        $user->assignRole('user');
+        $user->syncRoles([$role]);
+
+        return $user;
     }
 }

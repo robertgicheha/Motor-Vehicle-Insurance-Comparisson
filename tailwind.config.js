@@ -19,13 +19,13 @@ export default {
             },
             colors: {
                 brand: {
-                    blue: '#0066B3',
-                    'blue-dark': '#004f8c',
-                    'blue-light': '#e8f2fa',
-                    red: '#D0021B',
+                    blue: '#263B8B',
+                    'blue-dark': '#1b2c6b',
+                    'blue-light': '#e9ecf7',
+                    red: '#ED1D25',
                    
                 },
-                micblue: '#005F9E',
+                micblue: '#263B8B',
                 ga: '#005baa',
                 sanlam: '#1d3c6e',
             },

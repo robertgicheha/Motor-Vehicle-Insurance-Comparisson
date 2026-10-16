@@ -1,6 +1,37 @@
 <x-app-layout>
     <div class="space-y-5 mt-10 fade-in">
 
+        {{-- ─── PASSWORD EXPIRY NOTICE ───────────────────────────────────────── --}}
+        @if(session('password_expiry_notice') || $user->isPasswordExpired() || $user->isPasswordExpiringSoon())
+            @php
+                $expired = $user->isPasswordExpired();
+                $daysLeft = $user->daysUntilPasswordExpiry();
+            @endphp
+            <div class="rounded-xl border px-5 py-4 flex items-start gap-3 {{ $expired ? 'bg-red-50 border-red-200 dark:bg-red-900/20 dark:border-red-800' : 'bg-amber-50 border-amber-200 dark:bg-amber-900/20 dark:border-amber-800' }}">
+                <svg class="w-5 h-5 flex-shrink-0 mt-0.5 {{ $expired ? 'text-red-500' : 'text-amber-500' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                <div class="text-sm {{ $expired ? 'text-red-700 dark:text-red-300' : 'text-amber-700 dark:text-amber-300' }}">
+                    <p class="font-semibold">
+                        @if($expired)
+                            Your password has expired
+                        @else
+                            Your password expires soon
+                        @endif
+                    </p>
+                    <p class="mt-0.5">
+                        @if($expired)
+                            {{ session('password_expiry_notice', 'Your password has expired and must be changed before you can continue.') }}
+                        @else
+                            Your password will expire {{ $daysLeft === 0 ? 'today' : 'in '.$daysLeft.' day'.($daysLeft === 1 ? '' : 's') }}. Please change it to keep your account secure.
+                        @endif
+                    </p>
+                    <button type="button" onclick="document.getElementById('password-form').classList.remove('hidden'); document.getElementById('password-form').scrollIntoView({behavior:'smooth', block:'center'})"
+                            class="mt-2 inline-flex items-center gap-1.5 text-xs font-semibold underline">
+                        Change password now
+                    </button>
+                </div>
+            </div>
+        @endif
+
         {{-- ─── HERO ─────────────────────────────────────────────────────────── --}}
         <div class="rounded-2xl bg-micblue px-6 py-7 shadow-sm">
             <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
@@ -98,19 +129,11 @@
                     <p class="text-sm text-gray-900 dark:text-gray-100">{{ $user->last_name }}</p>
                 </div>
                 <div class="px-5 py-4">
-                    <p class="text-[10px] font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500 mb-1">Email address</p>
-                    <p class="text-sm text-gray-500 dark:text-gray-400">{{ $user->email }}</p>
-                    @if($user->hasVerifiedEmail())
-                        <span class="inline-flex items-center gap-1 mt-1 text-[10px] font-semibold text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/20 px-2 py-0.5 rounded-full border border-green-200 dark:border-green-800">
-                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-                            Verified
-                        </span>
-                    @else
-                        <span class="inline-flex items-center gap-1 mt-1 text-[10px] font-semibold text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 px-2 py-0.5 rounded-full border border-amber-200 dark:border-amber-800">
-                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                            Not verified
-                        </span>
-                    @endif
+                    <p class="text-[10px] font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500 mb-1">Username</p>
+                    <p class="text-sm text-gray-900 dark:text-gray-100">{{ $user->username }}</p>
+                    <span class="inline-flex items-center gap-1 mt-1 text-[10px] font-semibold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 px-2 py-0.5 rounded-full border border-blue-200 dark:border-blue-800">
+                        Login ID
+                    </span>
                 </div>
                 <div class="px-5 py-4">
                     <p class="text-[10px] font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500 mb-1">Phone</p>
@@ -121,13 +144,8 @@
                     <p class="text-sm text-gray-900 dark:text-gray-100">{{ ucfirst($user->gender ?? '—') }}</p>
                 </div>
                 <div class="px-5 py-4">
-                    <p class="text-[10px] font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500 mb-1">Social links</p>
-                    <div class="flex items-center gap-3 mt-1">
-                        <svg class="w-4 h-4 text-gray-400" fill="currentColor" viewBox="0 0 24 24"><path d="M18 2h-3a5 5 0 00-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 011-1h3z"/></svg>
-                        <svg class="w-4 h-4 text-gray-400" fill="currentColor" viewBox="0 0 24 24"><path d="M4 4l16 16M4 20L20 4"/><rect width="20" height="20" x="2" y="2" rx="5" ry="5" fill="none" stroke="currentColor" stroke-width="2"/></svg>
-                        <svg class="w-4 h-4 text-gray-400" fill="currentColor" viewBox="0 0 24 24"><path d="M16 8a6 6 0 016 6v7h-4v-7a2 2 0 00-2-2 2 2 0 00-2 2v7h-4v-7a6 6 0 016-6zM2 9h4v12H2z"/><circle cx="4" cy="4" r="2"/></svg>
-                        <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect width="20" height="20" x="2" y="2" rx="5" ry="5" stroke-width="2"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11.37A4 4 0 1112.63 8 4 4 0 0116 11.37z"/><line x1="17.5" x2="17.51" y1="6.5" y2="6.5" stroke-width="2"/></svg>
-                    </div>
+                    <p class="text-[10px] font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500 mb-1">Branch</p>
+                    <p class="text-sm text-gray-900 dark:text-gray-100">{{ $user->branch ?? '—' }}</p>
                 </div>
             </div>
         </div>
@@ -184,16 +202,15 @@
                         @error('last_name') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
                     </div>
                     <div>
-                        <label class="block text-[11px] font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500 mb-1.5">Email address</label>
-                        <input type="email" name="email" value="{{ old('email', $user->email) }}" required
-                               class="w-full px-3.5 py-2.5 text-sm rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition">
-                        @error('email') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
-                        @if($user->pending_email)
-                            <div class="mt-2 flex items-center gap-2 text-[10px] font-medium text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg px-3 py-2">
-                                <svg class="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                                <span>Verification pending for <strong>{{ $user->pending_email }}</strong>. Check your inbox for the verification link.</span>
-                            </div>
-                        @endif
+                        <label class="block text-[11px] font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500 mb-1.5">Username</label>
+                        <input type="text" value="{{ $user->username }}" readonly
+                               class="w-full px-3.5 py-2.5 text-sm rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-100 dark:bg-gray-600/50 text-gray-500 dark:text-gray-300 cursor-not-allowed">
+                        <p class="text-[10px] text-gray-400 mt-1">Your username and branch are set by an administrator.</p>
+                    </div>
+                    <div>
+                        <label class="block text-[11px] font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500 mb-1.5">Branch</label>
+                        <input type="text" value="{{ $user->branch ?? '—' }}" readonly
+                               class="w-full px-3.5 py-2.5 text-sm rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-100 dark:bg-gray-600/50 text-gray-500 dark:text-gray-300 cursor-not-allowed">
                     </div>
                     <div>
                         <label class="block text-[11px] font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500 mb-1.5">Mobile number</label>
@@ -269,20 +286,38 @@
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
                             <label class="block text-[11px] font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500 mb-1.5">New password</label>
-                            <input type="password" name="password" required minlength="8"
+                            <input type="password" name="password" id="newPassword" required minlength="12" autocomplete="new-password"
                                    class="w-full px-3.5 py-2.5 text-sm rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition">
+                            {{-- Password strength meter --}}
+                            <div class="mt-2" id="pwStrengthWrap">
+                                <div class="h-1.5 w-full rounded-full bg-gray-200 dark:bg-gray-600 overflow-hidden">
+                                    <div id="pwStrengthBar" class="h-full w-0 rounded-full transition-all duration-300" style="background:#ef4444"></div>
+                                </div>
+                                <div class="flex items-center justify-between mt-1">
+                                    <p id="pwStrengthLabel" class="text-[10px] font-medium text-gray-400">Password strength</p>
+                                    <p class="text-[10px] text-gray-400">Min 12 chars</p>
+                                </div>
+                                <ul class="mt-2 grid grid-cols-2 gap-1 text-[10px] text-gray-400" id="pwChecklist">
+                                    <li data-rule="length" class="flex items-center gap-1"><span class="pw-dot">○</span> 12+ characters</li>
+                                    <li data-rule="lower" class="flex items-center gap-1"><span class="pw-dot">○</span> Lowercase letter</li>
+                                    <li data-rule="upper" class="flex items-center gap-1"><span class="pw-dot">○</span> Uppercase letter</li>
+                                    <li data-rule="number" class="flex items-center gap-1"><span class="pw-dot">○</span> Number</li>
+                                    <li data-rule="symbol" class="flex items-center gap-1"><span class="pw-dot">○</span> Symbol</li>
+                                </ul>
+                            </div>
                             @error('password') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
                         </div>
                         <div>
                             <label class="block text-[11px] font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500 mb-1.5">Confirm password</label>
-                            <input type="password" name="password_confirmation" required
+                            <input type="password" name="password_confirmation" id="confirmPassword" required autocomplete="new-password"
                                    class="w-full px-3.5 py-2.5 text-sm rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition">
+                            <p id="pwMatchMsg" class="text-[10px] mt-1 hidden"></p>
                         </div>
                     </div>
 
                     <div class="flex items-center gap-2 pt-1">
-                        <button type="submit"
-                                class="inline-flex items-center gap-2 px-5 py-2.5 text-xs font-semibold bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition">
+                        <button type="submit" id="pwSubmitBtn"
+                                class="inline-flex items-center gap-2 px-5 py-2.5 text-xs font-semibold bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed">
                             Update password
                         </button>
                         <button type="button"
@@ -398,6 +433,71 @@ function applyCrop() {
         closeCropModal();
     }, 'image/jpeg', 0.9);
 }
+</script>
+
+<script>
+(function () {
+    const pw = document.getElementById('newPassword');
+    const confirm = document.getElementById('confirmPassword');
+    const bar = document.getElementById('pwStrengthBar');
+    const label = document.getElementById('pwStrengthLabel');
+    const submit = document.getElementById('pwSubmitBtn');
+    const matchMsg = document.getElementById('pwMatchMsg');
+    if (!pw || !bar) return;
+
+    const rules = {
+        length: v => v.length >= 12,
+        lower: v => /[a-z]/.test(v),
+        upper: v => /[A-Z]/.test(v),
+        number: v => /[0-9]/.test(v),
+        symbol: v => /[^A-Za-z0-9]/.test(v),
+    };
+
+    const levels = [
+        { pct: 0, color: '#ef4444', text: 'Very weak' },
+        { pct: 20, color: '#ef4444', text: 'Very weak' },
+        { pct: 40, color: '#f59e0b', text: 'Weak' },
+        { pct: 60, color: '#eab308', text: 'Fair' },
+        { pct: 80, color: '#22c55e', text: 'Strong' },
+        { pct: 100, color: '#16a34a', text: 'Very strong' },
+    ];
+
+    function evaluate() {
+        const v = pw.value;
+        let passed = 0;
+        document.querySelectorAll('#pwChecklist li').forEach(li => {
+            const ok = rules[li.dataset.rule](v);
+            if (ok) passed++;
+            li.querySelector('.pw-dot').textContent = ok ? '●' : '○';
+            li.classList.toggle('text-green-500', ok);
+            li.classList.toggle('text-gray-400', !ok);
+        });
+
+        const level = levels[passed];
+        bar.style.width = level.pct + '%';
+        bar.style.background = level.color;
+        label.textContent = v ? level.text : 'Password strength';
+        label.style.color = v ? level.color : '';
+
+        const strong = passed === 5;
+        if (submit) submit.disabled = !strong;
+        return strong;
+    }
+
+    function checkMatch() {
+        if (!confirm || !matchMsg) return;
+        if (!confirm.value) { matchMsg.classList.add('hidden'); return; }
+        const match = pw.value === confirm.value;
+        matchMsg.classList.remove('hidden');
+        matchMsg.textContent = match ? 'Passwords match' : 'Passwords do not match';
+        matchMsg.classList.toggle('text-green-500', match);
+        matchMsg.classList.toggle('text-red-500', !match);
+    }
+
+    pw.addEventListener('input', evaluate);
+    confirm?.addEventListener('input', checkMatch);
+    evaluate();
+})();
 </script>
 
 </x-app-layout>

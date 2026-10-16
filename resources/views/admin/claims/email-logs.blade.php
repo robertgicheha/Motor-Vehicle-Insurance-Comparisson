@@ -58,8 +58,6 @@
                 <thead>
                     <tr class="bg-gray-50 dark:bg-gray-700/40">
                         <th class="px-5 py-2.5 text-left font-semibold text-gray-400 uppercase tracking-wider text-[10px]">Claim #</th>
-                        <th class="px-5 py-2.5 text-left font-semibold text-gray-400 uppercase tracking-wider text-[10px]">Recipient</th>
-                        <th class="px-5 py-2.5 text-left font-semibold text-gray-400 uppercase tracking-wider text-[10px]">CC</th>
                         <th class="px-5 py-2.5 text-left font-semibold text-gray-400 uppercase tracking-wider text-[10px]">Subject</th>
                         <th class="px-5 py-2.5 text-center font-semibold text-gray-400 uppercase tracking-wider text-[10px]">Status</th>
                         <th class="px-5 py-2.5 text-left font-semibold text-gray-400 uppercase tracking-wider text-[10px]">Sent At</th>
@@ -76,8 +74,6 @@
                                     N/A
                                 @endif
                             </td>
-                            <td class="px-5 py-2.5 text-gray-500 dark:text-gray-400">{{ $log->recipient }}</td>
-                            <td class="px-5 py-2.5 text-gray-500 dark:text-gray-400">{{ $log->cc ?? '—' }}</td>
                             <td class="px-5 py-2.5 text-gray-500 dark:text-gray-400 max-w-xs truncate">{{ $log->subject }}</td>
                             <td class="px-5 py-2.5 text-center">
                                 @php
@@ -90,10 +86,10 @@
                                 </span>
                             </td>
                             <td class="px-5 py-2.5 text-gray-500 dark:text-gray-400">{{ $log->sent_at?->format('d M Y, H:i') ?? '-' }}</td>
-                            <td class="px-5 py-2.5 text-gray-500 dark:text-gray-400">{{ $log->triggeredBy->name ?? 'System' }}</td>
+                            <td class="px-5 py-2.5 text-gray-500 dark:text-gray-400">{{ $log->triggeredBy->username ?? 'System' }}</td>
                         </tr>
                     @empty
-                        <tr><td colspan="7" class="px-5 py-10 text-center text-xs text-gray-400">No claim emails logged yet.</td></tr>
+                        <tr><td colspan="5" class="px-5 py-10 text-center text-xs text-gray-400">No claim emails logged yet.</td></tr>
                     @endforelse
                 </tbody>
             </table>

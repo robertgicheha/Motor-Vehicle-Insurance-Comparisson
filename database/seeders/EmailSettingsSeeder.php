@@ -24,7 +24,7 @@ class EmailSettingsSeeder extends Seeder
             ],
             'quotation' => [
                 'subject' => 'A Quotation {{ quotation_number }} has been created successfully',
-                'body' => '<h2>Dear {{ customer_name }},</h2>'
+                'body' => '<h2>Dear Customer,</h2>'
                     . '<p>A quotation with the quotation no <strong>{{ quotation_number }}</strong> has been generated successfully.</p>'
                     . '<p>Thank you for choosing <strong>{{ company }}</strong>.</p>'
                     . '<div class="premium-box"><div class="label">Total Premium</div><div class="amount">KES {{ total_premium }}</div></div>'
@@ -96,10 +96,10 @@ class EmailSettingsSeeder extends Seeder
             EmailSetting::updateOrCreate(
                 ['key' => $key],
                 $data + [
-                    'letterhead_company' => 'MIC Global Risks',
-                    'letterhead_color' => '#004f8c',
+                    'letterhead_company' => 'LOLC Microfinance Bank',
+                    'letterhead_color' => '#263B8B',
                     'letterhead_logo' => null,
-                    'letterhead_address' => 'MIC Global Risks (Kenya) Limited, P.O. Box 10000 - 00100 Nairobi, Kenya',
+                    'letterhead_address' => 'LOLC Microfinance Bank, P.O. Box 10000 - 00100 Nairobi, Kenya',
                     'letterhead_website' => 'www.micglobalrisks.com',
                 ]
             );

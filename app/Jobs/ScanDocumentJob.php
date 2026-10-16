@@ -4,7 +4,7 @@ namespace App\Jobs;
 
 use App\Models\CertificateDocument;
 use App\Services\AuditService;
-use App\Services\ClamAVService;
+use App\Services\EsetScanService;
 use App\Services\FileSecurityService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -66,17 +66,19 @@ class ScanDocumentJob implements ShouldQueue
         $scanResult = 'No threats detected';
 
         try {
-            $clamav = new ClamAVService();
-            $isClean = $clamav->scan($fullPath);
-            if (!$isClean) {
+            $scan = (new EsetScanService())->scan($fullPath);
+
+            if ($scan['status'] === EsetScanService::STATUS_INFECTED) {
                 $scanStatus = 'infected';
-                $scanResult = 'Potential threat detected by ClamAV.';
+                $scanResult = $scan['result'];
                 Storage::disk('local')->delete($document->path);
+            } else {
+                $scanResult = $scan['result'];
             }
         } catch (\Exception $e) {
             $scanStatus = 'clean';
-            $scanResult = 'ClamAV unavailable — passed basic security checks.';
-            Log::warning('ClamAV scan failed: ' . $e->getMessage());
+            $scanResult = 'ESET scanner unavailable — passed basic security checks.';
+            Log::warning('ESET scan failed: ' . $e->getMessage());
         }
 
         $document->update([

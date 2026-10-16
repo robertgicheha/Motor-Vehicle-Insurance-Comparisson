@@ -76,7 +76,7 @@
                         <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/30">
                             <td class="px-5 py-2.5 text-gray-400">{{ $loop->iteration }}</td>
                             @if(auth()->user()->hasRole('super-admin') || auth()->user()->hasRole('admin'))
-                                <td class="px-5 py-2.5 font-medium text-gray-800 dark:text-white">{{ $q->customer_name }}</td>
+                                <td class="px-5 py-2.5 font-medium text-gray-800 dark:text-white">{{ $q->user->name ?? 'Guest' }}</td>
                             @endif
                             <td class="px-5 py-2.5 font-medium text-gray-800 dark:text-white">{{ $q->company->name }}</td>
                             <td class="px-5 py-2.5">

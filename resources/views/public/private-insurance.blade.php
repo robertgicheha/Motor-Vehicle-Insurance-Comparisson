@@ -1,7 +1,7 @@
 @inject('settingModel', 'App\Models\Setting')
 @php
-    $__logoPath = $settingModel->getValue('logo_path', 'images/MIC-Global-Risks_logo.png');
-    $__logoUrl = $__logoPath ? (str_starts_with($__logoPath, 'images/') ? asset($__logoPath) : asset('storage/' . $__logoPath)) : asset('images/MIC-Global-Risks_logo.png');
+    $__logoPath = $settingModel->getValue('logo_path', 'images/LOLC-Kenya.webp');
+    $__logoUrl = $__logoPath ? (str_starts_with($__logoPath, 'images/') ? asset($__logoPath) : asset('storage/' . $__logoPath)) : asset('images/LOLC-Kenya.webp');
     $__primaryColor = '#003087';
     $__primaryDark = '#00205B';
 @endphp
@@ -11,7 +11,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="csrf-token" content="{{ csrf_token() }}">
-<title>{{ $selectedCompany->name }} Private Motor Insurance | MIC Global Risks</title>
+<title>{{ $selectedCompany->name }} Private Motor Insurance | LOLC Microfinance Bank</title>
 <meta name="description" content="Get a private motor insurance quote from {{ $selectedCompany->name }}. Comprehensive cover for your personal vehicle.">
 <link rel="icon" type="image/x-icon" href="{{ asset('Favicon.png') }}">
 <link rel="preconnect" href="https://fonts.googleapis.com">

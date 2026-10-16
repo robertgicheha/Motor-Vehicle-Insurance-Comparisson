@@ -22,7 +22,7 @@ class UserDeleted extends Notification
         return [
             'type' => 'user_deleted',
             'title' => 'User deleted',
-            'message' => "{$this->deletedBy->name} deleted user {$this->deletedUser->name} ({$this->deletedUser->email}).",
+            'message' => "{$this->deletedBy->username} deleted user {$this->deletedUser->username}.",
             'icon' => 'trash',
             'color' => '#dc2626',
             'link' => route('admin.users.trash'),

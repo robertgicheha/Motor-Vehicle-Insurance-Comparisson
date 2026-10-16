@@ -70,7 +70,7 @@
                             class="w-full px-3 py-1.5 text-xs rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200 focus:ring-2 focus:ring-blue-500 outline-none">
                         <option value="">All Users</option>
                         @foreach($users as $u)
-                            <option value="{{ $u->id }}">{{ $u->name }}</option>
+                            <option value="{{ $u->id }}">{{ $u->username }}</option>
                         @endforeach
                     </select>
                 </div>
@@ -296,15 +296,16 @@
             return;
         }
         let html = '<table class="w-full text-xs"><thead><tr class="bg-gray-50 dark:bg-gray-700/40">';
-        ['Claim #', 'Filed By', 'Customer', 'Registration', 'Type', 'Status', 'Date'].forEach(h => {
+        ['Claim #', 'Filed By', 'Vehicle', 'Registration', 'Type', 'Status', 'Date'].forEach(h => {
             html += `<th class="px-5 py-2.5 text-left font-semibold text-gray-400 uppercase tracking-wider text-[10px]">${h}</th>`;
         });
         html += '</tr></thead><tbody class="divide-y divide-gray-100 dark:divide-gray-700">';
         claims.forEach(c => {
+            const vehicle = [c.vehicle_details?.make, c.vehicle_details?.model].filter(Boolean).join(' ') || c.registration_number || 'N/A';
             html += `<tr class="hover:bg-gray-50 dark:hover:bg-gray-700/30">
                 <td class="px-5 py-2.5 font-medium text-gray-800 dark:text-white">${c.claim_number}</td>
-                <td class="px-5 py-2.5 text-gray-500 dark:text-gray-400">${c.user?.name || 'N/A'}</td>
-                <td class="px-5 py-2.5 text-gray-500 dark:text-gray-400">${c.on_behalf_of_user?.name || c.customer_name}</td>
+                <td class="px-5 py-2.5 text-gray-500 dark:text-gray-400">${c.user?.username || 'N/A'}</td>
+                <td class="px-5 py-2.5 text-gray-500 dark:text-gray-400">${vehicle}</td>
                 <td class="px-5 py-2.5 text-gray-500 dark:text-gray-400">${c.registration_number}</td>
                 <td class="px-5 py-2.5 text-gray-500 dark:text-gray-400">${c.claim_type || '—'}</td>
                 <td class="px-5 py-2.5"><span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">${c.status}</span></td>

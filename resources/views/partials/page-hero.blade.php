@@ -3,7 +3,7 @@
     // motor-psv.blade.php etc. Distinct from partials/public-hero.blade.php
     // (the blue-gradient quotation hero), which stays untouched since it's
     // still used by layouts/public.blade.php.
-    $heroEyebrow = $heroEyebrow ?? 'MIC Global Risks';
+    $heroEyebrow = $heroEyebrow ?? 'LOLC Microfinance Bank';
     $heroTitle = $heroTitle ?? '';
     $heroSubtitle = $heroSubtitle ?? '';
     $heroImage = $heroImage ?? 'images/hero/vehicle.jpg';

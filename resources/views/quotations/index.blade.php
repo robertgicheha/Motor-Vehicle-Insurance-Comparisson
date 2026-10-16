@@ -28,7 +28,7 @@
     <div class="rounded-2xl bg-micblue px-6 py-7 shadow-sm">
         <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
             <div>
-                <p class="text-[10px] font-semibold uppercase tracking-widest text-blue-400">MIC Global Risks · Insurance Management</p>
+                <p class="text-[10px] font-semibold uppercase tracking-widest text-blue-400">LOLC Microfinance Bank · Insurance Management</p>
                 <h1 class="mt-0.5 text-xl font-bold text-white">Quotation Registry</h1>
                 <p class="mt-0.5 text-xs text-slate-400">{{ auth()->user()->hasRole('super-admin') || auth()->user()->hasRole('admin') ? 'All motor insurance quotations across active underwriters' : 'Your motor insurance quotations across active underwriters' }}</p>
             </div>
@@ -143,7 +143,7 @@
                     @forelse($quotations as $q)
                         <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/30"
                             x-show="rowVisible($el)"
-                            data-search="{{ strtolower($q->quotation_number . ' ' . $q->car_make . ' ' . $q->car_model . ' ' . $q->customer_name . ' ' . ($q->company->name ?? '')) }}"
+                            data-search="{{ strtolower($q->quotation_number . ' ' . $q->car_make . ' ' . $q->car_model . ' ' . $q->car_registration . ' ' . $q->chassis_number . ' ' . $q->engine_number . ' ' . ($q->user->name ?? '') . ' ' . ($q->company->name ?? '')) }}"
                             data-status="{{ strtolower($q->status) }}"
                             data-date="{{ $q->created_at->format('Y-m-d') }}">
                             <td class="px-5 py-2.5">
@@ -153,9 +153,9 @@
                                 <td class="px-5 py-2.5">
                                     <div class="flex items-center gap-2.5">
                                         <div class="w-7 h-7 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white text-[10px] font-bold shrink-0">
-                                            {{ strtoupper(substr($q->customer_name, 0, 2)) }}
+                                            {{ strtoupper(substr($q->user->name ?? 'Guest', 0, 2)) }}
                                         </div>
-                                        <span class="font-medium text-gray-800 dark:text-white">{{ $q->customer_name }}</span>
+                                        <span class="font-medium text-gray-800 dark:text-white">{{ $q->user->name ?? 'Guest' }}</span>
                                         @if(!$q->user_id)
                                             <span class="text-[9px] font-semibold px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">Guest</span>
                                         @endif
@@ -188,7 +188,7 @@
                                         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0zM2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
                                     </a>
                                     @if((auth()->user()->hasRole('super-admin') || auth()->user()->hasRole('admin')) && $q->user_id)
-                                    <button onclick="openApplyFor({{ $q->user_id }}, '{{ addslashes($q->customer_name) }}')"
+                                    <button onclick="openApplyFor({{ $q->user_id }}, '{{ addslashes($q->user->name) }}')"
                                         class="p-1.5 text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/20 rounded-md transition" title="Apply for this user">
                                         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
                                     </button>
@@ -280,7 +280,7 @@
 
             {{-- Step indicators --}}
             <div class="flex gap-2 mb-6">
-                <template x-for="(label, i) in ['Personal Details', 'Vehicle Details', 'Quote Generation']" :key="i">
+                <template x-for="(label, i) in ['Contact Details', 'Vehicle Details', 'Quote Generation']" :key="i">
                     <div @click="quoteStep = i + 1"
                         class="flex-1 px-3 py-2.5 rounded-lg border text-center cursor-pointer transition"
                         :class="{
@@ -304,40 +304,15 @@
                 </template>
             </div>
 
-            {{-- Step 1: Personal Details --}}
+            {{-- Step 1: Contact Details --}}
             <div x-show="quoteStep === 1" class="space-y-4">
                 <div>
-                    <p class="text-xs font-bold text-gray-800 dark:text-white">Personal Details</p>
-                    <p class="text-[10px] text-gray-400 mt-0.5">Please fill in the contact details of the insured party.</p>
+                    <p class="text-xs font-bold text-gray-800 dark:text-white">Contact Details</p>
+                    <p class="text-[10px] text-gray-400 mt-0.5">Your email is used only to send the quotation PDF and is never stored.</p>
                 </div>
-                <div class="grid grid-cols-3 gap-3">
-                    <div>
-                        <label class="block text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Salutation <span class="text-rose-500">*</span></label>
-                        <select x-model="qf.salutation" class="w-full px-3 py-2 text-xs rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none">
-                            <option value="">Select...</option>
-                            <option>Mr.</option><option>Mrs.</option><option>Miss</option><option>Dr.</option><option>Prof.</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">First Name <span class="text-rose-500">*</span></label>
-                        <input x-model="qf.first_name" type="text" placeholder="e.g. John" class="w-full px-3 py-2 text-xs rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none">
-                    </div>
-                    <div>
-                        <label class="block text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Middle Name</label>
-                        <input x-model="qf.middle_name" type="text" placeholder="Optional" class="w-full px-3 py-2 text-xs rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none">
-                    </div>
-                    <div>
-                        <label class="block text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Last Name <span class="text-rose-500">*</span></label>
-                        <input x-model="qf.last_name" type="text" placeholder="e.g. Doe" class="w-full px-3 py-2 text-xs rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none">
-                    </div>
-                    <div>
-                        <label class="block text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Phone Number <span class="text-rose-500">*</span></label>
-                        <input x-model="qf.phone" type="tel" placeholder="07XX XXX XXX" class="w-full px-3 py-2 text-xs rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none">
-                    </div>
-                    <div>
-                        <label class="block text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Email Address <span class="text-rose-500">*</span></label>
-                        <input x-model="qf.email" type="email" placeholder="email@example.com" class="w-full px-3 py-2 text-xs rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none">
-                    </div>
+                <div>
+                    <label class="block text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Email Address</label>
+                    <input x-model="qf.email" type="email" placeholder="email@example.com" class="w-full px-3 py-2 text-xs rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none">
                 </div>
                 <div class="flex justify-end gap-2 pt-2">
                     <button onclick="closeNewQuoteModal()" class="px-4 py-2 text-xs font-medium border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition">← Cancel</button>
@@ -490,7 +465,7 @@
                         class="w-full px-3 py-2 text-xs rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none">
                         <option value="">— Choose a user —</option>
                         @foreach($users ?? [] as $user)
-                            <option value="{{ $user->id }}">{{ $user->name }} ({{ $user->email }})</option>
+                            <option value="{{ $user->id }}">{{ $user->username }}</option>
                         @endforeach
                     </select>
                 </div>
@@ -525,8 +500,7 @@ function quotationsPage() {
         period: '',
         quoteStep: 1,
         qf: {
-            salutation: '', first_name: '', middle_name: '', last_name: '',
-            phone: '', email: '', reg: '', chassis: '', engine: '', make: '', make_other: '',
+            email: '', reg: '', chassis: '', engine: '', make: '', make_other: '',
             model: '', body: '', year: '', color: '', color_other: '', value: ''
         },
         premiums: {},
@@ -599,8 +573,7 @@ function quotationsPage() {
         resetQuoteForm() {
             this.quoteStep = 1;
             this.qf = {
-                salutation: '', first_name: '', middle_name: '', last_name: '',
-                phone: '', email: '', reg: '', chassis: '', make: '', make_other: '',
+                email: '', reg: '', chassis: '', engine: '', make: '', make_other: '',
                 model: '', body: '', year: '', color: '', color_other: '', value: ''
             };
             this.premiums = {};

@@ -47,9 +47,9 @@
                                 </div>
                                 <p class="text-[10px] text-gray-400 mt-0.5">
                                     @if($claim->onBehalfOfUser)
-                                        On behalf of {{ $claim->onBehalfOfUser->name }}
+                                        On behalf of {{ $claim->onBehalfOfUser->username }} &middot; {{ $claim->vehicle_description }}
                                     @else
-                                        {{ $claim->customer_name ?? $claim->user->name }}
+                                        {{ $claim->vehicle_description }}
                                     @endif
                                     &middot; {{ $claim->incident_date ? \Carbon\Carbon::parse($claim->incident_date)->format('d M Y') : 'No date' }}
                                 </p>

@@ -94,7 +94,8 @@ class StickerAdminController extends Controller
             $query->where(function ($q) use ($search) {
                 $q->where('sticker_number', 'like', "%{$search}%")
                   ->orWhere('underwriter_sticker_no', 'like', "%{$search}%")
-                  ->orWhere('customer_name', 'like', "%{$search}%")
+                  ->orWhereLikeCI('chassis_number', $search)
+                  ->orWhereLikeCI('engine_number', $search)
                   ->orWhereLikeCI('vehicle_registration', $search);
             });
         }
@@ -130,9 +131,9 @@ class StickerAdminController extends Controller
     /**
      * Searches stickers by whatever the underwriter's email thread will
      * actually reference — quotation number, registration, chassis/engine
-     * number, or owner name — never by our internal Sticker ID (that number
-     * never leaves this system). Returns every match so the reviewer can
-     * pick the right one before recording the underwriter's real sticker
+     * number, or sticker number — never by our internal Sticker ID (that
+     * number never leaves this system). Returns every match so the reviewer
+     * can pick the right one before recording the underwriter's real sticker
      * number. Mirrors StickerController::mySearchSticker(), unscoped to any
      * one issuer.
      */
@@ -148,7 +149,8 @@ class StickerAdminController extends Controller
                 $q->whereLikeCI('vehicle_registration', $search)
                   ->orWhereLikeCI('chassis_number', $search)
                   ->orWhereLikeCI('engine_number', $search)
-                  ->orWhereLikeCI('customer_name', $search)
+                  ->orWhereLikeCI('sticker_number', $search)
+                  ->orWhereLikeCI('underwriter_sticker_no', $search)
                   ->orWhereHas('quotation', function ($q) use ($search) {
                       $q->whereLikeCI('quotation_number', $search);
                   });
@@ -158,7 +160,7 @@ class StickerAdminController extends Controller
             ->get();
 
         if ($stickers->isEmpty()) {
-            return response()->json(['success' => false, 'error' => 'No sticker found. Search by quotation number, registration, chassis number, engine number, or owner name.']);
+            return response()->json(['success' => false, 'error' => 'No sticker found. Search by quotation number, registration, chassis number, engine number, or sticker number.']);
         }
 
         return response()->json([
@@ -168,7 +170,6 @@ class StickerAdminController extends Controller
                 'sticker_number' => $sticker->sticker_number,
                 'underwriter_sticker_no' => $sticker->underwriter_sticker_no,
                 'quotation_number' => $sticker->quotation?->quotation_number,
-                'customer_name' => $sticker->customer_name,
                 'vehicle_registration' => $sticker->vehicle_registration,
                 'chassis_number' => $sticker->chassis_number,
                 'engine_number' => $sticker->engine_number,

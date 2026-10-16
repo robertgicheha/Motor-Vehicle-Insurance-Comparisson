@@ -1,6 +1,6 @@
 @php
     $__companyStats = $companyStats ?? collect();
-    $companyColors = ['#003087', '#0066B3', '#00205B', '#D0021B', '#7c3aed', '#0f7a65'];
+    $companyColors = ['#003087', '#0066B3', '#00205B', '#ED1D25', '#7c3aed', '#0f7a65'];
 
     $__buildCompanyData = function($companies, $vehicleType) use ($companyColors, $__companyStats) {
         return $companies->filter(fn($c) => in_array($c->company_type, ['both', $vehicleType]))
@@ -43,7 +43,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Get a Motor Insurance Quote | MIC Global Risks</title>
+<title>Get a Motor Insurance Quote | LOLC Microfinance Bank</title>
 <meta name="description" content="Get a comprehensive motor vehicle insurance quote from Kenya's leading insurers. Compare private and PSV rates instantly.">
 <link rel="icon" type="image/x-icon" href="{{ asset('Favicon.png') }}">
 <link rel="preconnect" href="https://fonts.googleapis.com">

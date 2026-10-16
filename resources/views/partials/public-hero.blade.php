@@ -13,7 +13,7 @@
     $heroSubtitle = $heroSubtitle ?? "Your personalised premium breakdown from Kenya's leading motor insurers. Review, compare and download your quotation below.";
     $heroShowRef = $heroShowRef ?? true;
 @endphp
-<section class="bg-gradient-to-r from-[#004f8c] via-[#0066B3] to-[#0091d5] px-10 py-[52px] text-white relative overflow-hidden">
+<section class="bg-gradient-to-r from-[#263B8B] via-[#0066B3] to-[#0091d5] px-10 py-[52px] text-white relative overflow-hidden">
   <div class="relative z-10 max-w-[1100px] mx-auto">
     <div class="flex items-center gap-2 text-[12px] text-white/65 mb-[18px]">
       @foreach($heroBreadcrumb as $i => $crumb)

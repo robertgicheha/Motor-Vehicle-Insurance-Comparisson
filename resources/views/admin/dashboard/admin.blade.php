@@ -1028,7 +1028,7 @@
 
 @push('scripts')
 @php
-    $_companyColors = ['#003087', '#0066B3', '#00205B', '#D0021B'];
+    $_companyColors = ['#003087', '#0066B3', '#00205B', '#ED1D25'];
     $_idx = 0;
     $_companyData = $companies->map(function($c) use ($_companyColors, &$_idx) {
         $rate = $c->rates->firstWhere('item_name', 'Premium Rate');

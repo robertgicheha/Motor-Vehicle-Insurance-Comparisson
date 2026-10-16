@@ -17,13 +17,13 @@
             color: #1a1a2e;
         }
         .certificate-wrapper {
-            border: 3px solid #004f8c;
+            border: 3px solid #263B8B;
             border-radius: 12px;
             overflow: hidden;
             page-break-inside: avoid;
         }
         .certificate-header {
-            background: linear-gradient(135deg, #004f8c, #0066B3);
+            background: linear-gradient(135deg, #263B8B, #0066B3);
             color: white;
             padding: 14px 20px;
             display: flex;
@@ -58,7 +58,7 @@
             font-size: 22px;
             font-weight: 900;
             font-family: 'Courier New', monospace;
-            color: #004f8c;
+            color: #263B8B;
             letter-spacing: 2px;
         }
         .sticker-number-display .label {
@@ -71,7 +71,7 @@
             text-align: center;
             font-size: 20px;
             font-weight: 800;
-            color: #004f8c;
+            color: #263B8B;
             margin-bottom: 12px;
         }
         .info-grid {
@@ -201,7 +201,7 @@
             <div class="terms">
                 <strong>{{ $sticker->company->name }}</strong> &mdash; Policy subject to standard terms and conditions.<br>
                 Generated: {{ $sticker->generated_at?->format('d M Y h:i A') ?? $sticker->created_at->format('d M Y h:i A') }}<br>
-                Sticker ID #{{ $sticker->sticker_number }} &mdash; MIC Global Risks Insurance (Kenya) Limited
+                Sticker ID #{{ $sticker->sticker_number }} &mdash; LOLC Microfinance Bank
             </div>
         </div>
     </div>

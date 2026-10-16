@@ -5,7 +5,7 @@
     <style>
         body { font-family: 'Segoe UI', Arial, sans-serif; margin: 0; padding: 0; background: #f4f7f9; }
         .wrapper { max-width: 600px; margin: 0 auto; background: #ffffff; border-radius: 8px; overflow: hidden; }
-        .header { background: linear-gradient(135deg, #004f8c, #0066B3); padding: 28px 32px; text-align: center; }
+        .header { background: linear-gradient(135deg, #263B8B, #0066B3); padding: 28px 32px; text-align: center; }
         .header h1 { color: #ffffff; margin: 0; font-size: 22px; font-weight: 700; }
         .header p { color: rgba(255,255,255,0.85); margin: 6px 0 0; font-size: 13px; }
         .body-content { padding: 28px 32px; }
@@ -31,14 +31,14 @@
             @if($__logoPath && file_exists($__logoPath))
                 <img src="{{ $message->embed($__logoPath) }}" alt="{{ $__company->name }}" style="max-height:50px;max-width:160px;margin-bottom:8px;">
             @else
-                <img src="{{ $message->embed(public_path('images/MIC-Global-Risks_logo_no_background.png')) }}" alt="MIC Global Risks" style="max-height:50px;max-width:160px;margin-bottom:8px;filter:brightness(0) invert(1)">
+                <img src="{{ $message->embed(public_path('images/LOLC-Kenya.webp')) }}" alt="LOLC Microfinance Bank" style="max-height:50px;max-width:160px;margin-bottom:8px;filter:brightness(0) invert(1)">
             @endif
             <h1>Insurance Quotation Generated</h1>
             <p>{{ $quotation->quotation_number }}</p>
         </div>
 
         <div class="body-content">
-            <h2>Dear {{ trim(($quotation->customer_first_name ?? '') . ' ' . ($quotation->customer_last_name ?? '')) ?: $quotation->customer_name }},</h2>
+            <h2>Dear Customer,</h2>
 
             <p>A quotation with the quotation no <strong>{{ $quotation->quotation_number }}</strong> has been generated successfully.</p>
 
@@ -84,7 +84,7 @@
         </div>
 
         <div class="footer">
-            <p><strong>MIC Global Risks Insurance (Kenya) Limited</strong></p>
+            <p><strong>LOLC Microfinance Bank</strong></p>
             <p>www.micglobalrisks.com | This is a computer-generated quotation.</p>
         </div>
     </div>

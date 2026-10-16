@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>@yield('title', 'Motor Insurance Quotation') | MIC Global Risks</title>
-    <meta name="description" content="@yield('description', 'Compare motor vehicle insurance quotes from Kenya\'s leading insurers with MIC Global Risks.')">
+    <title>@yield('title', 'Motor Insurance Quotation') | LOLC Microfinance Bank</title>
+    <meta name="description" content="@yield('description', 'Compare motor vehicle insurance quotes from Kenya\'s leading insurers with LOLC Microfinance Bank.')">
     <link rel="icon" type="image/x-icon" href="{{ asset('Favicon.png') }}">
     <link rel="icon" type="image/png" sizes="32x32" href="{{ asset('Favicon.png') }}">
     <link rel="stylesheet" href="{{ asset('css/home.css') }}">

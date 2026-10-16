@@ -23,7 +23,7 @@
         <svg class="w-5 h-5 text-amber-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
         <div class="text-xs">
             <span class="font-semibold text-amber-700 dark:text-amber-400">Creating quotation on behalf of:</span>
-            <span class="text-amber-600 dark:text-amber-300 ml-1">{{ $targetUser->name }} ({{ $targetUser->email }})</span>
+            <span class="text-amber-600 dark:text-amber-300 ml-1">{{ $targetUser->username }}</span>
         </div>
     </div>
     @endif
@@ -32,8 +32,8 @@
         <div x-show="isNewCustomer" x-cloak class="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700 rounded-2xl px-5 py-3 flex items-center gap-3">
             <svg class="w-5 h-5 text-amber-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
             <div class="text-xs">
-                <span class="font-semibold text-amber-700 dark:text-amber-400">Creating quotation for a new customer</span>
-                <span class="text-amber-600 dark:text-amber-300 ml-1">— no account will be created, the details below are saved directly on the quotation.</span>
+                <span class="font-semibold text-amber-700 dark:text-amber-400">Creating quotation without a user account</span>
+                <span class="text-amber-600 dark:text-amber-300 ml-1">— it will not be linked to a user, and no personal details are stored.</span>
             </div>
         </div>
     </div>
@@ -63,27 +63,19 @@
 
         <template x-if="!loading && data">
             <div>
-                {{-- Personal Details Card --}}
+                {{-- Quotation Details Card --}}
                 <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
                     <div class="px-5 py-4 border-b border-gray-100 dark:border-gray-700">
-                        <h2 class="text-xs font-semibold text-gray-800 dark:text-white">Personal Details</h2>
+                        <h2 class="text-xs font-semibold text-gray-800 dark:text-white">Quotation Details</h2>
                     </div>
                     <div class="grid grid-cols-2 md:grid-cols-4 gap-4 p-5 text-xs">
                         <div>
-                            <span class="block text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Name</span>
-                            <span class="block font-medium text-gray-800 dark:text-white mt-1" x-text="personalName"></span>
-                        </div>
-                        <div>
-                            <span class="block text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Email</span>
-                            <span class="block font-medium text-gray-800 dark:text-white mt-1" x-text="data.email"></span>
-                        </div>
-                        <div>
-                            <span class="block text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Phone</span>
-                            <span class="block font-medium text-gray-800 dark:text-white mt-1" x-text="data.phone"></span>
-                        </div>
-                        <div>
                             <span class="block text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Insurer</span>
                             <span class="block font-medium text-gray-800 dark:text-white mt-1" x-text="selectedCompanyName"></span>
+                        </div>
+                        <div>
+                            <span class="block text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Email (not stored)</span>
+                            <span class="block font-medium text-gray-800 dark:text-white mt-1" x-text="data.email || '—'"></span>
                         </div>
                     </div>
                 </div>
@@ -185,11 +177,6 @@
                     <input type="hidden" name="num_passengers" :value="data.numPassengers || data.num_passengers || 1">
                     <input type="hidden" name="on_behalf_of" :value="onBehalfOf">
                     <input type="hidden" name="is_new_customer" :value="data.is_new_customer ? 1 : 0">
-                    <input type="hidden" name="salutation" :value="data.salutation">
-                    <input type="hidden" name="first_name" :value="data.first || data.first_name">
-                    <input type="hidden" name="middle_name" :value="data.middle || data.middle_name">
-                    <input type="hidden" name="last_name" :value="data.last || data.last_name">
-                    <input type="hidden" name="phone" :value="data.phone">
                     <input type="hidden" name="email" :value="data.email">
                     <input type="hidden" name="company_id" :value="selectedCompany.id">
                     <input type="hidden" name="premium" :value="basePremium">
@@ -280,13 +267,6 @@ function previewApp() {
         },
         get selectedCompanyName() {
             return this.selectedCompany.name || this.data?.insurer || '—';
-        },
-        get personalName() {
-            if (!this.data) return '—';
-            var first = this.data.first || this.data.first_name || this.data.firstName || '';
-            var middle = this.data.middle || this.data.middle_name || '';
-            var last = this.data.last || this.data.last_name || this.data.lastName || '';
-            return [this.data.salutation, first, middle, last].filter(Boolean).join(' ');
         },
         get premiumRateDisplay() {
             return this.serverBreakdown ? this.serverBreakdown.premium_rate.toFixed(1) : (this.selectedCompany.rate * 100).toFixed(1);

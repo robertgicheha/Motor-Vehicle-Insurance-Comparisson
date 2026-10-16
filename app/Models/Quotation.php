@@ -10,7 +10,7 @@ class Quotation extends Model
     use SoftDeletes;
 
     protected $fillable = [
-        'user_id', 'salutation', 'first_name', 'middle_name', 'last_name', 'phone', 'email',
+        'user_id',
         'company_id', 'quotation_number', 'car_make', 'car_model',
         'car_year', 'car_registration', 'chassis_number', 'engine_number', 'body_type', 'color',
         'car_valuation', 'vehicle_type', 'num_passengers', 'premium', 'pvt_premium',
@@ -51,44 +51,50 @@ class Quotation extends Model
     }
 
     /**
-     * Customer display name — prefers the quotation's own snapshot (covers
-     * guest quotations with no user_id, and "on behalf of" typed-in names
-     * that may differ from the linked user's current profile), falling
-     * back to the linked user for older rows saved before the snapshot
-     * columns existed.
+     * A short, non-personal description of the insured vehicle. Owner
+     * personal data is never stored, so the vehicle is the record's
+     * human-readable identity everywhere a "customer" used to be shown.
      */
+    public function getVehicleDescriptionAttribute(): string
+    {
+        $description = trim(collect([$this->car_make, $this->car_model])->filter()->implode(' '));
+        $registration = $this->car_registration;
+
+        if ($description !== '' && $registration) {
+            return $description . ' (' . $registration . ')';
+        }
+
+        return $description !== '' ? $description : ($registration ?: 'Vehicle');
+    }
+
     public function getCustomerNameAttribute(): string
     {
-        $snapshot = collect([$this->salutation, $this->first_name, $this->middle_name, $this->last_name])
-            ->filter()
-            ->implode(' ');
-
-        return $snapshot ?: ($this->user?->name ?? 'Valued Customer');
+        return $this->vehicle_description;
     }
 
     public function getCustomerSalutationAttribute(): ?string
     {
-        return $this->salutation;
+        return null;
     }
 
     public function getCustomerFirstNameAttribute(): ?string
     {
-        return $this->first_name ?: $this->user?->first_name;
+        return null;
     }
 
     public function getCustomerLastNameAttribute(): ?string
     {
-        return $this->last_name ?: $this->user?->last_name;
+        return null;
     }
 
     public function getCustomerEmailAttribute(): ?string
     {
-        return $this->email ?: $this->user?->email;
+        return null;
     }
 
     public function getCustomerPhoneAttribute(): ?string
     {
-        return $this->phone ?: $this->user?->mobile;
+        return null;
     }
 
     public static function generateNumber(?Company $company = null): string

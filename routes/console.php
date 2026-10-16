@@ -35,3 +35,7 @@ Artisan::command('send-mail {to=robertgicheha3@gmail.com}', function (string $to
 // Uptime monitoring — requires the server's cron to call `schedule:run` every minute
 // (standard Laravel setup: * * * * * php artisan schedule:run).
 Schedule::command('health:check')->everyFifteenMinutes();
+
+// Log retention: activity logs and audit-trail entries are kept for one month
+// and then permanently deleted from the database. Runs daily at 02:30.
+Schedule::command('logs:prune --days=30')->dailyAt('02:30');

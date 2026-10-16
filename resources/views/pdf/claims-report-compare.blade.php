@@ -14,20 +14,20 @@
         table td { padding: 5px 8px; border: 1px solid #dde3ed; }
         .kpi { background: #f0f7ff; border: 1px solid #dbeafe; border-radius: 6px; padding: 8px 12px; }
         .kpi-label { font-size: 8px; color: #64748b; text-transform: uppercase; letter-spacing: .05em; }
-        .kpi-value { font-size: 14px; font-weight: 800; color: #004f8c; }
+        .kpi-value { font-size: 14px; font-weight: 800; color: #263B8B; }
         .page-break { page-break-before: always; }
-        .compare-badge { display: inline-block; background: #004f8c; color: #fff; padding: 4px 10px; border-radius: 4px; font-size: 10px; font-weight: 700; }
+        .compare-badge { display: inline-block; background: #263B8B; color: #fff; padding: 4px 10px; border-radius: 4px; font-size: 10px; font-weight: 700; }
         .pdf-footer-text { padding: 14px 28px; background: #f8f9fb; border-top: 1px solid #dde3ed; font-size: 9px; color: #6b7280; }
     </style>
 </head>
 <body>
     <div class="pdf-body">
-        @php $__micLogoPath = public_path('images/MIC-Global-Risks_logo_no_background.png'); @endphp
+        @php $__micLogoPath = public_path('images/LOLC-Kenya.webp'); @endphp
         @if(file_exists($__micLogoPath))
             <div style="text-align:center;padding-bottom:8px"><img src="{{ $__micLogoPath }}" style="max-height:34px"></div>
         @endif
         <h2 style="text-align:center">CLAIMS REPORT COMPARISON</h2>
-        <p class="pdf-date" style="text-align:center">Generated {{ now()->format('d F Y, h:i A') }} by {{ auth()->user()->name }} &middot; {{ count($sections) }} report(s) compared</p>
+        <p class="pdf-date" style="text-align:center">Generated {{ now()->format('d F Y, h:i A') }} by {{ auth()->user()->username }} &middot; {{ count($sections) }} report(s) compared</p>
 
         {{-- Side-by-side summary across all sections first --}}
         <div class="section-title">SIDE-BY-SIDE SUMMARY</div>
@@ -82,12 +82,12 @@
 
             <div class="section-title">DETAILED RECORDS &mdash; {{ $s['claims']->count() }}</div>
             <table>
-                <thead><tr><th>Claim #</th><th>Customer</th><th>Registration</th><th>Type</th><th>Status</th><th style="text-align:right">Settlement</th><th>Date</th></tr></thead>
+                <thead><tr><th>Claim #</th><th>Vehicle</th><th>Registration</th><th>Type</th><th>Status</th><th style="text-align:right">Settlement</th><th>Date</th></tr></thead>
                 <tbody>
                     @forelse($s['claims'] as $c)
                         <tr>
                             <td>{{ $c->claim_number }}</td>
-                            <td>{{ $c->onBehalfOfUser?->name ?? $c->customer_name }}</td>
+                            <td>{{ $c->vehicle_description }}</td>
                             <td>{{ $c->registration_number }}</td>
                             <td>{{ App\Models\Claim::claimTypes()[$c->claim_type] ?? $c->claim_type }}</td>
                             <td>{{ ucfirst($c->status) }}</td>
@@ -103,7 +103,7 @@
     @endforeach
 
     <div class="pdf-footer-text">
-        MIC Global Risks Insurance (Kenya) Limited &middot; www.micglobalrisks.com &middot; This is a computer-generated report.
+        LOLC Microfinance Bank &middot; www.micglobalrisks.com &middot; This is a computer-generated report.
     </div>
 </body>
 </html>

@@ -4,9 +4,9 @@
     <div class="rounded-2xl bg-micblue px-6 py-7 shadow-sm">
         <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
             <div>
-                <p class="text-[10px] font-semibold uppercase tracking-widest text-blue-400">System Logs</p>
-                <h1 class="mt-0.5 text-xl font-bold text-white">Audit Trail</h1>
-                <p class="mt-0.5 text-xs text-slate-400">View system audit and activity logs</p>
+                <p class="text-[10px] font-semibold uppercase tracking-widest text-blue-400">{{ request()->routeIs('admin.audit.activity') ? 'System Logs' : 'Audit Trail' }}</p>
+                <h1 class="mt-0.5 text-xl font-bold text-white">{{ request()->routeIs('admin.audit.activity') ? 'Activity Logs' : 'Audit Trail' }}</h1>
+                <p class="mt-0.5 text-xs text-slate-400">{{ request()->routeIs('admin.audit.activity') ? 'Human-readable record of what each user did, when, and from where' : 'Structured record of data changes with before / after values' }}</p>
             </div>
             <div class="flex items-center gap-2 shrink-0">
                 <button type="button" id="refreshAudit"
@@ -81,8 +81,8 @@
     <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
         <div class="px-5 py-4 border-b border-gray-100 dark:border-gray-700 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             <div>
-                <h2 class="text-xs font-semibold text-gray-800 dark:text-white">Activity Log</h2>
-                <p class="text-[10px] text-gray-400 mt-0.5">Filtered system logs</p>
+                <h2 class="text-xs font-semibold text-gray-800 dark:text-white">{{ request()->routeIs('admin.audit.activity') ? 'Activity Log' : 'Audit Trail' }}</h2>
+                <p class="text-[10px] text-gray-400 mt-0.5">{{ request()->routeIs('admin.audit.activity') ? 'Who did what, when, and from which IP' : 'Data-change history' }}</p>
             </div>
             <form method="GET" class="flex flex-wrap items-center gap-2">
                 @if(request()->routeIs('admin.audit.activity'))
@@ -124,7 +124,7 @@
                 <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
                     @forelse($logs as $log)
                         <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/30 cursor-pointer" @click="selected = {{ Illuminate\Support\Js::from($log) }}; open = true">
-                            <td class="px-5 py-2.5 font-medium text-gray-800 dark:text-white">{{ $log->user?->name ?? 'System' }}</td>
+                            <td class="px-5 py-2.5 font-medium text-gray-800 dark:text-white">{{ $log->user_name ?? $log->user?->name ?? 'System' }}</td>
                             <td class="px-5 py-2.5">
                                 <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium
                                     @if(isset($log->level) && $log->level === 'error') bg-red-50 text-red-700 dark:bg-red-900/30 dark:text-red-400
@@ -166,7 +166,7 @@
             <div class="p-5 space-y-3 text-xs" x-show="selected">
                 <div class="flex justify-between gap-3">
                     <span class="text-gray-400 shrink-0">User</span>
-                    <span class="font-semibold text-gray-800 dark:text-white text-right" x-text="selected?.user?.name ?? 'System'"></span>
+                    <span class="font-semibold text-gray-800 dark:text-white text-right" x-text="selected?.user_name ?? selected?.user?.name ?? 'System'"></span>
                 </div>
                 <div class="flex justify-between gap-3">
                     <span class="text-gray-400 shrink-0">Date</span>

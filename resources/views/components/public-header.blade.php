@@ -1,11 +1,11 @@
 @inject('settingModel', 'App\Models\Setting')
 @php
-    $__logoPath = $settingModel->getValue('logo_path', 'images/MIC-Global-Risks_logo.png');
-    $__logoUrl = $__logoPath ? (str_starts_with($__logoPath, 'images/') ? asset($__logoPath) : asset('storage/' . $__logoPath)) : asset('images/MIC-Global-Risks_logo.png');
+    $__logoPath = $settingModel->getValue('logo_path', 'images/LOLC-Kenya.webp');
+    $__logoUrl = $__logoPath ? (str_starts_with($__logoPath, 'images/') ? asset($__logoPath) : asset('storage/' . $__logoPath)) : asset('images/LOLC-Kenya.webp');
 @endphp
 
 <nav class="bg-white border-b border-gray-200 sticky top-0 z-200 shadow-sm">
-  <div class="bg-[#004f8c] flex flex-wrap gap-x-5 gap-y-1 justify-end px-4 sm:px-10 py-1.5 text-[11px]">
+  <div class="bg-[#263B8B] flex flex-wrap gap-x-5 gap-y-1 justify-end px-4 sm:px-10 py-1.5 text-[11px]">
     <a href="#" class="text-white/75 hover:text-white no-underline py-1 inline-block">About Us</a>
     <a href="#" class="text-white/75 hover:text-white no-underline py-1 inline-block">Contact Us</a>
     <a href="#" class="text-white/75 hover:text-white no-underline py-1 inline-block">Affiliates</a>
@@ -13,7 +13,7 @@
   </div>
   <div class="flex items-center justify-between px-4 sm:px-10 py-3.5">
     <a href="{{ url('/') }}">
-        <img src="{{ $__logoUrl }}" alt="MIC Global Risks" class="h-[42px] object-contain">
+        <img src="{{ $__logoUrl }}" alt="LOLC Microfinance Bank" class="h-[42px] object-contain">
     </a>
 
     {{-- Desktop nav --}}
@@ -24,14 +24,13 @@
       <a href="{{ url('/motor-psv') }}" class="text-[13.5px] font-semibold text-[#1a1a2e] no-underline hover:text-[#0066B3]">Motor Vehicle PSV</a>
       <a href="{{ route('stickers.lookup') }}" class="text-[13.5px] font-semibold text-[#1a1a2e] no-underline hover:text-[#0066B3]">Get a Sticker</a>
       @auth
-        <a href="{{ route('dashboard') }}" class="bg-[#0066B3] text-white text-[13.5px] font-semibold px-5 py-2 rounded-md no-underline hover:bg-[#004f8c]">Dashboard</a>
+        <a href="{{ route('dashboard') }}" class="bg-[#0066B3] text-white text-[13.5px] font-semibold px-5 py-2 rounded-md no-underline hover:bg-[#263B8B]">Dashboard</a>
         <form method="POST" action="{{ route('logout') }}" class="inline">
             @csrf
-            <button type="submit" class="bg-[#D0021B] text-white text-[13.5px] font-semibold px-5 py-2 rounded-md no-underline hover:bg-[#a00015] cursor-pointer">Logout</button>
+            <button type="submit" class="bg-[#ED1D25] text-white text-[13.5px] font-semibold px-5 py-2 rounded-md no-underline hover:bg-[#B6161C] cursor-pointer">Logout</button>
         </form>
       @else
-        <a href="{{ route('login') }}" class="bg-[#0066B3] text-white text-[13.5px] font-semibold px-5 py-2 rounded-md no-underline hover:bg-[#004f8c]">Login</a>
-        <a href="{{ route('register') }}" class="bg-[#004f8c] text-white text-[13.5px] font-semibold px-5 py-2 rounded-md no-underline hover:bg-[#003a6b]">Sign Up</a>
+        <a href="{{ route('login') }}" class="bg-[#0066B3] text-white text-[13.5px] font-semibold px-5 py-2 rounded-md no-underline hover:bg-[#263B8B]">Login</a>
       @endauth
     </div>
 
@@ -52,11 +51,10 @@
       <a href="{{ route('dashboard') }}" class="block text-center bg-[#0066B3] text-white text-[14px] font-semibold px-5 py-2.5 rounded-md no-underline mt-2">Dashboard</a>
       <form method="POST" action="{{ route('logout') }}">
           @csrf
-          <button type="submit" class="w-full bg-[#D0021B] text-white text-[14px] font-semibold px-5 py-2.5 rounded-md no-underline cursor-pointer mt-2">Logout</button>
+          <button type="submit" class="w-full bg-[#ED1D25] text-white text-[14px] font-semibold px-5 py-2.5 rounded-md no-underline cursor-pointer mt-2">Logout</button>
       </form>
     @else
       <a href="{{ route('login') }}" class="block text-center bg-[#0066B3] text-white text-[14px] font-semibold px-5 py-2.5 rounded-md no-underline mt-2">Login</a>
-      <a href="{{ route('register') }}" class="block text-center bg-[#004f8c] text-white text-[14px] font-semibold px-5 py-2.5 rounded-md no-underline mt-2">Sign Up</a>
     @endauth
   </div>
 </nav>

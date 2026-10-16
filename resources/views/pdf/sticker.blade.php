@@ -27,7 +27,7 @@
             font-size: 11px; color: #6b7280; line-height: 1.8;
         }
         .section-title { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: #0066B3; margin: 24px 0 10px; padding-bottom: 8px; border-bottom: 1.5px solid #e8f2fa; }
-        .total-row { background: #004f8c; color: white; font-weight: bold; }
+        .total-row { background: #263B8B; color: white; font-weight: bold; }
         .total-row td { padding: 10px 12px; font-size: 14px; }
         .badge { display: inline-block; padding: 3px 10px; border-radius: 4px; font-size: 10px; font-weight: bold; background: #dcfce7; color: #166534; }
     </style>
@@ -170,7 +170,7 @@
     {{-- FOOTER --}}
     <div class="pdf-footer-text">
         KENYA | UGANDA | TANZANIA<br>
-        Sticker ID {{ $sticker->sticker_number }} &mdash; MIC Global Risks Insurance (Kenya) Limited | This is a computer-generated document.
+        Sticker ID {{ $sticker->sticker_number }} &mdash; LOLC Microfinance Bank | This is a computer-generated document.
     </div>
 </body>
 </html>

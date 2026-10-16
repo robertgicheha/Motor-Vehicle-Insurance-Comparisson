@@ -8,6 +8,7 @@ use App\Models\Company;
 use App\Models\Quotation;
 use App\Models\User;
 use App\Notifications\ClaimStatusChanged;
+use App\Services\EsetScanService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -62,14 +63,12 @@ class ClaimsController extends Controller
 
         $users = User::whereDoesntHave('roles', function ($q) {
             $q->whereIn('name', ['super-admin', 'admin']);
-        })->orderBy('name')->get(['id', 'name', 'email', 'first_name', 'last_name', 'mobile']);
+        })->orderBy('username')->get(['id', 'username']);
 
-        $admins = User::role(['super-admin', 'admin'])->orderBy('name')->get(['id', 'name', 'email', 'first_name', 'last_name', 'mobile']);
+        $admins = User::role(['super-admin', 'admin'])->orderBy('username')->get(['id', 'username']);
 
         $self = [
-            'name' => trim($user->first_name . ' ' . $user->last_name) ?: $user->name,
-            'email' => $user->email,
-            'phone' => $user->mobile ?? '',
+            'username' => $user->username,
         ];
 
         $companies = Company::active()->get(['id', 'name', 'slug', 'logo']);
@@ -127,12 +126,13 @@ class ClaimsController extends Controller
         $user = auth()->user();
         $isAdmin = $user->hasRole('super-admin') || $user->hasRole('admin');
 
-        // Customer identity is resolved server-side from the matched
-        // quotation, never trusted from the client — a regular user could
-        // otherwise submit an arbitrary name/email as the "claimant". An
-        // admin filing on a customer's behalf is what on_behalf_of_user_id
-        // is for; a plain user only ever matches their own quotations (see
-        // the same scoping in lookupVehicle()/suggestVehicles() below).
+        // Vehicle identity is resolved server-side from the matched
+        // quotation, never trusted from the client. An admin filing on a
+        // customer's behalf is what on_behalf_of_user_id is for; a plain
+        // user only ever matches their own quotations (see the same
+        // scoping in lookupVehicle()/suggestVehicles() below). No personal
+        // customer data is copied onto the claim — the vehicle is its only
+        // human-readable identity.
         $registration = strtoupper(trim($request->registration_number));
         $quotation = Quotation::with('user')
             ->whereRaw('UPPER(car_registration) = ?', [$registration])
@@ -141,33 +141,14 @@ class ClaimsController extends Controller
             ->first();
 
         $onBehalfOfUserId = null;
-        if ($quotation) {
-            // Always the quotation's own captured customer fields — not the
-            // account it's stored under. An admin/superadmin can generate a
-            // quotation on a customer's behalf, in which case
-            // $quotation->user is the staff member, not the claimant; the
-            // real customer's salutation/name/email live on the quotation
-            // itself (customer_first_name / customer_last_name / etc.).
-            $customerName = $quotation->customer_name;
-            $customerEmail = $quotation->customer_email;
-            $customerPhone = $quotation->customer_phone;
-            if ($quotation->user && $quotation->user->id !== $user->id) {
-                $onBehalfOfUserId = $quotation->user->id;
-            }
-        } else {
-            // No matching quotation — the person filing is the claimant.
-            $customerName = trim($user->first_name . ' ' . $user->last_name) ?: $user->name;
-            $customerEmail = $user->email;
-            $customerPhone = $user->mobile ?? '';
+        if ($quotation && $quotation->user && $quotation->user->id !== $user->id) {
+            $onBehalfOfUserId = $quotation->user->id;
         }
 
         $claim = Claim::create([
             'claim_number' => Claim::generateNumber(),
             'user_id' => $user->id,
             'on_behalf_of_user_id' => $onBehalfOfUserId,
-            'customer_name' => $customerName,
-            'customer_email' => $customerEmail,
-            'customer_phone' => $customerPhone,
             'registration_number' => $request->registration_number,
             'vehicle_details' => [
                 'make' => $request->vehicle_make,
@@ -223,9 +204,6 @@ class ClaimsController extends Controller
             try {
                 $claimEmailData = [
                     'claim_number' => $claim->claim_number,
-                    'customer_name' => $claim->customer_name,
-                    'customer_email' => $claim->customer_email,
-                    'customer_phone' => $claim->customer_phone,
                     'registration_number' => $claim->registration_number,
                     'vehicle_details' => $claim->vehicle_details,
                     'incident_date' => $claim->incident_date,
@@ -258,9 +236,6 @@ class ClaimsController extends Controller
             \App\Models\ClaimEmailLog::create([
                 'claim_id' => $claim->id,
                 'type' => 'outbound_to_underwriter',
-                'recipient' => $toAddress,
-                'cc' => $ccAddress,
-                'sender' => $fromAddress,
                 'subject' => 'New Claim Logged - ' . $claim->claim_number,
                 'status' => $emailStatus,
                 'error_message' => $emailError,
@@ -300,9 +275,6 @@ class ClaimsController extends Controller
         return response()->json([
             'found' => true,
             'registration_number' => $quotation->car_registration,
-            'customer_name' => $quotation->customer_name,
-            'customer_email' => $quotation->customer_email ?? '',
-            'customer_phone' => $quotation->customer_phone ?? '',
             'vehicle' => [
                 'make' => $quotation->car_make,
                 'model' => $quotation->car_model,
@@ -386,6 +358,19 @@ class ClaimsController extends Controller
             ], 422);
         }
 
+        // ESET Server Security (odscan) scans the file while it's still in
+        // transit (PHP's temp path). An infected file is rejected here and
+        // never stored or attached to the underwriter email.
+        $scan = (new EsetScanService())->scan($file->getRealPath());
+        if ($scan['status'] === EsetScanService::STATUS_INFECTED) {
+            \App\Services\AuditService::activity('claim_document_rejected', "Claim document rejected by ESET: {$scan['result']}", 'warning');
+            return response()->json([
+                'error' => 'Security threat detected! The uploaded file is unsafe. Please upload a clean file.',
+            ], 422);
+        }
+        $scanStatus = 'clean';
+        $scanResult = $scan['result'];
+
         $filename = time() . '_' . uniqid() . '_' . preg_replace('/[^A-Za-z0-9_\-\.]/', '', $file->getClientOriginalName());
         $path = $file->storeAs('claim-documents', $filename, 'public');
 
@@ -403,6 +388,8 @@ class ClaimsController extends Controller
                 'path' => $path,
                 'mime_type' => $file->getClientMimeType(),
                 'file_size' => $file->getSize(),
+                'scan_status' => $scanStatus,
+                'scan_result' => $scanResult,
                 'uploaded_by' => auth()->id(),
             ]);
             $documentId = $existingDoc->id;
@@ -414,8 +401,8 @@ class ClaimsController extends Controller
                 'path' => $path,
                 'mime_type' => $file->getClientMimeType(),
                 'file_size' => $file->getSize(),
-                'scan_status' => 'clean',
-                'scan_result' => 'Document accepted.',
+                'scan_status' => $scanStatus,
+                'scan_result' => $scanResult,
                 'uploaded_by' => auth()->id(),
             ]);
             $documentId = $doc->id;

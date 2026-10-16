@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="csrf-token" content="{{ csrf_token() }}">
-<title>Look Up Sticker | MIC Global Risks</title>
+<title>Look Up Sticker | LOLC Microfinance Bank</title>
 <meta name="description" content="Look up your motor insurance quotation by quotation number, registration number or name, and generate your insurance sticker.">
 <link rel="icon" type="image/x-icon" href="{{ asset('Favicon.png') }}">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -60,7 +60,7 @@
                        class="w-full px-4 py-3 rounded-xl border-2 border-gray-200 text-sm font-medium focus:border-[#0066B3] focus:ring-2 focus:ring-[#0066B3]/20 outline-none transition">
             </div>
             <button @click="search" :disabled="!number || loading"
-                    class="px-6 py-3 rounded-xl text-[13px] font-bold text-white bg-[#0066B3] hover:bg-[#004f8c] disabled:opacity-50 disabled:cursor-not-allowed transition shrink-0">
+                    class="px-6 py-3 rounded-xl text-[13px] font-bold text-white bg-[#0066B3] hover:bg-[#263B8B] disabled:opacity-50 disabled:cursor-not-allowed transition shrink-0">
                 <span x-show="!loading">Search</span>
                 <span x-show="loading" class="inline-flex items-center gap-1.5">
                     <svg class="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24">
@@ -86,7 +86,7 @@
                 <h3 class="text-sm font-bold text-gray-900">Quotation Found</h3>
                 <p class="text-xs text-gray-500 mt-0.5" x-text="result?.quotation.quotation_number"></p>
             </div>
-            <span class="w-9 h-9 rounded-full bg-gradient-to-br from-[#0066B3] to-[#004f8c] flex items-center justify-center text-white text-xs font-bold shrink-0"
+            <span class="w-9 h-9 rounded-full bg-gradient-to-br from-[#0066B3] to-[#263B8B] flex items-center justify-center text-white text-xs font-bold shrink-0"
                   x-text="(result?.quotation.company || '?').charAt(0)"></span>
         </div>
 
@@ -116,7 +116,7 @@
                     <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                     <span>Sticker <strong x-text="result.sticker.sticker_number"></strong> already <span x-text="result.sticker.status"></span></span>
                 </div>
-                <a href="javascript:void(0)" @click="viewCertificate()" class="px-4 py-2 text-xs font-bold text-white bg-[#0066B3] hover:bg-[#004f8c] rounded-lg transition shrink-0">View Sticker →</a>
+                <a href="javascript:void(0)" @click="viewCertificate()" class="px-4 py-2 text-xs font-bold text-white bg-[#0066B3] hover:bg-[#263B8B] rounded-lg transition shrink-0">View Sticker →</a>
             </div>
         </template>
 
@@ -124,7 +124,7 @@
         <template x-if="result && !result.sticker && result.can_generate_sticker">
             <div class="px-6 py-4 bg-blue-50 border-t border-blue-100 flex items-center justify-between gap-3">
                 <p class="text-sm text-blue-700 font-medium">You're ready to request a sticker for this quotation.</p>
-                <a :href="result.generate_url" class="px-4 py-2 text-xs font-bold text-white bg-[#0066B3] hover:bg-[#004f8c] rounded-lg transition shrink-0">Proceed to Request for Sticker →</a>
+                <a :href="result.generate_url" class="px-4 py-2 text-xs font-bold text-white bg-[#0066B3] hover:bg-[#263B8B] rounded-lg transition shrink-0">Proceed to Request for Sticker →</a>
             </div>
         </template>
 
@@ -132,7 +132,7 @@
         <template x-if="result && !result.sticker && result.requires_login">
             <div class="px-6 py-4 bg-amber-50 border-t border-amber-100 flex items-center justify-between gap-3">
                 <p class="text-sm text-amber-700 font-medium">Log in to request a sticker for this quotation.</p>
-                <a href="{{ route('login') }}" class="px-4 py-2 text-xs font-bold text-white bg-[#0066B3] hover:bg-[#004f8c] rounded-lg transition shrink-0">Log In →</a>
+                <a href="{{ route('login') }}" class="px-4 py-2 text-xs font-bold text-white bg-[#0066B3] hover:bg-[#263B8B] rounded-lg transition shrink-0">Log In →</a>
             </div>
         </template>
 
@@ -145,7 +145,7 @@
     </div>
 
     <div class="text-center mt-8">
-        <a href="{{ route('stickers.create') }}" class="text-[13px] font-semibold text-[#0066B3] hover:text-[#004f8c]">
+        <a href="{{ route('stickers.create') }}" class="text-[13px] font-semibold text-[#0066B3] hover:text-[#263B8B]">
             Don't have a quotation yet? Generate one &rarr;
         </a>
     </div>

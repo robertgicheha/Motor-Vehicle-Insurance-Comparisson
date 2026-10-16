@@ -9,7 +9,7 @@ class FailedLoginLockout extends Notification
 {
     use Queueable;
 
-    public function __construct(protected string $email, protected string $ip) {}
+    public function __construct(protected string $username, protected string $ip) {}
 
     public function via(object $notifiable): array
     {
@@ -19,9 +19,9 @@ class FailedLoginLockout extends Notification
     public function toArray(object $notifiable): array
     {
         return [
-            'email' => $this->email,
+            'username' => $this->username,
             'ip' => $this->ip,
-            'message' => "Repeated failed login attempts for '{$this->email}' from IP {$this->ip} — account temporarily locked out.",
+            'message' => "Repeated failed login attempts for '{$this->username}' from IP {$this->ip} — account temporarily locked out.",
         ];
     }
 }

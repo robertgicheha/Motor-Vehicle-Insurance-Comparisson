@@ -51,7 +51,7 @@
                              class="p-3 rounded-xl border border-gray-200 dark:border-gray-600 hover:border-blue-300 dark:hover:border-blue-600 bg-gray-50 dark:bg-gray-700/50 hover:bg-blue-50 dark:hover:bg-blue-900/10 cursor-pointer transition-all duration-200">
                             <div class="flex items-center justify-between gap-2">
                                 <div class="min-w-0">
-                                    <p class="text-[11px] font-bold text-gray-800 dark:text-white" x-text="(r.quotation_number || 'No quotation number') + ' — ' + r.customer_name"></p>
+                                    <p class="text-[11px] font-bold text-gray-800 dark:text-white" x-text="(r.quotation_number || 'No quotation number')"></p>
                                     <p class="text-[10px] text-gray-500 dark:text-gray-400" x-text="(r.vehicle_registration || 'No reg.') + ' · ' + r.car_make + ' ' + r.car_model + ' · ' + r.company"></p>
                                 </div>
                                 <span class="text-[8px] font-semibold px-1.5 py-0.5 rounded-full shrink-0"
@@ -91,10 +91,6 @@
                         <div x-show="foundSticker?.underwriter_sticker_no">
                             <p class="text-[9px] font-semibold uppercase tracking-wider text-gray-400 mb-0.5">Sticker Number</p>
                             <p class="text-sm font-bold text-gray-800 dark:text-white" x-text="foundSticker?.underwriter_sticker_no"></p>
-                        </div>
-                        <div>
-                            <p class="text-[9px] font-semibold uppercase tracking-wider text-gray-400 mb-0.5">Customer</p>
-                            <p class="text-sm font-medium text-gray-800 dark:text-white" x-text="foundSticker?.customer_name"></p>
                         </div>
                         <div>
                             <p class="text-[9px] font-semibold uppercase tracking-wider text-gray-400 mb-0.5">Insurance Company</p>
@@ -172,7 +168,6 @@
                                         'sticker_number' => $sticker->sticker_number,
                                         'underwriter_sticker_no' => $sticker->underwriter_sticker_no,
                                         'quotation_number' => $sticker->quotation?->quotation_number,
-                                        'customer_name' => $sticker->customer_name,
                                         'vehicle_registration' => $sticker->vehicle_registration,
                                         'chassis_number' => $sticker->chassis_number,
                                         'engine_number' => $sticker->engine_number,
@@ -194,7 +189,7 @@
                                     <div class="flex items-center justify-between gap-2">
                                         <div class="min-w-0">
                                             <p class="text-[11px] font-bold text-gray-800 dark:text-white">{{ $sticker->quotation?->quotation_number ?: $sticker->vehicle_registration ?: 'No reference' }}</p>
-                                            <p class="text-[10px] text-gray-500 dark:text-gray-400">{{ $sticker->customer_name }}</p>
+                                            <p class="text-[10px] text-gray-500 dark:text-gray-400">{{ $sticker->car_make }} {{ $sticker->car_model }}</p>
                                         </div>
                                         <span class="text-[8px] font-semibold px-1.5 py-0.5 rounded-full bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300 shrink-0">ISSUED</span>
                                     </div>

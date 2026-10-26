@@ -263,7 +263,7 @@ function openLetterheadPicker(btn) {
     const sampleValues = {
         user_name: 'John Doe', user_email: 'john@example.com', password: 'P@ssw0rd!',
         login_url: '#', app_name: 'Motor Vehicle Insurance Portal',
-        customer_name: 'John Doe', quotation_number: 'Q-2026/0001', company: 'GA Insurance Ltd',
+        customer_name: 'Customer', quotation_number: 'Q-2026/0001', company: 'GA Insurance Ltd',
         vehicle: 'Toyota Land Cruiser 2020', valuation: '900,000.00', premium: '58,500.00', total_premium: '62,400.00',
         view_url: '#', sticker_number: 'S-2026/0001', dashboard_url: '#', profile_url: '#',
         verify_url: '#',

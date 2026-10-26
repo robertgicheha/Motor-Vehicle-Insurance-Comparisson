@@ -33,7 +33,7 @@
         </div>
 
         <div class="body-content">
-            <h2>Dear {{ $sticker->customer_name }},</h2>
+            <h2>Dear Sir/Madam,</h2>
 
             <p>Your motor insurance certificate has been successfully generated with <strong>{{ $sticker->company->name }}</strong>. Please find a summary of your certificate below.</p>
 
@@ -45,7 +45,6 @@
             <table class="details-table">
                 <tr><td>Certificate Number</td><td>{{ $sticker->sticker_number }}</td></tr>
                 <tr><td>Insurance Company</td><td>{{ $sticker->company->name }}</td></tr>
-                <tr><td>Customer Name</td><td>{{ $sticker->customer_name }}</td></tr>
                 <tr><td>Vehicle</td><td>{{ $sticker->car_make }} {{ $sticker->car_model }} ({{ $sticker->car_year }})</td></tr>
                 <tr><td>Registration</td><td>{{ $sticker->vehicle_registration ?? 'N/A' }}</td></tr>
                 <tr><td>Vehicle Valuation</td><td>KES {{ number_format($sticker->car_valuation, 2) }}</td></tr>

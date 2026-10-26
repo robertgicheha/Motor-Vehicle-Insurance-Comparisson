@@ -54,7 +54,7 @@
                         <a :href="stickerUrl + '/' + s.id"
                            class="flex items-center gap-3 px-4 py-2 hover:bg-gray-50 dark:hover:bg-gray-700/50 text-sm">
                             <span class="font-medium text-gray-900 dark:text-white shrink-0" x-text="s.sticker_number"></span>
-                            <span class="text-gray-400 truncate" x-text="[s.customer_name, s.car_make, s.car_model].filter(Boolean).join(' · ')"></span>
+                            <span class="text-gray-400 truncate" x-text="[s.vehicle_registration, s.car_make, s.car_model].filter(Boolean).join(' · ')"></span>
                         </a>
                     </template>
                 </div>

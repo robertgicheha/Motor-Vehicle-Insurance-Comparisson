@@ -31,7 +31,7 @@
                         class="w-full px-3 py-2.5 text-sm border-0 rounded-lg bg-white/95 text-gray-800 focus:ring-2 focus:ring-blue-300 outline-none">
                     <option value="">Search for a user...</option>
                     @foreach($users as $u)
-                        <option value="{{ $u->id }}" {{ $selectedUser?->id === $u->id ? 'selected' : '' }}>{{ $u->name }} ({{ $u->email }})</option>
+                        <option value="{{ $u->id }}" {{ $selectedUser?->id === $u->id ? 'selected' : '' }}>{{ $u->name }}</option>
                     @endforeach
                 </select>
             </div>
@@ -66,7 +66,9 @@
                                 </span>
                                 <span class="text-[10px] text-gray-400 shrink-0">{{ $entry->created_at->format('d M Y, h:i A') }}</span>
                             </div>
-                            <p class="text-xs text-gray-700 dark:text-gray-300 mt-1.5">{{ $entry->description }}</p>
+                            @if($entry->description && $entry->description !== $entry->action)
+                                <p class="text-xs text-gray-700 dark:text-gray-300 mt-1.5">{{ $entry->description }}</p>
+                            @endif
                         </div>
                     </div>
                 @empty

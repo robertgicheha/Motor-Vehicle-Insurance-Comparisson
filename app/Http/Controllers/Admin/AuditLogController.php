@@ -71,7 +71,7 @@ class AuditLogController extends Controller
                     return (object) [
                         'type' => 'activity',
                         'action' => $log->action,
-                        'description' => $log->description ?? $log->action,
+                        'description' => $log->description,
                         'model' => null,
                         'model_id' => null,
                         'old_values' => null,

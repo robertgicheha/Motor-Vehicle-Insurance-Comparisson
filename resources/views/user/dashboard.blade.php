@@ -31,11 +31,11 @@
     @endif
 
     {{-- ─── HERO ─────────────────────────────────────────────────────────── --}}
-    <div class="rounded-2xl bg-micblue px-6 py-7 shadow-sm">
+    <div class="rounded-2xl bg-micblue px-6 py-7 shadow-sm border-l-4 border-[#ED1D25]">
         <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
             <div>
                 <p class="text-[10px] font-semibold uppercase tracking-widest text-blue-400">Dashboard</p>
-                <h1 class="mt-0.5 text-xl font-bold text-white">{{ $greeting }}, {{ auth()->user()->first_name ?: auth()->user()->name }}!</h1>
+                <h1 class="mt-0.5 text-xl font-bold text-white">{{ $greeting }}, {{ auth()->user()->username }}!</h1>
                 <p class="mt-0.5 text-xs text-slate-400">Compare and generate insurance quotations</p>
             </div>
             <div class="flex items-center gap-2 shrink-0">
@@ -47,7 +47,7 @@
 
 
                 <a href="{{ route('quotations.create') }}"
-                   class="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold bg-blue-500 hover:bg-blue-400 text-white rounded-lg transition">
+                   class="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold bg-[#ED1D25] hover:bg-[#B6161C] text-white rounded-lg transition">
                     <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
                     New Quotation
                 </a>
@@ -59,7 +59,7 @@
         {{-- ─── KPI CARDS (4-COLUMN) ────────────────────────────────────── --}}
         <div class="mt-6 grid grid-cols-2 md:grid-cols-4 gap-3">
             <a href="{{ route('quotations.index') }}" class="kpi-card p-4 block hover:opacity-80 transition">
-                <div class="accent-bar"></div>
+                <div class="accent-bar" style="background:linear-gradient(90deg,#ED1D25,#F4737A)"></div>
                 <p class="kpi-eyebrow">Total Quotations</p>
                 <p class="kpi-value mt-1">{{ $totalQuotations }}</p>
                 <span class="kpi-delta neutral mt-1.5 inline-block">All your quotes</span>

@@ -57,10 +57,9 @@
       <div class="summary-row"><span>Generated</span><span>{{ $sticker->generated_at?->format('d M Y, h:i A') ?? $sticker->created_at->format('d M Y, h:i A') }}</span></div>
     </div>
     <div class="summary-card">
-      <h4>Customer</h4>
-      <div class="summary-row"><span>Name</span><span>{{ $sticker->customer_name }}</span></div>
-      @if($sticker->customer_email)<div class="summary-row"><span>Email</span><span>{{ $sticker->customer_email }}</span></div>@endif
-      @if($sticker->customer_phone)<div class="summary-row"><span>Phone</span><span>{{ $sticker->customer_phone }}</span></div>@endif
+      <h4>Policy Reference</h4>
+      @if($sticker->underwriter_sticker_no)<div class="summary-row"><span>Policy No</span><span>{{ $sticker->underwriter_sticker_no }}</span></div>@endif
+      <div class="summary-row"><span>Client Type</span><span>{{ ucfirst($sticker->client_type ?? 'individual') }}</span></div>
     </div>
     <div class="summary-card">
       <h4>Premium</h4>

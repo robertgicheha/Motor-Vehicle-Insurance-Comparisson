@@ -31,7 +31,7 @@
 @endphp
 
 <aside
-    class="fixed inset-y-0 left-0 z-40 flex flex-col sidebar-transition overflow-x-hidden bg-[#005F9E] border-r border-white/[0.08] shadow-[4px_0_24px_rgba(0,0,0,0.12)]"
+    class="fixed inset-y-0 left-0 z-40 flex flex-col sidebar-transition overflow-x-hidden bg-[#263B8B] border-r border-white/[0.08] shadow-[4px_0_24px_rgba(0,0,0,0.12)]"
     :class="sidebarOpen ? 'w-60' : 'w-[68px]'"
     x-data="{
         open: {},
@@ -60,7 +60,7 @@
             @if($isAdmin && ($isActive('admin.reports*') || $isActive('admin.analytics*') || $isActive('admin.audit*') || $isActive('admin.email-analytics*')))
                 this.open.insights = true;
             @endif
-            @if($isSuperAdmin && ($isActive('admin.settings*') || $isActive('admin.notifications*') || $isActive('admin.rate-settings*') || $isActive('admin.help*') || $isActive('admin.media*') || $isActive('admin.health*') || $isActive('admin.email-settings*')))
+            @if($isSuperAdmin && ($isActive('admin.settings*') || $isActive('admin.notifications*') || $isActive('admin.rate-settings*') || $isActive('admin.help*') || $isActive('admin.media*') || $isActive('admin.health*') || $isActive('admin.email-settings*') || $isActive('admin.email-config*')))
                 this.open.system = true;
             @endif
             @if($isAdmin && !$isSuperAdmin && ($isActive('admin.settings*') || $isActive('admin.help*')))
@@ -421,7 +421,7 @@
                        class="sidebar-sub-link flex items-center gap-2 pl-[42px] pr-3 py-1.5 rounded-lg text-[12px] text-white transition-all duration-150
                               {{ $isActive('admin.analytics*') ? 'bg-white/[0.16]' : 'hover:bg-white/[0.10]' }}">
                         Analytics
-                        <span class="ml-1 text-[9px] font-bold px-1.5 py-px rounded-full bg-emerald-400 text-[#005F9E]">New</span>
+                        <span class="ml-1 text-[9px] font-bold px-1.5 py-px rounded-full bg-emerald-400 text-[#263B8B]">New</span>
                     </a>
                     <a href="{{ route('admin.audit.index') }}"
                        class="sidebar-sub-link flex items-center gap-2 pl-[42px] pr-3 py-1.5 rounded-lg text-[12px] text-white transition-all duration-150
@@ -457,7 +457,7 @@
                 <a href="{{ route('admin.rate-settings.index') }}" @click.prevent.stop="toggle('system')"
                         class="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-[13px] font-medium transition-all duration-150 group"
                         :class="sidebarOpen ? 'justify-start' : 'justify-center'"
-                        style="{{ ($isActive('admin.settings*') || $isActive('admin.notifications*') || $isActive('admin.rate-settings*') || $isActive('admin.help*') || $isActive('admin.media*') || $isActive('admin.health*') || $isActive('admin.email-settings*')) ? $activeStyle : $inactiveStyle }}">
+                        style="{{ ($isActive('admin.settings*') || $isActive('admin.notifications*') || $isActive('admin.rate-settings*') || $isActive('admin.help*') || $isActive('admin.media*') || $isActive('admin.health*') || $isActive('admin.email-settings*') || $isActive('admin.email-config*')) ? $activeStyle : $inactiveStyle }}">
                     <span class="shrink-0 text-white transition-opacity">
                         <svg class="w-[18px] h-[18px]" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
                     </span>
@@ -486,6 +486,11 @@
                        class="sidebar-sub-link flex items-center gap-2 pl-[42px] pr-3 py-1.5 rounded-lg text-[12px] text-white transition-all duration-150
                               {{ $isActive('admin.email-settings*') ? 'bg-white/[0.16]' : 'hover:bg-white/[0.10]' }}">
                         Email Templates
+                    </a>
+                    <a href="{{ route('admin.email-config.index') }}"
+                       class="sidebar-sub-link flex items-center gap-2 pl-[42px] pr-3 py-1.5 rounded-lg text-[12px] text-white transition-all duration-150
+                              {{ $isActive('admin.email-config*') ? 'bg-white/[0.16]' : 'hover:bg-white/[0.10]' }}">
+                        Email Settings
                     </a>
                     <a href="{{ route('admin.notifications.index') }}"
                        class="sidebar-sub-link flex items-center gap-2 pl-[42px] pr-3 py-1.5 rounded-lg text-[12px] text-white transition-all duration-150
@@ -662,8 +667,8 @@
         {{-- Expanded --}}
         <div x-show="sidebarOpen" x-cloak>
             <div class="flex items-center gap-2.5 px-2 py-2 rounded-xl" style="background:rgba(255,255,255,0.08);">
-                <div class="w-8 h-8 rounded-full flex items-center justify-center text-[11px] font-bold text-[#005F9E] shrink-0" style="background:#ffffff;">
-                    {{ strtoupper(substr(auth()->user()->first_name ?? auth()->user()->name, 0, 1)) }}{{ strtoupper(substr(auth()->user()->last_name ?? '', 0, 1)) }}
+                <div class="w-8 h-8 rounded-full flex items-center justify-center text-[11px] font-bold text-[#263B8B] shrink-0" style="background:#ffffff;">
+                    {{ strtoupper(substr(auth()->user()->username, 0, 1)) }}
                 </div>
                 <div class="flex-1 min-w-0">
                     <p class="text-[12px] font-semibold text-white truncate leading-tight">{{ auth()->user()->name }}</p>
@@ -689,8 +694,8 @@
 
         {{-- Collapsed --}}
         <div x-show="!sidebarOpen" x-cloak class="flex flex-col items-center gap-2 py-1">
-            <div class="w-8 h-8 rounded-full flex items-center justify-center text-[11px] font-bold text-[#005F9E]" style="background:#ffffff;">
-                {{ strtoupper(substr(auth()->user()->first_name ?? auth()->user()->name, 0, 1)) }}{{ strtoupper(substr(auth()->user()->last_name ?? '', 0, 1)) }}
+            <div class="w-8 h-8 rounded-full flex items-center justify-center text-[11px] font-bold text-[#263B8B]" style="background:#ffffff;">
+                {{ strtoupper(substr(auth()->user()->username, 0, 1)) }}
             </div>
             <form method="POST" action="{{ route('logout') }}">
                 @csrf

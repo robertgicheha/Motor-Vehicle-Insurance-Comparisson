@@ -60,12 +60,8 @@
                         class="w-full max-w-xs px-3 py-2 text-xs rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none">
                     <option value="">— Select a user —</option>
                     @foreach($users as $u)
-                        <option value="{{ $u->id }}" {{ (request('on_behalf_of') == $u->id) ? 'selected' : '' }}
-                                data-first="{{ $u->first_name ?? '' }}"
-                                data-last="{{ $u->last_name ?? '' }}"
-                                data-email="{{ $u->email ?? '' }}"
-                                data-phone="{{ $u->mobile ?? '' }}">
-                            {{ $u->name }} ({{ $u->email }})
+                        <option value="{{ $u->id }}" {{ (request('on_behalf_of') == $u->id) ? 'selected' : '' }}>
+                            {{ $u->name }}
                         </option>
                     @endforeach
                 </select>
@@ -73,7 +69,7 @@
             @endif
             <div id="new-customer-note" class="mt-3 hidden">
                 <p class="text-[11px] text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 rounded-lg px-3 py-2">
-                    This customer isn't a registered user. Fill in their name, phone and email in the Personal Details step below — the quotation will be saved against those details directly, with no account created.
+                    This customer isn't a registered user. Enter their name, phone and email in the Personal Details step below — these are used only to send the quotation and are never stored. No account is created.
                 </p>
             </div>
             <input type="hidden" id="f-is-new-customer" value="">
@@ -403,16 +399,6 @@ function onUserSelected(userId) {
         return;
     }
     if (hidden) hidden.value = userId;
-    var opt = document.querySelector('#f-on-behalf-of option[value="' + userId + '"]');
-    if (!opt) return;
-    var first = document.getElementById('f-first');
-    var last = document.getElementById('f-last');
-    var email = document.getElementById('f-email');
-    var phone = document.getElementById('f-phone');
-    if (first) first.value = opt.dataset.first || '';
-    if (last) last.value = opt.dataset.last || '';
-    if (email) email.value = opt.dataset.email || '';
-    if (phone) phone.value = opt.dataset.phone || '';
 }
 
 // ── Populate year dropdown ──

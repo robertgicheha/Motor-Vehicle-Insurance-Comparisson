@@ -41,7 +41,7 @@
                         <td class="px-5 py-2.5">
                             <div class="flex items-center gap-2">
                                 <div class="w-7 h-7 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center text-[10px] font-bold text-blue-600">
-                                    {{ strtoupper(substr($r->user->first_name ?? $r->user->name, 0, 1)) }}
+                                    {{ strtoupper(substr($r->user->username ?? '', 0, 1)) }}
                                 </div>
                                 <span class="font-medium text-gray-800 dark:text-white">{{ $r->user->name }}</span>
                             </div>

@@ -60,7 +60,7 @@
                             <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Subject Template</label>
                             <input type="text" name="subject_template" value="{{ $emailConfig['sticker_email_subject_template'] ?? 'Sticker Issuance Request - {sticker_number}' }}"
                                    class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-800 dark:text-white focus:ring-2 focus:ring-blue-500">
-                            <p class="text-[10px] text-gray-400 mt-1">Available variables: {!! '{'.'{sticker_number}'.'}' !!}, {!! '{'.'{customer_name}'.'}' !!}, {!! '{'.'{company}'.'}' !!}, {!! '{'.'{registration}'.'}' !!}</p>
+                            <p class="text-[10px] text-gray-400 mt-1">Available variables: {!! '{'.'{sticker_number}'.'}' !!}, {!! '{'.'{quotation_number}'.'}' !!}, {!! '{'.'{company}'.'}' !!}, {!! '{'.'{registration}'.'}' !!}</p>
                         </div>
                         <div>
                             <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Turnaround Time (minutes)</label>
@@ -89,7 +89,7 @@
                         </div>
                         <div class="p-5 grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
                             <div class="bg-gray-50 dark:bg-gray-700/50 rounded-lg px-3 py-2"><code class="text-blue-600">{!! '{'.'{sticker_number}'.'}' !!}</code><p class="text-gray-400 text-[10px] mt-0.5">Sticker ID</p></div>
-                            <div class="bg-gray-50 dark:bg-gray-700/50 rounded-lg px-3 py-2"><code class="text-blue-600">{!! '{'.'{customer_name}'.'}' !!}</code><p class="text-gray-400 text-[10px] mt-0.5">Customer full name</p></div>
+                            <div class="bg-gray-50 dark:bg-gray-700/50 rounded-lg px-3 py-2"><code class="text-blue-600">{!! '{'.'{quotation_number}'.'}' !!}</code><p class="text-gray-400 text-[10px] mt-0.5">Quotation number</p></div>
                             <div class="bg-gray-50 dark:bg-gray-700/50 rounded-lg px-3 py-2"><code class="text-blue-600">{!! '{'.'{company}'.'}' !!}</code><p class="text-gray-400 text-[10px] mt-0.5">Insurance company</p></div>
                             <div class="bg-gray-50 dark:bg-gray-700/50 rounded-lg px-3 py-2"><code class="text-blue-600">{!! '{'.'{registration}'.'}' !!}</code><p class="text-gray-400 text-[10px] mt-0.5">Vehicle registration</p></div>
                             <div class="bg-gray-50 dark:bg-gray-700/50 rounded-lg px-3 py-2"><code class="text-blue-600">{!! '{'.'{premium}'.'}' !!}</code><p class="text-gray-400 text-[10px] mt-0.5">Total premium amount</p></div>

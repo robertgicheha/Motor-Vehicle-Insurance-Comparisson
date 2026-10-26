@@ -163,8 +163,8 @@
 
             <div class="info-grid">
                 <div class="item">
-                    <div class="lbl">Customer</div>
-                    <div class="val">{{ $sticker->customer_name }}</div>
+                    <div class="lbl">Client Type</div>
+                    <div class="val">{{ ucfirst($sticker->client_type ?? 'individual') }}</div>
                 </div>
                 <div class="item">
                     <div class="lbl">Registration</div>

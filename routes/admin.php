@@ -17,6 +17,7 @@ use App\Http\Controllers\Admin\HealthCheckController;
 use App\Http\Controllers\Admin\ChangeRequestController;
 use App\Http\Controllers\Admin\MediaController;
 use App\Http\Controllers\Admin\EmailSettingController;
+use App\Http\Controllers\Admin\EmailConfigController;
 use App\Http\Controllers\Admin\ClaimController as AdminClaimController;
 use App\Http\Controllers\Admin\EmailAnalyticsController;
 use App\Http\Controllers\DashboardController;
@@ -70,9 +71,22 @@ Route::middleware(['auth', 'online', 'role:super-admin|admin'])->prefix('admin')
     Route::get('/reports/export-csv', [ReportController::class, 'exportCsv'])->name('reports.export-csv');
     Route::get('/reports/export-excel', [ReportController::class, 'exportExcel'])->name('reports.export-excel');
     Route::get('/reports/export-pdf', [ReportController::class, 'exportPdf'])->name('reports.export-pdf');
+    Route::get('/reports/preview-pdf', [ReportController::class, 'previewPdf'])->name('reports.preview-pdf');
     Route::get('/reports/stickers/export-csv', [ReportController::class, 'exportStickersCsv'])->name('reports.stickers.export-csv');
     Route::get('/reports/stickers/export-excel', [ReportController::class, 'exportStickersExcel'])->name('reports.stickers.export-excel');
     Route::get('/reports/stickers/export-pdf', [ReportController::class, 'exportStickersPdf'])->name('reports.stickers.export-pdf');
+    Route::get('/reports/stickers/preview-pdf', [ReportController::class, 'previewStickersPdf'])->name('reports.stickers.preview-pdf');
+
+    Route::post('/reports/users', [ReportController::class, 'userReport'])->name('reports.users')->middleware('throttle:10,1');
+    Route::post('/reports/underwriters', [ReportController::class, 'underwriterReport'])->name('reports.underwriters')->middleware('throttle:10,1');
+    Route::get('/reports/users/export-csv', [ReportController::class, 'exportUsersCsv'])->name('reports.users.export-csv');
+    Route::get('/reports/users/export-excel', [ReportController::class, 'exportUsersExcel'])->name('reports.users.export-excel');
+    Route::get('/reports/users/export-pdf', [ReportController::class, 'exportUsersPdf'])->name('reports.users.export-pdf');
+    Route::get('/reports/users/preview-pdf', [ReportController::class, 'previewUsersPdf'])->name('reports.users.preview-pdf');
+    Route::get('/reports/underwriters/export-csv', [ReportController::class, 'exportUnderwritersCsv'])->name('reports.underwriters.export-csv');
+    Route::get('/reports/underwriters/export-excel', [ReportController::class, 'exportUnderwritersExcel'])->name('reports.underwriters.export-excel');
+    Route::get('/reports/underwriters/export-pdf', [ReportController::class, 'exportUnderwritersPdf'])->name('reports.underwriters.export-pdf');
+    Route::get('/reports/underwriters/preview-pdf', [ReportController::class, 'previewUnderwritersPdf'])->name('reports.underwriters.preview-pdf');
 
     Route::get('/audit-logs', [AuditLogController::class, 'indexAudit'])->name('audit.index');
     Route::get('/activity-logs', [AuditLogController::class, 'indexActivity'])->name('audit.activity');
@@ -92,7 +106,15 @@ Route::middleware(['auth', 'online', 'role:super-admin|admin'])->prefix('admin')
     Route::patch('/email-settings/{emailSetting}', [EmailSettingController::class, 'update'])->name('email-settings.update');
     Route::delete('/email-settings/{emailSetting}', [EmailSettingController::class, 'destroy'])->name('email-settings.destroy');
 
+    // Mail server credentials (.env backed, encrypted at rest). Superadmin only.
+    Route::middleware('role:super-admin')->group(function () {
+        Route::get('/email-config', [EmailConfigController::class, 'index'])->name('email-config.index');
+        Route::post('/email-config', [EmailConfigController::class, 'update'])->name('email-config.update');
+        Route::post('/email-config/encrypt', [EmailConfigController::class, 'encrypt'])->name('email-config.encrypt');
+    });
+
     Route::get('/analytics', [AnalyticsController::class, 'index'])->name('analytics.index');
+    Route::get('/analytics/live', [AnalyticsController::class, 'live'])->name('analytics.live');
 
     Route::get('/notifications', [AdminNotificationController::class, 'index'])->name('notifications.index');
     Route::get('/notifications/{id}', [AdminNotificationController::class, 'show'])->name('notifications.show');

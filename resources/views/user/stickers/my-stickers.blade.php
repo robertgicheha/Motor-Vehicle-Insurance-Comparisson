@@ -57,7 +57,7 @@
                 <thead>
                     <tr class="bg-gray-50 dark:bg-gray-700/40">
                         <th class="px-5 py-2.5 text-left font-semibold text-gray-400 uppercase tracking-wider text-[10px]">Number</th>
-                        <th class="px-5 py-2.5 text-left font-semibold text-gray-400 uppercase tracking-wider text-[10px]">Customer</th>
+                        <th class="px-5 py-2.5 text-left font-semibold text-gray-400 uppercase tracking-wider text-[10px]">Registration</th>
                         <th class="px-5 py-2.5 text-left font-semibold text-gray-400 uppercase tracking-wider text-[10px]">Vehicle</th>
                         <th class="px-5 py-2.5 text-left font-semibold text-gray-400 uppercase tracking-wider text-[10px]">Company</th>
                         <th class="px-5 py-2.5 text-right font-semibold text-gray-400 uppercase tracking-wider text-[10px]">Premium</th>
@@ -70,7 +70,7 @@
                     @forelse($stickers as $sticker)
                         <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/30">
                             <td class="px-5 py-2.5 font-mono text-[10px] font-bold text-gray-800 dark:text-white">{{ $sticker->sticker_number }}</td>
-                            <td class="px-5 py-2.5 text-gray-500 dark:text-gray-400">{{ $sticker->customer_name }}</td>
+                            <td class="px-5 py-2.5 text-gray-500 dark:text-gray-400">{{ $sticker->vehicle_registration ?? '—' }}</td>
                             <td class="px-5 py-2.5 text-gray-500 dark:text-gray-400">{{ $sticker->car_make }} {{ $sticker->car_model }} ({{ $sticker->car_year }})</td>
                             <td class="px-5 py-2.5 font-medium text-gray-800 dark:text-white">{{ $sticker->company->name ?? '—' }}</td>
                             <td class="px-5 py-2.5 text-right font-semibold text-gray-800 dark:text-white">KES {{ number_format($sticker->premium) }}</td>

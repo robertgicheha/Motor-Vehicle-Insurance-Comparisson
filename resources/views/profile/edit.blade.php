@@ -106,14 +106,10 @@
                 </div>
                 <div>
                     <p class="text-sm font-semibold text-gray-900 dark:text-white">
-                        {{ $user->first_name }} {{ $user->last_name }}
+                        {{ $user->username }}
                     </p>
                     <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
                         {{ ucfirst($user->role ?? 'User') }}
-                        @if($user->mobile)
-                            <span class="mx-1.5 text-gray-300 dark:text-gray-600">|</span>
-                            {{ $user->mobile }}
-                        @endif
                     </p>
                 </div>
             </div>
@@ -121,27 +117,11 @@
             {{-- Field grid --}}
             <div class="grid grid-cols-2 md:grid-cols-4 divide-x divide-y divide-gray-100 dark:divide-gray-700">
                 <div class="px-5 py-4">
-                    <p class="text-[10px] font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500 mb-1">First name</p>
-                    <p class="text-sm text-gray-900 dark:text-gray-100">{{ $user->first_name }}</p>
-                </div>
-                <div class="px-5 py-4">
-                    <p class="text-[10px] font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500 mb-1">Last name</p>
-                    <p class="text-sm text-gray-900 dark:text-gray-100">{{ $user->last_name }}</p>
-                </div>
-                <div class="px-5 py-4">
                     <p class="text-[10px] font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500 mb-1">Username</p>
                     <p class="text-sm text-gray-900 dark:text-gray-100">{{ $user->username }}</p>
                     <span class="inline-flex items-center gap-1 mt-1 text-[10px] font-semibold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 px-2 py-0.5 rounded-full border border-blue-200 dark:border-blue-800">
                         Login ID
                     </span>
-                </div>
-                <div class="px-5 py-4">
-                    <p class="text-[10px] font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500 mb-1">Phone</p>
-                    <p class="text-sm text-gray-900 dark:text-gray-100">{{ $user->mobile ?? '—' }}</p>
-                </div>
-                <div class="px-5 py-4">
-                    <p class="text-[10px] font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500 mb-1">Gender</p>
-                    <p class="text-sm text-gray-900 dark:text-gray-100">{{ ucfirst($user->gender ?? '—') }}</p>
                 </div>
                 <div class="px-5 py-4">
                     <p class="text-[10px] font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500 mb-1">Branch</p>
@@ -154,7 +134,7 @@
         <div id="edit-form" class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
             <div class="px-5 py-4 border-b border-gray-100 dark:border-gray-700">
                 <h2 class="text-sm font-semibold text-gray-900 dark:text-white">Update profile</h2>
-                <p class="text-xs text-gray-400 dark:text-gray-500 mt-0.5">Edit your personal details below</p>
+                <p class="text-xs text-gray-400 dark:text-gray-500 mt-0.5">Update your profile photo below</p>
             </div>
             <form action="{{ route('profile.update') }}" method="POST" enctype="multipart/form-data" class="px-5 py-5 space-y-4">
                 @csrf @method('PATCH')
@@ -190,18 +170,6 @@
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                        <label class="block text-[11px] font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500 mb-1.5">First name</label>
-                        <input type="text" name="first_name" value="{{ old('first_name', $user->first_name) }}" required
-                               class="w-full px-3.5 py-2.5 text-sm rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition">
-                        @error('first_name') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
-                    </div>
-                    <div>
-                        <label class="block text-[11px] font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500 mb-1.5">Last name</label>
-                        <input type="text" name="last_name" value="{{ old('last_name', $user->last_name) }}" required
-                               class="w-full px-3.5 py-2.5 text-sm rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition">
-                        @error('last_name') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
-                    </div>
-                    <div>
                         <label class="block text-[11px] font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500 mb-1.5">Username</label>
                         <input type="text" value="{{ $user->username }}" readonly
                                class="w-full px-3.5 py-2.5 text-sm rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-100 dark:bg-gray-600/50 text-gray-500 dark:text-gray-300 cursor-not-allowed">
@@ -211,23 +179,6 @@
                         <label class="block text-[11px] font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500 mb-1.5">Branch</label>
                         <input type="text" value="{{ $user->branch ?? '—' }}" readonly
                                class="w-full px-3.5 py-2.5 text-sm rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-100 dark:bg-gray-600/50 text-gray-500 dark:text-gray-300 cursor-not-allowed">
-                    </div>
-                    <div>
-                        <label class="block text-[11px] font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500 mb-1.5">Mobile number</label>
-                        <input type="text" name="mobile" value="{{ old('mobile', $user->mobile) }}" required
-                               class="w-full px-3.5 py-2.5 text-sm rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition">
-                        @error('mobile') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
-                    </div>
-                    <div>
-                        <label class="block text-[11px] font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500 mb-1.5">Gender</label>
-                        <select name="gender"
-                                class="w-full px-3.5 py-2.5 text-sm rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition">
-                            <option value="">Select gender</option>
-                            <option value="male"   {{ $user->gender === 'male'   ? 'selected' : '' }}>Male</option>
-                            <option value="female" {{ $user->gender === 'female' ? 'selected' : '' }}>Female</option>
-                            <option value="other"  {{ $user->gender === 'other'  ? 'selected' : '' }}>Other</option>
-                        </select>
-                        @error('gender') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
                     </div>
                 </div>
 

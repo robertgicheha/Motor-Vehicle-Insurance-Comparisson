@@ -47,7 +47,8 @@ class SettingController extends Controller
         }
 
         foreach ($request->settings as $key => $value) {
-            Setting::setValue($key, $value);
+            $group = Setting::where('key', $key)->value('group') ?? 'general';
+            Setting::setValue($key, $value, $group);
         }
 
         AuditService::activity('settings_updated', 'System settings updated by admin');

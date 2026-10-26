@@ -2,79 +2,60 @@
 <html>
 <head>
     <meta charset="utf-8">
-    <title>Quotations Report</title>
+    <title>{{ $unit ?? 'Quotations' }} Report</title>
     <style>
-        body { font-family: 'DejaVu Sans', sans-serif; font-size: 10px; color: #1a1a2e; margin: 0; padding: 0; }
-        .letterhead { display: flex; justify-content: space-between; align-items: stretch; min-height: 80px; }
-        .lh-left { display: flex; align-items: center; padding: 16px 24px; min-width: 200px; }
-        .lh-left img { max-height: 38px; max-width: 140px; object-fit: contain; }
-        .lh-left .lh-name { font-size: 20px; font-weight: 800; color: #fff; display: none; }
-        .lh-right { flex: 1; display: flex; align-items: center; justify-content: flex-end; padding: 14px 24px; text-align: right; }
-        .lh-right p { font-size: 10px; line-height: 1.6; color: rgba(255,255,255,.92); margin: 0; }
-        .pdf-body { padding: 20px 28px; }
-        .pdf-body h2 { font-size: 14px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; margin: 0 0 4px; }
-        .pdf-body .pdf-date { font-size: 10px; color: #6b7280; margin-bottom: 14px; }
-        .section-title { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: #0066B3; margin: 16px 0 8px; padding-bottom: 6px; border-bottom: 1.5px solid #e8f2fa; }
-        table { width: 100%; border-collapse: collapse; margin: 8px 0; font-size: 9px; }
-        table th { background: #f0f4fa; padding: 6px 8px; text-align: left; font-size: 8px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; border: 1px solid #dde3ed; }
-        table td { padding: 5px 8px; border: 1px solid #dde3ed; }
-        .kpi { background: #f0f7ff; border: 1px solid #dbeafe; border-radius: 6px; padding: 8px 12px; }
-        .kpi-label { font-size: 8px; color: #64748b; text-transform: uppercase; letter-spacing: .05em; }
-        .kpi-value { font-size: 14px; font-weight: 800; color: #263B8B; }
+        body { font-family: 'DejaVu Sans', sans-serif; font-size: 9.5px; color: #1a1a2e; margin: 0; padding: 0; }
+        .mic-banner { text-align: center; padding: 6px 0 4px; }
+        .mic-banner img { max-height: 36px; }
+        .letterhead { display: flex; justify-content: space-between; align-items: stretch; min-height: 64px; border-bottom: 1.5px solid #dde3ed; }
+        .lh-left { display: flex; flex-direction: column; align-items: flex-start; justify-content: center; padding: 8px 26px; min-width: 220px; }
+        .lh-left img { max-height: 34px; max-width: 180px; object-fit: contain; }
+        .lh-left .lh-fallback-name { font-size: 18px; font-weight: 800; color: #1a1a2e; display: none; }
+        .lh-left .lh-caption { margin-top: 4px; font-size: 10px; }
+        .lh-left .lh-caption .lh-company-name { font-weight: 700; color: #1a1a2e; }
+        .lh-right { flex: 1; display: flex; align-items: center; justify-content: flex-end; padding: 8px 26px; text-align: right; }
+        .lh-right p { font-size: 10px; line-height: 1.4; color: #6b7280; margin: 0; }
+        .pdf-body { padding: 10px 26px; }
+        .report-title { font-size: 15px; font-weight: 800; text-transform: uppercase; letter-spacing: .05em; margin: 8px 0 2px; text-decoration: underline; }
+        .meta-line { font-size: 9.5px; color: #6b7280; margin: 0 0 8px; line-height: 1.5; }
+        .section-title { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: #1a1a2e; margin: 10px 0 4px; padding-bottom: 3px; border-bottom: 1.5px solid #dde3ed; }
+        table { width: 100%; border-collapse: collapse; margin: 5px 0; font-size: 9px; }
+        th { background: #f0f4fa; padding: 4px 8px; text-align: left; font-size: 8px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; border: 1px solid #dde3ed; }
+        td { padding: 3.5px 8px; border: 1px solid #dde3ed; }
+        .kpi-row { width: 100%; border-collapse: separate; border-spacing: 5px 0; margin: 4px 0; }
+        .kpi { background: #f0f7ff; border: 1px solid #dbeafe; border-radius: 5px; padding: 6px 10px; }
+        .kpi-label { font-size: 7.5px; color: #64748b; text-transform: uppercase; letter-spacing: .04em; }
+        .kpi-value { font-size: 12.5px; font-weight: 800; color: #263B8B; }
         .total-row { background: #263B8B; color: #fff; font-weight: bold; }
-        .pdf-footer-text { padding: 14px 28px; background: #f8f9fb; border-top: 1px solid #dde3ed; font-size: 9px; color: #6b7280; line-height: 1.7; }
+        .bar-track { background: #eef2f7; height: 8px; width: 100%; }
+        .bar-fill { background: #0066B3; height: 8px; }
+        .insights { margin: 4px 0 0; padding-left: 15px; }
+        .insights li { font-size: 9.5px; line-height: 1.5; margin-bottom: 2px; }
+        .muted { color: #94a3b8; }
         .mono { font-family: 'DejaVu Sans Mono', monospace; font-size: 8px; }
+        .page-break { page-break-before: always; }
+        .pdf-footer-text { padding: 8px 26px; background: #f8f9fb; border-top: 1px solid #dde3ed; font-size: 9px; color: #6b7280; line-height: 1.4; }
     </style>
 </head>
 <body>
-    @include('pdf.partials.letterhead', ['company' => $company ?? null])
+    @include('pdf.partials.report-head', ['company' => $company ?? null])
 
     <div class="pdf-body">
-        <p class="pdf-date">{{ now()->format('d F Y, h:i A') }}</p>
-        <h2>QUOTATIONS REPORT</h2>
-        <p class="pdf-date">
-            Period: {{ $request->date_from ? $request->date_from : 'All time' }} &rarr; {{ $request->date_to ? $request->date_to : 'Present' }}
-            &middot; Insurer: {{ $company->name ?? 'All Companies' }} &middot; Generated by {{ auth()->user()->username }}
+        @php
+            $__period = ($request->date_from ?: 'All time') . ' to ' . ($request->date_to ?: 'Present');
+        @endphp
+        <div class="report-title">{{ $unit }} Report</div>
+        <p class="meta-line">
+            Report Ref: MR-{{ strtoupper(substr($unit, 0, 3)) }}-{{ now()->format('Ymd-His') }}
+            &nbsp;&middot;&nbsp; Period: {{ $__period }}
+            &nbsp;&middot;&nbsp; Underwriter: {{ $company->name ?? 'All Underwriters' }}
+            &nbsp;&middot;&nbsp; Generated: {{ now()->format('d F Y, h:i A') }} by {{ auth()->user()?->username ?? 'System' }}
         </p>
 
-        <div class="section-title">SUMMARY</div>
-        <div style="display:flex;gap:8px">
-            @foreach([
-                ['Total Quotations', number_format($summary['total_quotations'])],
-                ['Total Premium (KES)', number_format($summary['total_premium'], 2)],
-                ['Avg Premium (KES)', number_format($summary['average_premium'] ?? 0, 2)],
-                ['Avg Valuation (KES)', number_format($summary['average_valuation'] ?? 0, 2)],
-            ] as [$label, $value])
-                <div class="kpi" style="flex:1"><div class="kpi-label">{{ $label }}</div><div class="kpi-value">{{ $value }}</div></div>
-            @endforeach
-        </div>
+        @include('pdf.partials.report-analytics', ['analytics' => $analytics, 'unit' => $unit, 'showDownloads' => false])
 
-        <div class="section-title">QUOTATIONS BY COMPANY</div>
-        <table>
-            <thead><tr><th>Company</th><th style="text-align:right">Count</th><th style="text-align:right">Total Premium</th><th style="text-align:right">Avg Premium</th></tr></thead>
-            <tbody>
-                @forelse($byCompany as $name => $item)
-                    <tr><td>{{ $name }}</td><td style="text-align:right">{{ $item['count'] }}</td><td style="text-align:right">{{ number_format($item['total_premium'], 2) }}</td><td style="text-align:right">{{ number_format($item['average_premium'] ?? 0, 2) }}</td></tr>
-                @empty
-                    <tr><td colspan="4" style="text-align:center;color:#94a3b8">No data</td></tr>
-                @endforelse
-                <tr class="total-row"><td>Total</td><td style="text-align:right">{{ $summary['total_quotations'] }}</td><td style="text-align:right">{{ number_format($summary['total_premium'], 2) }}</td><td style="text-align:right">—</td></tr>
-            </tbody>
-        </table>
-
-        <div class="section-title">DAILY TREND</div>
-        <table>
-            <thead><tr><th>Date</th><th style="text-align:right">Quotations</th><th style="text-align:right">Total Premium</th></tr></thead>
-            <tbody>
-                @forelse($byDay as $date => $item)
-                    <tr><td>{{ $date }}</td><td style="text-align:right">{{ $item['count'] }}</td><td style="text-align:right">{{ number_format($item['total'], 2) }}</td></tr>
-                @empty
-                    <tr><td colspan="3" style="text-align:center;color:#94a3b8">No data</td></tr>
-                @endforelse
-            </tbody>
-        </table>
-
-        <div class="section-title">DETAILED REPORT &mdash; {{ $quotations->count() }} RECORDS</div>
+        <div class="page-break"></div>
+        <div class="section-title">Detailed Report &mdash; {{ $quotations->count() }} Records</div>
         <table>
             <thead><tr>
                 <th>Quotation #</th><th>Username</th><th>Company</th><th>Registration</th><th>Vehicle</th>
@@ -96,7 +77,7 @@
                         <td>{{ $q->created_at->format('d M Y') }}</td>
                     </tr>
                 @empty
-                    <tr><td colspan="10" style="text-align:center;color:#94a3b8">No records found for the selected filters.</td></tr>
+                    <tr><td colspan="10" class="muted" style="text-align:center">No records found for the selected filters.</td></tr>
                 @endforelse
             </tbody>
         </table>

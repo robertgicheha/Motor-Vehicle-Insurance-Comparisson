@@ -104,7 +104,8 @@ class ChangeRequestController extends Controller
         switch ($changeRequest->type) {
             case 'setting':
                 foreach ($data as $key => $value) {
-                    \App\Models\Setting::setValue($key, $value);
+                    $group = \App\Models\Setting::where('key', $key)->value('group') ?? 'general';
+                    \App\Models\Setting::setValue($key, $value, $group);
                 }
                 break;
 

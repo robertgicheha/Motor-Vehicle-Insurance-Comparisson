@@ -28,7 +28,7 @@
             </div>
         @endif
 
-        <div class="rounded-2xl bg-micblue px-6 py-7 shadow-sm">
+        <div class="rounded-2xl bg-micblue px-6 py-7 shadow-sm border-l-4 border-[#ED1D25]">
             <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
                 <div>
                     <p class="text-[10px] font-semibold uppercase tracking-widest text-blue-400">Welcome back</p>
@@ -40,7 +40,7 @@
 
         @if($isAdmin)
             <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 gap-4">
-                <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-5">
+                <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 border-t-4 border-t-[#ED1D25] p-5">
                     <div class="flex items-center gap-3">
                         <div class="w-10 h-10 rounded-xl bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center shrink-0">
                             <svg class="w-5 h-5 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>

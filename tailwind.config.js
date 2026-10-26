@@ -28,6 +28,11 @@ export default {
                 micblue: '#263B8B',
                 ga: '#005baa',
                 sanlam: '#1d3c6e',
+                lolc: {
+                    red: '#ED1D25',
+                    'red-dark': '#B6161C',
+                    navy: '#263B8B',
+                },
             },
         },
     },

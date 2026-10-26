@@ -2,11 +2,11 @@
 <div class="space-y-6 pt-16 md:pt-10 fade-in">
 
     {{-- ─── HERO ─────────────────────────────────────────────────────────── --}}
-    <div class="rounded-2xl bg-micblue px-6 py-7 shadow-sm">
+    <div class="rounded-2xl bg-micblue px-6 py-7 shadow-sm border-l-4 border-[#ED1D25]">
         <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
             <div>
                 <p class="text-[10px] font-semibold uppercase tracking-widest text-blue-400">Dashboard</p>
-                <h1 class="mt-0.5 text-xl font-bold text-white">{{ $greeting }}, {{ auth()->user()->first_name ?: auth()->user()->name }}!</h1>
+                <h1 class="mt-0.5 text-xl font-bold text-white">{{ $greeting }}, {{ auth()->user()->username }}!</h1>
                 <p class="mt-0.5 text-xs text-slate-400">Platform overview, quotations and account activity</p>
             </div>
             <div class="flex items-center gap-2 shrink-0">
@@ -18,7 +18,7 @@
 
 
                 <a href="{{ route('quotations.create') }}"
-                   class="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold bg-blue-500 hover:bg-blue-400 text-white rounded-lg transition">
+                   class="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold bg-[#ED1D25] hover:bg-[#B6161C] text-white rounded-lg transition">
                     <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
                     New Quotation
                 </a>
@@ -30,7 +30,7 @@
         {{-- ─── KPI CARDS (4-COLUMN) ────────────────────────────────────── --}}
         <div class="mt-6 grid grid-cols-2 md:grid-cols-4 gap-3">
             <a href="{{ route('quotations.index') }}" class="kpi-card p-4 block hover:opacity-80 transition">
-                <div class="accent-bar"></div>
+                <div class="accent-bar" style="background:linear-gradient(90deg,#ED1D25,#F4737A)"></div>
                 <p class="kpi-eyebrow">Total Quotations</p>
                 <p class="kpi-value mt-1">{{ $totalQuotations }}</p>
                 <span class="kpi-delta neutral mt-1.5 inline-block">All your quotes</span>
@@ -824,11 +824,6 @@
           <div class="db-kpi-label" style="margin-bottom:0">Email Templates</div>
           <div class="db-kpi-sub">Edit inbound / outbound emails</div>
         </a>
-        <a href="{{ route('admin.settings.index') }}" class="db-kpi" style="--accent:#c0392b;--icon-bg:#fdeaea;cursor:pointer;text-decoration:none;display:flex;flex-direction:column;">
-          <div class="db-kpi-icon"><x-icon name="settings" class="w-4 h-4" aria-hidden="true" /></div>
-          <div class="db-kpi-label" style="margin-bottom:0">Mail Settings</div>
-          <div class="db-kpi-sub">SMTP &amp; delivery configuration</div>
-        </a>
         <a href="{{ route('admin.reports.index') }}" class="db-kpi" style="--accent:#1E40AF;--icon-bg:#e0edff;cursor:pointer;text-decoration:none;display:flex;flex-direction:column;">
           <div class="db-kpi-icon"><x-icon name="report" class="w-4 h-4" aria-hidden="true" /></div>
           <div class="db-kpi-label" style="margin-bottom:0">Generate Reports</div>
@@ -912,7 +907,7 @@
             <div class="db-activity-item">
               <div class="db-activity-dot" style="background:#d4860e"></div>
               <div>
-                <div class="db-activity-text"><a href="{{ route('admin.claims.show', $claim) }}" style="color:#d4860e;font-weight:700">{{ $claim->claim_number }}</a> &mdash; {{ $claim->customer_name ?? 'N/A' }}</div>
+                <div class="db-activity-text"><a href="{{ route('admin.claims.show', $claim) }}" style="color:#d4860e;font-weight:700">{{ $claim->claim_number }}</a> &mdash; {{ $claim->vehicle_description }}</div>
                 <div class="db-activity-time">{{ $claim->created_at->diffForHumans() }}</div>
               </div>
             </div>

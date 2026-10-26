@@ -6,7 +6,7 @@
 
       <div class="db-top-bar">
         <div class="db-greeting">
-          <h1>{{ $greeting }}, {{ auth()->user()->first_name ?: auth()->user()->name }}!</h1>
+          <h1>{{ $greeting }}, {{ auth()->user()->username }}!</h1>
           <p>Super Admin Dashboard &mdash; Motor Insurance Portal</p>
         </div>
         <div class="db-weather" x-data="weatherWidget()" x-init="init()">
@@ -211,9 +211,9 @@
           <div class="db-kpi-label" style="margin-bottom:0">Email Templates</div>
           <div class="db-kpi-sub">Edit inbound / outbound emails</div>
         </a>
-        <a href="{{ route('admin.settings.index') }}" class="db-kpi" style="--accent:#1756c8;--icon-bg:#e8f0fc;cursor:pointer;text-decoration:none;display:flex;flex-direction:column;">
+        <a href="{{ route('admin.email-config.index') }}" class="db-kpi" style="--accent:#ED1D25;--icon-bg:#fdeaea;cursor:pointer;text-decoration:none;display:flex;flex-direction:column;">
           <div class="db-kpi-icon"><x-icon name="settings" class="w-4 h-4" aria-hidden="true" /></div>
-          <div class="db-kpi-label" style="margin-bottom:0">Mail Settings</div>
+          <div class="db-kpi-label" style="margin-bottom:0">Email Settings</div>
           <div class="db-kpi-sub">SMTP &amp; delivery configuration</div>
         </a>
       </div>
@@ -255,7 +255,7 @@
                 @forelse($recentQuotations as $q)
                 <tr>
                   <td><a href="{{ route('quotations.show', $q) }}" style="color:#1756c8;font-weight:700">{{ $q->quotation_number }}</a></td>
-                  <td>{{ $q->customer_name }}</td>
+                  <td>{{ $q->user?->username ?? '—' }}</td>
                   <td>{{ $q->company->name }}</td>
                   <td>{{ $q->car_make }} {{ $q->car_model }}</td>
                   <td>{{ number_format($q->total_premium) }}</td>
@@ -585,7 +585,7 @@
             @forelse($recentQuotations as $q)
             <tr>
               <td><a href="{{ route('quotations.show', $q) }}" style="color:#1756c8;font-weight:700">{{ $q->quotation_number }}</a></td>
-              <td>{{ $q->customer_name }}</td>
+              <td>{{ $q->user?->username ?? '—' }}</td>
               <td>{{ $q->company->name }}</td>
               <td>{{ $q->car_make }} {{ $q->car_model }}</td>
               <td>{{ number_format($q->total_premium) }}</td>
@@ -611,7 +611,7 @@
           <option value="">— Select a quotation —</option>
           @foreach($recentQuotations ?? [] as $rq)
           <option value="{{ $rq->id }}" data-download="{{ route('quotations.download.pdf', $rq) }}" data-show="{{ route('quotations.show', $rq) }}">
-            {{ $rq->quotation_number }} — {{ $rq->customer_name }}
+            {{ $rq->quotation_number }} — {{ $rq->user?->username ?? '—' }}
           </option>
           @endforeach
         </select>

@@ -37,9 +37,9 @@
             <h2>Dear {{ $underwriter_name }},</h2>
 
             @if($client_type === 'corporate')
-            <p>A new motor insurance sticker has been requested on behalf of the corporate client below. The KYC documents have been uploaded and verified. Please find the owner and vehicle details below, along with the quotation attached for your perusal, and respond to this email thread with the Sticker and Policy Document attached.</p>
+            <p>A new motor insurance sticker has been requested on behalf of the corporate client below. The KYC documents have been uploaded and verified. Please find the client and vehicle details below, along with the quotation attached for your perusal, and respond to this email thread with the Sticker and Policy Document attached.</p>
             @else
-            <p>A new motor insurance sticker has been requested for the individual client below. The KYC documents have been uploaded and verified. Please find the owner and vehicle details below, along with the quotation attached for your perusal, and respond to this email thread with the Sticker and Policy Document attached.</p>
+            <p>A new motor insurance sticker has been requested for the individual client below. The KYC documents have been uploaded and verified. Please find the client and vehicle details below, along with the quotation attached for your perusal, and respond to this email thread with the Sticker and Policy Document attached.</p>
             @endif
 
             @if($admin_notes)
@@ -55,11 +55,9 @@
             </div>
             <p style="font-size:11px;color:#94a3b8;text-align:center;margin-top:-10px">The amount above is subject to the underwriter's confirmation.</p>
 
-            <h2>Owner Details</h2>
+            <h2>Client Details</h2>
             <table class="details-table">
                 <tr><td>Client Type</td><td>{{ $client_type_label }}</td></tr>
-                <tr><td>Salutation</td><td>{{ $salutation ?: 'N/A' }}</td></tr>
-                <tr><td>Customer Name</td><td>{{ $customer_name }}</td></tr>
             </table>
 
             <h2>Vehicle Details</h2>

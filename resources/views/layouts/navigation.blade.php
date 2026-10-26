@@ -112,7 +112,7 @@
             @php $navUser = auth()->user(); @endphp
             <button @click="open = !open" class="flex items-center gap-2 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none">
                 <div class="w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-medium overflow-hidden"
-                    style="background-color: #005F9E;">
+                    style="background-color: #263B8B;">
                     @if($navUser->avatar && file_exists(public_path($navUser->avatar)))
                         <img src="{{ asset($navUser->avatar) }}" alt="{{ $navUser->name }}" class="w-full h-full object-cover">
                     @else

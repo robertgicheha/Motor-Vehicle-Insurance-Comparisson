@@ -79,7 +79,7 @@
     {{-- BODY --}}
     <div class="pdf-body">
         <p style="margin-top:4px">{{ $now }}</p>
-        <p>Dear {{ $sticker->customer_name }},</p>
+        <p>Dear Sir/Madam,</p>
         <h2>MOTOR INSURANCE STICKER</h2>
         <p class="pdf-date">
             Sticker ID: <strong>{{ $sticker->sticker_number }}</strong>
@@ -90,16 +90,14 @@
         </p>
         <p>This document confirms that the vehicle described below is covered under a {{ $sticker->cover_type }} motor insurance policy with {{ $company->name }}.</p>
 
-        <div class="section-title">CUSTOMER DETAILS</div>
+        <div class="section-title">CLIENT DETAILS</div>
         <table>
             <thead>
-                <tr><th>Customer Name</th><th>Phone</th><th>Email</th></tr>
+                <tr><th>Client Type</th></tr>
             </thead>
             <tbody>
                 <tr>
-                    <td>{{ $sticker->customer_name }}</td>
-                    <td>{{ $sticker->customer_phone ?? '—' }}</td>
-                    <td>{{ $sticker->customer_email ?? '—' }}</td>
+                    <td>{{ $sticker->client_type === 'corporate' ? 'Corporate' : 'Individual' }}</td>
                 </tr>
             </tbody>
         </table>

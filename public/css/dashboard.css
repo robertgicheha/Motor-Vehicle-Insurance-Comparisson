@@ -59,6 +59,8 @@ body {
   gap: 8px;
   margin-top: 6px;
   margin-bottom: 14px;
+  border-left: 3px solid var(--red);
+  padding-left: 12px;
 }
 
 .db-greeting h1 {
@@ -152,7 +154,7 @@ body {
 }
 
 .db-kpi:hover {
-  background: #005F9E !important;
+  background: var(--blue) !important;
 }
 .db-kpi:hover .db-kpi-label,
 .db-kpi:hover .db-kpi-sub,
@@ -337,7 +339,7 @@ body {
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: #1756c8;
+  background: var(--red);
   display: inline-block;
   margin-right: 5px;
 }
@@ -582,7 +584,7 @@ body {
   min-width: 0;
   cursor: pointer;
 }
-.kpi-card:hover { background: #005F9E !important; transform: translateY(-2px); }
+.kpi-card:hover { background: var(--blue) !important; transform: translateY(-2px); }
 .kpi-card:hover .kpi-eyebrow,
 .kpi-card:hover .kpi-delta,
 .kpi-card:hover .kpi-sub,

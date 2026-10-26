@@ -1,29 +1,64 @@
 <x-app-layout>
 <div class="space-y-5 pt-8 fade-in">
 
+    @php
+        // Mail/SMTP settings now live on the Email Settings page (super-admin).
+        $visible = $settings->reject(fn ($v, $k) => $k === 'email');
+
+        $groupTitles = [
+            'general'       => 'General Settings',
+            'quotations'    => 'Quotation Settings',
+            'appearance'    => 'Appearance',
+            'notifications' => 'Notifications',
+            'api'           => 'API Settings',
+            'integrations'  => 'Integrations',
+            'security'      => 'Security',
+        ];
+
+        $groupDescriptions = [
+            'general'       => 'Core site information — name, timezone, currency, and defaults.',
+            'quotations'    => 'Rules and defaults used when generating quotations.',
+            'appearance'    => 'Branding, logo, favicon, and theme colour.',
+            'notifications' => 'System and alert preferences.',
+            'api'           => 'API keys, tokens, and rate limits.',
+            'integrations'  => 'Third-party service connections.',
+            'security'      => 'Password policy, 2FA, and access controls.',
+        ];
+
+        $groupAccents = [
+            'general'       => '#3b82f6',
+            'quotations'    => '#6366f1',
+            'appearance'    => '#ED1D25',
+            'notifications' => '#f59e0b',
+            'api'           => '#8b5cf6',
+            'integrations'  => '#14b8a6',
+            'security'      => '#10b981',
+        ];
+    @endphp
+
     {{-- ─── HERO ─────────────────────────────────────────────────────────────── --}}
-    <div class="rounded-2xl bg-micblue px-6 py-6 shadow-sm">
+    <div class="rounded-2xl bg-micblue px-6 py-6 shadow-sm border-l-4 border-[#ED1D25]">
         <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
             <div>
                 <p class="text-[10px] font-semibold uppercase tracking-widest text-blue-400">Configuration</p>
                 <h1 class="mt-0.5 text-lg font-bold text-white">Settings</h1>
-                <p class="mt-0.5 text-[11px] text-slate-400">Manage all system settings — general, email, quotations, API, security &amp; more</p>
+                <p class="mt-0.5 text-[11px] text-slate-400">Manage system preferences — general, quotations, appearance, notifications &amp; more</p>
             </div>
             <div class="flex items-center gap-2 text-[11px] text-slate-400">
                 <span class="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-blue-500/20 text-blue-300">
                     <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
-                    {{ $settings->count() }} groups
+                    {{ $visible->count() }} groups
                 </span>
                 <span class="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-green-500/20 text-green-300">
                     <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                    {{ $settings->sum(fn($g) => $g->count()) }} settings
+                    {{ $visible->sum(fn($g) => $g->count()) }} settings
                 </span>
             </div>
         </div>
 
         <div class="mt-5 grid grid-cols-2 md:grid-cols-4 gap-3">
             <div class="kpi-card p-3.5">
-                <div class="accent-bar"></div>
+                <div class="accent-bar" style="background:linear-gradient(90deg,#ED1D25,#f4737a)"></div>
                 <p class="kpi-eyebrow text-[10px]">Environment</p>
                 <p class="kpi-value mt-1 text-sm">{{ app()->environment() }}</p>
                 <span class="kpi-delta neutral mt-1 inline-block text-[10px]">App environment</span>
@@ -49,56 +84,50 @@
         </div>
     </div>
 
-    @php
-    // One card per original settings group, with friendly display names — no merging.
-    $groupTitles = [
-        'general'       => 'General Settings',
-        'quotations'    => 'Quotation Settings',
-        'appearance'    => 'Appearance',
-        'notifications' => 'Notifications',
-        'email'         => 'Mail Settings',
-        'api'           => 'API Settings',
-        'integrations'  => 'Integrations',
-        'security'      => 'Security',
-    ];
+    {{-- ─── EMAIL SETTINGS MOVED (super-admin) ─────────────────────────────── --}}
+    @if(auth()->user()->hasRole('super-admin'))
+        <a href="{{ route('admin.email-config.index') }}"
+           class="group flex items-center justify-between gap-4 rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-5 py-4 hover:border-[#ED1D25]/60 hover:shadow-sm transition">
+            <div class="flex items-center gap-3 min-w-0">
+                <div class="w-9 h-9 rounded-xl bg-[#fdeaea] flex items-center justify-center shrink-0">
+                    <svg class="w-4.5 h-5 text-[#ED1D25]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+                </div>
+                <div class="min-w-0">
+                    <p class="text-sm font-bold text-gray-900 dark:text-white">Email Settings</p>
+                    <p class="text-[11px] text-gray-400 dark:text-gray-500 truncate">SMTP &amp; delivery configuration now lives on its own page.</p>
+                </div>
+            </div>
+            <span class="inline-flex items-center gap-1 text-[11px] font-semibold text-[#ED1D25] shrink-0">
+                Open
+                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+            </span>
+        </a>
+    @endif
 
-    $groupDescriptions = [
-        'general'       => 'Core site information — name, timezone, currency, and defaults.',
-        'quotations'    => 'Rules and defaults used when generating quotations.',
-        'appearance'    => 'Branding, logo, favicon, and theme colour.',
-        'notifications' => 'Email and system alert preferences.',
-        'email'         => 'SMTP and email delivery settings for system notifications and quotations.',
-        'api'           => 'API keys, tokens, and rate limits.',
-        'integrations'  => 'Third-party service connections.',
-        'security'      => 'Password policy, 2FA, and access controls.',
-    ];
-@endphp
-
-    <div class="space-y-4">
-        @foreach($settings as $bucketName => $bucketSettings)
+    {{-- ─── SETTING GROUPS (carded grid) ───────────────────────────────────── --}}
+    <div class="grid grid-cols-1 xl:grid-cols-2 gap-4 items-start">
+        @foreach($visible as $bucketName => $bucketSettings)
             @continue($bucketSettings->isEmpty())
 
-            {{-- Card: matches profile page's bordered white section --}}
-            <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
-
+            <div class="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 overflow-hidden">
                 <form action="{{ route('admin.settings.update') }}" method="POST">
                     @csrf
 
-                    {{-- Card header row: title left, small action button right — mirrors "My Profile" / "Edit" row --}}
+                    <div class="h-1" style="background:linear-gradient(90deg,{{ $groupAccents[$bucketName] ?? '#3b82f6' }},{{ $groupAccents[$bucketName] ?? '#3b82f6' }}55)"></div>
+
                     <div class="flex items-start justify-between px-5 py-4 border-b border-gray-100 dark:border-gray-700">
                         <div>
                             <h2 class="text-sm font-bold text-gray-900 dark:text-white">{{ $groupTitles[$bucketName] ?? \Illuminate\Support\Str::title(str_replace('_', ' ', $bucketName)) }}</h2>
                             <p class="text-[11px] text-gray-400 dark:text-gray-500 mt-0.5">{{ $groupDescriptions[$bucketName] ?? '' }}</p>
                         </div>
                         <button type="submit"
-                                class="shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-semibold text-gray-700 dark:text-gray-200 border border-gray-200 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition">
+                                class="shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-semibold text-white bg-[#263B8B] hover:bg-[#1b2c66] rounded-lg transition">
                             <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
                             Save
                         </button>
                     </div>
 
-                    {{-- Field rows: tight label/value layout like profile's First Name / Last Name grid --}}
-                    <div class="px-5 py-3 grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-3.5">
+                    <div class="px-5 py-3 grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3.5">
                         @foreach($bucketSettings as $setting)
                             @php
                                 $key = $setting->key;
@@ -116,15 +145,13 @@
                                     $inputType = 'media';
                                 } elseif (str_contains($key, 'url') || str_contains($key, 'path')) {
                                     $inputType = 'url';
-                                } elseif (in_array($key, ['timezone', 'date_format', 'currency', 'currency_symbol', 'default_cover_type', 'mail_mailer', 'mail_encryption', 'primary_color'])) {
+                                } elseif (in_array($key, ['timezone', 'date_format', 'currency', 'currency_symbol', 'default_cover_type', 'primary_color'])) {
                                     $inputType = 'select';
                                     if ($key === 'timezone') $options = ['Africa/Nairobi', 'UTC', 'America/New_York', 'Europe/London', 'Asia/Dubai'];
                                     elseif ($key === 'date_format') $options = ['d M Y', 'Y-m-d', 'm/d/Y', 'd/m/Y'];
                                     elseif ($key === 'currency') $options = ['KES', 'USD', 'EUR', 'GBP'];
                                     elseif ($key === 'currency_symbol') $options = ['KES', '$', '€', '£'];
                                     elseif ($key === 'default_cover_type') $options = ['comprehensive', 'third_party', 'third_party_fire_theft'];
-                                    elseif ($key === 'mail_mailer') $options = ['smtp', 'log', 'sendmail', 'ses', 'postmark', 'mailgun'];
-                                    elseif ($key === 'mail_encryption') $options = ['tls', 'ssl', 'none'];
                                     elseif ($key === 'primary_color') $inputType = 'color';
                                 } elseif (is_numeric($value) || str_contains($key, 'count') || str_contains($key, 'limit') || str_contains($key, 'days') || str_contains($key, 'lifetime') || str_contains($key, 'length') || str_contains($key, 'rate') || str_contains($key, 'per_page') || str_contains($key, 'port') || str_contains($key, 'valuation')) {
                                     $inputType = 'number';
@@ -167,7 +194,7 @@
                                                id="setting-{{ $key }}" readonly
                                                onclick="openSettingMediaPicker('setting-{{ $key }}')" style="cursor:pointer">
                                         <button type="button" onclick="openSettingMediaPicker('setting-{{ $key }}')"
-                                                class="px-2.5 py-1.5 text-[11px] font-semibold bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition whitespace-nowrap">
+                                                class="px-2.5 py-1.5 text-[11px] font-semibold bg-[#263B8B] hover:bg-[#1b2c66] text-white rounded-lg transition whitespace-nowrap">
                                             Browse
                                         </button>
                                         @if($value)
@@ -197,7 +224,7 @@
         <div class="flex items-start justify-between px-6 py-4 border-b border-gray-100 dark:border-gray-700">
             <div class="flex items-center gap-3">
                 <div class="w-9 h-9 rounded-xl bg-indigo-50 dark:bg-indigo-900/30 flex items-center justify-center shrink-0">
-                    <svg class="w-4.5 h-4.5 w-5 h-5 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                    <svg class="w-5 h-5 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
                 </div>
                 <div>
                     <h2 class="text-sm font-bold text-gray-900 dark:text-white">Cache Management</h2>

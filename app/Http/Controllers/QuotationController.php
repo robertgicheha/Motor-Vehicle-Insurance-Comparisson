@@ -175,7 +175,7 @@ class QuotationController extends Controller
             ];
                 
             // ── Users list for admin "Apply for User" modal ──────────
-            $users = ($isAdmin || $isSuperAdmin) ? \App\Models\User::orderBy('username')->get(['id', 'username', 'email']) : collect();
+            $users = ($isAdmin || $isSuperAdmin) ? \App\Models\User::orderBy('username')->get(['id', 'username']) : collect();
         
             $companies = Company::active()->with('rates')->get();
             session(['quotations_last_viewed_at' => now()]);
@@ -239,7 +239,7 @@ class QuotationController extends Controller
             ->get()
             ->groupBy('company_id');
 
-        $users = $isAdmin ? User::orderBy('username')->get(['id', 'username', 'email']) : collect();
+        $users = $isAdmin ? User::orderBy('username')->get(['id', 'username']) : collect();
         $targetUser = null;
         if ($isAdmin && request('on_behalf_of')) {
             $targetUser = User::find(request('on_behalf_of'));

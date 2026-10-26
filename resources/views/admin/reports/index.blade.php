@@ -177,6 +177,7 @@
         </div>
 
         {{-- Dashboard pane --}}
+        {{-- Dashboard pane --}}
         <div id="pane-dashboard" class="space-y-6">
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3" id="summaryCards"></div>
 
@@ -450,11 +451,11 @@
                 : { eyebrow: 'Forecast Next', value: fmtInt(Math.round(a.forecast.counts[0] || 0)), sub: a.forecast.labels[0] || 'Next period', accent: 'linear-gradient(90deg,#a78bfa,#c4b5fd)', cls: '' }
         ];
         document.getElementById('summaryCards').innerHTML = cards.map(c => `
-            <div class="kpi-card p-4">
+            <div class="kpi-card p-4" style="background-color:#263B8B;border:1px solid rgba(255,255,255,0.12);">
                 <div class="accent-bar" ${c.accent ? `style="background:${c.accent}"` : ''}></div>
-                <p class="kpi-eyebrow">${c.eyebrow}</p>
-                <p class="kpi-value mt-1 ${c.cls}">${c.value}</p>
-                <span class="kpi-delta neutral mt-1.5 inline-block">${c.sub}</span>
+                <p class="kpi-eyebrow text-blue-200/70">${c.eyebrow}</p>
+                <p class="kpi-value mt-1 ${c.cls || 'text-white'}">${c.value}</p>
+                <span class="kpi-delta neutral mt-1.5 inline-block text-blue-200/70">${c.sub}</span>
             </div>`).join('');
     }
 

@@ -18,7 +18,7 @@
             <div>
                 <p class="text-[10px] font-semibold uppercase tracking-widest text-blue-400">System</p>
                 <h1 class="mt-0.5 text-lg font-bold text-white">Email Settings</h1>
-                <p class="mt-0.5 text-[11px] text-slate-400">Choose the mail provider and manage the credentials used for all system emails</p>
+                <p class="mt-0.5 text-[11px] text-slate-400">Configure LOLC's Custom SMTP server used for all system emails</p>
             </div>
             <span class="inline-flex items-center gap-1 self-start px-2.5 py-1 rounded-lg bg-amber-500/20 text-amber-200 text-[11px] font-semibold">
                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
@@ -32,144 +32,35 @@
         <div class="flex gap-3">
             <svg class="w-4 h-4 text-blue-500 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
             <div class="text-[11px] leading-relaxed text-blue-800 dark:text-blue-200">
-                <p class="font-semibold">All credentials — both the default provider and LOLC's Custom SMTP — are stored securely in the server's <code class="px-1 rounded bg-blue-100 dark:bg-blue-900/40">.env</code> file as environment variables, separate from application code and never in the database.</p>
+                <p class="font-semibold">Credentials are stored securely in the server's <code class="px-1 rounded bg-blue-100 dark:bg-blue-900/40">.env</code> file as environment variables, separate from application code and never in the database.</p>
                 <p class="mt-1">They are encrypted using Laravel's built-in environment encryption, and this page is strictly restricted to the <strong>Superadmin</strong> role. Use <strong>Encrypt environment file</strong> below to write the encrypted <code class="px-1 rounded bg-blue-100 dark:bg-blue-900/40">.env.encrypted</code> copy.</p>
             </div>
         </div>
     </div>
 
-    @php $currentProvider = old('provider', $config['provider'] ?? 'default'); @endphp
-
-    {{-- ─── PROVIDER + CREDENTIALS ───────────────────────────────────────── --}}
-    <form action="{{ route('admin.email-config.update') }}" method="POST" x-data="{ provider: '{{ $currentProvider }}' }" class="space-y-5">
+    {{-- ─── LOLC CUSTOM SMTP ─────────────────────────────────────────────── --}}
+    <form action="{{ route('admin.email-config.update') }}" method="POST" class="space-y-5">
         @csrf
+        <input type="hidden" name="provider" value="lolc">
 
-        {{-- Delivery provider selector --}}
         <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
-            <div class="px-6 py-4 border-b border-gray-100 dark:border-gray-700">
-                <h2 class="text-sm font-bold text-gray-900 dark:text-white">Delivery Provider</h2>
-                <p class="text-[11px] text-gray-400 mt-0.5">Which mail server sends the portal's emails</p>
-            </div>
-            <div class="px-6 py-5 grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <label class="cursor-pointer rounded-xl border p-4 transition"
-                       :class="provider === 'default' ? 'border-blue-500 ring-2 ring-blue-500/30 bg-blue-50/40 dark:bg-blue-900/10' : 'border-gray-200 dark:border-gray-600 hover:border-gray-300'">
-                    <input type="radio" name="provider" value="default" x-model="provider" class="sr-only">
-                    <div class="flex items-center justify-between">
-                        <span class="text-sm font-semibold text-gray-900 dark:text-white">Default</span>
-                        <span class="w-4 h-4 rounded-full border-2 flex items-center justify-center"
-                              :class="provider === 'default' ? 'border-blue-500' : 'border-gray-300 dark:border-gray-500'">
-                            <span class="w-2 h-2 rounded-full bg-blue-500" x-show="provider === 'default'"></span>
-                        </span>
-                    </div>
-                    <p class="text-[11px] text-gray-400 mt-1">Postmark, SES, Sendmail or a generic SMTP server (the standard <code>MAIL_*</code> transport).</p>
-                </label>
-
-                <label class="cursor-pointer rounded-xl border p-4 transition"
-                       :class="provider === 'lolc' ? 'border-blue-500 ring-2 ring-blue-500/30 bg-blue-50/40 dark:bg-blue-900/10' : 'border-gray-200 dark:border-gray-600 hover:border-gray-300'">
-                    <input type="radio" name="provider" value="lolc" x-model="provider" class="sr-only">
-                    <div class="flex items-center justify-between">
-                        <span class="text-sm font-semibold text-gray-900 dark:text-white">Custom SMTP (LOLC)</span>
-                        <span class="w-4 h-4 rounded-full border-2 flex items-center justify-center"
-                              :class="provider === 'lolc' ? 'border-blue-500' : 'border-gray-300 dark:border-gray-500'">
-                            <span class="w-2 h-2 rounded-full bg-blue-500" x-show="provider === 'lolc'"></span>
-                        </span>
-                    </div>
-                    <p class="text-[11px] text-gray-400 mt-1">Send through LOLC's own mail server, so mail originates from their infrastructure.</p>
-                </label>
-            </div>
-            @error('provider') <p class="px-6 pb-4 text-xs text-red-500">{{ $message }}</p> @enderror
-        </div>
-
-        {{-- Default mail server --}}
-        <div x-show="provider === 'default'" x-cloak class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
-            <div class="px-6 py-4 border-b border-gray-100 dark:border-gray-700">
-                <h2 class="text-sm font-bold text-gray-900 dark:text-white">Default Mail Server</h2>
-                <p class="text-[11px] text-gray-400 mt-0.5">Connection details for the standard outbound transport</p>
-            </div>
-            <div class="px-6 py-5 grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                    <label class="block text-[11px] font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500 mb-1.5">Mail Mailer</label>
-                    <select name="mailer" class="w-full px-3.5 py-2.5 text-sm rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500">
-                        @foreach(['smtp' => 'SMTP', 'ses' => 'Amazon SES', 'postmark' => 'Postmark', 'resend' => 'Resend', 'sendmail' => 'Sendmail', 'mailtrap' => 'Mailtrap', 'log' => 'Log (development)', 'array' => 'Array (testing)'] as $value => $label)
-                            <option value="{{ $value }}" {{ old('mailer', $config['mailer']) === $value ? 'selected' : '' }}>{{ $label }}</option>
-                        @endforeach
-                    </select>
-                    @error('mailer') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
-                </div>
-                <div>
-                    <label class="block text-[11px] font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500 mb-1.5">Mail Encryption</label>
-                    <select name="encryption" class="w-full px-3.5 py-2.5 text-sm rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500">
-                        <option value="" {{ old('encryption', $config['encryption']) === '' || old('encryption', $config['encryption']) === null ? 'selected' : '' }}>None / auto</option>
-                        <option value="tls" {{ old('encryption', $config['encryption']) === 'tls' ? 'selected' : '' }}>TLS (STARTTLS — port 587)</option>
-                        <option value="ssl" {{ old('encryption', $config['encryption']) === 'ssl' ? 'selected' : '' }}>SSL (implicit — port 465)</option>
-                    </select>
-                    @error('encryption') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
-                </div>
-                <div>
-                    <label class="block text-[11px] font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500 mb-1.5">Mail Host</label>
-                    <input type="text" name="host" value="{{ old('host', $config['host']) }}" placeholder="smtp.example.com"
-                           class="w-full px-3.5 py-2.5 text-sm rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500">
-                    @error('host') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
-                </div>
-                <div>
-                    <label class="block text-[11px] font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500 mb-1.5">Mail Port</label>
-                    <input type="number" name="port" value="{{ old('port', $config['port']) }}" placeholder="587" min="1" max="65535"
-                           class="w-full px-3.5 py-2.5 text-sm rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500">
-                    @error('port') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
-                </div>
-                <div>
-                    <label class="block text-[11px] font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500 mb-1.5">Mail Username</label>
-                    <input type="text" name="username" value="{{ old('username', $config['username']) }}" autocomplete="off"
-                           class="w-full px-3.5 py-2.5 text-sm rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500">
-                    @error('username') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
-                </div>
-                <div>
-                    <label class="block text-[11px] font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500 mb-1.5">Mail Password</label>
-                    <div class="relative" x-data="{ show: false }">
-                        <input :type="show ? 'text' : 'password'" name="password" value="" autocomplete="new-password"
-                               placeholder="{{ $config['password'] ? '•••••••• (leave blank to keep current)' : 'Enter password' }}"
-                               class="w-full px-3.5 py-2.5 pr-10 text-sm rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500">
-                        <button type="button" @click="show = !show" class="absolute inset-y-0 right-0 px-3 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200" tabindex="-1">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
-                        </button>
-                    </div>
-                    <p class="text-[10px] text-gray-400 mt-1">Write-only for security — the current password is never displayed.</p>
-                    @error('password') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
-                </div>
-                <div>
-                    <label class="block text-[11px] font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500 mb-1.5">Mail From Address</label>
-                    <input type="email" name="from_address" value="{{ old('from_address', $config['from_address']) }}" placeholder="no-reply@example.com"
-                           class="w-full px-3.5 py-2.5 text-sm rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500">
-                    @error('from_address') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
-                </div>
-                <div>
-                    <label class="block text-[11px] font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500 mb-1.5">Mail From Name</label>
-                    <input type="text" name="from_name" value="{{ old('from_name', $config['from_name']) }}" placeholder="LOLC Microfinance Bank"
-                           class="w-full px-3.5 py-2.5 text-sm rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500">
-                    @error('from_name') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
-                </div>
-            </div>
-        </div>
-
-        {{-- Custom SMTP (LOLC) --}}
-        <div x-show="provider === 'lolc'" x-cloak class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
             <div class="px-6 py-4 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between">
                 <div>
                     <h2 class="text-sm font-bold text-gray-900 dark:text-white">Custom SMTP — LOLC Mail Server</h2>
-                    <p class="text-[11px] text-gray-400 mt-0.5">LOLC's own SMTP credentials. When selected, all email leaves from their server.</p>
+                    <p class="text-[11px] text-gray-400 mt-0.5">All portal emails are sent through LOLC's SMTP server.</p>
                 </div>
                 <span class="hidden sm:inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-300">LOLC</span>
             </div>
             <div class="px-6 py-5 grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                     <label class="block text-[11px] font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500 mb-1.5">SMTP Host <span class="text-rose-500">*</span></label>
-                    <input type="text" name="lolc_host" value="{{ old('lolc_host', $lolc['host']) }}" placeholder="mail.lolc.com"
+                    <input type="text" name="lolc_host" value="{{ old('lolc_host', $lolc['host']) }}" placeholder="mail.lolc.com" required
                            class="w-full px-3.5 py-2.5 text-sm rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500">
                     @error('lolc_host') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
                 </div>
                 <div>
                     <label class="block text-[11px] font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500 mb-1.5">SMTP Port <span class="text-rose-500">*</span></label>
-                    <input type="number" name="lolc_port" value="{{ old('lolc_port', $lolc['port']) }}" placeholder="587" min="1" max="65535"
+                    <input type="number" name="lolc_port" value="{{ old('lolc_port', $lolc['port']) }}" placeholder="587" min="1" max="65535" required
                            class="w-full px-3.5 py-2.5 text-sm rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500">
                     @error('lolc_port') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
                 </div>
@@ -213,9 +104,6 @@
                            class="w-full px-3.5 py-2.5 text-sm rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500">
                     @error('lolc_from_name') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
                 </div>
-            </div>
-            <div class="px-6 pb-5">
-                <p class="text-[11px] text-gray-400">LOLC will provide these values. Mail is sent from their server only while <strong>Custom SMTP (LOLC)</strong> is the selected provider.</p>
             </div>
         </div>
 

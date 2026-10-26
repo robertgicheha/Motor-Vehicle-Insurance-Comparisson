@@ -78,7 +78,8 @@
       </div>
       <script>
       document.addEventListener('DOMContentLoaded', function () {
-          if (window._toastManager) {
+          if (window._toastManager && !window._stickerReminderToastShown) {
+              window._stickerReminderToastShown = true;
               window._toastManager.addToast(
                   {{ Illuminate\Support\Js::from($stickerNumberReminders->count() . ' sticker' . ($stickerNumberReminders->count() > 1 ? 's' : '') . ' awaiting the underwriter\'s sticker number.') }},
                   'warning'
@@ -100,58 +101,58 @@
       @endphp
       <div class="db-section-label">Key Metrics</div>
       <div class="db-kpi-grid">
-        <a href="{{ route('admin.users.index') }}" class="db-kpi" style="--accent:#1756c8;--icon-bg:#e8f0fc;cursor:pointer;text-decoration:none;">
-          <div class="db-kpi-icon"><x-icon name="users" class="w-4 h-4" aria-hidden="true" /></div>
-          <div class="db-kpi-label">Total Users</div>
-          <div class="db-kpi-value">{{ $totalUsers }}</div>
-          {!! $trendBadge($trends['users'], 'this month') !!}
+        <a href="{{ route('admin.users.index') }}" class="db-kpi" style="--accent:#ED1D25;--icon-bg:rgba(255,255,255,0.15);background-color:#263B8B;border:1px solid rgba(255,255,255,0.12);cursor:pointer;text-decoration:none;">
+          <div class="db-kpi-icon" style="color:#fff"><x-icon name="users" class="w-4 h-4" aria-hidden="true" /></div>
+          <div class="db-kpi-label" style="color:rgba(255,255,255,0.75)">Total Users</div>
+          <div class="db-kpi-value" style="color:#fff">{{ $totalUsers }}</div>
+          <div class="text-[10px] text-blue-200/70">{!! $trendBadge($trends['users'], 'this month') !!}</div>
         </a>
 
-        <a href="{{ route('admin.companies.index') }}" class="db-kpi" style="--accent:#7c3aed;--icon-bg:#ede9fe;cursor:pointer;text-decoration:none;">
-        <div class="db-kpi-icon"><x-icon name="building" class="w-4 h-4" aria-hidden="true" /></div>
-        <div class="db-kpi-label">Total Companies</div>
-        <div class="db-kpi-value">{{ $totalCompanies }}</div>
-        {!! $trendBadge($trends['companies'], 'this week') !!}
+        <a href="{{ route('admin.companies.index') }}" class="db-kpi" style="--accent:#ED1D25;--icon-bg:rgba(255,255,255,0.15);background-color:#263B8B;border:1px solid rgba(255,255,255,0.12);cursor:pointer;text-decoration:none;">
+        <div class="db-kpi-icon" style="color:#fff"><x-icon name="building" class="w-4 h-4" aria-hidden="true" /></div>
+        <div class="db-kpi-label" style="color:rgba(255,255,255,0.75)">Total Companies</div>
+        <div class="db-kpi-value" style="color:#fff">{{ $totalCompanies }}</div>
+        <div class="text-[10px] text-blue-200/70">{!! $trendBadge($trends['companies'], 'this week') !!}</div>
       </a>
 
-        <a href="{{ route('quotations.index') }}" class="db-kpi" style="--accent:#7c3aed;--icon-bg:#ede9fe;cursor:pointer;text-decoration:none;">
-          <div class="db-kpi-icon"><x-icon name="file-description" class="w-4 h-4" aria-hidden="true" /></div>
-          <div class="db-kpi-label">Total Quotations</div>
-          <div class="db-kpi-value">{{ $totalQuotations }}</div>
-          {!! $trendBadge($trends['quotations'], 'vs last month') !!}
+        <a href="{{ route('quotations.index') }}" class="db-kpi" style="--accent:#ED1D25;--icon-bg:rgba(255,255,255,0.15);background-color:#263B8B;border:1px solid rgba(255,255,255,0.12);cursor:pointer;text-decoration:none;">
+          <div class="db-kpi-icon" style="color:#fff"><x-icon name="file-description" class="w-4 h-4" aria-hidden="true" /></div>
+          <div class="db-kpi-label" style="color:rgba(255,255,255,0.75)">Total Quotations</div>
+          <div class="db-kpi-value" style="color:#fff">{{ $totalQuotations }}</div>
+          <div class="text-[10px] text-blue-200/70">{!! $trendBadge($trends['quotations'], 'vs last month') !!}</div>
         </a>
-        <a href="{{ route('quotations.index') }}" class="db-kpi" style="--accent:#d4860e;--icon-bg:#fef3c7;cursor:pointer;text-decoration:none;">
-          <div class="db-kpi-icon"><x-icon name="coins" class="w-4 h-4" aria-hidden="true" /></div>
-          <div class="db-kpi-label">Total Premium (KES)</div>
-          <div class="db-kpi-value" style="font-size:20px">{{ number_format($totalPremium) }}</div>
-          {!! $trendBadge($trends['premium'], 'growth') !!}
+        <a href="{{ route('quotations.index') }}" class="db-kpi" style="--accent:#ED1D25;--icon-bg:rgba(255,255,255,0.15);background-color:#263B8B;border:1px solid rgba(255,255,255,0.12);cursor:pointer;text-decoration:none;">
+          <div class="db-kpi-icon" style="color:#fff"><x-icon name="coins" class="w-4 h-4" aria-hidden="true" /></div>
+          <div class="db-kpi-label" style="color:rgba(255,255,255,0.75)">Total Premium (KES)</div>
+          <div class="db-kpi-value" style="font-size:20px;color:#fff">{{ number_format($totalPremium) }}</div>
+          <div class="text-[10px] text-blue-200/70">{!! $trendBadge($trends['premium'], 'growth') !!}</div>
         </a>
       </div>
 
       <div class="db-kpi-grid" style="margin-top:14px">
-        <a href="{{ route('quotations.index') }}" class="db-kpi" style="--accent:#c0392b;--icon-bg:#fdeaea;cursor:pointer;text-decoration:none;">
-          <div class="db-kpi-icon"><x-icon name="car" class="w-4 h-4" aria-hidden="true" /></div>
-          <div class="db-kpi-label">Vehicles Insured</div>
-          <div class="db-kpi-value">{{ $vehiclesInsured }}</div>
-          <div class="db-kpi-sub">Vehicles with an issued sticker</div>
+        <a href="{{ route('quotations.index') }}" class="db-kpi" style="--accent:#ED1D25;--icon-bg:rgba(255,255,255,0.15);background-color:#263B8B;border:1px solid rgba(255,255,255,0.12);cursor:pointer;text-decoration:none;">
+          <div class="db-kpi-icon" style="color:#fff"><x-icon name="car" class="w-4 h-4" aria-hidden="true" /></div>
+          <div class="db-kpi-label" style="color:rgba(255,255,255,0.75)">Vehicles Insured</div>
+          <div class="db-kpi-value" style="color:#fff">{{ $vehiclesInsured }}</div>
+          <div class="db-kpi-sub" style="color:rgba(255,255,255,0.6)">Vehicles with an issued sticker</div>
         </a>
-        <a href="{{ route('admin.stickers.index') }}" class="db-kpi" style="--accent:#0f7a65;--icon-bg:#e1f5ee;cursor:pointer;text-decoration:none;">
-          <div class="db-kpi-icon"><x-icon name="ticket" class="w-4 h-4" aria-hidden="true" /></div>
-          <div class="db-kpi-label">Stickers Issued</div>
-          <div class="db-kpi-value">{{ $totalStickersIssued }}</div>
-          <div class="db-kpi-sub">Total sticker records</div>
+        <a href="{{ route('admin.stickers.index') }}" class="db-kpi" style="--accent:#ED1D25;--icon-bg:rgba(255,255,255,0.15);background-color:#263B8B;border:1px solid rgba(255,255,255,0.12);cursor:pointer;text-decoration:none;">
+          <div class="db-kpi-icon" style="color:#fff"><x-icon name="ticket" class="w-4 h-4" aria-hidden="true" /></div>
+          <div class="db-kpi-label" style="color:rgba(255,255,255,0.75)">Stickers Issued</div>
+          <div class="db-kpi-value" style="color:#fff">{{ $totalStickersIssued }}</div>
+          <div class="db-kpi-sub" style="color:rgba(255,255,255,0.6)">Total sticker records</div>
         </a>
-        <a href="{{ route('admin.users.index') }}" class="db-kpi" style="--accent:#1756c8;--icon-bg:#e8f0fc;cursor:pointer;text-decoration:none;">
-          <div class="db-kpi-icon"><x-icon name="mail-forward" class="w-4 h-4" aria-hidden="true" /></div>
-          <div class="db-kpi-label">Emails Dispatched</div>
-          <div class="db-kpi-value">{{ $totalEmailsDispatched }}</div>
-          <div class="db-kpi-sub">To underwriters</div>
+        <a href="{{ route('admin.users.index') }}" class="db-kpi" style="--accent:#ED1D25;--icon-bg:rgba(255,255,255,0.15);background-color:#263B8B;border:1px solid rgba(255,255,255,0.12);cursor:pointer;text-decoration:none;">
+          <div class="db-kpi-icon" style="color:#fff"><x-icon name="mail-forward" class="w-4 h-4" aria-hidden="true" /></div>
+          <div class="db-kpi-label" style="color:rgba(255,255,255,0.75)">Emails Dispatched</div>
+          <div class="db-kpi-value" style="color:#fff">{{ $totalEmailsDispatched }}</div>
+          <div class="db-kpi-sub" style="color:rgba(255,255,255,0.6)">To underwriters</div>
         </a>
-        <div class="db-kpi" style="--accent:#0f7a65;--icon-bg:#e1f5ee">
-          <div class="db-kpi-icon"><x-icon name="wifi" class="w-4 h-4" aria-hidden="true" /></div>
-          <div class="db-kpi-label">Online Now</div>
-          <div class="db-kpi-value">{{ $onlineUsers }}</div>
-          <div class="db-kpi-sub">Active sessions</div>
+        <div class="db-kpi" style="--accent:#ED1D25;--icon-bg:rgba(255,255,255,0.15);background-color:#263B8B;border:1px solid rgba(255,255,255,0.12)">
+          <div class="db-kpi-icon" style="color:#fff"><x-icon name="wifi" class="w-4 h-4" aria-hidden="true" /></div>
+          <div class="db-kpi-label" style="color:rgba(255,255,255,0.75)">Online Now</div>
+          <div class="db-kpi-value" style="color:#fff">{{ $onlineUsers }}</div>
+          <div class="db-kpi-sub" style="color:rgba(255,255,255,0.6)">Active sessions</div>
         </div>
       </div>
 

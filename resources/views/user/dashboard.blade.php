@@ -58,29 +58,29 @@
 
         {{-- ─── KPI CARDS (4-COLUMN) ────────────────────────────────────── --}}
         <div class="mt-6 grid grid-cols-2 md:grid-cols-4 gap-3">
-            <a href="{{ route('quotations.index') }}" class="kpi-card p-4 block hover:opacity-80 transition">
+            <a href="{{ route('quotations.index') }}" class="kpi-card p-4 block hover:opacity-80 transition" style="background-color:#263B8B;border:1px solid rgba(255,255,255,0.12);">
                 <div class="accent-bar" style="background:linear-gradient(90deg,#ED1D25,#F4737A)"></div>
-                <p class="kpi-eyebrow">Total Quotations</p>
-                <p class="kpi-value mt-1">{{ $totalQuotations }}</p>
-                <span class="kpi-delta neutral mt-1.5 inline-block">All your quotes</span>
+                <p class="kpi-eyebrow" style="color:rgba(255,255,255,0.75)">Total Quotations</p>
+                <p class="kpi-value mt-1 text-white">{{ $totalQuotations }}</p>
+                <span class="kpi-delta neutral mt-1.5 inline-block" style="color:rgba(255,255,255,0.7)">All your quotes</span>
             </a>
-            <a href="{{ route('quotations.index') }}" class="kpi-card p-4 block hover:opacity-80 transition">
-                <div class="accent-bar" style="background:linear-gradient(90deg,#34d399,#6ee7b7)"></div>
-                <p class="kpi-eyebrow">This Week</p>
-                <p class="kpi-value mt-1">{{ $weeklyQuotations }}</p>
-                <span class="kpi-delta up mt-1.5 inline-block">Generated this week</span>
+            <a href="{{ route('quotations.index') }}" class="kpi-card p-4 block hover:opacity-80 transition" style="background-color:#263B8B;border:1px solid rgba(255,255,255,0.12);">
+                <div class="accent-bar" style="background:linear-gradient(90deg,#ED1D25,#F4737A)"></div>
+                <p class="kpi-eyebrow" style="color:rgba(255,255,255,0.75)">This Week</p>
+                <p class="kpi-value mt-1 text-white">{{ $weeklyQuotations }}</p>
+                <span class="kpi-delta up mt-1.5 inline-block" style="color:rgba(255,255,255,0.7)">Generated this week</span>
             </a>
-            <a href="{{ route('stickers.issue') }}" class="kpi-card p-4 block hover:opacity-80 transition">
-                <div class="accent-bar" style="background:linear-gradient(90deg,#818cf8,#a5b4fc)"></div>
-                <p class="kpi-eyebrow">Stickers</p>
-                <p class="kpi-value mt-1">{{ $stickersCount }}</p>
-                <span class="kpi-delta up mt-1.5 inline-block">Stickers issued</span>
+            <a href="{{ route('stickers.issue') }}" class="kpi-card p-4 block hover:opacity-80 transition" style="background-color:#263B8B;border:1px solid rgba(255,255,255,0.12);">
+                <div class="accent-bar" style="background:linear-gradient(90deg,#ED1D25,#F4737A)"></div>
+                <p class="kpi-eyebrow" style="color:rgba(255,255,255,0.75)">Stickers</p>
+                <p class="kpi-value mt-1 text-white">{{ $stickersCount }}</p>
+                <span class="kpi-delta up mt-1.5 inline-block" style="color:rgba(255,255,255,0.7)">Stickers issued</span>
             </a>
-            <a href="{{ route('profile.edit') }}" class="kpi-card p-4 block hover:opacity-80 transition">
-                <div class="accent-bar" style="background:linear-gradient(90deg,#fb7185,#fda4af)"></div>
-                <p class="kpi-eyebrow">Profile</p>
-                <p class="kpi-value mt-1">{{ $profileCompletion }}%</p>
-                <span class="kpi-delta up mt-1.5 inline-block">Profile complete</span>
+            <a href="{{ route('profile.edit') }}" class="kpi-card p-4 block hover:opacity-80 transition" style="background-color:#263B8B;border:1px solid rgba(255,255,255,0.12);">
+                <div class="accent-bar" style="background:linear-gradient(90deg,#ED1D25,#F4737A)"></div>
+                <p class="kpi-eyebrow" style="color:rgba(255,255,255,0.75)">Profile</p>
+                <p class="kpi-value mt-1 text-white">{{ $profileCompletion }}%</p>
+                <span class="kpi-delta up mt-1.5 inline-block" style="color:rgba(255,255,255,0.7)">Profile complete</span>
             </a>
         </div>
 

@@ -57,11 +57,14 @@
         </button>
     </form>
 
-    <p class="mt-6 text-center">
+    <div class="mt-6 flex flex-col items-center gap-1">
         <a href="{{ route('password.reset') }}" class="text-xs font-medium text-[#263B8B] hover:underline">
-            Forgot your password, or has it expired? Reset it here
+            Forgot your password?
         </a>
-    </p>
+        <a href="{{ route('password.reset') }}" class="text-xs font-medium text-[#263B8B] hover:underline">
+            Password expired? Reset it here
+        </a>
+    </div>
 
     <p class="mt-4 text-xs text-center text-gray-400">
         Accounts are issued by your administrator. Completely forgotten your password? Ask them to reset it.

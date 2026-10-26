@@ -15,7 +15,7 @@
     x-data="toastManager({{ json_encode($flashMessages) }})"
     x-init="init()"
     class="fixed top-20 right-6 z-[100] flex flex-col gap-2 max-w-sm w-full pointer-events-none">
-    <template x-for="(toast, index) in toasts" :key="index">
+    <template x-for="(toast, index) in toasts" :key="index + '|' + toast.message">
         <div
             x-show="toast.show"
             x-transition:enter="transition ease-out duration-300"
@@ -51,7 +51,16 @@
 function toastManager(messages = []) {
     return {
         toasts: [],
+        _seen: {},
         init() {
+            if (window._toastManager) {
+                // Already initialized, merge messages if any
+                var self = this;
+                messages.forEach(function(msg) {
+                    if (window._toastManager.addToast) window._toastManager.addToast(msg.message, msg.type);
+                });
+                return;
+            }
             var self = this;
             messages.forEach(function(msg) {
                 self.addToast(msg.message, msg.type);
@@ -71,6 +80,9 @@ function toastManager(messages = []) {
         // duration: optional auto-dismiss override in ms (defaults to 5000).
         addToast(message, type, isHtml, duration) {
             if (!message) return;
+            var key = (type || 'success') + '|' + message;
+            if (this._seen && this._seen[key]) return;
+            if (this._seen) this._seen[key] = true;
             var toast = { message: message, type: type || 'success', html: isHtml === true, show: true };
             this.toasts.push(toast);
             setTimeout(() => {

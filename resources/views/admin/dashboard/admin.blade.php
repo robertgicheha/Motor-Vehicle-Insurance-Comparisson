@@ -173,7 +173,8 @@
       </div>
       <script>
       document.addEventListener('DOMContentLoaded', function () {
-          if (window._toastManager) {
+          if (window._toastManager && !window._stickerReminderToastShown) {
+              window._stickerReminderToastShown = true;
               window._toastManager.addToast(
                   {{ Illuminate\Support\Js::from($stickerNumberReminders->count() . ' sticker' . ($stickerNumberReminders->count() > 1 ? 's' : '') . ' awaiting the underwriter\'s sticker number.') }},
                   'warning'
@@ -185,32 +186,32 @@
 
         <div class="db-section-label">Key Metrics</div>
       <div class="db-kpi-grid">
-        <a href="{{ route('admin.users.index') }}" class="db-kpi" style="--accent:#1756c8;--icon-bg:#e8f0fc;cursor:pointer;text-decoration:none;">
-          <div class="db-kpi-icon"><x-icon name="users" class="w-4 h-4" aria-hidden="true" /></div>
-          <div class="db-kpi-label">Total Users</div>
-          <div class="db-kpi-value">{{ $totalUsers ?? 0 }}</div>
-          <div class="db-kpi-trend trend-neutral"><x-icon name="users" class="w-3 h-3 inline" /> {{ $activeUsers ?? 0 }} active</div>
+        <a href="{{ route('admin.users.index') }}" class="db-kpi" style="--accent:#ED1D25;--icon-bg:rgba(255,255,255,0.15);background-color:#263B8B;border:1px solid rgba(255,255,255,0.12);cursor:pointer;text-decoration:none;">
+          <div class="db-kpi-icon" style="color:#fff"><x-icon name="users" class="w-4 h-4" aria-hidden="true" /></div>
+          <div class="db-kpi-label" style="color:rgba(255,255,255,0.75)">Total Users</div>
+          <div class="db-kpi-value" style="color:#fff">{{ $totalUsers ?? 0 }}</div>
+          <div class="db-kpi-trend trend-neutral" style="color:rgba(255,255,255,0.75)"><x-icon name="users" class="w-3 h-3 inline" /> {{ $activeUsers ?? 0 }} active</div>
         </a>
 
-        <a href="{{ route('quotations.index') }}" class="db-kpi" style="--accent:#0f7a65;--icon-bg:#e8f5f0;cursor:pointer;text-decoration:none;">
-          <div class="db-kpi-icon"><x-icon name="file-description" class="w-4 h-4" aria-hidden="true" /></div>
-          <div class="db-kpi-label">Total Quotations</div>
-          <div class="db-kpi-value">{{ $totalQuotations ?? 0 }}</div>
-          <div class="db-kpi-trend trend-up"><x-icon name="trending-up" class="w-3 h-3 inline" /> +{{ $todayQuotations ?? 0 }} today</div>
+        <a href="{{ route('quotations.index') }}" class="db-kpi" style="--accent:#ED1D25;--icon-bg:rgba(255,255,255,0.15);background-color:#263B8B;border:1px solid rgba(255,255,255,0.12);cursor:pointer;text-decoration:none;">
+          <div class="db-kpi-icon" style="color:#fff"><x-icon name="file-description" class="w-4 h-4" aria-hidden="true" /></div>
+          <div class="db-kpi-label" style="color:rgba(255,255,255,0.75)">Total Quotations</div>
+          <div class="db-kpi-value" style="color:#fff">{{ $totalQuotations ?? 0 }}</div>
+          <div class="db-kpi-trend trend-up" style="color:rgba(255,255,255,0.75)"><x-icon name="trending-up" class="w-3 h-3 inline" /> +{{ $todayQuotations ?? 0 }} today</div>
         </a>
 
-        <a href="{{ route('admin.claims.index') }}" class="db-kpi" style="--accent:#d4860e;--icon-bg:#fef5e7;cursor:pointer;text-decoration:none;">
-          <div class="db-kpi-icon"><x-icon name="article" class="w-4 h-4" aria-hidden="true" /></div>
-          <div class="db-kpi-label">Total Claims</div>
-          <div class="db-kpi-value">{{ $totalClaims ?? 0 }}</div>
-          <div class="db-kpi-sub">All submitted claims</div>
+        <a href="{{ route('admin.claims.index') }}" class="db-kpi" style="--accent:#ED1D25;--icon-bg:rgba(255,255,255,0.15);background-color:#263B8B;border:1px solid rgba(255,255,255,0.12);cursor:pointer;text-decoration:none;">
+          <div class="db-kpi-icon" style="color:#fff"><x-icon name="article" class="w-4 h-4" aria-hidden="true" /></div>
+          <div class="db-kpi-label" style="color:rgba(255,255,255,0.75)">Total Claims</div>
+          <div class="db-kpi-value" style="color:#fff">{{ $totalClaims ?? 0 }}</div>
+          <div class="db-kpi-sub" style="color:rgba(255,255,255,0.6)">All submitted claims</div>
         </a>
 
-        <a href="{{ route('admin.stickers.index') }}" class="db-kpi" style="--accent:#c0392b;--icon-bg:#fce8e8;cursor:pointer;text-decoration:none;">
-          <div class="db-kpi-icon"><x-icon name="ticket" class="w-4 h-4" aria-hidden="true" /></div>
-          <div class="db-kpi-label">Stickers / Certificates</div>
-          <div class="db-kpi-value">{{ $totalStickers ?? 0 }}</div>
-          <div class="db-kpi-sub">Across all policies</div>
+        <a href="{{ route('admin.stickers.index') }}" class="db-kpi" style="--accent:#ED1D25;--icon-bg:rgba(255,255,255,0.15);background-color:#263B8B;border:1px solid rgba(255,255,255,0.12);cursor:pointer;text-decoration:none;">
+          <div class="db-kpi-icon" style="color:#fff"><x-icon name="ticket" class="w-4 h-4" aria-hidden="true" /></div>
+          <div class="db-kpi-label" style="color:rgba(255,255,255,0.75)">Stickers / Certificates</div>
+          <div class="db-kpi-value" style="color:#fff">{{ $totalStickers ?? 0 }}</div>
+          <div class="db-kpi-sub" style="color:rgba(255,255,255,0.6)">Across all policies</div>
         </a>
       </div>
 

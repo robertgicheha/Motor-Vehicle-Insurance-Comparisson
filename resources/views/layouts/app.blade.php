@@ -5,7 +5,8 @@
         document.documentElement.classList.toggle('dark', val);
         localStorage.setItem('theme', val ? 'dark' : 'light');
     });
-" x-on:sidebar-expand.window="sidebarOpen = true" x-on:sidebar-close-mobile.window="mobileSidebarOpen = false">
+    window.addEventListener('resize', () => { if (window.innerWidth >= 1024) { mobileSidebarOpen = false; } });
+" x-on:sidebar-expand.window="if (window.innerWidth >= 1024) { sidebarOpen = true; }" x-on:sidebar-close-mobile.window="mobileSidebarOpen = false">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -45,7 +46,7 @@
     <div class="min-h-screen flex overflow-x-hidden">
         <div x-show="mobileSidebarOpen" x-transition:enter="transition-opacity duration-300" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
              x-transition:leave="transition-opacity duration-300" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0"
-             @click="mobileSidebarOpen = false" class="fixed inset-0 bg-black/50 z-30 lg:hidden" x-cloak></div>
+             @click.prevent="mobileSidebarOpen = false" class="fixed inset-0 bg-black/50 z-30 lg:hidden" x-cloak></div>
 
         @auth
             @include('layouts.sidebar')

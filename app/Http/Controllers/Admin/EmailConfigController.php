@@ -90,19 +90,9 @@ class EmailConfigController extends Controller
     public function update(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'provider' => 'required|in:default,lolc',
-            'mailer' => 'required|string|max:50',
-            'host' => 'nullable|string|max:255',
-            'port' => 'nullable|integer|min:1|max:65535',
-            'username' => 'nullable|string|max:255',
-            'password' => 'nullable|string|max:255',
-            'encryption' => 'nullable|in:tls,ssl,',
-            'from_address' => 'nullable|email|max:255',
-            'from_name' => 'nullable|string|max:255',
-            // LOLC custom SMTP: host + port become mandatory once it is the
-            // active provider, otherwise the portal would silently fail to send.
-            'lolc_host' => 'required_if:provider,lolc|nullable|string|max:255',
-            'lolc_port' => 'required_if:provider,lolc|nullable|integer|min:1|max:65535',
+            'provider' => 'nullable|in:lolc',
+            'lolc_host' => 'required|string|max:255',
+            'lolc_port' => 'required|integer|min:1|max:65535',
             'lolc_username' => 'nullable|string|max:255',
             'lolc_password' => 'nullable|string|max:255',
             'lolc_encryption' => 'nullable|in:tls,ssl,',
@@ -116,9 +106,8 @@ class EmailConfigController extends Controller
 
         $values = $validator->validated();
 
-        // The password fields are write-only: an empty submission means "leave
+        // The password field is write-only: an empty submission means "leave
         // the existing secret untouched" rather than "clear the password".
-        $password = $request->filled('password') ? $values['password'] : null;
         $lolcPassword = $request->filled('lolc_password') ? $values['lolc_password'] : null;
 
         $envPath = base_path('.env');
@@ -128,21 +117,10 @@ class EmailConfigController extends Controller
         }
 
         try {
-            $this->setEnvValue('MAIL_PROVIDER', $values['provider']);
+            $this->setEnvValue('MAIL_PROVIDER', 'lolc');
 
-            $this->setEnvValue('MAIL_MAILER', $values['mailer']);
-            $this->setEnvValue('MAIL_HOST', $values['host'] ?? '');
-            $this->setEnvValue('MAIL_PORT', $values['port'] ?? '');
-            $this->setEnvValue('MAIL_USERNAME', $values['username'] ?? '');
-            if ($password !== null) {
-                $this->setEnvValue('MAIL_PASSWORD', $password);
-            }
-            $this->setEnvValue('MAIL_ENCRYPTION', $values['encryption'] ?? '');
-            $this->setEnvValue('MAIL_FROM_ADDRESS', $values['from_address'] ?? '');
-            $this->setEnvValue('MAIL_FROM_NAME', $values['from_name'] ?? '');
-
-            $this->setEnvValue('LOLC_MAIL_HOST', $values['lolc_host'] ?? '');
-            $this->setEnvValue('LOLC_MAIL_PORT', $values['lolc_port'] ?? '');
+            $this->setEnvValue('LOLC_MAIL_HOST', $values['lolc_host']);
+            $this->setEnvValue('LOLC_MAIL_PORT', $values['lolc_port']);
             $this->setEnvValue('LOLC_MAIL_USERNAME', $values['lolc_username'] ?? '');
             if ($lolcPassword !== null) {
                 $this->setEnvValue('LOLC_MAIL_PASSWORD', $lolcPassword);
@@ -158,10 +136,9 @@ class EmailConfigController extends Controller
 
         Artisan::call('config:clear');
 
-        $providerLabel = $values['provider'] === 'lolc' ? 'Custom SMTP (LOLC)' : 'Default';
-        AuditService::activity('mail_settings_updated', 'Mail provider (' . $providerLabel . ') updated in .env by ' . auth()->user()->username);
+        AuditService::activity('mail_settings_updated', 'Mail provider (Custom SMTP/LOLC) updated in .env by ' . auth()->user()->username);
 
-        return back()->with('success', 'Mail settings saved to .env and configuration cache cleared.');
+        return back()->with('success', 'LOLC SMTP settings saved to .env and configuration cache cleared.');
     }
 
     public function encrypt()

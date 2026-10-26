@@ -1,6 +1,6 @@
 <x-auth-layout title="Reset Password">
     <p class="mb-6 text-sm text-center text-gray-500">
-        Reset your password when you've forgotten it or it has expired. Confirm your identity with your
+        Reset your password if you've forgotten it, or if your password has expired. Confirm your identity with your
         username and current password, then choose a new strong one.
     </p>
 
